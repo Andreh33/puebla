@@ -25,7 +25,13 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [];
+    return [
+      // Atajos de género para el header: /nino, /nina, /accesorios.
+      // /accesorios ya existe como categoría root; /nino y /nina redirigen
+      // al catálogo filtrado por género para evitar duplicar páginas.
+      { source: "/nino", destination: "/catalogo?genero=NINO", permanent: false },
+      { source: "/nina", destination: "/catalogo?genero=NINA", permanent: false },
+    ];
   },
   async headers() {
     return [

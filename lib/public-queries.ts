@@ -795,11 +795,39 @@ export function buildProductWhere(opts: {
     // Cast: genero values must match Prisma enum
     where.gender = { in: filters.genero as never };
   }
+  // FIX: el catálogo real tiene colores compuestos ("VERDE KAKI", "GRIS
+  // MELANGE", "AZUL MARINO"). El filtro `in` con match exacto fallaba al
+  // seleccionar "Verde" porque ningún producto tiene literalmente
+  // `colorName="Verde"`. Pasamos a `contains insensitive` con OR para
+  // que "Verde" matchee "Verde Kaki", "Verde Manzana", etc.
+  const andClauses: Prisma.ProductWhereInput[] = Array.isArray(where.AND)
+    ? [...where.AND]
+    : where.AND
+      ? [where.AND]
+      : [];
   if (filters.color && filters.color.length) {
-    where.colorName = { in: filters.color, mode: "insensitive" };
+    andClauses.push({
+      OR: filters.color.map((c) => ({
+        colorName: { contains: c, mode: "insensitive" as const },
+      })),
+    });
   }
+  // Talla: misma corrección. Las tallas en DB pueden venir con espacios
+  // o variaciones de caja ("L" vs "l", "UNICA" vs "Unica"). Usamos
+  // equals insensitive vía OR para tolerarlo.
   if (filters.talla && filters.talla.length) {
-    where.sizes = { some: { size: { in: filters.talla } } };
+    andClauses.push({
+      OR: filters.talla.map((t) => ({
+        sizes: {
+          some: {
+            size: { equals: t, mode: "insensitive" as const },
+          },
+        },
+      })),
+    });
+  }
+  if (andClauses.length > 0) {
+    where.AND = andClauses;
   }
   if (filters.min != null || filters.max != null) {
     where.retailPrice = {

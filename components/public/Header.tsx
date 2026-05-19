@@ -54,6 +54,18 @@ const PAGE_NAV: Array<{ label: string; href: string }> = [
   { label: "Blog", href: "/blog" },
 ];
 
+/**
+ * Sub-tabs para infantil: Niño / Niña / Accesorios. Aparecen tras los
+ * GENDER_TABS principales en la pill desktop, justo antes del separador
+ * a PAGE_NAV. Los slugs sin tildes son los canónicos; las URLs con tilde
+ * se redirigen aquí desde next.config.ts.
+ */
+const SUBTABS_NINOS: Array<{ label: string; href: string }> = [
+  { label: "Niño", href: "/nino" },
+  { label: "Niña", href: "/nina" },
+  { label: "Accesorios", href: "/accesorios" },
+];
+
 const GENDER_TABS: Array<{
   key: MegaMenuKey;
   label: string;
@@ -279,9 +291,32 @@ export function Header() {
                 );
               })}
 
-              {/* Separador entre TIENDA (Mujer/Hombre/Niños) y PÁGINA
-                  (Contacto/Blog/App). El cliente pidió diferenciar
-                  visualmente qué lleva a comprar y qué a información. */}
+              {/* Mini-separador sutil + sub-tabs Niño / Niña / Accesorios
+                  (atajos de la sección infantil). */}
+              <span className="mx-1 h-4 w-px bg-zs-border/60" aria-hidden />
+              {SUBTABS_NINOS.map((item) => {
+                const active =
+                  pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-zs-blue-950 text-white"
+                        : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Separador entre TIENDA (Mujer/Hombre/Niños + sub-tabs) y
+                  PÁGINA (Contacto/Blog/App). Diferenciación visual:
+                  «aquí compras» vs «aquí informas». */}
               <span className="mx-3 h-5 w-px bg-zs-border" aria-hidden />
 
               {/* Links a páginas (no son tienda). */}
