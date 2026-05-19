@@ -71,6 +71,12 @@ interface PreviewRow {
   status: string;
 }
 
+interface JobError {
+  row: number;
+  code: string;
+  message: string;
+}
+
 interface JobState {
   id: string;
   status: "PENDING" | "RUNNING" | "DONE" | "FAILED";
@@ -82,6 +88,7 @@ interface JobState {
   errorRows: number;
   startedAt: string | null;
   finishedAt: string | null;
+  errors?: JobError[] | null;
 }
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -485,6 +492,46 @@ export function ImportXlsxClient() {
                 <Stat label="Errores" value={job.errorRows} tone="red" />
                 <Stat label="Progreso" value={`${progressPct}%`} tone="muted" />
               </div>
+
+              {/* Log y errores en tiempo real. Útil para diagnosticar jobs
+                  que se quedan atascados: cada hito importante (job arrancado,
+                  fichero abierto, filas contadas...) se persiste como INFO
+                  en errors[] y aparece aquí en cuanto llega el siguiente poll. */}
+              {Array.isArray(job.errors) && job.errors.length > 0 && (
+                <details
+                  open={phase === "failed" || phase === "polling"}
+                  className="rounded-lg border border-zs-border bg-zs-surface/50 p-3 text-xs"
+                >
+                  <summary className="cursor-pointer select-none font-semibold text-zs-ink">
+                    Log y errores ({job.errors.length})
+                  </summary>
+                  <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto font-mono text-[11px]">
+                    {job.errors.slice(-50).map((e, i) => {
+                      const isInfo = e.code === "INFO";
+                      return (
+                        <li
+                          key={i}
+                          className={
+                            isInfo
+                              ? "text-zs-muted"
+                              : e.code === "STACK"
+                                ? "text-amber-700"
+                                : "text-zs-red-600"
+                          }
+                        >
+                          <span className="inline-block w-12 shrink-0 text-zs-muted/70">
+                            {e.row > 0 ? `f${e.row}` : ""}
+                          </span>
+                          <span className="ml-1 inline-block w-16 shrink-0 font-semibold uppercase">
+                            {e.code}
+                          </span>
+                          <span className="ml-2 break-words">{e.message}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </details>
+              )}
 
               {(phase === "done" || phase === "failed") && (
                 <div className="flex flex-wrap items-center gap-3 pt-2">

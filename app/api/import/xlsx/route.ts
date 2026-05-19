@@ -8,7 +8,7 @@
  * Devuelve { jobId } al cliente, que hará polling a /api/import/jobs/[id].
  */
 
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -20,7 +20,12 @@ import type { Prisma } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 30; // segundos para la creación del job; el procesado es asíncrono
+// El procesado vive DENTRO de la misma function execution vía `after()`:
+// Next.js garantiza que las tareas registradas con `after` corren después
+// de devolver la response pero antes de que termine la function. Sin esto,
+// el `void (async () => ...)` previo se mataba en cuanto el handler
+// retornaba — el job quedaba en PENDING para siempre.
+export const maxDuration = 300;
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
@@ -93,15 +98,45 @@ export async function POST(req: Request) {
     select: { id: true },
   });
 
-  // Fire-and-forget: no await, atrapamos errores y los persistimos en el job
-  void (async () => {
+  // Procesado garantizado con `after()`: corre tras devolver la response al
+  // cliente, pero dentro de la misma function execution (maxDuration=300).
+  // Si processImportJob lanza, lo capturamos y persistimos FAILED con el
+  // mensaje + stack truncado para que el cliente lo vea en el polling.
+  after(async () => {
+    const t0 = Date.now();
+    console.log(`[import:xlsx] job ${job.id} → arranque after() · file=${file.name} · size=${(file.size / 1024).toFixed(1)} KB`);
     try {
       await processImportJob(job.id);
+      console.log(`[import:xlsx] job ${job.id} → done en ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     } catch (err) {
-      // processImportJob ya persiste FAILED si lanza; este catch es defensivo
-      console.error(`[import:xlsx] job ${job.id} failed`, err);
+      const e = err as Error;
+      console.error(`[import:xlsx] job ${job.id} FAILED tras ${((Date.now() - t0) / 1000).toFixed(1)} s:`, e);
+      // Persistimos el error en el job para que se vea en /api/import/jobs/[id].
+      await db.importJob
+        .update({
+          where: { id: job.id },
+          data: {
+            status: "FAILED",
+            finishedAt: new Date(),
+            errors: [
+              {
+                row: 0,
+                code: "PROCESS_ERROR",
+                message: (e.message || "Error desconocido").slice(0, 500),
+              },
+              {
+                row: 0,
+                code: "STACK",
+                message: (e.stack || "").split("\n").slice(0, 6).join(" | ").slice(0, 1500),
+              },
+            ] as unknown as Prisma.InputJsonValue,
+          },
+        })
+        .catch((dbErr) => {
+          console.error(`[import:xlsx] no pude persistir FAILED:`, dbErr);
+        });
     }
-  })();
+  });
 
   return NextResponse.json({ jobId: job.id }, { status: 202 });
 }

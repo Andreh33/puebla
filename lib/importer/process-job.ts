@@ -557,6 +557,27 @@ export async function processImportJob(
   jobId: string,
   opts: ProcessJobOptions = {},
 ): Promise<void> {
+  const log = (msg: string) => {
+    console.log(`[import:process ${jobId}] ${msg}`);
+  };
+
+  // Breadcrumbs persistidos en `errors[]` con code "INFO". El cliente los
+  // muestra junto a los errores reales para diagnosticar dónde se atascó
+  // un job sin tener que mirar logs de Vercel.
+  const breadcrumbs: ImportError[] = [];
+  const breadcrumb = async (code: string, message: string) => {
+    log(`${code}: ${message}`);
+    breadcrumbs.push({ row: 0, code, message: message.slice(0, 300) });
+    await db.importJob
+      .update({
+        where: { id: jobId },
+        data: { errors: breadcrumbs as unknown as Prisma.InputJsonValue },
+      })
+      .catch(() => {});
+  };
+
+  await breadcrumb("INFO", `Job arrancado · ${new Date().toISOString()}`);
+
   const job = await db.importJob.findUnique({ where: { id: jobId } });
   if (!job) throw new Error(`ImportJob ${jobId} no existe`);
   if (!job.fileUrl) throw new Error(`ImportJob ${jobId} sin fileUrl`);
@@ -567,16 +588,17 @@ export async function processImportJob(
   const defaultStatus = optsPayload.defaultStatus ?? "DRAFT";
   const defaultCategorySlug = optsPayload.defaultCategorySlug;
 
-  // Resolver filePath: en este proyecto, fileUrl es la ruta local del xlsx
-  // (los uploads de la UI escriben en /tmp/zs-imports/... y guardan ese path).
   const filePath = job.fileUrl;
+  await breadcrumb("INFO", `Leyendo fichero: ${filePath}`);
 
   // Marcar RUNNING + total
   let totalRows = 0;
   try {
     totalRows = await countPricatRows(filePath);
+    await breadcrumb("INFO", `Filas contadas: ${totalRows}`);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    log(`FAIL countPricatRows: ${message}`);
     await db.importJob.update({
       where: { id: jobId },
       data: {
@@ -584,6 +606,7 @@ export async function processImportJob(
         startedAt: new Date(),
         finishedAt: new Date(),
         errors: [
+          ...breadcrumbs,
           { row: 0, code: "FILE", message: `No se pudo abrir el fichero: ${message}` },
         ] as unknown as Prisma.InputJsonValue,
       },
@@ -601,9 +624,13 @@ export async function processImportJob(
       createdRows: 0,
       updatedRows: 0,
       errorRows: 0,
-      errors: [] as unknown as Prisma.InputJsonValue,
+      // No vaciamos errors[]: conservamos los breadcrumbs INFO de arranque
+      // para que se vean en el polling. Los errores reales se acumulan
+      // encima vía flushProgress.
+      errors: breadcrumbs as unknown as Prisma.InputJsonValue,
     },
   });
+  await breadcrumb("INFO", `Estado RUNNING · iniciando procesado de ${totalRows} filas`);
 
   let processedRows = 0;
   let createdRows = 0;
