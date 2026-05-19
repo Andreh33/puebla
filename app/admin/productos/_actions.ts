@@ -114,3 +114,79 @@ export async function bulkAction(ids: string[], action: BulkActionType) {
   return { ok: true as const, count };
 }
 
+// ---------------------------------------------------------------------------
+// Quick-edit inline: SKU y STATUS desde la tabla /admin/productos
+// ---------------------------------------------------------------------------
+
+const SKU_MAX = 64;
+const STATUS_VALUES = ["DRAFT", "ACTIVE", "INACTIVE", "OUT_OF_STOCK"] as const;
+type StatusValue = (typeof STATUS_VALUES)[number];
+
+export async function updateProductSkuAction(
+  id: string,
+  skuRaw: string,
+): Promise<{ ok: true; sku: string | null } | { ok: false; error: string }> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  const sku = skuRaw.trim();
+  if (sku.length > SKU_MAX) {
+    return { ok: false, error: `SKU excede ${SKU_MAX} caracteres` };
+  }
+  try {
+    const updated = await db.product.update({
+      where: { id },
+      data: { sku: sku.length === 0 ? null : sku },
+      select: { sku: true },
+    });
+    revalidatePath("/admin/productos");
+    return { ok: true, sku: updated.sku };
+  } catch (err) {
+    const e = err as { code?: string; message?: string };
+    if (e.code === "P2002") {
+      return { ok: false, error: "Ya existe otro producto con ese SKU" };
+    }
+    return { ok: false, error: e.message ?? "Error guardando SKU" };
+  }
+}
+
+export async function updateProductStatusAction(
+  id: string,
+  statusRaw: string,
+): Promise<{ ok: true; status: StatusValue } | { ok: false; error: string }> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  if (!STATUS_VALUES.includes(statusRaw as StatusValue)) {
+    return { ok: false, error: `Estado inválido: ${statusRaw}` };
+  }
+  const status = statusRaw as StatusValue;
+  try {
+    // Si pasa a ACTIVE y aún no tenía publishedAt, lo seteamos a ahora.
+    const existing = await db.product.findUnique({
+      where: { id },
+      select: { publishedAt: true },
+    });
+    await db.product.update({
+      where: { id },
+      data: {
+        status,
+        publishedAt:
+          status === "ACTIVE" && !existing?.publishedAt ? new Date() : undefined,
+      },
+    });
+    revalidatePath("/admin/productos");
+    return { ok: true, status };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message ?? "Error guardando estado" };
+  }
+}
+
+/**
+ * Server action sin args usada por el botón verde "Guardar cambios" al pie
+ * de /admin/productos. Cada edit inline ya persiste atómicamente; este
+ * botón es una confirmación visual + revalidación forzada del listado.
+ */
+export async function forceSaveProductsList(): Promise<void> {
+  await requireSession();
+  revalidatePath("/admin/productos");
+}
+

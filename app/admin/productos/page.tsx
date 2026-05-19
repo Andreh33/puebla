@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, Check } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { listProducts, type ProductListFilters } from "@/lib/products/queries";
 import { ProductsTable } from "./ProductsTable";
+import { forceSaveProductsList } from "./_actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Productos" };
@@ -90,6 +91,19 @@ export default async function ProductosPage({
         categories={categories}
         popularTags={allTags.map((t) => t.tag)}
       />
+
+      {/* Botón verde "Guardar cambios" — refresca el listado desde DB. Los
+          edits inline (SKU, Estado) ya persisten al momento; este botón es
+          confirmación visual + revalidate forzado. Mismo patrón que /admin/usuarios. */}
+      <form action={forceSaveProductsList} className="mt-6 flex justify-end">
+        <button
+          type="submit"
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+        >
+          <Check className="h-4 w-4" strokeWidth={2.5} />
+          Guardar cambios
+        </button>
+      </form>
     </div>
   );
 }

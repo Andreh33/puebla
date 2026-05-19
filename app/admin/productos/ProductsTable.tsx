@@ -67,6 +67,8 @@ import {
   bulkAction,
   deleteProductAction,
   duplicateProductAction,
+  updateProductSkuAction,
+  updateProductStatusAction,
   type BulkActionType,
 } from "./_actions";
 
@@ -89,11 +91,130 @@ const GENDER_LABEL: Record<string, string> = {
   HOMBRE: "Hombre",
   MUJER: "Mujer",
   UNISEX: "Unisex",
-  NINO: "NiÃ±o",
-  NINA: "NiÃ±a",
-  BEBE: "BebÃ©",
-  NO_ESPECIFICADO: "â€”",
+  NINO: "Niño",
+  NINA: "Niña",
+  BEBE: "Bebé",
+  NO_ESPECIFICADO: "—",
 };
+
+const STATUS_OPTIONS = [
+  { value: "DRAFT", label: "Borrador" },
+  { value: "ACTIVE", label: "Activo" },
+  { value: "INACTIVE", label: "Inactivo" },
+  { value: "OUT_OF_STOCK", label: "Sin stock" },
+] as const;
+
+/**
+ * Celda SKU editable inline. Click para editar, blur o Enter para guardar.
+ * Si está vacío, persiste null y la ficha pública usa el fallback
+ * (modelCode → externalId → id corto).
+ */
+function EditableSkuCell({
+  id,
+  initialSku,
+  fallback,
+}: {
+  id: string;
+  initialSku: string | null;
+  fallback: string;
+}) {
+  const [value, setValue] = React.useState(initialSku ?? "");
+  const [saved, setSaved] = React.useState(initialSku ?? "");
+  const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const isFallback = !saved;
+
+  const commit = React.useCallback(async () => {
+    const trimmed = value.trim();
+    if (trimmed === (saved ?? "")) return;
+    setSaving(true);
+    const res = await updateProductSkuAction(id, trimmed);
+    setSaving(false);
+    if (res.ok) {
+      setSaved(res.sku ?? "");
+      toast.success(res.sku ? `SKU guardado: ${res.sku}` : "SKU borrado");
+    } else {
+      // Rollback
+      setValue(saved);
+      toast.error(res.error);
+    }
+  }, [id, value, saved]);
+
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            inputRef.current?.blur();
+          } else if (e.key === "Escape") {
+            setValue(saved);
+            inputRef.current?.blur();
+          }
+        }}
+        placeholder={fallback}
+        disabled={saving}
+        maxLength={64}
+        className={`h-7 w-32 rounded-md border border-transparent bg-transparent px-2 font-mono text-xs transition-colors hover:border-zs-border focus:border-zs-blue-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zs-blue-100 ${
+          isFallback ? "text-zs-muted placeholder:text-zs-muted/60" : "font-semibold text-zs-ink"
+        }`}
+        title={isFallback ? `SKU no definido (fallback: ${fallback})` : `SKU: ${saved}`}
+      />
+      {saving && (
+        <span aria-hidden className="absolute right-1 top-1.5 h-3 w-3 animate-pulse rounded-full bg-zs-blue-300" />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Celda de estado editable inline. Select que persiste el cambio al instante.
+ * Cambia a Borrador, Activo, Inactivo o Sin stock con una sola interacción.
+ */
+function EditableStatusCell({ id, initialStatus }: { id: string; initialStatus: string }) {
+  const [status, setStatus] = React.useState(initialStatus);
+  const [saving, setSaving] = React.useState(false);
+  const variant = STATUS_VARIANT[status] ?? STATUS_VARIANT.DRAFT!;
+
+  const onChange = async (next: string) => {
+    if (next === status) return;
+    const prev = status;
+    setStatus(next); // optimistic
+    setSaving(true);
+    const res = await updateProductStatusAction(id, next);
+    setSaving(false);
+    if (res.ok) {
+      toast.success(`Estado: ${STATUS_OPTIONS.find((o) => o.value === next)?.label ?? next}`);
+    } else {
+      setStatus(prev); // rollback
+      toast.error(res.error);
+    }
+  };
+
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <Select value={status} onValueChange={onChange} disabled={saving}>
+        <SelectTrigger
+          className={`h-7 min-h-0 rounded-full border px-2.5 py-0 text-xs font-semibold ${variant.cls} [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-70`}
+        >
+          <SelectValue>{variant.label}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {STATUS_OPTIONS.map((o) => (
+            <SelectItem key={o.value} value={o.value} className="text-sm">
+              {o.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 export function ProductsTable({
   initialData,
@@ -255,20 +376,8 @@ export function ProductsTable({
         header: "SKU",
         cell: ({ row }) => {
           const r = row.original;
-          const sku = r.sku || r.modelCode || r.externalId || r.id.slice(0, 8).toUpperCase();
-          const isFallback = !r.sku;
-          return (
-            <span
-              className={
-                isFallback
-                  ? "font-mono text-xs text-zs-muted"
-                  : "font-mono text-xs font-semibold text-zs-ink"
-              }
-              title={isFallback ? "SKU no definido — mostrando fallback" : `SKU: ${sku}`}
-            >
-              {sku}
-            </span>
-          );
+          const fallback = r.modelCode || r.externalId || r.id.slice(0, 8).toUpperCase();
+          return <EditableSkuCell id={r.id} initialSku={r.sku} fallback={fallback} />;
         },
       },
       {
@@ -318,16 +427,9 @@ export function ProductsTable({
       {
         accessorKey: "status",
         header: "Estado",
-        cell: ({ row }) => {
-          const s = STATUS_VARIANT[row.original.status] ?? STATUS_VARIANT.DRAFT!;
-          return (
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${s.cls}`}
-            >
-              {s.label}
-            </span>
-          );
-        },
+        cell: ({ row }) => (
+          <EditableStatusCell id={row.original.id} initialStatus={row.original.status} />
+        ),
       },
       {
         accessorKey: "retailPrice",
