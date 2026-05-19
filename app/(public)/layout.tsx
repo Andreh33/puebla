@@ -10,7 +10,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     <>
       <PageLoader />
       <Header />
-      <main id="main" className="min-h-[60vh]">
+      <main id="main" className="min-h-[60vh] pt-[136px] sm:pt-[148px]">
         {children}
       </main>
       <Footer />

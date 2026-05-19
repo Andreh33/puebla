@@ -470,10 +470,9 @@ export function Header() {
           }
         `}</style>
       </header>
-
-      {/* Spacer — el header es fixed, dejamos hueco para que no tape el hero.
-          Aprox: top-strip ~38px + pt-4 (16px) + pill ~64px + margen seguro. */}
-      <div className="h-[136px] sm:h-[148px]" aria-hidden />
+      {/* El spacer ya no vive aquí — lo gestiona `<main>` con `pt-[136px]
+          sm:pt-[148px]` para no tapar contenido. El home anula ese padding
+          con `-mt-[136px]` para que la pill flote sobre la foto del hero. */}
     </>
   );
 }

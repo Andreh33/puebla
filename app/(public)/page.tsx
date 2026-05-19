@@ -73,6 +73,11 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* El home anula el padding-top del <main> para que el hero ocupe el
+          viewport y la pill flotante del header quede ENCIMA de la foto, no
+          sobre franja blanca. El resto de páginas conservan el padding. */}
+      <div className="-mt-[136px] sm:-mt-[148px]" />
+
       {/* Hero editorial directo (sin ScrollScene 3D — reservado para fase futura). */}
       <HomeHero />
 
