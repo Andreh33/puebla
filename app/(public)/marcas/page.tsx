@@ -9,7 +9,7 @@ export const revalidate = 600;
 export const metadata = buildMetadata({
   title: "Marcas que trabajamos",
   description:
-    "Catálogo de marcas deportivas disponibles en Zona Sport — Puebla de la Calzada. John Smith, +8000, Adidas, Nike, Bullpadel, Joma y muchas más.",
+    "Catálogo de marcas deportivas disponibles en Zona Sport — Puebla de la Calzada. John Smith, +8000, Joma, Bullpadel, Head, Asics, Salomon y muchas más.",
   path: "/marcas",
 });
 

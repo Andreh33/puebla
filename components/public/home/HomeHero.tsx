@@ -1,47 +1,40 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, MessageCircle } from "lucide-react";
+import { ArrowRight, Truck, Sparkles } from "lucide-react";
 import { MagneticButton } from "@/components/public/MagneticButton";
-import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
 /**
- * HomeHero — hero editorial inmersivo a viewport completo.
+ * HomeHero — hero comercial monumental sobre foto Unsplash.
  *
- * Reemplaza el viejo StaticHeroFallback (foto plana de bota sobre blanco) por
- * una composición tipográfica gigante con mesh-gradient animado de fondo, words
- * que entran con stagger, marquee de marcas y CTAs magnéticos.
- *
- * Decisiones:
- *  - Sin foto cuadrada de producto. Bleed completo al viewport.
- *  - Mesh gradient: 4 blobs azul/red/tennis con animación CSS lenta (no GPU
- *    expensive). En reduced-motion los blobs se quedan fijos.
- *  - Tipografía display ~clamp(3.5rem, 12vw, 11rem) con tracking apretado.
- *  - Stagger por palabra mediante delays incrementales — sin dependencias
- *    nuevas (no Motion/Framer): solo CSS transitions disparadas por estado
- *    `mounted`.
- *  - Marquee inferior infinito con keyframes.
- *  - CTAs envueltos en MagneticButton existente.
+ * Cambios respecto a la versión editorial previa:
+ *  - Foto heroica de fondo (`/category-photos/running.jpg`) con overlay
+ *    degradado oscuro para legibilidad del texto.
+ *  - Headline más comercial: "La temporada que estabas esperando.".
+ *  - Banner "OFERTAS DE LA SEMANA" como franja-CTA destacada.
+ *  - 2 CTAs claros: rojo primario "Comprar ahora" + outline "Explorar marcas".
+ *  - Sticker "ENVIO RAPIDO" en esquina superior derecha.
  *
  * A11y:
- *  - H1 con todo el texto del título "leído" (sr-only fallback) y la versión
- *    visible aria-hidden.
- *  - prefers-reduced-motion neutraliza stagger y mesh.
+ *  - H1 visible con el headline real (no sr-only).
+ *  - Mantiene `prefers-reduced-motion`.
+ *  - Contraste AA por el overlay 60% sobre la foto.
  */
 
-const HEADLINE = ["No", "es", "una", "tienda.", "Es", "el", "barrio."] as const;
+const HEADLINE = ["La", "temporada", "que", "estabas", "esperando."] as const;
 const BRANDS_TICKER = [
   "JOHN SMITH",
   "+8000",
-  "NIKE",
-  "ADIDAS",
   "BULLPADEL",
   "HEAD",
   "NOX",
   "WILSON",
   "ASICS",
   "SALOMON",
+  "JOMA",
+  "MIZUNO",
 ] as const;
 
 export function HomeHero() {
@@ -52,7 +45,6 @@ export function HomeHero() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    // Defer al siguiente frame para garantizar transición desde el estado inicial.
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -72,8 +64,8 @@ export function HomeHero() {
     let cy = 0;
     const onMove = (e: PointerEvent) => {
       const rect = root.getBoundingClientRect();
-      tx = ((e.clientX - rect.left) / rect.width - 0.5) * 14;
-      ty = ((e.clientY - rect.top) / rect.height - 0.5) * 14;
+      tx = ((e.clientX - rect.left) / rect.width - 0.5) * 10;
+      ty = ((e.clientY - rect.top) / rect.height - 0.5) * 10;
       if (!raf) raf = requestAnimationFrame(loop);
     };
     const loop = () => {
@@ -101,37 +93,50 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* H1 accesible para SEO */}
-      <h1 className="sr-only">
-        Zona Sport — tienda de deportes multimarca en Puebla de la Calzada (Badajoz).
-      </h1>
-
-      {/* Mesh-gradient animado: 4 blobs en colores corporativos. */}
-      <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
-        <div className="zs-blob zs-blob-1" />
-        <div className="zs-blob zs-blob-2" />
-        <div className="zs-blob zs-blob-3" />
-        <div className="zs-blob zs-blob-4" />
-        {/* Grano sutil */}
+      {/* Foto de fondo a viewport completo */}
+      <div className="absolute inset-0 -z-20" aria-hidden>
+        <Image
+          src="/category-photos/running.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+      </div>
+      {/* Overlay degradado para legibilidad. Capas:
+           1. Negro sólido 50% para el cuerpo del hero.
+           2. Gradiente vertical más oscuro abajo para el marquee.
+           3. Tinte azul corporativo sutil arriba a la izquierda. */}
+      <div className="absolute inset-0 -z-10" aria-hidden>
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="absolute inset-0 bg-gradient-to-t from-zs-blue-950 via-zs-blue-950/40 to-zs-blue-950/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-zs-blue-950/55 via-transparent to-transparent" />
         <div className="absolute inset-0 mix-blend-overlay opacity-[0.07] zs-grain" />
-        {/* Viñeta inferior para legibilidad del marquee */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-zs-blue-950 via-zs-blue-950/40 to-transparent" />
+      </div>
+
+      {/* Sticker superior derecho */}
+      <div className="pointer-events-none absolute right-4 top-24 z-20 hidden -rotate-6 sm:right-8 sm:top-28 sm:block">
+        <div className="flex items-center gap-2 rounded-full bg-zs-tennis-300 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-zs-blue-950 shadow-2xl">
+          <Truck className="h-3.5 w-3.5" strokeWidth={2.5} />
+          Envío rápido
+        </div>
       </div>
 
       {/* Eyebrow superior */}
       <div className="relative mx-auto flex max-w-[1600px] items-center justify-between px-4 pt-28 sm:px-8 sm:pt-32 lg:pt-36">
-        <p className="inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-white/60">
+        <p className="inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
           <span className="inline-block h-px w-8 bg-white/40" />
           Multimarca · Puebla de la Calzada
         </p>
-        <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/45 sm:block">
+        <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/55 sm:block">
           Est. 1998 — Badajoz
         </p>
       </div>
 
       {/* Titular monumental */}
       <div
-        className="relative mx-auto max-w-[1600px] px-4 pt-10 pb-10 sm:px-8 sm:pt-16 lg:pt-24"
+        className="relative mx-auto max-w-[1600px] px-4 pt-8 pb-10 sm:px-8 sm:pt-14 lg:pt-20"
         style={{
           transform: reduced
             ? undefined
@@ -139,10 +144,9 @@ export function HomeHero() {
           transition: "transform 600ms cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
-        <h2
-          aria-hidden
-          className="font-display font-black leading-[0.86] tracking-[-0.04em]"
-          style={{ fontSize: "clamp(3.5rem, 13vw, 12rem)" }}
+        <h1
+          className="font-display font-black leading-[0.86] tracking-[-0.04em] text-white"
+          style={{ fontSize: "clamp(3rem, 11vw, 10.5rem)" }}
         >
           {HEADLINE.map((word, i) => (
             <span
@@ -158,7 +162,7 @@ export function HomeHero() {
                     mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 105%, 0)",
                   opacity: mounted || reduced ? 1 : 0,
                   color:
-                    word === "barrio."
+                    word === "esperando."
                       ? "var(--color-zs-red-500)"
                       : undefined,
                 }}
@@ -167,13 +171,13 @@ export function HomeHero() {
               </span>
             </span>
           ))}
-        </h2>
+        </h1>
 
-        {/* Sub-copy + CTAs en grid 12 cols */}
-        <div className="mt-12 grid gap-10 sm:mt-16 lg:grid-cols-12 lg:items-end">
+        {/* Sub-copy + CTAs */}
+        <div className="mt-10 grid gap-10 sm:mt-14 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
             <p
-              className="max-w-2xl text-balance text-base leading-relaxed text-white/75 sm:text-lg"
+              className="max-w-2xl text-balance text-base leading-relaxed text-white/85 sm:text-lg"
               style={{
                 opacity: mounted || reduced ? 1 : 0,
                 transform:
@@ -182,9 +186,9 @@ export function HomeHero() {
                   "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms",
               }}
             >
-              Running, montaña, pádel y calzado. Llevamos años eligiendo a mano
-              cada referencia que entra en la tienda. Te asesoramos cara a cara
-              — y por WhatsApp cuando te queda lejos venir.
+              Running, montaña, pádel, fitness y calzado. Más de 40 marcas
+              técnicas y urbanas, atención cara a cara en tienda y envío 24/48 h
+              en toda Extremadura.
             </p>
           </div>
 
@@ -201,38 +205,78 @@ export function HomeHero() {
             <MagneticButton strength={14}>
               <Link
                 href="#catalogo"
-                data-cursor="Catálogo"
-                className="group inline-flex h-14 items-center gap-3 rounded-full bg-white pl-7 pr-3 text-sm font-semibold tracking-tight text-zs-blue-950 shadow-[0_18px_60px_-20px_rgba(0,0,0,0.7)] transition-colors hover:bg-zs-tennis-300"
+                data-cursor="Comprar"
+                className="group inline-flex h-14 items-center gap-3 rounded-full bg-zs-red-600 pl-7 pr-3 text-sm font-bold uppercase tracking-[0.06em] text-white shadow-[0_18px_60px_-15px_rgba(220,38,38,0.7)] transition-colors hover:bg-zs-red-500"
               >
-                Ver catálogo
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zs-blue-950 text-white transition-transform group-hover:rotate-45">
-                  <ArrowUpRight className="h-4 w-4" strokeWidth={2.25} />
+                Comprar ahora
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zs-red-600 transition-transform group-hover:translate-x-0.5">
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </span>
               </Link>
             </MagneticButton>
             <MagneticButton strength={10}>
-              <a
-                href={whatsappUrl(WhatsAppMessages.generic())}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-cursor="WhatsApp"
-                className="inline-flex h-14 items-center gap-2.5 rounded-full border border-white/20 bg-white/[0.04] px-7 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/40 hover:bg-white/[0.08]"
+              <Link
+                href="/marcas"
+                data-cursor="Marcas"
+                className="inline-flex h-14 items-center gap-2.5 rounded-full border border-white/30 bg-white/[0.06] px-7 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/60 hover:bg-white/[0.12]"
               >
-                <MessageCircle className="h-4 w-4" /> WhatsApp directo
-              </a>
+                Explorar marcas
+              </Link>
             </MagneticButton>
           </div>
         </div>
       </div>
 
+      {/* Banner "OFERTAS DE LA SEMANA" — franja CTA dramática */}
+      <div
+        className="relative mx-auto max-w-[1600px] px-4 pb-12 sm:px-8 sm:pb-16"
+        style={{
+          opacity: mounted || reduced ? 1 : 0,
+          transform: mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 18px, 0)",
+          transition:
+            "opacity 800ms cubic-bezier(0.16, 1, 0.3, 1) 1200ms, transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 1200ms",
+        }}
+      >
+        <Link
+          href="#catalogo"
+          data-cursor="Ofertas"
+          className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-zs-red-600 via-zs-red-600 to-[#7a1e1e] p-6 text-white sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
+        >
+          <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay zs-grain" aria-hidden />
+          <div className="flex flex-1 items-center gap-5 sm:gap-7">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur sm:h-16 sm:w-16">
+              <Sparkles className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.25} />
+            </span>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-white/80">
+                Ofertas de la semana
+              </p>
+              <p
+                className="mt-1 font-display font-black leading-[0.95] tracking-[-0.03em]"
+                style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
+              >
+                Hasta <span className="text-zs-tennis-300">-30%</span> en una selección
+              </p>
+              <p className="mt-1 text-sm text-white/80">
+                Running, montaña y calzado urbano · termina el domingo
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold uppercase tracking-[0.06em] text-zs-red-600 transition-transform group-hover:translate-x-1">
+            Ver ofertas
+            <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+          </span>
+        </Link>
+      </div>
+
       {/* Stats fila inferior */}
-      <div className="relative mx-auto max-w-[1600px] px-4 pb-14 sm:px-8">
-        <div className="mt-12 grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:mt-16 sm:grid-cols-4">
+      <div className="relative mx-auto max-w-[1600px] px-4 pb-12 sm:px-8 sm:pb-16">
+        <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
           {[
             { k: "27", v: "años en el barrio" },
             { k: "+40", v: "marcas seleccionadas" },
-            { k: "24/7", v: "reservas por WhatsApp" },
-            { k: "0€", v: "envío en Extremadura" },
+            { k: "24/48h", v: "envío Península" },
+            { k: "0€", v: "envío Extremadura" },
           ].map((it, i) => (
             <div
               key={it.v}
@@ -241,14 +285,14 @@ export function HomeHero() {
                 transform:
                   mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 12px, 0)",
                 transition: `opacity 600ms cubic-bezier(0.16, 1, 0.3, 1) ${
-                  1200 + i * 80
-                }ms, transform 600ms cubic-bezier(0.16, 1, 0.3, 1) ${1200 + i * 80}ms`,
+                  1300 + i * 80
+                }ms, transform 600ms cubic-bezier(0.16, 1, 0.3, 1) ${1300 + i * 80}ms`,
               }}
             >
               <p className="font-display text-3xl font-bold leading-none tracking-tight text-white sm:text-4xl">
                 {it.k}
               </p>
-              <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white/55">
+              <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65">
                 {it.v}
               </p>
             </div>
@@ -257,8 +301,8 @@ export function HomeHero() {
       </div>
 
       {/* Marquee inferior de marcas */}
-      <div className="relative border-t border-white/10 bg-black/30 py-5">
-        <div className="zs-brand-track flex w-max items-center gap-12 whitespace-nowrap text-white/70">
+      <div className="relative border-t border-white/10 bg-black/45 py-5">
+        <div className="zs-brand-track flex w-max items-center gap-12 whitespace-nowrap text-white/75">
           {[...BRANDS_TICKER, ...BRANDS_TICKER, ...BRANDS_TICKER].map((b, i) => (
             <span
               key={`${b}-${i}`}
@@ -274,64 +318,6 @@ export function HomeHero() {
       </div>
 
       <style>{`
-        .zs-blob {
-          position: absolute;
-          border-radius: 9999px;
-          filter: blur(120px);
-          opacity: 0.55;
-          will-change: transform;
-        }
-        .zs-blob-1 {
-          top: -10%;
-          left: -8%;
-          width: 48vmax;
-          height: 48vmax;
-          background: radial-gradient(circle, #1e3a8a 0%, transparent 65%);
-          animation: zs-blob-a 22s ease-in-out infinite;
-        }
-        .zs-blob-2 {
-          top: 8%;
-          right: -12%;
-          width: 42vmax;
-          height: 42vmax;
-          background: radial-gradient(circle, #dc2626 0%, transparent 65%);
-          animation: zs-blob-b 28s ease-in-out infinite;
-          opacity: 0.42;
-        }
-        .zs-blob-3 {
-          bottom: -18%;
-          left: 22%;
-          width: 50vmax;
-          height: 50vmax;
-          background: radial-gradient(circle, #14225b 0%, transparent 70%);
-          animation: zs-blob-c 32s ease-in-out infinite;
-          opacity: 0.85;
-        }
-        .zs-blob-4 {
-          top: 38%;
-          left: 38%;
-          width: 26vmax;
-          height: 26vmax;
-          background: radial-gradient(circle, #c8da46 0%, transparent 60%);
-          animation: zs-blob-d 26s ease-in-out infinite;
-          opacity: 0.18;
-        }
-        @keyframes zs-blob-a {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(8vw, 6vh, 0) scale(1.12); }
-        }
-        @keyframes zs-blob-b {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(-6vw, 8vh, 0) scale(0.92); }
-        }
-        @keyframes zs-blob-c {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(4vw, -10vh, 0) scale(1.08); }
-        }
-        @keyframes zs-blob-d {
-          0%, 100% { transform: translate3d(0,0,0) scale(1); }
-          50% { transform: translate3d(-10vw, 4vh, 0) scale(1.18); }
-        }
         .zs-grain {
           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
           background-size: 200px 200px;
@@ -347,7 +333,6 @@ export function HomeHero() {
           animation: zs-brand-scroll 38s linear infinite;
         }
         @media (prefers-reduced-motion: reduce) {
-          .zs-blob,
           .zs-brand-track { animation: none !important; }
         }
       `}</style>

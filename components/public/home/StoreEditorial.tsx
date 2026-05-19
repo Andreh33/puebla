@@ -1,20 +1,19 @@
 import Image from "next/image";
-import { ArrowUpRight, MapPin, MessageCircle } from "lucide-react";
+import { ArrowUpRight, MapPin, MessageCircle, Star } from "lucide-react";
 import { Reveal } from "@/components/public/Reveal";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
 /**
- * StoreEditorial — sustituye "Visítanos en Puebla de la Calzada" con su mapa
- * iframe enorme por una composición editorial:
+ * StoreEditorial — bloque "La tienda".
  *
- *   - Foto ambiente grande (placeholder: producto sobre fondo cálido) en la
- *     izquierda con un marco rasante.
- *   - Coordenadas + dirección + 3 stat blocks tipo "5 min Montijo · 15 Mérida
- *     · 30 Badajoz".
- *   - CTAs duales: WhatsApp + Maps. El mapa real queda como link, no como
- *     iframe enorme.
+ * Cambios respecto a versión previa:
+ *  - Sustituye la foto-placeholder de zapatilla por `/category-photos/tienda-fachada.jpg`
+ *    (Unsplash, fachada de tienda deportiva genérica, sin marcas Nike/Adidas).
+ *  - Si la imagen no carga, el fondo gradient debajo sigue funcionando como
+ *    fallback visual.
+ *  - Añade un testimonial visual con estrellas y texto natural.
  *
- * Fondo off-white para cambiar de tono respecto a las secciones azul/oscuro.
+ * Mantiene los 3 stats de proximidad y los CTAs (WhatsApp + Maps).
  */
 export function StoreEditorial() {
   return (
@@ -23,31 +22,55 @@ export function StoreEditorial() {
         <Reveal variant="fade-up">
           <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-zs-muted">
             <span className="inline-block h-px w-8 bg-zs-blue-900/30" />
-            04 — La tienda
+            La tienda
           </p>
         </Reveal>
       </header>
 
       <div className="mx-auto grid max-w-[1600px] gap-12 px-4 sm:px-8 lg:grid-cols-12 lg:gap-16">
-        {/* Foto ambiente */}
+        {/* Foto fachada — Unsplash, sin marcas */}
         <Reveal className="lg:col-span-7" variant="fade-up">
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#e8e0d5] via-[#d7c9b6] to-[#b59a78]">
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-zs-blue-950 via-zs-blue-900 to-[#08102d]">
             <Image
-              src="/sample-products/bota-alta-john-smith-libel-high-24i-blanco.webp"
-              alt="Interior Zona Sport — selección de producto"
+              src="/category-photos/tienda-fachada.jpg"
+              alt="Tienda Zona Sport — Puebla de la Calzada"
               fill
               sizes="(max-width: 1024px) 100vw, 60vw"
-              className="object-contain p-12 sm:p-20"
+              className="object-cover object-center"
             />
-            {/* Etiqueta tienda */}
+            {/* Velo inferior degradado para legibilidad de la etiqueta */}
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-transparent"
+            />
+            {/* Etiqueta dirección */}
             <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full bg-zs-blue-950/85 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-white backdrop-blur">
               <MapPin className="h-3 w-3" />
               C. Silos, 3 · 06490
             </div>
-            {/* Coordenadas ed */}
-            <div className="absolute bottom-6 right-6 text-right font-mono text-[10px] uppercase tracking-[0.18em] text-zs-blue-950/70">
+            {/* Coordenadas */}
+            <div className="absolute bottom-6 right-6 text-right font-mono text-[10px] uppercase tracking-[0.18em] text-white/85">
               38.8821° N<br />
               6.6164° W
+            </div>
+
+            {/* Testimonial flotante */}
+            <div className="absolute inset-x-6 bottom-6 max-w-md rounded-2xl border border-white/15 bg-white/95 p-5 shadow-xl backdrop-blur sm:left-6 sm:right-auto">
+              <div className="flex items-center gap-1.5 text-zs-tennis-400">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-current text-zs-tennis-400" />
+                ))}
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-zs-blue-950">
+                <span className="font-semibold">
+                  &ldquo;Llevo años comprando aquí.
+                </span>{" "}
+                Te asesoran de verdad, no te venden la moto. Salí con la
+                zapatilla que necesitaba y sin pagar de más.&rdquo;
+              </p>
+              <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zs-muted">
+                — Cliente del barrio
+              </p>
             </div>
           </div>
         </Reveal>
@@ -67,7 +90,7 @@ export function StoreEditorial() {
             <p className="max-w-md text-base leading-relaxed text-zs-muted">
               Estamos en pleno centro, frente al ayuntamiento. Ven a probarte
               la zapatilla, a pesar la mochila, a ver el color real bajo luz
-              de verdad. Te asesoramos sin prisa.
+              de verdad. Sin prisa y sin presión.
             </p>
           </Reveal>
 

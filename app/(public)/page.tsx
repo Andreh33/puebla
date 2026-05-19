@@ -1,13 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import { ScrollScene } from "@/components/public/scroll3d/ScrollScene";
 import { BrandsMarquee } from "@/components/public/BrandsMarquee";
 import { HomeHero } from "@/components/public/home/HomeHero";
-import { BentoLookbook } from "@/components/public/home/BentoLookbook";
+import { QuickShop } from "@/components/public/home/QuickShop";
+import { PromoStrip } from "@/components/public/home/PromoStrip";
 import { ProductShowcase } from "@/components/public/home/ProductShowcase";
 import { GenderSplit } from "@/components/public/home/GenderSplit";
 import { StoreEditorial } from "@/components/public/home/StoreEditorial";
+import { SocialProof } from "@/components/public/home/SocialProof";
+import { WhatsAppNudge } from "@/components/public/home/WhatsAppNudge";
 import { Reveal } from "@/components/public/Reveal";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { db } from "@/lib/db";
@@ -75,23 +77,22 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero 3D scroll-driven con fallback al nuevo HomeHero editorial. */}
-      <ScrollScene fallback={<HomeHero />} />
+      {/* Hero editorial directo (sin ScrollScene 3D — reservado para fase futura). */}
+      <HomeHero />
 
-      {/* Transición y anclaje del catálogo. */}
-      <div
-        id="catalogo"
-        aria-hidden
-        className="relative -mt-px h-12 bg-gradient-to-b from-zs-blue-950 via-zs-blue-950 to-white"
-      />
+      {/* Ancla del catálogo. */}
+      <div id="catalogo" aria-hidden className="h-0" />
 
-      {/* 01 — Lookbook bento (sustituye las cards de Running/Pádel/Montaña/Calzado). */}
-      <BentoLookbook />
+      {/* 01 — Atajos para comprar (4 categorías estrella con foto Unsplash). */}
+      <QuickShop />
 
-      {/* 02 — Lo más buscado (sustituye "Lo que más sale por la puerta"). */}
+      {/* 02 — Promo strip: Ofertas / Recién llegado / Recogida en tienda. */}
+      <PromoStrip />
+
+      {/* 03 — Top ventas con badges, countdown y trust badges. */}
       <ProductShowcase products={featuredProducts} />
 
-      {/* 03 — Para ella / Para él (split 50/50 que crece en hover). */}
+      {/* 04 — Para ella / Para él / Para los pequeños con fotos reales. */}
       <GenderSplit />
 
       {/* Tira de marcas — marquee editorial sobre fondo blanco. */}
@@ -125,8 +126,14 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 04 — La tienda (sustituye "Visítanos" + iframe enorme). */}
+      {/* 05 — La tienda con foto Unsplash + testimonial. */}
       <StoreEditorial />
+
+      {/* 06 — Reviews / Social proof. */}
+      <SocialProof />
+
+      {/* Mini-tooltip mobile sobre el WhatsApp flotante. */}
+      <WhatsAppNudge />
 
       {/* Blog: si hay posts publicados se mantiene en formato editorial. */}
       {latestPosts.length > 0 && (

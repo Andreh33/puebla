@@ -90,7 +90,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Tenéis equipaciones del CD Puebla o textil deportivo para clubes locales?",
-        a: "Trabajamos con marcas técnicas (Joma, Mercury, John Smith, Asics, Adidas) y podemos personalizar prendas para clubes y peñas del pueblo bajo pedido. Pásate por la tienda con la propuesta y te preparamos presupuesto.",
+        a: "Trabajamos con marcas técnicas (Joma, Mercury, John Smith, +8000, Asics) y podemos personalizar prendas para clubes y peñas del pueblo bajo pedido. Pásate por la tienda con la propuesta y te preparamos presupuesto.",
       },
       {
         q: "¿Atendéis los días festivos o durante las fiestas patronales?",
@@ -123,7 +123,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Tenéis palas y material de pádel para los clubes de Montijo?",
-        a: "Sí, somos especialistas en pádel: trabajamos Bullpadel, Nox, Adidas y Head, con palas para iniciación, intermedio y competición. Disponemos también de paleteros, grips, overgrips, pelotas y zapatillas de pádel específicas.",
+        a: "Sí, somos especialistas en pádel: trabajamos Bullpadel, Nox, Head y Wilson, con palas para iniciación, intermedio y competición. Disponemos también de paleteros, grips, overgrips, pelotas y zapatillas de pádel específicas.",
       },
       {
         q: "¿Hago el viaje en vano? ¿Puedo confirmar antes que tenéis mi talla?",
@@ -131,7 +131,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis reposición de zapatillas de running para los corredores de Montijo?",
-        a: "Trabajamos las tallas y modelos más demandados por corredores populares: Asics Nimbus y Cumulus, Brooks Ghost y Glycerin, New Balance 1080 y modelos de Adidas. Si tu modelo habitual no está, te lo pedimos en menos de una semana.",
+        a: "Trabajamos las tallas y modelos más demandados por corredores populares: Asics Nimbus y Cumulus, Brooks Ghost y Glycerin, New Balance 1080 y modelos técnicos de Joma. Si tu modelo habitual no está, te lo pedimos en menos de una semana.",
       },
     ],
   },
@@ -193,7 +193,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Tenéis ropa técnica para entrenar al aire libre en verano?",
-        a: "Sí. Trabajamos camisetas técnicas transpirables, mallas cortas, gorras y manguitos de protección solar de marcas como Joma, Asics, Nike y Adidas. Imprescindible cuando aprietan los 40 grados en Tierra de Barros.",
+        a: "Sí. Trabajamos camisetas técnicas transpirables, mallas cortas, gorras y manguitos de protección solar de marcas como Joma, Asics, John Smith y +8000. Imprescindible cuando aprietan los 40 grados en Tierra de Barros.",
       },
       {
         q: "¿Hacéis envíos a Talavera la Real?",
