@@ -269,9 +269,11 @@ export function Header() {
                 );
               })}
 
+              {/* OCULTO a petición del cliente: el sub-nav de deportes
+                  (Running/Pádel/Montaña/Calzado) y su separador vertical
+                  dejan la pill con solo Mujer/Hombre/Niños. Para volver
+                  a verlos: descomenta el bloque siguiente.
               <span className="mx-2 h-5 w-px bg-zs-border" aria-hidden />
-
-              {/* Sub-nav de deportes */}
               {SPORT_NAV.slice(0, 4).map((item) => {
                 const active =
                   pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -290,6 +292,7 @@ export function Header() {
                   </Link>
                 );
               })}
+              */}
             </nav>
 
             {/* Acciones derecha */}
