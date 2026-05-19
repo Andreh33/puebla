@@ -184,7 +184,7 @@ export function Header() {
       <header
         data-hidden={hidden ? "true" : "false"}
         className={cn(
-          "fixed inset-x-0 top-0 z-40 transition-transform duration-300 will-change-transform",
+          "fixed inset-x-0 top-0 z-40 overflow-x-clip transition-transform duration-300 will-change-transform",
           hidden && !mobileOpen ? "-translate-y-[120%]" : "translate-y-0",
         )}
       >

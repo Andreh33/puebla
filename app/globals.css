@@ -108,6 +108,12 @@
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
     scroll-behavior: smooth;
+    /* `overflow-x: clip` evita scroll horizontal sin crear scroll-container.
+       Causa raíz: la marquesina top-strip del Header (fixed) contiene un
+       track con `w-max` (≈9430 px) que, aunque su padre directo tenga
+       `overflow-hidden`, contribuía al `html.scrollWidth` y producía
+       desplazamiento lateral en móvil. */
+    overflow-x: clip;
   }
 
   body {
@@ -117,6 +123,7 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
 
   h1,
