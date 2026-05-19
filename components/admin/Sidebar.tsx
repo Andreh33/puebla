@@ -44,7 +44,15 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Imágenes", href: "/admin/imagenes", icon: ImageIcon },
   { label: "Blog", href: "/admin/blog", icon: FileText },
   { label: "Leads", href: "/admin/leads", icon: Users },
-  { label: "Redirecciones", href: "/admin/redirecciones", icon: ArrowLeftRight },
+  // OCULTO temporalmente a petición del cliente. Qué hace:
+  // gestiona redirecciones 301/302 entre URLs antiguas y nuevas del sitio.
+  // Útil cuando cambias el slug de un producto o categoría y quieres que
+  // los enlaces antiguos (de Google, redes sociales, emails…) sigan
+  // llevando al destino correcto en lugar de dar 404 — el middleware lee
+  // la tabla RedirectRule y reescribe la URL al vuelo.
+  // La ruta /admin/redirecciones sigue accesible si la escribes a mano,
+  // pero no aparece en el sidebar. Para reactivarla: descomenta la línea.
+  // { label: "Redirecciones", href: "/admin/redirecciones", icon: ArrowLeftRight },
   { label: "Ajustes", href: "/admin/ajustes", icon: Settings, ownerOnly: true },
   { label: "Usuarios admin", href: "/admin/usuarios", icon: ShieldCheck, ownerOnly: true },
 ];
