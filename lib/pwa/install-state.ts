@@ -7,8 +7,8 @@ export const PWA_DISMISSED_KEY = "zs_pwa_dismissed_at";
 export const PWA_INSTALLED_KEY = "zs_pwa_installed_at";
 export const PWA_PAGEVIEWS_KEY = "zs_pwa_pageviews";
 
-/** Días que silencia el banner tras un "Ahora no". */
-export const PWA_DISMISS_DAYS = 30;
+/** Días que silencia el banner tras un "Más tarde". */
+export const PWA_DISMISS_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Storage mínimo — permite inyectar mock en tests. */
@@ -66,8 +66,8 @@ export function getInstalledAt(storage?: StorageLike): number | null {
 }
 
 export interface ShouldShowInput {
-  /** Pageviews acumuladas (sessionStorage). */
-  pageviews: number;
+  /** Pageviews acumuladas (sessionStorage). Reservado por compatibilidad; ignorado. */
+  pageviews?: number;
   /** Tiempo ahora (ms). */
   now: number;
   /** Plataforma detectada. */
@@ -79,18 +79,13 @@ export interface ShouldShowInput {
 }
 
 /**
- * Decide si el banner debe mostrarse:
- *  - nunca en desktop
- *  - nunca si ya está instalada
- *  - nunca si se descartó en los últimos 30 días
- *  - nunca si ya se instaló alguna vez
- *  - solo tras 2+ pageviews
+ * Decide si el banner debe mostrarse — política "always-on":
+ *  - nunca si ya está instalada (standalone, navigator.standalone, appinstalled)
+ *  - nunca si se descartó en los últimos PWA_DISMISS_DAYS días
+ *  - en cualquier otro caso → SÍ (todas las plataformas, mobile y desktop).
  */
 export function shouldShowPrompt(input: ShouldShowInput): boolean {
   if (input.isStandalone) return false;
-  if (input.platform === "desktop" || input.platform === "other") return false;
-  if (input.pageviews < 2) return false;
-
   if (getInstalledAt(input.storage) !== null) return false;
 
   const dismissedAt = getDismissedAt(input.storage);

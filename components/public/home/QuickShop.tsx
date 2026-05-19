@@ -97,7 +97,7 @@ export function QuickShop() {
               <Link
                 href={c.href}
                 data-cursor={c.title}
-                className="group relative flex aspect-[3/4] w-full overflow-hidden rounded-3xl bg-zs-blue-950 text-white shadow-[0_18px_60px_-30px_rgba(11,22,64,0.4)] transition-shadow duration-500 hover:shadow-[0_30px_80px_-25px_rgba(220,38,38,0.45)]"
+                className="group relative flex aspect-[3/4] w-full overflow-hidden rounded-3xl bg-zs-blue-950 text-white shadow-[var(--shadow-zs-blue-glow)] transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-rojo-glow-lg)]"
               >
                 <Image
                   src={c.image}

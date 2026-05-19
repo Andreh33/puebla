@@ -58,7 +58,7 @@ describe("PWA install state helpers", () => {
   });
 });
 
-describe("shouldShowPrompt", () => {
+describe("shouldShowPrompt (política always-on)", () => {
   let storage: StorageLike;
   const now = 1_700_000_000_000;
 
@@ -66,22 +66,20 @@ describe("shouldShowPrompt", () => {
     storage = createMemoryStorage();
   });
 
-  it("no muestra en desktop", () => {
+  it("muestra en desktop si no hay dismiss/install", () => {
     expect(
       shouldShowPrompt({
-        pageviews: 5,
         now,
         platform: "desktop",
         isStandalone: false,
         storage,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("no muestra si ya está instalada (standalone)", () => {
     expect(
       shouldShowPrompt({
-        pageviews: 5,
         now,
         platform: "android",
         isStandalone: true,
@@ -90,22 +88,9 @@ describe("shouldShowPrompt", () => {
     ).toBe(false);
   });
 
-  it("no muestra con menos de 2 pageviews", () => {
+  it("muestra en Android sin dismiss previo", () => {
     expect(
       shouldShowPrompt({
-        pageviews: 1,
-        now,
-        platform: "android",
-        isStandalone: false,
-        storage,
-      }),
-    ).toBe(false);
-  });
-
-  it("muestra en Android con 2+ pageviews sin dismiss previo", () => {
-    expect(
-      shouldShowPrompt({
-        pageviews: 2,
         now,
         platform: "android",
         isStandalone: false,
@@ -114,10 +99,9 @@ describe("shouldShowPrompt", () => {
     ).toBe(true);
   });
 
-  it("muestra en iOS con 2+ pageviews", () => {
+  it("muestra en iOS sin dismiss previo", () => {
     expect(
       shouldShowPrompt({
-        pageviews: 3,
         now,
         platform: "ios",
         isStandalone: false,
@@ -126,11 +110,10 @@ describe("shouldShowPrompt", () => {
     ).toBe(true);
   });
 
-  it("no muestra si fue descartado hace menos de 30 días", () => {
-    markDismissed(now - 5 * DAY_MS, storage);
+  it("no muestra si fue descartado dentro del periodo de gracia (7 días)", () => {
+    markDismissed(now - 3 * DAY_MS, storage);
     expect(
       shouldShowPrompt({
-        pageviews: 5,
         now,
         platform: "android",
         isStandalone: false,
@@ -139,11 +122,10 @@ describe("shouldShowPrompt", () => {
     ).toBe(false);
   });
 
-  it("vuelve a mostrar pasados 30 días desde el dismiss", () => {
+  it("vuelve a mostrar pasados PWA_DISMISS_DAYS desde el dismiss", () => {
     markDismissed(now - (PWA_DISMISS_DAYS + 1) * DAY_MS, storage);
     expect(
       shouldShowPrompt({
-        pageviews: 5,
         now,
         platform: "android",
         isStandalone: false,
@@ -152,11 +134,14 @@ describe("shouldShowPrompt", () => {
     ).toBe(true);
   });
 
+  it("PWA_DISMISS_DAYS está fijado a 7", () => {
+    expect(PWA_DISMISS_DAYS).toBe(7);
+  });
+
   it("nunca muestra si ya se instaló", () => {
     markInstalled(now - 365 * DAY_MS, storage);
     expect(
       shouldShowPrompt({
-        pageviews: 99,
         now,
         platform: "android",
         isStandalone: false,

@@ -81,6 +81,16 @@
 
   /* Container */
   --container-3xl: 1600px;
+
+  /* Sombras de marca — glows de color para CTAs y cards destacadas.
+     Se usan vía Tailwind `shadow-zs-blue-glow`, `shadow-zs-tennis-glow`,
+     `shadow-zs-rojo-glow` y sus variantes `hover:shadow-zs-*-glow-lg`. */
+  --shadow-zs-blue-glow: 0 10px 40px -10px rgba(28, 71, 160, 0.45);
+  --shadow-zs-tennis-glow: 0 10px 40px -10px rgba(196, 217, 76, 0.55);
+  --shadow-zs-rojo-glow: 0 10px 40px -10px rgba(225, 60, 60, 0.4);
+  --shadow-zs-blue-glow-lg: 0 22px 70px -18px rgba(28, 71, 160, 0.6);
+  --shadow-zs-tennis-glow-lg: 0 22px 70px -18px rgba(196, 217, 76, 0.75);
+  --shadow-zs-rojo-glow-lg: 0 22px 70px -18px rgba(225, 60, 60, 0.55);
 }
 
 /* ----------------------------------------------------------------------------

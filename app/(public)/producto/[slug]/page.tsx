@@ -15,6 +15,8 @@ import { OtherColors } from "@/components/public/OtherColors";
 import { RelatedProducts } from "@/components/public/RelatedProducts";
 import { AmazonDisclosure } from "@/components/public/AmazonDisclosure";
 import { InfoAccordion } from "@/components/public/InfoAccordion";
+import { ProductSku } from "@/components/public/ProductSku";
+import { resolveProductSku } from "@/lib/products/sku";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 300;
@@ -271,6 +273,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               )}
             </div>
             <p className="text-xs text-zs-muted">IVA incluido</p>
+
+            <ProductSku
+              sku={resolveProductSku({
+                modelCode: product.modelCode,
+                externalId: product.externalId,
+                id: product.id,
+              })}
+            />
 
             <ProductActions
               productName={product.shortName ?? product.name}

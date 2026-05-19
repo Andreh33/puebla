@@ -76,8 +76,8 @@ export function ProductCardLuxe({
       onClick={handleClick}
       href={`/producto/${product.slug}`}
       className={cn(
-        "group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500",
-        "hover:-translate-y-1 hover:shadow-[0_24px_48px_-20px_rgba(20,34,91,0.35)]",
+        "zs-tilt-luxe group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out",
+        "hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow-lg)]",
         className,
       )}
       aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
@@ -226,6 +226,10 @@ export function ProductCardLuxe({
 
       <style>{`
         @keyframes zs-ripple { from { width: 0; height: 0; opacity: 0.6; } to { width: 220%; height: 220%; opacity: 0; } }
+        @media (hover: hover) and (pointer: fine) {
+          .zs-tilt-luxe { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease, translate 600ms ease; }
+          .zs-tilt-luxe:hover { transform: perspective(900px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-4px); }
+        }
       `}</style>
     </Link>
   );

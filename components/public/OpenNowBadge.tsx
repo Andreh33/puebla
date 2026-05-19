@@ -30,75 +30,166 @@ const SCHEDULE: Record<number, Range[]> = {
   0: [],
 };
 
-function fmt(min: number) {
+const DAY_LABELS = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+];
+
+function fmtClock(min: number) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+function fmtDuration(min: number) {
+  if (min < 1) return "menos de 1 min";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h < 24 && m === 0) return `${h} h`;
+  if (h < 24) return `${h} h ${m} min`;
+  const d = Math.floor(h / 24);
+  const rh = h % 24;
+  return rh > 0 ? `${d} d ${rh} h` : `${d} d`;
+}
+
 /**
- * OpenNowBadge — calcula en cliente si la tienda está abierta.
- * Hidratación segura: el primer render no muestra texto (evita mismatch).
+ * Devuelve "ahora" en zona horaria Europe/Madrid (con DST automático),
+ * convertido a una fecha local equivalente (los métodos getDay/getHours/etc
+ * leen como si estuviéramos en Madrid).
  */
-export function OpenNowBadge({ className }: { className?: string }) {
-  const [state, setState] = useState<{
-    open: boolean;
-    next: string;
-  } | null>(null);
+function nowInMadrid(): Date {
+  // Intl convierte una fecha a partes en una TZ. Reconstruimos un Date
+  // con esas partes para que getHours()/getDay() respondan en Madrid.
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date());
+  const v: Record<string, string> = {};
+  for (const p of parts) if (p.type !== "literal") v[p.type] = p.value;
+  const hour = v.hour === "24" ? "00" : v.hour;
+  // Construimos como Date local (no UTC). Lo único que necesitamos son los
+  // getters locales y getDay() coherente.
+  return new Date(`${v.year}-${v.month}-${v.day}T${hour}:${v.minute}:${v.second}`);
+}
+
+type State = {
+  open: boolean;
+  /** Texto secundario con info concreta del próximo evento. */
+  detail: string;
+};
+
+function compute(): State {
+  const now = nowInMadrid();
+  const day = now.getDay();
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const ranges = SCHEDULE[day] ?? [];
+  const inside = ranges.find((r) => minutes >= r.open && minutes < r.close);
+  if (inside) {
+    const diff = inside.close - minutes;
+    return { open: true, detail: `cierra en ${fmtDuration(diff)}` };
+  }
+  // ¿Hay próximo tramo hoy?
+  const nextToday = ranges.find((r) => minutes < r.open);
+  if (nextToday) {
+    const diff = nextToday.open - minutes;
+    return {
+      open: false,
+      detail:
+        diff <= 90
+          ? `abre en ${fmtDuration(diff)}`
+          : `abre hoy a las ${fmtClock(nextToday.open)}`,
+    };
+  }
+  // Buscar próximo día con tramos
+  for (let i = 1; i <= 7; i++) {
+    const d = (day + i) % 7;
+    const r = SCHEDULE[d]?.[0];
+    if (r) {
+      const label = i === 1 ? "mañana" : `el ${DAY_LABELS[d]}`;
+      return { open: false, detail: `abre ${label} a las ${fmtClock(r.open)}` };
+    }
+  }
+  return { open: false, detail: "horarios disponibles en tienda" };
+}
+
+type Props = {
+  className?: string;
+  /**
+   * "light" (default) → fondos claros. "dark" → fondos oscuros (hero/footer).
+   */
+  tone?: "light" | "dark";
+};
+
+/**
+ * OpenNowBadge — calcula en cliente si la tienda está abierta AHORA en
+ * Europe/Madrid. Pill verde si abierto + tiempo a cerrar; pill ámbar si
+ * cerrado + tiempo o día/hora de apertura. Se refresca cada 60 s.
+ *
+ * Hidratación segura: el primer render devuelve null (evita mismatch).
+ */
+export function OpenNowBadge({ className, tone = "light" }: Props) {
+  const [state, setState] = useState<State | null>(null);
 
   useEffect(() => {
-    function compute() {
-      const now = new Date();
-      const day = now.getDay();
-      const minutes = now.getHours() * 60 + now.getMinutes();
-      const ranges = SCHEDULE[day] ?? [];
-      const inside = ranges.find((r) => minutes >= r.open && minutes < r.close);
-      if (inside) {
-        setState({ open: true, next: `Cierra a las ${fmt(inside.close)}` });
-        return;
-      }
-      // Próximo open hoy
-      const nextToday = ranges.find((r) => minutes < r.open);
-      if (nextToday) {
-        setState({ open: false, next: `Abre hoy a las ${fmt(nextToday.open)}` });
-        return;
-      }
-      // Próximo día
-      for (let i = 1; i <= 7; i++) {
-        const d = (day + i) % 7;
-        const r = SCHEDULE[d]?.[0];
-        if (r) {
-          const labels = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-          setState({ open: false, next: `Abre el ${labels[d]} a las ${fmt(r.open)}` });
-          return;
-        }
-      }
-      setState({ open: false, next: "" });
-    }
-    compute();
-    const id = window.setInterval(compute, 60_000);
+    setState(compute());
+    const id = window.setInterval(() => setState(compute()), 60_000);
     return () => window.clearInterval(id);
   }, []);
 
   if (!state) return null;
 
+  const darkBg = tone === "dark";
+  const openClasses = state.open
+    ? darkBg
+      ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-300/40"
+      : "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+    : darkBg
+      ? "bg-amber-400/15 text-amber-100 ring-1 ring-amber-300/40"
+      : "bg-amber-50 text-amber-900 ring-1 ring-amber-200";
+  const dotClasses = state.open
+    ? "bg-emerald-400"
+    : "bg-amber-400";
+  const detailClasses = darkBg ? "text-white/80" : "text-zs-muted";
+
   return (
-    <span className={className}>
+    <span className={["inline-flex flex-wrap items-center gap-2", className ?? ""].join(" ")}>
       <span
-        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
-          state.open ? "bg-emerald-100 text-emerald-800" : "bg-zs-red-100 text-zs-red-800"
-        }`}
+        className={[
+          "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em]",
+          openClasses,
+        ].join(" ")}
       >
         <span
-          className={`h-1.5 w-1.5 rounded-full ${state.open ? "bg-emerald-500" : "bg-zs-red-600"}`}
-          style={state.open ? { animation: "zs-pulse 1.6s ease-in-out infinite" } : undefined}
+          aria-hidden
+          className={[
+            "block h-2 w-2 rounded-full",
+            dotClasses,
+            state.open ? "zs-open-pulse" : "",
+          ].join(" ")}
         />
         {state.open ? "Abierto ahora" : "Cerrado"}
       </span>
-      {state.next && (
-        <span className="ml-2 text-xs text-zs-muted">{state.next}</span>
+      {state.detail && (
+        <span className={["text-xs", detailClasses].join(" ")}>· {state.detail}</span>
       )}
-      <style>{`@keyframes zs-pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.35 } }`}</style>
+      <style>{`
+        @keyframes zs-open-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.78); } }
+        .zs-open-pulse { animation: zs-open-pulse 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .zs-open-pulse { animation: none; } }
+      `}</style>
     </span>
   );
 }

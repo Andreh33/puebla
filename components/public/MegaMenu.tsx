@@ -82,11 +82,20 @@ export function MegaMenu({
       {tab && (
         <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
-            {/* Hero lifestyle sticky a la izquierda */}
+            {/* Hero lifestyle sticky a la izquierda.
+             *
+             * Fijamos `aspect-[4/5]` y `max-h-[420px]` para que la imagen no
+             * se estire en vertical cuando el tab "Niños" (3 secciones +
+             * accesorios) hace crecer el alto del panel. Sin esto, el hero
+             * heredaba toda la altura del grid y la foto se veía gigante.
+             *
+             * `self-start` evita que `align-items: stretch` del grid fuerce
+             * al hero a tomar la altura del contenido a la derecha.
+             */}
             <Link
               href={tab.href}
               onClick={onClose}
-              className="group relative isolate flex h-full min-h-[260px] flex-col justify-end overflow-hidden rounded-2xl bg-zs-surface"
+              className="group relative isolate flex aspect-[4/5] max-h-[420px] w-full flex-col justify-end self-start overflow-hidden rounded-2xl bg-zs-surface"
             >
               <Image
                 src={tab.heroImage}

@@ -14,6 +14,9 @@
 import type { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { DEMO_PRODUCTS } from "../demo-products";
+import { SEED_BLOG_POSTS } from "./blog-posts";
+
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type SeedResult = {
   admin: { email: string; created: boolean };
@@ -308,6 +311,45 @@ Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lun
     },
   });
 
+  // ----------------------------- 8 POSTS DEL CATÁLOGO ---------------------
+  // Idempotentes: upsert por slug. La fecha de publicación se calcula
+  // relativa al "ahora" del seed para que el orden cronológico sea estable
+  // aunque se ejecute meses después.
+  const now = Date.now();
+  for (const p of SEED_BLOG_POSTS) {
+    const publishedAt = new Date(now - p.weeksAgo * WEEK_MS);
+    await db.blogPost.upsert({
+      where: { slug: p.slug },
+      // Mantenemos contenido y metadatos actualizables (idempotente: si se
+      // refina un texto, se aplica al re-ejecutar). publishedAt NO se toca
+      // en update para no remover orden manual desde admin.
+      update: {
+        title: p.title,
+        excerpt: p.excerpt,
+        contentMd: p.contentMd,
+        coverImageUrl: p.coverImageUrl,
+        author: p.author,
+        tags: p.tags,
+        status: p.status,
+        metaTitle: p.metaTitle,
+        metaDescription: p.metaDescription,
+      },
+      create: {
+        slug: p.slug,
+        title: p.title,
+        excerpt: p.excerpt,
+        contentMd: p.contentMd,
+        coverImageUrl: p.coverImageUrl,
+        author: p.author,
+        tags: p.tags,
+        status: p.status,
+        publishedAt,
+        metaTitle: p.metaTitle,
+        metaDescription: p.metaDescription,
+      },
+    });
+  }
+
   return {
     admin: { email: ownerEmail, created: ownerCreated },
     brands: brands.length,
@@ -319,7 +361,8 @@ Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lun
       failed: demoFailed,
       failures: demoFailures.length > 0 ? demoFailures : undefined,
     },
-    blogPosts: 1,
+    // 1 post de bienvenida + los del catálogo.
+    blogPosts: 1 + SEED_BLOG_POSTS.length,
     durationMs: Date.now() - t0,
   };
 }

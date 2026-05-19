@@ -1,21 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import { BrandsMarquee } from "@/components/public/BrandsMarquee";
 import { HomeHero } from "@/components/public/home/HomeHero";
 import { QuickShop } from "@/components/public/home/QuickShop";
 import { PromoStrip } from "@/components/public/home/PromoStrip";
 import { ProductShowcase } from "@/components/public/home/ProductShowcase";
 import { GenderSplit } from "@/components/public/home/GenderSplit";
 import { StoreEditorial } from "@/components/public/home/StoreEditorial";
-import { SocialProof } from "@/components/public/home/SocialProof";
+import { StoreMap } from "@/components/public/home/StoreMap";
+import { PhrasesMarquee } from "@/components/public/home/PhrasesMarquee";
 import { WhatsAppNudge } from "@/components/public/home/WhatsAppNudge";
 import { Reveal } from "@/components/public/Reveal";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { db } from "@/lib/db";
 import { formatDateES } from "@/lib/utils";
 import {
-  getFeaturedBrands,
   getFeaturedProducts,
   type PublicProductCardData,
 } from "@/lib/public-queries";
@@ -31,7 +30,6 @@ export const revalidate = 300;
 
 type HomeData = {
   featuredProducts: PublicProductCardData[];
-  featuredBrands: Array<{ id: string; name: string; slug: string; logoUrl: string | null }>;
   latestPosts: Array<{
     id: string;
     slug: string;
@@ -64,16 +62,15 @@ async function fetchLatestPosts(): Promise<HomeData["latestPosts"]> {
 }
 
 async function fetchHomeData(): Promise<HomeData> {
-  const [featuredProducts, featuredBrands, latestPosts] = await Promise.all([
+  const [featuredProducts, latestPosts] = await Promise.all([
     getFeaturedProducts(8),
-    getFeaturedBrands(8),
     fetchLatestPosts(),
   ]);
-  return { featuredProducts, featuredBrands, latestPosts };
+  return { featuredProducts, latestPosts };
 }
 
 export default async function HomePage() {
-  const { featuredProducts, featuredBrands, latestPosts } = await fetchHomeData();
+  const { featuredProducts, latestPosts } = await fetchHomeData();
 
   return (
     <>
@@ -95,42 +92,15 @@ export default async function HomePage() {
       {/* 04 — Para ella / Para él / Para los pequeños con fotos reales. */}
       <GenderSplit />
 
-      {/* Tira de marcas — marquee editorial sobre fondo blanco. */}
-      {featuredBrands.length > 0 && (
-        <section className="relative bg-white py-20 sm:py-24">
-          <header className="mx-auto mb-10 flex max-w-[1600px] flex-col gap-4 px-4 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
-            <Reveal variant="fade-up">
-              <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-zs-muted">
-                <span className="inline-block h-px w-8 bg-zs-blue-900/30" />
-                Marcas
-              </p>
-              <h2
-                className="mt-4 font-display font-bold leading-[0.95] tracking-[-0.035em] text-zs-blue-950"
-                style={{ fontSize: "clamp(1.85rem, 4vw, 3.25rem)" }}
-              >
-                Las que ponemos en la balda.
-              </h2>
-            </Reveal>
-            <Link
-              href="/marcas"
-              data-cursor="Marcas"
-              className="group inline-flex items-center gap-3 self-start text-sm font-semibold uppercase tracking-[0.22em] text-zs-blue-950 lg:self-end"
-            >
-              Ver todas
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-zs-blue-950/15 transition-all group-hover:bg-zs-blue-950 group-hover:text-white">
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
-              </span>
-            </Link>
-          </header>
-          <BrandsMarquee brands={featuredBrands} />
-        </section>
-      )}
+      {/* Marquesina infinita con frases (reemplaza la antigua tira de logos). */}
+      <PhrasesMarquee />
 
       {/* 05 — La tienda con foto Unsplash + testimonial. */}
       <StoreEditorial />
 
-      {/* 06 — Reviews / Social proof. */}
-      <SocialProof />
+      {/* 06 — Mapa real a la tienda + NAP, horarios, WhatsApp y "Cómo llegar"
+              (reemplaza al antiguo SocialProof). */}
+      <StoreMap />
 
       {/* Mini-tooltip mobile sobre el WhatsApp flotante. */}
       <WhatsAppNudge />

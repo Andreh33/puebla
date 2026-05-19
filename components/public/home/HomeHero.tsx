@@ -5,22 +5,20 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
 import { MagneticButton } from "@/components/public/MagneticButton";
+import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 /**
- * HomeHero — hero comercial monumental sobre foto Unsplash.
+ * HomeHero — hero comercial monumental sobre UNA SOLA imagen estática.
  *
- * Cambios respecto a la versión editorial previa:
- *  - Foto heroica de fondo (`/category-photos/running.jpg`) con overlay
- *    degradado oscuro para legibilidad del texto.
- *  - Headline más comercial: "La temporada que estabas esperando.".
- *  - Banner "OFERTAS DE LA SEMANA" como franja-CTA destacada.
- *  - 2 CTAs claros: rojo primario "Comprar ahora" + outline "Explorar marcas".
- *  - Sticker "ENVIO RAPIDO" en esquina superior derecha.
+ * Decisión: el cliente pidió retirar tanto el `<video>` (hero-running.mp4)
+ * como la `<Image>` solapada que había encima. En su lugar ponemos una única
+ * foto Unsplash CC0 (`/category-photos/hero-runner.jpg`) con overlay
+ * degradado oscuro. Sin marcas Nike/Adidas visibles.
  *
  * A11y:
- *  - H1 visible con el headline real (no sr-only).
+ *  - H1 visible con headline real.
  *  - Mantiene `prefers-reduced-motion`.
- *  - Contraste AA por el overlay 60% sobre la foto.
+ *  - Contraste AA por overlay 55% + gradientes.
  */
 
 const HEADLINE = ["La", "temporada", "que", "estabas", "esperando."] as const;
@@ -93,44 +91,19 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* Video heroico a viewport completo. Pesa ~2.1 MB (H.264 720p), con
-          poster como primer frame para no parpadear mientras carga. Autoplay
-          silenciado y loop para que la transición sea continua. Si el
-          navegador no puede reproducirlo (data-saver, error de codec), se
-          muestra el poster como fondo estático.
-
-          NOTA: no usamos `<Image />` aquí porque queremos video real, sin
-          marcas visibles (cliente no vende Nike/Adidas). El video viene de
-          Pexels con licencia comercial libre. */}
+      {/* UNA SOLA foto hero — Unsplash CC0, runner cinematográfico sin marcas. */}
       <div className="absolute inset-0 -z-20" aria-hidden>
-        {reduced ? (
-          // prefers-reduced-motion → mostrar solo el poster, sin reproducir video.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src="/videos/hero-running.jpg"
-            alt=""
-            className="h-full w-full object-cover object-center"
-          />
-        ) : (
-          <video
-            className="h-full w-full object-cover object-center"
-            poster="/videos/hero-running.jpg"
-            src="/videos/hero-running.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            // Si por lo que sea el video falla, dejamos el poster visible.
-            onError={(e) => {
-              const v = e.currentTarget;
-              v.style.display = "none";
-            }}
-          />
-        )}
+        <Image
+          src="/category-photos/hero-runner.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
       </div>
       {/* Overlay degradado para legibilidad. Capas:
-           1. Negro sólido 50% para el cuerpo del hero.
+           1. Negro sólido 55% para el cuerpo del hero.
            2. Gradiente vertical más oscuro abajo para el marquee.
            3. Tinte azul corporativo sutil arriba a la izquierda. */}
       <div className="absolute inset-0 -z-10" aria-hidden>
@@ -142,21 +115,32 @@ export function HomeHero() {
 
       {/* Sticker superior derecho */}
       <div className="pointer-events-none absolute right-4 top-24 z-20 hidden -rotate-6 sm:right-8 sm:top-28 sm:block">
-        <div className="flex items-center gap-2 rounded-full bg-zs-tennis-300 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-zs-blue-950 shadow-2xl">
+        <div
+          className="flex items-center gap-2 rounded-full bg-zs-tennis-300 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-zs-blue-950 shadow-2xl"
+          style={{ boxShadow: "var(--shadow-zs-tennis-glow-lg)" }}
+        >
           <Truck className="h-3.5 w-3.5" strokeWidth={2.5} />
           Envío rápido
         </div>
       </div>
 
-      {/* Eyebrow superior */}
-      <div className="relative mx-auto flex max-w-[1600px] items-center justify-between px-4 pt-28 sm:px-8 sm:pt-32 lg:pt-36">
+      {/* Eyebrow superior + badge "Abierto ahora" */}
+      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-28 sm:px-8 sm:pt-32 lg:pt-36">
         <p className="inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
           <span className="inline-block h-px w-8 bg-white/40" />
           Multimarca · Puebla de la Calzada
         </p>
-        <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/55 sm:block">
-          Est. 1998 — Badajoz
-        </p>
+        <div className="flex items-center gap-3">
+          <OpenNowBadge className="hidden items-center text-white sm:inline-flex" tone="dark" />
+          <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/55 sm:block">
+            Est. 1998 — Badajoz
+          </p>
+        </div>
+      </div>
+
+      {/* OpenNowBadge solo-móvil, justo debajo del eyebrow */}
+      <div className="relative mx-auto mt-4 max-w-[1600px] px-4 sm:hidden">
+        <OpenNowBadge tone="dark" />
       </div>
 
       {/* Titular monumental */}
@@ -231,7 +215,8 @@ export function HomeHero() {
               <Link
                 href="#catalogo"
                 data-cursor="Comprar"
-                className="group inline-flex h-14 items-center gap-3 rounded-full bg-zs-red-600 pl-7 pr-3 text-sm font-bold uppercase tracking-[0.06em] text-white shadow-[0_18px_60px_-15px_rgba(220,38,38,0.7)] transition-colors hover:bg-zs-red-500"
+                className="group inline-flex h-14 items-center gap-3 rounded-full bg-zs-red-600 pl-7 pr-3 text-sm font-bold uppercase tracking-[0.06em] text-white transition-all hover:bg-zs-red-500"
+                style={{ boxShadow: "var(--shadow-zs-rojo-glow-lg)" }}
               >
                 Comprar ahora
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zs-red-600 transition-transform group-hover:translate-x-0.5">
@@ -265,7 +250,8 @@ export function HomeHero() {
         <Link
           href="#catalogo"
           data-cursor="Ofertas"
-          className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-zs-red-600 via-zs-red-600 to-[#7a1e1e] p-6 text-white sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
+          className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-zs-red-600 via-zs-red-600 to-[#7a1e1e] p-6 text-white transition-transform hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
+          style={{ boxShadow: "var(--shadow-zs-rojo-glow-lg)" }}
         >
           <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay zs-grain" aria-hidden />
           <div className="flex flex-1 items-center gap-5 sm:gap-7">

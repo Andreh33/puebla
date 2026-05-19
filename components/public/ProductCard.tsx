@@ -40,7 +40,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
     <Link
       href={`/producto/${product.slug}`}
       className={cn(
-        "group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
         className,
       )}
       aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
@@ -51,7 +51,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
             src={product.mainImageUrl}
             alt={`${title}${product.colorName ? ` — color ${product.colorName}` : ""}`}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
             sizes={sizes ?? "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}
             priority={priority}
             placeholder={product.blurDataUrl ? "blur" : "empty"}
@@ -106,6 +106,15 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
           )}
         </div>
       </div>
+      {/* Tilt 3D sutil — sólo se aplica en pointer fino (desktop), no marea.
+          Definido inline para no contaminar globals con un selector demasiado
+          específico; sólo este componente lo activa. */}
+      <style>{`
+        @media (hover: hover) and (pointer: fine) {
+          .zs-tilt { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease, translate 600ms ease; }
+          .zs-tilt:hover { transform: perspective(900px) rotateX(2deg) rotateY(-2deg); }
+        }
+      `}</style>
     </Link>
   );
 }

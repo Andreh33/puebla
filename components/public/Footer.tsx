@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Clock, Facebook, Instagram } from "lucide-react";
 import { STORE_NAP } from "@/lib/seo/schema-org";
+import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 const COLS = [
   {
@@ -71,6 +72,9 @@ export function Footer() {
               <p className="text-zs-muted">L–V: 10:00–14:00 · 17:00–20:00</p>
               <p className="text-zs-muted">Sábado: 10:00–14:00</p>
               <p className="text-zs-muted">Domingo: cerrado</p>
+              <div className="pt-2">
+                <OpenNowBadge tone="light" />
+              </div>
             </div>
           </div>
 
