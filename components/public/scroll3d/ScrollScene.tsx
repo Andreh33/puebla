@@ -62,6 +62,26 @@ export function ScrollScene() {
     setHydrated(true);
   }, []);
 
+  // Lazy: el canvas 3D sólo se monta tras 1ª interacción / scroll / 1500 ms.
+  // El bundle Three+drei (~600 KB) no compite con el LCP.
+  const [shouldMountCanvas, setShouldMountCanvas] = useState(false);
+  useEffect(() => {
+    if (!hydrated || !webglOk) return;
+    const mount = () => setShouldMountCanvas(true);
+    window.addEventListener("scroll", mount, { once: true, passive: true });
+    window.addEventListener("pointermove", mount, { once: true });
+    window.addEventListener("touchstart", mount, { once: true, passive: true });
+    window.addEventListener("keydown", mount, { once: true });
+    const t = setTimeout(mount, 1500);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("scroll", mount);
+      window.removeEventListener("pointermove", mount);
+      window.removeEventListener("touchstart", mount);
+      window.removeEventListener("keydown", mount);
+    };
+  }, [hydrated, webglOk]);
+
   // Failsafe: si tras 8 s no terminó (red lenta, GPU lenta, asset corrupto),
   // ocultamos el loader igualmente para no bloquear al usuario.
   useEffect(() => {
@@ -163,16 +183,18 @@ export function ScrollScene() {
       style={{ height: "400vh" }}
       aria-label="Recorrido visual por Zona Sport"
     >
-      {/* Canvas sticky 3D */}
-      <div className="sticky top-0 h-screen w-full overflow-hidden">
-        <ScrollSceneCanvas
-          scrollProgress={scrollProgress}
-          low={low}
-          onLoadingChange={({ progress, loaded: isLoaded }) => {
-            setLoadProgress(progress);
-            if (isLoaded) setLoaded(true);
-          }}
-        />
+      {/* Canvas sticky 3D — lazy montado tras 1ª interacción/scroll/1500ms */}
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-zs-blue-950">
+        {shouldMountCanvas && (
+          <ScrollSceneCanvas
+            scrollProgress={scrollProgress}
+            low={low}
+            onLoadingChange={({ progress, loaded: isLoaded }) => {
+              setLoadProgress(progress);
+              if (isLoaded) setLoaded(true);
+            }}
+          />
+        )}
 
         {/* Loader visible mientras descarga + parsea el .glb (1.6 MB) */}
         <SceneLoader visible={!loaded} progress={loadProgress} />

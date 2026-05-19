@@ -43,6 +43,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* Preload del modelo 3D + imagen demo del fallback (LCP) */}
+        <link
+          rel="preload"
+          as="fetch"
+          href="/3d/zapatilla.glb"
+          type="model/gltf-binary"
+          crossOrigin="anonymous"
+        />
+        <link rel="preload" as="image" href="/sample-products/bota-alta-8000-tovir-negro.webp" />
         <meta name="application-name" content="Zona Sport" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
