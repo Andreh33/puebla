@@ -230,3 +230,97 @@ export async function generateMetaDescriptionAction(productId: string): Promise<
   return { ok: true, metaDescription: generateAutoMetaFromProduct(product) };
 }
 
+/**
+ * Aplica una descripción genérica a TODOS los productos que no tengan
+ * description y/o metaDescription. Por cada producto coge una plantilla
+ * aleatoria de su categoría (fallback a "default") y sustituye los
+ * placeholders. Persiste cada producto individualmente — si uno falla
+ * el resto sigue.
+ *
+ * Modos:
+ *   - `mode: "missing"` (default): solo rellena los vacíos.
+ *   - `mode: "all"`: sobreescribe TODAS las descripciones, incluso las
+ *     que el admin ya editó. Útil para repoblar tras añadir plantillas
+ *     nuevas. Respeta `isCustomized = true` para no destruir trabajo
+ *     manual.
+ */
+export async function bulkGenerateDescriptionsAction(
+  mode: "missing" | "all" = "missing",
+): Promise<
+  | { ok: true; updated: number; skipped: number; total: number }
+  | { ok: false; error: string }
+> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  const { pickTemplateForCategory, applyTemplate, generateAutoMetaFromProduct } =
+    await import("@/lib/products/description");
+
+  const where =
+    mode === "all"
+      ? { isCustomized: false } // no toca lo que el admin marcó como custom
+      : {
+          isCustomized: false,
+          OR: [
+            { description: null },
+            { description: "" },
+            { metaDescription: null },
+            { metaDescription: "" },
+          ],
+        };
+
+  const products = await db.product.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      colorName: true,
+      description: true,
+      metaDescription: true,
+      brand: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+    },
+  });
+
+  let updated = 0;
+  let skipped = 0;
+  for (const p of products) {
+    try {
+      const template = await pickTemplateForCategory(p.category.slug);
+      const productInfo = {
+        name: p.name,
+        colorName: p.colorName,
+        brand: p.brand,
+        category: p.category,
+      };
+
+      const data: { description?: string; metaDescription?: string } = {};
+      const needsDesc =
+        mode === "all" || !p.description || p.description.trim() === "";
+      const needsMeta =
+        mode === "all" || !p.metaDescription || p.metaDescription.trim() === "";
+
+      if (needsDesc && template) {
+        data.description = applyTemplate(template.body, productInfo);
+      }
+      if (needsMeta) {
+        data.metaDescription = template?.metaShort
+          ? applyTemplate(template.metaShort, productInfo)
+          : generateAutoMetaFromProduct(productInfo);
+      }
+
+      if (Object.keys(data).length === 0) {
+        skipped++;
+        continue;
+      }
+      await db.product.update({ where: { id: p.id }, data });
+      updated++;
+    } catch (err) {
+      console.error(`[bulkGenerateDescriptions] ${p.id} falló:`, err);
+      skipped++;
+    }
+  }
+
+  revalidatePath("/admin/productos");
+  return { ok: true, updated, skipped, total: products.length };
+}
+

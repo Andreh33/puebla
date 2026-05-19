@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { listProducts, type ProductListFilters } from "@/lib/products/queries";
 import { ProductsTable } from "./ProductsTable";
 import { forceSaveProductsList } from "./_actions";
+import { BulkGenerateDescriptionsButton } from "./BulkGenerateDescriptionsButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Productos" };
@@ -64,6 +65,7 @@ export default async function ProductosPage({
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Productos" }]}
         actions={
           <>
+            <BulkGenerateDescriptionsButton />
             <Button asChild variant="outline" size="sm">
               <Link href={`/admin/productos/exportCsv?${new URLSearchParams(
                 Object.entries(sp).reduce<Record<string, string>>((acc, [k, v]) => {
