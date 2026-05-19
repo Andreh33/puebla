@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { Check } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
@@ -7,6 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { formatDateTimeES } from "@/lib/utils";
 import { UsersTableActions } from "./_components/UsersTableActions";
 import { NewUserDialog } from "./_components/NewUserDialog";
+
+async function forceSaveUsersList() {
+  "use server";
+  // Cada edit/toggle de usuario ya persiste atómicamente desde UsersTableActions.
+  // Este botón es un "confirm visual" que invalida la cache del listado y la
+  // re-renderiza desde la DB para dar al admin la certeza de que ve el estado
+  // real más reciente.
+  revalidatePath("/admin/usuarios");
+}
 
 export const metadata = { title: "Usuarios admin" };
 export const dynamic = "force-dynamic";
@@ -198,6 +209,19 @@ export default async function UsuariosPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Botón verde "Guardar" abajo — server action que revalida el listado.
+          Las acciones individuales ya persisten al momento; este botón da paz
+          mental al admin (confirma que el listado está al día). */}
+      <form action={forceSaveUsersList} className="mt-6 flex justify-end">
+        <button
+          type="submit"
+          className="inline-flex h-12 items-center gap-2 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+        >
+          <Check className="h-4 w-4" strokeWidth={2.5} />
+          Guardar cambios
+        </button>
+      </form>
     </div>
   );
 }

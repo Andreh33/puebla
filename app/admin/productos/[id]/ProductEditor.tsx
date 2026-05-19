@@ -83,6 +83,7 @@ interface EditorProps {
     externalId: string | null;
     externalUrl: string | null;
     modelCode: string | null;
+    sku: string | null;
     colorName: string;
     colorHex: string | null;
     gender: string;
@@ -180,6 +181,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     externalId: initial?.externalId ?? null,
     externalUrl: initial?.externalUrl ?? null,
     modelCode: initial?.modelCode ?? null,
+    sku: initial?.sku ?? null,
     colorName: initial?.colorName ?? "Único",
     colorHex: initial?.colorHex ?? null,
     gender: (initial?.gender as FormValues["gender"]) ?? "NO_ESPECIFICADO",
@@ -905,6 +907,22 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 <div>
                   <Label htmlFor="modelCode">Código modelo</Label>
                   <Input id="modelCode" {...register("modelCode")} placeholder="M24205" />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="sku">
+                    SKU / Referencia interna
+                  </Label>
+                  <Input
+                    id="sku"
+                    {...register("sku")}
+                    placeholder="ZS-RUNN-001 (único en toda la tienda)"
+                    autoComplete="off"
+                  />
+                  <p className="mt-1 text-xs text-zs-muted">
+                    Aparece en la ficha pública como «Referencia». Debe ser único.
+                    Si lo dejas vacío, la ficha muestra el código modelo como fallback.
+                  </p>
+                  {errors.sku && <FieldError msg="SKU inválido (máx. 64 caracteres)" />}
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="externalUrl">URL externa (afiliado / ficha proveedor)</Label>

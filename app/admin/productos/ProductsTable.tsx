@@ -251,6 +251,27 @@ export function ProductsTable({
         },
       },
       {
+        id: "sku",
+        header: "SKU",
+        cell: ({ row }) => {
+          const r = row.original;
+          const sku = r.sku || r.modelCode || r.externalId || r.id.slice(0, 8).toUpperCase();
+          const isFallback = !r.sku;
+          return (
+            <span
+              className={
+                isFallback
+                  ? "font-mono text-xs text-zs-muted"
+                  : "font-mono text-xs font-semibold text-zs-ink"
+              }
+              title={isFallback ? "SKU no definido — mostrando fallback" : `SKU: ${sku}`}
+            >
+              {sku}
+            </span>
+          );
+        },
+      },
+      {
         accessorKey: "brand.name",
         header: "Marca",
         cell: ({ row }) => (

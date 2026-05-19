@@ -93,12 +93,13 @@ model Product {
   externalId   String?       // "pricat:030501", ASIN, ID Miravia
   externalUrl  String?       // URL afiliado Amazon o URL ficha proveedor
   modelCode    String?       // "M24205"
-  colorName    String        @default("Ãšnico")
+  sku          String?       @unique // SKU/Referencia interna editable desde /admin
+  colorName    String        @default("Único")
   colorHex     String?
 
   gender       Gender        @default(NO_ESPECIFICADO)
-  sportUse     String?       // "MontaÃ±ismo/Trekking/Escalada"
-  composition  String?       // "PoliÃ©ster 100%"
+  sportUse     String?       // "Montañismo/Trekking/Escalada"
+  composition  String?       // "Poliéster 100%"
 
   costPrice    Decimal?      @db.Decimal(10, 2)
   retailPrice  Decimal       @db.Decimal(10, 2)
@@ -181,7 +182,7 @@ model ProductAudit {
 }
 
 // ----------------------------------------------------------------------------
-// TaxonomÃ­a
+// Taxonomía
 // ----------------------------------------------------------------------------
 
 model Brand {

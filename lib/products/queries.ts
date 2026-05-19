@@ -37,6 +37,9 @@ export interface ProductListResult {
     shortName: string | null;
     colorName: string;
     colorHex: string | null;
+    sku: string | null;
+    modelCode: string | null;
+    externalId: string | null;
     mainImageUrl: string | null;
     brand: { id: string; name: string };
     category: { id: string; name: string };
@@ -70,6 +73,7 @@ function buildWhere(f: ProductListFilters): Prisma.ProductWhereInput {
         { description: { contains: q, mode: "insensitive" } },
         { slug: { contains: q, mode: "insensitive" } },
         { modelCode: { contains: q, mode: "insensitive" } },
+        { sku: { contains: q, mode: "insensitive" } },
         { externalId: { contains: q, mode: "insensitive" } },
         { brand: { name: { contains: q, mode: "insensitive" } } },
         { category: { name: { contains: q, mode: "insensitive" } } },
@@ -143,6 +147,9 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       shortName: r.shortName,
       colorName: r.colorName,
       colorHex: r.colorHex,
+      sku: r.sku ?? null,
+      modelCode: r.modelCode ?? null,
+      externalId: r.externalId ?? null,
       mainImageUrl: r.mainImageUrl,
       brand: r.brand,
       category: r.category,

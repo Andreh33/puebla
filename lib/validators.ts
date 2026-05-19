@@ -68,6 +68,7 @@ export const ProductSchema = z.object({
   externalId: z.string().optional().nullable(),
   externalUrl: z.string().url().optional().nullable().or(z.literal("")),
   modelCode: z.string().max(60).optional().nullable(),
+  sku: z.string().max(64).optional().nullable(),
   colorName: z.string().min(1).max(60),
   colorHex: z
     .string()

@@ -208,6 +208,7 @@ export async function duplicateProduct(id: string, userId?: string) {
         externalId: null,
         externalUrl: src.externalUrl,
         modelCode: src.modelCode,
+        sku: null, // sku es @unique → no se copia en duplicados; el admin asignará uno nuevo.
         colorName: src.colorName,
         colorHex: src.colorHex,
         gender: src.gender,

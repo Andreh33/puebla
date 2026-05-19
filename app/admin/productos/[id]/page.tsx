@@ -43,6 +43,7 @@ export default async function EditProductPage({
     externalId: product.externalId,
     externalUrl: product.externalUrl,
     modelCode: product.modelCode,
+    sku: product.sku,
     colorName: product.colorName,
     colorHex: product.colorHex,
     gender: product.gender,
