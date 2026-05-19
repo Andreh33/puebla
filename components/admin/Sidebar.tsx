@@ -15,6 +15,7 @@ import {
   Settings,
   ArrowLeftRight,
   ShieldCheck,
+  ShoppingCart,
   Menu,
   type LucideIcon,
 } from "lucide-react";
@@ -41,6 +42,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Categorías", href: "/admin/categorias", icon: FolderTree },
   { label: "Marcas", href: "/admin/marcas", icon: Tags },
   { label: "Importar", href: "/admin/importar/xlsx", icon: Upload },
+  { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
   { label: "Imágenes", href: "/admin/imagenes", icon: ImageIcon },
   { label: "Blog", href: "/admin/blog", icon: FileText },
   { label: "Leads", href: "/admin/leads", icon: Users },

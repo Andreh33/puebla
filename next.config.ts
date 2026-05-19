@@ -57,6 +57,9 @@ const nextConfig: NextConfig = {
     // paapi5-nodejs-sdk usa imports relativos sin "./" que el bundler de
     // producción de Next no resuelve. Lo cargamos en runtime Node tal cual.
     "paapi5-nodejs-sdk",
+    // Stripe SDK es Node-only y pesado; lo dejamos external para no inflar
+    // los bundles de las funciones que no lo usan.
+    "stripe",
   ],
 };
 

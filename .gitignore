@@ -88,3 +88,6 @@ home-desktop.png
 .tmp-hero-frames/
 .tmp-hero-v2/
 debug-video-frames/
+
+# Carpeta local con CSV exportados de WooCommerce — no se commitean
+wp/

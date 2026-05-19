@@ -1,0 +1,175 @@
+/**
+ * POST /api/stripe/create-checkout
+ *
+ * Crea una Stripe Checkout Session a partir del CartIntent del cliente y
+ * devuelve la URL hospedada de Stripe a la que redirigir.
+ *
+ * Body esperado (validado con Zod):
+ *   {
+ *     items: CheckoutCartItem[],
+ *     deliveryMethod?: "pickup" | "shipping",
+ *     customerEmail?: string,
+ *     successUrl?: string,
+ *     cancelUrl?: string,
+ *   }
+ *
+ * Si STRIPE_SECRET_KEY no está definida devuelve 503 con `missing` y un
+ * mensaje claro de qué env vars añadir.
+ */
+
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { getStripe, missingStripeEnv, warnIfStripeMissing } from "@/lib/stripe/client";
+import type { CreateCheckoutResponse } from "@/lib/stripe/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const CheckoutItemSchema = z.object({
+  productId: z.string().min(1),
+  slug: z.string().min(1),
+  name: z.string().min(1).max(250),
+  brand: z.string().max(100).default(""),
+  imageUrl: z.string().url().nullable(),
+  colorName: z.string().max(100).default("Único"),
+  size: z.string().max(20).nullable(),
+  price: z.number().nonnegative().finite(),
+  qty: z.number().int().positive().max(99),
+});
+
+const RequestSchema = z.object({
+  items: z.array(CheckoutItemSchema).min(1).max(50),
+  deliveryMethod: z.enum(["pickup", "shipping"]).optional(),
+  customerEmail: z.string().email().optional(),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+});
+
+function siteUrl(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.es").replace(
+    /\/$/,
+    "",
+  );
+}
+
+function toCents(eur: number): number {
+  return Math.round(eur * 100);
+}
+
+export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckoutResponse>> {
+  warnIfStripeMissing("create-checkout");
+  const stripe = getStripe();
+  if (!stripe) {
+    return NextResponse.json<CreateCheckoutResponse>(
+      {
+        ok: false,
+        error: "stripe_not_configured",
+        message:
+          "El TPV no está activado. Configura STRIPE_SECRET_KEY (y STRIPE_WEBHOOK_SECRET) " +
+          "en Vercel para habilitar el checkout.",
+        missing: missingStripeEnv(),
+      },
+      { status: 503 },
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json<CreateCheckoutResponse>(
+      { ok: false, error: "invalid_json", message: "Body no es JSON válido" },
+      { status: 400 },
+    );
+  }
+
+  const parsed = RequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json<CreateCheckoutResponse>(
+      {
+        ok: false,
+        error: "invalid_payload",
+        message: parsed.error.errors.map((e) => e.message).join("; "),
+      },
+      { status: 400 },
+    );
+  }
+
+  const { items, deliveryMethod = "shipping", customerEmail, successUrl, cancelUrl } =
+    parsed.data;
+
+  const base = siteUrl();
+  // El tipo concreto `Stripe.Checkout.SessionCreateParams.LineItem` no se
+  // re-exporta como sub-namespace en el SDK actual; dejamos que TS infiera
+  // la forma del objeto y la valida al pasarlo a `sessions.create`.
+  const lineItems = items.map((it) => ({
+    quantity: it.qty,
+    price_data: {
+      currency: "eur",
+      unit_amount: toCents(it.price),
+      product_data: {
+        name: it.name,
+        description: [it.brand, it.colorName, it.size]
+          .filter(Boolean)
+          .join(" · "),
+        images: it.imageUrl ? [it.imageUrl] : undefined,
+        metadata: {
+          zs_product_id: it.productId,
+          zs_slug: it.slug,
+          zs_size: it.size ?? "",
+          zs_color: it.colorName,
+        },
+      },
+    },
+  }));
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      currency: "eur",
+      line_items: lineItems,
+      customer_email: customerEmail,
+      // Recogemos teléfono para coordinar pickup/envío
+      phone_number_collection: { enabled: true },
+      // Solo pedimos dirección de envío si es shipping. Para pickup la
+      // tienda contacta al cliente.
+      shipping_address_collection:
+        deliveryMethod === "shipping"
+          ? { allowed_countries: ["ES", "PT"] }
+          : undefined,
+      // España + Portugal son los únicos países de envío inicialmente.
+      locale: "es",
+      success_url:
+        successUrl ?? `${base}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: cancelUrl ?? `${base}/checkout/cancelado`,
+      metadata: {
+        deliveryMethod,
+        source: "zonasport-web",
+      },
+    });
+
+    if (!session.url) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        {
+          ok: false,
+          error: "no_session_url",
+          message: "Stripe no devolvió URL de sesión",
+        },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json<CreateCheckoutResponse>({
+      ok: true,
+      url: session.url,
+      sessionId: session.id,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    console.error("[stripe:create-checkout] error:", message);
+    return NextResponse.json<CreateCheckoutResponse>(
+      { ok: false, error: "stripe_error", message },
+      { status: 502 },
+    );
+  }
+}

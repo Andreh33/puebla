@@ -63,6 +63,7 @@ enum ImportSource {
   XLSX
   MIRAVIA
   AMAZON
+  WOOCOMMERCE
 }
 
 enum ImportStatus {
@@ -70,6 +71,16 @@ enum ImportStatus {
   RUNNING
   DONE
   FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
 }
 
 // ----------------------------------------------------------------------------
@@ -386,4 +397,57 @@ model CartIntent {
   updatedAt   DateTime @updatedAt
 
   @@index([sessionId])
+}
+
+// ----------------------------------------------------------------------------
+// Pedidos (Stripe TPV — Phase 2)
+// Modelo de pedido que se rellena vía webhooks Stripe (checkout.session.completed)
+// y se consume desde /admin/pedidos. Si las env vars STRIPE_SECRET_KEY y
+// STRIPE_WEBHOOK_SECRET no están definidas, el sistema no recibe pedidos y la
+// UI muestra "Pendiente de activación".
+// ----------------------------------------------------------------------------
+
+model Order {
+  id                    String      @id @default(cuid())
+  stripeSessionId       String?     @unique
+  stripePaymentIntentId String?     @unique
+  stripeCustomerId      String?
+  customerName          String?
+  customerEmail         String?
+  customerPhone         String?
+  shippingAddress       Json?
+  subtotal              Decimal     @db.Decimal(10, 2)
+  shippingCost          Decimal     @default(0) @db.Decimal(10, 2)
+  tax                   Decimal     @default(0) @db.Decimal(10, 2)
+  total                 Decimal     @db.Decimal(10, 2)
+  currency              String      @default("EUR")
+  status                OrderStatus @default(PENDING)
+  paymentStatus         String?
+  deliveryMethod        String?     // "pickup" | "shipping"
+  notes                 String?     @db.Text
+  items                 OrderItem[]
+  metadata              Json?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerEmail])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  productSlug String?
+  productName String
+  productSku  String?
+  variantSize String?
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  quantity    Int
+  subtotal    Decimal  @db.Decimal(10, 2)
+  metadata    Json?
+
+  @@index([orderId])
+  @@index([productId])
 }

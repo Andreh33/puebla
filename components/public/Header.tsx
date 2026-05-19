@@ -225,7 +225,7 @@ export function Header() {
             ref={navRef}
             onMouseLeave={scheduleClose}
             className={cn(
-              "mx-auto flex max-w-[1180px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-2 backdrop-blur-md transition-shadow sm:gap-3 sm:px-4 sm:py-2.5",
+              "mx-auto flex max-w-[1180px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-2.5 backdrop-blur-md transition-shadow sm:gap-3 sm:px-4 sm:py-3",
               scrolled ? "shadow-xl" : "shadow-lg",
             )}
             style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
@@ -242,7 +242,7 @@ export function Header() {
                 width={270}
                 height={186}
                 priority
-                className="h-10 w-auto sm:h-12"
+                className="h-12 w-auto sm:h-14"
               />
             </Link>
 
