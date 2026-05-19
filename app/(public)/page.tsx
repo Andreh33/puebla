@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import { HomeHero } from "@/components/public/home/HomeHero";
-import { QuickShop } from "@/components/public/home/QuickShop";
 import { PromoStrip } from "@/components/public/home/PromoStrip";
 import { ProductShowcase } from "@/components/public/home/ProductShowcase";
 import { GenderSplit } from "@/components/public/home/GenderSplit";
@@ -84,8 +83,11 @@ export default async function HomePage() {
       {/* Ancla del catálogo. */}
       <div id="catalogo" aria-hidden className="h-0" />
 
-      {/* 01 — Atajos para comprar (4 categorías estrella con foto Unsplash). */}
-      <QuickShop />
+      {/* 01 — Para ella / Para él / Para los pequeños con fotos reales.
+              (Antes vivía en posición 04; el cliente movió este bloque al
+              lugar de los antiguos "Atajos para comprar" / QuickShop, que
+              se eliminó para no duplicar la navegación por género). */}
+      <GenderSplit />
 
       {/* 02 — Promo strip: Ofertas / Recién llegado / Recogida en tienda. */}
       <PromoStrip />
@@ -93,13 +95,10 @@ export default async function HomePage() {
       {/* 03 — Top ventas con badges, countdown y trust badges. */}
       <ProductShowcase products={featuredProducts} />
 
-      {/* 04 — Para ella / Para él / Para los pequeños con fotos reales. */}
-      <GenderSplit />
-
-      {/* 05 — La tienda con foto Unsplash + testimonial. */}
+      {/* 04 — La tienda con foto Unsplash + testimonial. */}
       <StoreEditorial />
 
-      {/* 06 — Mapa real a la tienda + NAP, horarios, WhatsApp y "Cómo llegar"
+      {/* 05 — Mapa real a la tienda + NAP, horarios, WhatsApp y "Cómo llegar"
               (reemplaza al antiguo SocialProof). */}
       <StoreMap />
 
