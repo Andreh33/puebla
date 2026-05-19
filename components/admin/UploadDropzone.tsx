@@ -1,18 +1,18 @@
 "use client";
 
 /**
- * UploadDropzone — drag & drop reutilizable para imágenes admin.
+ * UploadDropzone â€” drag & drop reutilizable para imÃ¡genes admin.
  *
  * - Comprime client-side con browser-image-compression antes de enviar.
  * - Subida POST multipart/form-data a /api/upload.
- * - También soporta ingesta por URL con /api/upload-from-url.
+ * - TambiÃ©n soporta ingesta por URL con /api/upload-from-url.
  *
  * Usado por:
- *   - app/admin/productos/[id]/edit/...  (editor de imágenes de producto)
+ *   - app/admin/productos/[id]/edit/...  (editor de imÃ¡genes de producto)
  *   - app/admin/blog/[id]/edit/...       (cover de post)
  *   - app/admin/marcas/[id]/edit/...     (logo de marca)
- *   - app/admin/categorias/[id]/edit/... (imagen de categoría)
- *   - app/admin/imagenes/...             (galería general)
+ *   - app/admin/categorias/[id]/edit/... (imagen de categorÃ­a)
+ *   - app/admin/imagenes/...             (galerÃ­a general)
  */
 import * as React from "react";
 import { UploadCloud, X, Link2, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -39,7 +39,7 @@ export type UploadDropzoneProps = {
   productId?: string;
   /** alt SEO por defecto (luego el usuario puede ajustar) */
   defaultAlt?: string;
-  /** Si false, sólo permite 1 archivo a la vez */
+  /** Si false, sÃ³lo permite 1 archivo a la vez */
   multiple?: boolean;
   maxFiles?: number;
   onUploaded?: (images: UploadedImage[]) => void;
@@ -59,7 +59,7 @@ type FileTask = {
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
 
 async function compressIfNeeded(file: File): Promise<File> {
-  // Importación dinámica — la lib es pesada y sólo se necesita en cliente.
+  // ImportaciÃ³n dinÃ¡mica â€” la lib es pesada y sÃ³lo se necesita en cliente.
   const { default: imageCompression } = await import("browser-image-compression");
   try {
     const compressed = await imageCompression(file, {
@@ -72,7 +72,7 @@ async function compressIfNeeded(file: File): Promise<File> {
     // Si tras comprimir es mayor que el original, usamos el original.
     return compressed.size < file.size ? compressed : file;
   } catch {
-    return file; // si falla la compresión, subimos el original
+    return file; // si falla la compresiÃ³n, subimos el original
   }
 }
 
@@ -209,7 +209,7 @@ export function UploadDropzone({
           maxLength={200}
         />
         <p className="text-xs text-zs-muted">
-          Se aplicará a todas las imágenes subidas. Puedes editarlo después por imagen.
+          Se aplicarÃ¡ a todas las imÃ¡genes subidas. Puedes editarlo despuÃ©s por imagen.
         </p>
       </div>
 
@@ -227,7 +227,7 @@ export function UploadDropzone({
           <div
             role="button"
             tabIndex={0}
-            aria-label="Arrastra archivos aquí o haz clic para seleccionar"
+            aria-label="Arrastra archivos aquÃ­ o haz clic para seleccionar"
             onClick={() => inputRef.current?.click()}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -256,10 +256,10 @@ export function UploadDropzone({
           >
             <UploadCloud className="h-8 w-8 text-zs-muted" aria-hidden />
             <p className="text-sm font-medium text-zs-ink">
-              Arrastra imágenes o haz clic
+              Arrastra imÃ¡genes o haz clic
             </p>
             <p className="text-xs text-zs-muted">
-              JPEG, PNG, WebP o AVIF · Máx 10 MB · Hasta {maxFiles} archivos
+              JPEG, PNG, WebP o AVIF Â· MÃ¡x 10 MB Â· Hasta {maxFiles} archivos
             </p>
             <input
               ref={inputRef}
@@ -277,14 +277,14 @@ export function UploadDropzone({
 
         <TabsContent value="url">
           <div className="space-y-2 rounded-2xl border border-zs-border bg-white p-4">
-            <Label htmlFor="upload-url">URL externa (Amazon, Movalia, John Smith…)</Label>
+            <Label htmlFor="upload-url">URL externa (Amazon, Miravia, John Smithâ€¦)</Label>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 id="upload-url"
                 type="url"
                 value={urlInput}
                 onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="https://m.media-amazon.com/images/I/…"
+                placeholder="https://m.media-amazon.com/images/I/â€¦"
                 disabled={urlBusy}
               />
               <Button onClick={handleUrlSubmit} disabled={urlBusy || !urlInput.trim()}>
@@ -298,7 +298,7 @@ export function UploadDropzone({
               </p>
             )}
             <p className="text-xs text-zs-muted">
-              Sólo dominios permitidos: Amazon, Movalia, John Smith, MAS 8000.
+              SÃ³lo dominios permitidos: Amazon, Miravia, John Smith, MAS 8000.
             </p>
           </div>
         </TabsContent>
@@ -331,7 +331,7 @@ export function UploadDropzone({
                     {(t.status === "uploading" || t.status === "compressing") && (
                       <>
                         <Loader2 className="inline h-3 w-3 animate-spin" aria-hidden />{" "}
-                        {t.status === "compressing" ? "Comprimiendo" : "Subiendo"}…
+                        {t.status === "compressing" ? "Comprimiendo" : "Subiendo"}â€¦
                       </>
                     )}
                   </span>

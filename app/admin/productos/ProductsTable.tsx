@@ -74,7 +74,7 @@ type Row = ProductListResult["rows"][number];
 
 const SOURCE_VARIANT: Record<string, { label: string; cls: string }> = {
   LOCAL: { label: "Local", cls: "border-zs-blue-200 bg-zs-blue-50 text-zs-blue-900" },
-  MOVALIA: { label: "Movalia", cls: "border-emerald-300 bg-emerald-50 text-emerald-900" },
+  MIRAVIA: { label: "Miravia", cls: "border-emerald-300 bg-emerald-50 text-emerald-900" },
   AMAZON: { label: "Amazon", cls: "border-amber-300 bg-amber-50 text-amber-900" },
 };
 
@@ -89,10 +89,10 @@ const GENDER_LABEL: Record<string, string> = {
   HOMBRE: "Hombre",
   MUJER: "Mujer",
   UNISEX: "Unisex",
-  NINO: "Niño",
-  NINA: "Niña",
-  BEBE: "Bebé",
-  NO_ESPECIFICADO: "—",
+  NINO: "NiÃ±o",
+  NINA: "NiÃ±a",
+  BEBE: "BebÃ©",
+  NO_ESPECIFICADO: "â€”",
 };
 
 export function ProductsTable({
@@ -119,7 +119,7 @@ export function ProductsTable({
 
   const qInputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Sync URL — debounce search
+  // Sync URL â€” debounce search
   const updateParams = React.useCallback(
     (mutate: (sp: URLSearchParams) => void, opts: { resetPage?: boolean } = {}) => {
       const sp = new URLSearchParams(searchParams?.toString() ?? "");
@@ -259,16 +259,16 @@ export function ProductsTable({
       },
       {
         accessorKey: "category.name",
-        header: "Categoría",
+        header: "CategorÃ­a",
         cell: ({ row }) => (
           <span className="text-sm text-zs-muted">{row.original.category.name}</span>
         ),
       },
       {
         accessorKey: "gender",
-        header: "Género",
+        header: "GÃ©nero",
         cell: ({ row }) => (
-          <span className="text-xs text-zs-muted">{GENDER_LABEL[row.original.gender] ?? "—"}</span>
+          <span className="text-xs text-zs-muted">{GENDER_LABEL[row.original.gender] ?? "â€”"}</span>
         ),
       },
       {
@@ -346,8 +346,8 @@ export function ProductsTable({
                 asChild
                 variant="ghost"
                 size="icon"
-                aria-label="Ver público"
-                title="Ver público"
+                aria-label="Ver pÃºblico"
+                title="Ver pÃºblico"
               >
                 <Link href={`/producto/${r.slug}`} target="_blank">
                   <ExternalLink className="h-4 w-4" />
@@ -360,7 +360,7 @@ export function ProductsTable({
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Más acciones">
+                  <Button variant="ghost" size="icon" aria-label="MÃ¡s acciones">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -461,9 +461,9 @@ export function ProductsTable({
               ref={qInputRef}
               value={qLocal}
               onChange={(e) => setQLocal(e.target.value)}
-              placeholder="Buscar por nombre, modelo, EAN, marca…"
+              placeholder="Buscar por nombre, modelo, EAN, marcaâ€¦"
               className="pl-9"
-              aria-label="Búsqueda"
+              aria-label="BÃºsqueda"
             />
           </div>
 
@@ -471,7 +471,7 @@ export function ProductsTable({
             label="Origen"
             options={[
               { value: "LOCAL", label: "Local" },
-              { value: "MOVALIA", label: "Movalia" },
+              { value: "MIRAVIA", label: "Miravia" },
               { value: "AMAZON", label: "Amazon" },
             ]}
             selected={source}
@@ -496,21 +496,21 @@ export function ProductsTable({
             searchable
           />
           <FilterChip
-            label="Categoría"
+            label="CategorÃ­a"
             options={categories.map((c) => ({ value: c.id, label: c.name }))}
             selected={categorySel}
             onToggle={(v) => toggleMulti("category", v)}
             searchable
           />
           <FilterChip
-            label="Género"
+            label="GÃ©nero"
             options={[
               { value: "HOMBRE", label: "Hombre" },
               { value: "MUJER", label: "Mujer" },
               { value: "UNISEX", label: "Unisex" },
-              { value: "NINO", label: "Niño" },
-              { value: "NINA", label: "Niña" },
-              { value: "BEBE", label: "Bebé" },
+              { value: "NINO", label: "NiÃ±o" },
+              { value: "NINA", label: "NiÃ±a" },
+              { value: "BEBE", label: "BebÃ©" },
             ]}
             selected={gender}
             onToggle={(v) => toggleMulti("gender", v)}
@@ -547,8 +547,8 @@ export function ProductsTable({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="createdAt_desc">Más recientes</SelectItem>
-                <SelectItem value="createdAt_asc">Más antiguos</SelectItem>
+                <SelectItem value="createdAt_desc">MÃ¡s recientes</SelectItem>
+                <SelectItem value="createdAt_asc">MÃ¡s antiguos</SelectItem>
                 <SelectItem value="name_asc">Nombre A-Z</SelectItem>
                 <SelectItem value="price_asc">Precio ascendente</SelectItem>
                 <SelectItem value="price_desc">Precio descendente</SelectItem>
@@ -652,10 +652,10 @@ export function ProductsTable({
         )}
       </div>
 
-      {/* Paginación */}
+      {/* PaginaciÃ³n */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zs-muted">
         <div className="flex items-center gap-2">
-          <span>Por página</span>
+          <span>Por pÃ¡gina</span>
           <Select
             value={String(pageSize)}
             onValueChange={(v) =>
@@ -675,7 +675,7 @@ export function ProductsTable({
 
         <div className="flex items-center gap-3">
           <span className="text-xs">
-            Página {page} de {totalPages} · {initialData.total.toLocaleString("es-ES")} resultados
+            PÃ¡gina {page} de {totalPages} Â· {initialData.total.toLocaleString("es-ES")} resultados
           </span>
           <div className="flex items-center gap-1">
             <Button
@@ -707,17 +707,17 @@ export function ProductsTable({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirm?.type === "delete" && "¿Eliminar producto?"}
-              {confirm?.type === "archive" && "¿Archivar producto?"}
-              {confirm?.type === "duplicate" && "¿Duplicar producto?"}
+              {confirm?.type === "delete" && "Â¿Eliminar producto?"}
+              {confirm?.type === "archive" && "Â¿Archivar producto?"}
+              {confirm?.type === "duplicate" && "Â¿Duplicar producto?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirm?.type === "delete" &&
-                `Se eliminará permanentemente "${confirm.name}" junto con sus imágenes y tallas. Esta acción no se puede deshacer.`}
+                `Se eliminarÃ¡ permanentemente "${confirm.name}" junto con sus imÃ¡genes y tallas. Esta acciÃ³n no se puede deshacer.`}
               {confirm?.type === "archive" &&
-                `"${confirm?.name}" pasará a estado Inactivo y dejará de mostrarse en la web.`}
+                `"${confirm?.name}" pasarÃ¡ a estado Inactivo y dejarÃ¡ de mostrarse en la web.`}
               {confirm?.type === "duplicate" &&
-                `Se creará una copia de "${confirm.name}" como borrador. Tendrás que ajustar EAN y datos únicos.`}
+                `Se crearÃ¡ una copia de "${confirm.name}" como borrador. TendrÃ¡s que ajustar EAN y datos Ãºnicos.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -741,9 +741,9 @@ export function ProductsTable({
       <AlertDialog open={!!bulkConfirm} onOpenChange={(o) => !o && setBulkConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar {selectedIds.length} productos?</AlertDialogTitle>
+            <AlertDialogTitle>Â¿Eliminar {selectedIds.length} productos?</AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminarán permanentemente junto con sus imágenes y tallas. Acción irreversible.
+              Se eliminarÃ¡n permanentemente junto con sus imÃ¡genes y tallas. AcciÃ³n irreversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -797,7 +797,7 @@ function FilterChip({
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar…"
+            placeholder="Buscarâ€¦"
             className="mb-2 h-8 text-xs"
           />
         )}

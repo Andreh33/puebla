@@ -9,9 +9,9 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 type Props = {
   productName: string;
   sizes: SizeOption[];
-  source?: "LOCAL" | "MOVALIA" | "AMAZON";
+  source?: "LOCAL" | "MIRAVIA" | "AMAZON";
   externalUrl?: string | null;
-  /** Datos necesarios para añadir al carrito. Si falta, sólo mostramos WhatsApp. */
+  /** Datos necesarios para aÃ±adir al carrito. Si falta, sÃ³lo mostramos WhatsApp. */
   product?: AddToCartProduct;
 };
 
@@ -24,12 +24,12 @@ export function ProductActions({
 }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
 
-  // Detectar "única" sola
+  // Detectar "Ãºnica" sola
   const onlyUnica =
     sizes.length === 1 &&
-    (sizes[0]!.size.toUpperCase() === "ÚNICA" || sizes[0]!.size.toUpperCase() === "UNICA");
+    (sizes[0]!.size.toUpperCase() === "ÃšNICA" || sizes[0]!.size.toUpperCase() === "UNICA");
   const requiresSize = sizes.length > 0 && !onlyUnica;
-  const effectiveSize: string | null = onlyUnica ? "ÚNICA" : selected;
+  const effectiveSize: string | null = onlyUnica ? "ÃšNICA" : selected;
   const canCta = !requiresSize || !!selected;
 
   const reservationHref = whatsappUrl(
@@ -59,7 +59,7 @@ export function ProductActions({
           rel="noopener noreferrer"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-zs-border bg-white px-6 text-sm font-semibold text-zs-ink hover:bg-zs-surface"
         >
-          <MessageCircle className="h-5 w-5 text-emerald-600" /> O consúltanos por WhatsApp
+          <MessageCircle className="h-5 w-5 text-emerald-600" /> O consÃºltanos por WhatsApp
         </a>
       </div>
     );
@@ -107,7 +107,7 @@ export function ProductActions({
         <p className="text-xs text-zs-muted">Selecciona una talla para continuar.</p>
       )}
       <p className="text-[11px] leading-snug text-zs-muted">
-        Pagos online próximamente. Añade al carrito y confirma por WhatsApp; te
+        Pagos online prÃ³ximamente. AÃ±ade al carrito y confirma por WhatsApp; te
         lo reservamos para recogida en tienda.
       </p>
     </div>

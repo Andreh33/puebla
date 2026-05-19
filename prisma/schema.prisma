@@ -1,5 +1,5 @@
 // ============================================================================
-// Zona Sport — Prisma schema
+// Zona Sport â€” Prisma schema
 // Modelo de datos del CRM unificado: productos (1 color = 1 producto), blog,
 // leads, importaciones, redirecciones, ajustes y administradores.
 // ============================================================================
@@ -21,7 +21,7 @@ datasource db {
 
 enum ProductSource {
   LOCAL
-  MOVALIA
+  MIRAVIA
   AMAZON
 }
 
@@ -61,7 +61,7 @@ enum Gender {
 
 enum ImportSource {
   XLSX
-  MOVALIA
+  MIRAVIA
   AMAZON
 }
 
@@ -90,15 +90,15 @@ model Product {
   category     Category      @relation(fields: [categoryId], references: [id])
 
   source       ProductSource @default(LOCAL)
-  externalId   String?       // "pricat:030501", ASIN, ID Movalia
+  externalId   String?       // "pricat:030501", ASIN, ID Miravia
   externalUrl  String?       // URL afiliado Amazon o URL ficha proveedor
   modelCode    String?       // "M24205"
-  colorName    String        @default("Único")
+  colorName    String        @default("Ãšnico")
   colorHex     String?
 
   gender       Gender        @default(NO_ESPECIFICADO)
-  sportUse     String?       // "Montañismo/Trekking/Escalada"
-  composition  String?       // "Poliéster 100%"
+  sportUse     String?       // "MontaÃ±ismo/Trekking/Escalada"
+  composition  String?       // "PoliÃ©ster 100%"
 
   costPrice    Decimal?      @db.Decimal(10, 2)
   retailPrice  Decimal       @db.Decimal(10, 2)
@@ -146,7 +146,7 @@ model ProductImage {
   width       Int?
   height      Int?
   blurDataUrl String?                                // LQIP base64
-  source      String?                                // "upload" | "url-external" | "amazon" | "movalia"
+  source      String?                                // "upload" | "url-external" | "amazon" | "miravia"
   originalUrl String?                                // URL de origen si vino de fuera
   createdAt   DateTime @default(now())
 
@@ -157,7 +157,7 @@ model ProductSize {
   id          String   @id @default(cuid())
   productId   String
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  size        String                                // "M", "L", "42", "8", "ÚNICA"
+  size        String                                // "M", "L", "42", "8", "ÃšNICA"
   ean         String?                                // EAN-13 del SKU final
   stock       Int      @default(0)
   costPrice   Decimal? @db.Decimal(10, 2)
@@ -181,7 +181,7 @@ model ProductAudit {
 }
 
 // ----------------------------------------------------------------------------
-// Taxonomía
+// TaxonomÃ­a
 // ----------------------------------------------------------------------------
 
 model Brand {

@@ -6,24 +6,24 @@ import { Card } from "@/components/ui/card";
 import { Loader2, FlaskConical, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-export function MovaliaImportClient({ enabled }: { enabled: boolean }) {
+export function MiraviaImportClient({ enabled }: { enabled: boolean }) {
   const [running, setRunning] = React.useState<"dry" | "real" | null>(null);
 
   async function trigger(mode: "dry" | "real") {
     setRunning(mode);
     try {
-      const res = await fetch("/api/import/movalia", {
+      const res = await fetch("/api/import/miravia", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ dryRun: mode === "dry" }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        toast.error(json.error || "Error en sincronización");
+        toast.error(json.error || "Error en sincronizaciÃ³n");
         return;
       }
       toast.success(
-        `Sync ${mode === "dry" ? "(dry-run)" : ""} OK — ${json.result.total} total, ${json.result.created} nuevos, ${json.result.updated} actualizados, ${json.result.errors} errores`,
+        `Sync ${mode === "dry" ? "(dry-run)" : ""} OK â€” ${json.result.total} total, ${json.result.created} nuevos, ${json.result.updated} actualizados, ${json.result.errors} errores`,
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error desconocido");
@@ -35,7 +35,7 @@ export function MovaliaImportClient({ enabled }: { enabled: boolean }) {
   return (
     <Card className="space-y-4 p-4">
       <p className="text-sm text-zs-muted">
-        El sync recorre el feed configurado en <code>MOVALIA_FEED_URL</code> y
+        El sync recorre el feed configurado en <code>MIRAVIA_FEED_URL</code> y
         aplica upsert por <code>externalId</code>. Es idempotente: puedes
         ejecutarlo varias veces sin duplicar productos.
       </p>

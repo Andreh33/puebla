@@ -176,7 +176,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     description: initial?.description ?? null,
     brandId: initial?.brandId ?? "",
     categoryId: initial?.categoryId ?? "",
-    source: (initial?.source as "LOCAL" | "MOVALIA" | "AMAZON") ?? "LOCAL",
+    source: (initial?.source as "LOCAL" | "MIRAVIA" | "AMAZON") ?? "LOCAL",
     externalId: initial?.externalId ?? null,
     externalUrl: initial?.externalUrl ?? null,
     modelCode: initial?.modelCode ?? null,
@@ -873,7 +873,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 <div className="mt-2 flex flex-wrap gap-3">
                   {[
                     { value: "LOCAL", label: "Local" },
-                    { value: "MOVALIA", label: "Movalia" },
+                    { value: "MIRAVIA", label: "Miravia" },
                     { value: "AMAZON", label: "Amazon" },
                   ].map((s) => (
                     <label key={s.value} className="flex items-center gap-2 text-sm">
@@ -899,7 +899,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   <Input
                     id="externalId"
                     {...register("externalId")}
-                    placeholder="ASIN / pricat:030501 / movalia-id"
+                    placeholder="ASIN / pricat:030501 / miravia-id"
                   />
                 </div>
                 <div>

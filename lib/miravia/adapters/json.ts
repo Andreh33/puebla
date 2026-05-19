@@ -1,12 +1,12 @@
 /**
- * Adaptador JSON para Movalia. Espera un array de items con la forma de
- * MovaliaItem (los campos opcionales pueden faltar) o un objeto con `items`.
+ * Adaptador JSON para Miravia. Espera un array de items con la forma de
+ * MiraviaItem (los campos opcionales pueden faltar) o un objeto con `items`.
  */
 
 import { readFile } from "node:fs/promises";
-import type { MovaliaItem, MovaliaProvider, MovaliaItemSize } from "../provider";
+import type { MiraviaItem, MiraviaProvider, MiraviaItemSize } from "../provider";
 
-export interface MovaliaJsonOptions {
+export interface MiraviaJsonOptions {
   source: string;
 }
 
@@ -19,14 +19,14 @@ async function readSource(source: string): Promise<string> {
   return readFile(source, "utf-8");
 }
 
-function coerce(it: Record<string, unknown>): MovaliaItem | null {
+function coerce(it: Record<string, unknown>): MiraviaItem | null {
   const externalId = String(it.externalId ?? it.id ?? "").trim();
   const name = String(it.name ?? "").trim();
   const retail = Number(it.retailPrice ?? it.price ?? 0);
   if (!externalId || !name || !Number.isFinite(retail)) return null;
 
   const sizesRaw = Array.isArray(it.sizes) ? it.sizes : [];
-  const sizes: MovaliaItemSize[] = [];
+  const sizes: MiraviaItemSize[] = [];
   for (const s of sizesRaw) {
     if (!s || typeof s !== "object") continue;
     const o = s as Record<string, unknown>;
@@ -49,8 +49,8 @@ function coerce(it: Record<string, unknown>): MovaliaItem | null {
     name,
     description: it.description ? String(it.description) : undefined,
     brand: String(it.brand ?? "Sin Marca"),
-    category: String(it.category ?? "Sin Categoría"),
-    colorName: String(it.colorName ?? "Único"),
+    category: String(it.category ?? "Sin CategorÃ­a"),
+    colorName: String(it.colorName ?? "Ãšnico"),
     colorHex: it.colorHex ? String(it.colorHex) : undefined,
     gender: it.gender ? String(it.gender) : undefined,
     composition: it.composition ? String(it.composition) : undefined,
@@ -64,10 +64,10 @@ function coerce(it: Record<string, unknown>): MovaliaItem | null {
   };
 }
 
-export function createMovaliaJsonProvider(opts: MovaliaJsonOptions): MovaliaProvider {
+export function createMiraviaJsonProvider(opts: MiraviaJsonOptions): MiraviaProvider {
   return {
-    name: `movalia-json:${opts.source}`,
-    async *fetchCatalog(): AsyncIterable<MovaliaItem> {
+    name: `miravia-json:${opts.source}`,
+    async *fetchCatalog(): AsyncIterable<MiraviaItem> {
       const text = await readSource(opts.source);
       const parsed = JSON.parse(text);
       const items: unknown[] = Array.isArray(parsed)

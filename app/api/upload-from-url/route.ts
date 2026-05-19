@@ -1,14 +1,14 @@
 /**
  * POST /api/upload-from-url
  *
- * Ingesta una imagen desde una URL externa (ej: Amazon, Movalia, johnsmith).
+ * Ingesta una imagen desde una URL externa (ej: Amazon, Miravia, johnsmith).
  * Body JSON: { url: string, alt: string, productId?: string, type?: "product"|"blog"|"brand"|"category" }
  *
  * Seguridad:
- *   - Sesión admin.
+ *   - SesiÃ³n admin.
  *   - Rate limit 50/h por usuario.
  *   - Allowlist de dominios.
- *   - Timeout fetch 10s, máximo 10 MB.
+ *   - Timeout fetch 10s, mÃ¡ximo 10 MB.
  *   - Content-type real validado por magic bytes.
  */
 import { NextResponse, type NextRequest } from "next/server";
@@ -36,10 +36,10 @@ const ALLOWED_HOSTS = new Set<string>([
   "johnsmith-sport.com",
   "www.mas8000.com",
   "mas8000.com",
-  "shop.movalia.com",
-  "movalia.com",
-  "www.movalia.com",
-  // Mayorista oficial John Smith / +8000 — fuente de imágenes del PRICAT.
+  "shop.miravia.com",
+  "miravia.com",
+  "www.miravia.com",
+  // Mayorista oficial John Smith / +8000 â€” fuente de imÃ¡genes del PRICAT.
   "www.aguirreycia.es",
   "aguirreycia.es",
 ]);
@@ -82,7 +82,7 @@ async function fetchBoundedBytes(url: string): Promise<Buffer> {
       signal: ctrl.signal,
       redirect: "follow",
       headers: {
-        // User-Agent realista — algunos CDNs bloquean fetch sin UA.
+        // User-Agent realista â€” algunos CDNs bloquean fetch sin UA.
         "User-Agent":
           "Mozilla/5.0 (compatible; ZonaSportBot/1.0; +https://zonasport.es)",
         Accept: "image/*",
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
+    return NextResponse.json({ error: "JSON invÃ¡lido" }, { status: 400 });
   }
 
   const urlStr = String(body.url ?? "").trim();
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
   try {
     parsed = new URL(urlStr);
   } catch {
-    return NextResponse.json({ error: "URL inválida" }, { status: 400 });
+    return NextResponse.json({ error: "URL invÃ¡lida" }, { status: 400 });
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     return NextResponse.json({ error: "Protocolo no permitido" }, { status: 400 });
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
   const realMime = detectMime(buffer);
   if (!realMime) {
     return NextResponse.json(
-      { error: "El contenido no parece ser una imagen válida" },
+      { error: "El contenido no parece ser una imagen vÃ¡lida" },
       { status: 400 },
     );
   }
@@ -198,8 +198,8 @@ export async function POST(req: NextRequest) {
         alt,
         sourceType: parsed.hostname.includes("amazon")
           ? "amazon"
-          : parsed.hostname.includes("movalia")
-            ? "movalia"
+          : parsed.hostname.includes("miravia")
+            ? "miravia"
             : "url-external",
         originalUrl: parsed.toString(),
       });

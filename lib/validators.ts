@@ -5,8 +5,8 @@ import { z } from "zod";
 // ---------------------------------------------------------------------------
 
 export const LoginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  email: z.string().email("Email invÃ¡lido"),
+  password: z.string().min(8, "MÃ­nimo 8 caracteres"),
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
@@ -17,17 +17,17 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 
 export const LeadSchema = z.object({
   name: z.string().min(2, "Nombre requerido").max(100),
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Email invÃ¡lido"),
   phone: z
     .string()
     .trim()
     .optional()
-    .refine((v) => !v || /^[\d\s+()-]{7,20}$/.test(v), "Teléfono inválido"),
+    .refine((v) => !v || /^[\d\s+()-]{7,20}$/.test(v), "TelÃ©fono invÃ¡lido"),
   message: z.string().min(10, "Mensaje demasiado breve").max(2000),
   sourcePage: z.string().optional(),
   productId: z.string().optional(),
   gdprConsent: z.literal(true, {
-    errorMap: () => ({ message: "Debes aceptar la política de privacidad" }),
+    errorMap: () => ({ message: "Debes aceptar la polÃ­tica de privacidad" }),
   }),
   // Honeypot anti-spam
   website: z.string().max(0, "Spam detectado").optional(),
@@ -40,10 +40,10 @@ export type LeadInput = z.infer<typeof LeadSchema>;
 // ---------------------------------------------------------------------------
 
 export const NewsletterSchema = z.object({
-  email: z.string().email("Email inválido"),
+  email: z.string().email("Email invÃ¡lido"),
   source: z.string().optional(),
   gdprConsent: z.literal(true, {
-    errorMap: () => ({ message: "Debes aceptar la política de privacidad" }),
+    errorMap: () => ({ message: "Debes aceptar la polÃ­tica de privacidad" }),
   }),
 });
 
@@ -59,19 +59,19 @@ export const ProductSchema = z.object({
     .string()
     .min(3)
     .max(200)
-    .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
+    .regex(/^[a-z0-9-]+$/, "Solo minÃºsculas, nÃºmeros y guiones"),
   shortName: z.string().max(120).optional().nullable(),
   description: z.string().max(20000).optional().nullable(),
   brandId: z.string().cuid(),
   categoryId: z.string().cuid(),
-  source: z.enum(["LOCAL", "MOVALIA", "AMAZON"]).default("LOCAL"),
+  source: z.enum(["LOCAL", "MIRAVIA", "AMAZON"]).default("LOCAL"),
   externalId: z.string().optional().nullable(),
   externalUrl: z.string().url().optional().nullable().or(z.literal("")),
   modelCode: z.string().max(60).optional().nullable(),
   colorName: z.string().min(1).max(60),
   colorHex: z
     .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Color hex inválido")
+    .regex(/^#[0-9a-fA-F]{6}$/, "Color hex invÃ¡lido")
     .optional()
     .nullable()
     .or(z.literal("")),
@@ -98,7 +98,7 @@ export const ProductSizeSchema = z.object({
   size: z.string().min(1).max(20),
   ean: z
     .string()
-    .regex(/^\d{8,14}$/, "EAN inválido (8-14 dígitos)")
+    .regex(/^\d{8,14}$/, "EAN invÃ¡lido (8-14 dÃ­gitos)")
     .optional()
     .nullable()
     .or(z.literal("")),
@@ -117,7 +117,7 @@ export const BlogPostSchema = z.object({
     .string()
     .min(3)
     .max(200)
-    .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
+    .regex(/^[a-z0-9-]+$/, "Solo minÃºsculas, nÃºmeros y guiones"),
   excerpt: z.string().max(500).optional().nullable(),
   contentMd: z.string().min(50, "Contenido demasiado breve").max(100000),
   coverImageUrl: z.string().url().optional().nullable().or(z.literal("")),

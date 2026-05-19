@@ -5,8 +5,8 @@ import { join } from "node:path";
 import {
   parseCsvLine,
   parseCsvText,
-  createMovaliaCsvProvider,
-} from "@/lib/movalia/adapters/csv";
+  createMiraviaCsvProvider,
+} from "@/lib/miravia/adapters/csv";
 
 describe("parseCsvLine", () => {
   it("separa por coma respetando comillas dobles", () => {
@@ -14,7 +14,7 @@ describe("parseCsvLine", () => {
   });
 
   it("interpreta '' dentro de comillas como '\"' literal", () => {
-    expect(parseCsvLine('"él dijo ""hola""",ok', ",")).toEqual(['él dijo "hola"', "ok"]);
+    expect(parseCsvLine('"Ã©l dijo ""hola""",ok', ",")).toEqual(['Ã©l dijo "hola"', "ok"]);
   });
 
   it("soporta punto y coma como separador", () => {
@@ -33,27 +33,27 @@ describe("parseCsvText", () => {
     ]);
   });
 
-  it("respeta saltos de línea dentro de comillas", () => {
-    const text = 'a,b\n"línea1\nlínea2",ok\n';
+  it("respeta saltos de lÃ­nea dentro de comillas", () => {
+    const text = 'a,b\n"lÃ­nea1\nlÃ­nea2",ok\n';
     const r = parseCsvText(text, ",");
     expect(r.rows).toHaveLength(1);
-    expect(r.rows[0]!.a).toContain("línea1");
-    expect(r.rows[0]!.a).toContain("línea2");
+    expect(r.rows[0]!.a).toContain("lÃ­nea1");
+    expect(r.rows[0]!.a).toContain("lÃ­nea2");
   });
 });
 
-describe("createMovaliaCsvProvider", () => {
-  it("agrupa filas por externalId y construye MovaliaItem", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "movalia-csv-"));
+describe("createMiraviaCsvProvider", () => {
+  it("agrupa filas por externalId y construye MiraviaItem", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "miravia-csv-"));
     const path = join(dir, "feed.csv");
     const csv =
       "externalId,name,brand,category,colorName,retailPrice,size,ean,stock,imageUrl\n" +
-      'MV001,Camiseta Running,Adidas,Running,Negro,"21,99",M,1234567890123,5,https://shop.movalia.com/img/a.jpg\n' +
-      'MV001,Camiseta Running,Adidas,Running,Negro,"21,99",L,1234567890124,3,https://shop.movalia.com/img/a.jpg\n' +
-      'MV002,Pantalón Trekking,Salomon,Montaña,Verde,"45,00",42,,2,\n';
+      'MV001,Camiseta Running,Adidas,Running,Negro,"21,99",M,1234567890123,5,https://shop.miravia.com/img/a.jpg\n' +
+      'MV001,Camiseta Running,Adidas,Running,Negro,"21,99",L,1234567890124,3,https://shop.miravia.com/img/a.jpg\n' +
+      'MV002,PantalÃ³n Trekking,Salomon,MontaÃ±a,Verde,"45,00",42,,2,\n';
     await writeFile(path, csv, "utf-8");
 
-    const provider = createMovaliaCsvProvider({ source: path });
+    const provider = createMiraviaCsvProvider({ source: path });
     const items = [];
     for await (const it of provider.fetchCatalog()) items.push(it);
 
@@ -72,31 +72,31 @@ describe("createMovaliaCsvProvider", () => {
   });
 
   it("auto-detecta separador `;`", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "movalia-csv2-"));
+    const dir = await mkdtemp(join(tmpdir(), "miravia-csv2-"));
     const path = join(dir, "feed.csv");
     const csv =
       "externalId;name;brand;category;colorName;retailPrice;size\n" +
       "X1;Producto X;MarcaY;CatZ;Rojo;9,90;UNICA\n";
     await writeFile(path, csv, "utf-8");
 
-    const provider = createMovaliaCsvProvider({ source: path });
+    const provider = createMiraviaCsvProvider({ source: path });
     const items = [];
     for await (const it of provider.fetchCatalog()) items.push(it);
     expect(items).toHaveLength(1);
     expect(items[0]!.name).toBe("Producto X");
-    // talla ÚNICA se normaliza a "" (no se añade a sizes)
+    // talla ÃšNICA se normaliza a "" (no se aÃ±ade a sizes)
     expect(items[0]!.sizes).toHaveLength(0);
   });
 
   it("aplica mapping de campos custom", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "movalia-csv3-"));
+    const dir = await mkdtemp(join(tmpdir(), "miravia-csv3-"));
     const path = join(dir, "feed.csv");
     const csv =
       "id,nombre,marca,categoria,color,pvp,talla\n" +
       "AA,producto A,marca A,cat A,Rojo,10,UNICA\n";
     await writeFile(path, csv, "utf-8");
 
-    const provider = createMovaliaCsvProvider({
+    const provider = createMiraviaCsvProvider({
       source: path,
       mapping: {
         id: "externalId",

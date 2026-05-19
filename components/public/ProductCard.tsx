@@ -15,7 +15,7 @@ export type ProductCardProduct = {
   mainImageUrl?: string | null;
   retailPrice: number | string;
   salePrice?: number | string | null;
-  source?: "LOCAL" | "MOVALIA" | "AMAZON" | null;
+  source?: "LOCAL" | "MIRAVIA" | "AMAZON" | null;
   brand?: { name: string; slug?: string | null } | null;
   blurDataUrl?: string | null;
 };
@@ -43,13 +43,13 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
         className,
       )}
-      aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
+      aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} Â· ${formatPriceEUR(final.toNumber())}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zs-surface">
         {product.mainImageUrl ? (
           <Image
             src={product.mainImageUrl}
-            alt={`${title}${product.colorName ? ` — color ${product.colorName}` : ""}`}
+            alt={`${title}${product.colorName ? ` â€” color ${product.colorName}` : ""}`}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
             sizes={sizes ?? "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"}
@@ -92,7 +92,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         <p className="line-clamp-2 text-sm font-semibold text-zs-ink group-hover:text-zs-blue-700">
           {title}
         </p>
-        {product.colorName && product.colorName !== "Único" && (
+        {product.colorName && product.colorName !== "Ãšnico" && (
           <p className="text-xs text-zs-muted">{product.colorName}</p>
         )}
         <div className="flex items-baseline gap-2 pt-1">
@@ -106,9 +106,9 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
           )}
         </div>
       </div>
-      {/* Tilt 3D sutil — sólo se aplica en pointer fino (desktop), no marea.
+      {/* Tilt 3D sutil â€” sÃ³lo se aplica en pointer fino (desktop), no marea.
           Definido inline para no contaminar globals con un selector demasiado
-          específico; sólo este componente lo activa. */}
+          especÃ­fico; sÃ³lo este componente lo activa. */}
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           .zs-tilt { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease, translate 600ms ease; }

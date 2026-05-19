@@ -1,6 +1,6 @@
 /**
- * Página /admin/importar/historial — tabla con los últimos 50 ImportJob
- * de cualquier source (XLSX, MOVALIA, AMAZON).
+ * PÃ¡gina /admin/importar/historial â€” tabla con los Ãºltimos 50 ImportJob
+ * de cualquier source (XLSX, MIRAVIA, AMAZON).
  */
 
 import Link from "next/link";
@@ -32,7 +32,7 @@ function sourceBadge(src: string) {
   const tones: Record<string, "default" | "amazon" | "outline"> = {
     XLSX: "default",
     AMAZON: "amazon",
-    MOVALIA: "outline",
+    MIRAVIA: "outline",
   };
   return <Badge variant={tones[src] ?? "outline"}>{src}</Badge>;
 }
@@ -62,7 +62,7 @@ export default async function ImportHistoryPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Historial de importaciones"
-        description="Últimos 50 jobs de importación de catálogo (PRICAT, Movalia y Amazon)."
+        description="Ãšltimos 50 jobs de importaciÃ³n de catÃ¡logo (PRICAT, Miravia y Amazon)."
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Importar" },
@@ -74,12 +74,12 @@ export default async function ImportHistoryPage() {
         <CardContent className="p-0">
           {jobs.length === 0 ? (
             <div className="p-10 text-center text-sm text-zs-muted">
-              Aún no se ha lanzado ninguna importación.{" "}
+              AÃºn no se ha lanzado ninguna importaciÃ³n.{" "}
               <Link
                 href="/admin/importar/xlsx"
                 className="font-semibold text-zs-blue-700 hover:text-zs-red-600"
               >
-                Empezar →
+                Empezar â†’
               </Link>
             </div>
           ) : (
@@ -104,9 +104,9 @@ export default async function ImportHistoryPage() {
                   {jobs.map((j) => (
                     <tr key={j.id} className="hover:bg-zs-surface/60">
                       <td className="px-4 py-3">{sourceBadge(j.source)}</td>
-                      <td className="px-4 py-3 text-zs-ink">{j.fileName ?? "—"}</td>
+                      <td className="px-4 py-3 text-zs-ink">{j.fileName ?? "â€”"}</td>
                       <td className="px-4 py-3">{statusBadge(j.status)}</td>
-                      <td className="px-4 py-3 text-xs text-zs-muted">{j.mode ?? "—"}</td>
+                      <td className="px-4 py-3 text-xs text-zs-muted">{j.mode ?? "â€”"}</td>
                       <td className="px-4 py-3 text-right tabular-nums">
                         {j.processedRows}/{j.totalRows}
                       </td>
@@ -123,7 +123,7 @@ export default async function ImportHistoryPage() {
                         {formatDateTimeES(j.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-xs text-zs-muted">
-                        {j.finishedAt ? formatDateTimeES(j.finishedAt) : "—"}
+                        {j.finishedAt ? formatDateTimeES(j.finishedAt) : "â€”"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {j.errorRows > 0 && (

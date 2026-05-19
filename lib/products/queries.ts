@@ -1,7 +1,7 @@
 import "server-only";
 import { db, type Prisma } from "@/lib/db";
 
-export type ProductSourceFilter = "LOCAL" | "MOVALIA" | "AMAZON";
+export type ProductSourceFilter = "LOCAL" | "MIRAVIA" | "AMAZON";
 export type ProductStatusFilter = "DRAFT" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK";
 export type GenderFilter =
   | "HOMBRE"

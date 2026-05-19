@@ -1,12 +1,12 @@
-# Conectores externos · Zona Sport
+# Conectores externos Â· Zona Sport
 
-Este documento describe los conectores que pueblan el catálogo desde fuentes
-externas. Hay dos: **Amazon** (afiliados, PA-API 5.0) y **Movalia** (feed de
+Este documento describe los conectores que pueblan el catÃ¡logo desde fuentes
+externas. Hay dos: **Amazon** (afiliados, PA-API 5.0) y **Miravia** (feed de
 proveedor en CSV/JSON/XML).
 
-Ambos están construidos como _stubs funcionales_: el código está completo y
+Ambos estÃ¡n construidos como _stubs funcionales_: el cÃ³digo estÃ¡ completo y
 testado, pero permanecen desactivados hasta que se rellenen las variables de
-entorno correspondientes. Hasta entonces, las páginas del admin muestran un
+entorno correspondientes. Hasta entonces, las pÃ¡ginas del admin muestran un
 aviso amarillo con instrucciones y los crons hacen un `skipped: true` en vez
 de romper el deploy.
 
@@ -19,33 +19,33 @@ productos con `source = AMAZON` y `externalId = ASIN`.
 
 ### Variables de entorno
 
-| Nombre                  | Obligatoria | Por defecto                | Descripción                                |
+| Nombre                  | Obligatoria | Por defecto                | DescripciÃ³n                                |
 | ----------------------- | ----------- | -------------------------- | ------------------------------------------ |
-| `AMAZON_ENABLED`        | sí          | —                          | Pon a `true` para habilitar admin + crons. |
-| `AMAZON_ACCESS_KEY`     | sí          | —                          | Access Key de PA-API 5.0.                  |
-| `AMAZON_SECRET_KEY`     | sí          | —                          | Secret Key de PA-API 5.0.                  |
-| `AMAZON_ASSOCIATE_TAG`  | sí          | —                          | Tag de afiliados, ej. `zonasport-21`.      |
+| `AMAZON_ENABLED`        | sÃ­          | â€”                          | Pon a `true` para habilitar admin + crons. |
+| `AMAZON_ACCESS_KEY`     | sÃ­          | â€”                          | Access Key de PA-API 5.0.                  |
+| `AMAZON_SECRET_KEY`     | sÃ­          | â€”                          | Secret Key de PA-API 5.0.                  |
+| `AMAZON_ASSOCIATE_TAG`  | sÃ­          | â€”                          | Tag de afiliados, ej. `zonasport-21`.      |
 | `AMAZON_HOST`           | no          | `webservices.amazon.es`    | Endpoint regional.                         |
-| `AMAZON_REGION`         | no          | `eu-west-1`                | Región AWS para firmar la petición.        |
-| `AMAZON_MARKETPLACE`    | no          | `www.amazon.es`            | Dominio público (para URLs de afiliado).   |
+| `AMAZON_REGION`         | no          | `eu-west-1`                | RegiÃ³n AWS para firmar la peticiÃ³n.        |
+| `AMAZON_MARKETPLACE`    | no          | `www.amazon.es`            | Dominio pÃºblico (para URLs de afiliado).   |
 
-### Endpoints / páginas
+### Endpoints / pÃ¡ginas
 
-- `GET /admin/importar/amazon` — UI con input ASIN/URL y modo bulk (máx. 10).
-- `POST /api/import/amazon/preview` — devuelve preview sin tocar DB.
-- `POST /api/import/amazon` — crea/actualiza productos (`source=AMAZON`).
-- `GET  /api/cron/refresh-amazon` — cron nocturno (4:00 UTC) que refresca
+- `GET /admin/importar/amazon` â€” UI con input ASIN/URL y modo bulk (mÃ¡x. 10).
+- `POST /api/import/amazon/preview` â€” devuelve preview sin tocar DB.
+- `POST /api/import/amazon` â€” crea/actualiza productos (`source=AMAZON`).
+- `GET  /api/cron/refresh-amazon` â€” cron nocturno (4:00 UTC) que refresca
   precio y disponibilidad en bloques de 10 ASIN.
 
-### Cómo activar
+### CÃ³mo activar
 
-1. Date de alta en Amazon Associates España.
-2. En PA-API, genera credenciales (asegúrate de tener ventas recientes — si no,
+1. Date de alta en Amazon Associates EspaÃ±a.
+2. En PA-API, genera credenciales (asegÃºrate de tener ventas recientes â€” si no,
    los endpoints devuelven `RequestThrottled`).
-3. Configura las variables en Vercel (Project → Settings → Environment).
+3. Configura las variables en Vercel (Project â†’ Settings â†’ Environment).
 4. Marca `AMAZON_ENABLED=true`.
 
-### Cómo probar localmente
+### CÃ³mo probar localmente
 
 ```bash
 export AMAZON_ENABLED=true
@@ -55,62 +55,62 @@ export AMAZON_ASSOCIATE_TAG=zonasport-21
 npm run dev
 ```
 
-Luego abre `/admin/importar/amazon` con sesión admin y prueba con un ASIN
+Luego abre `/admin/importar/amazon` con sesiÃ³n admin y prueba con un ASIN
 de un producto que sepas que existe (por ejemplo `B0DGHWX7TS`).
 
 ### Rate limiting
 
-PA-API limita a **1 request/segundo** por cliente. El módulo
+PA-API limita a **1 request/segundo** por cliente. El mÃ³dulo
 `lib/amazon/paapi-client.ts` implementa una cola interna (`TpsQueue`) que
-serializa todas las llamadas — no necesitas preocuparte por eso. Los lotes
-grandes se procesarán secuencialmente.
+serializa todas las llamadas â€” no necesitas preocuparte por eso. Los lotes
+grandes se procesarÃ¡n secuencialmente.
 
 ---
 
-## Movalia (proveedor de moda deportiva)
+## Miravia (proveedor de moda deportiva)
 
-Sincroniza el catálogo completo de Movalia. La fuente es un fichero (CSV,
-JSON o XML) — la URL la negocia el proveedor.
+Sincroniza el catÃ¡logo completo de Miravia. La fuente es un fichero (CSV,
+JSON o XML) â€” la URL la negocia el proveedor.
 
 ### Variables de entorno
 
-| Nombre                | Obligatoria | Por defecto | Descripción                                              |
+| Nombre                | Obligatoria | Por defecto | DescripciÃ³n                                              |
 | --------------------- | ----------- | ----------- | -------------------------------------------------------- |
-| `MOVALIA_ENABLED`     | sí          | —           | Pon a `true` para habilitar admin + crons.               |
-| `MOVALIA_FEED_URL`    | sí          | —           | URL HTTPS o path local del fichero.                      |
-| `MOVALIA_FEED_FORMAT` | no          | `csv`       | `csv` / `json` / `xml`.                                  |
-| `MOVALIA_INTERNAL_URL` | no         | `NEXT_PUBLIC_SITE_URL` | Base URL para llamar a `/api/upload-from-url` desde el cron. |
+| `MIRAVIA_ENABLED`     | sÃ­          | â€”           | Pon a `true` para habilitar admin + crons.               |
+| `MIRAVIA_FEED_URL`    | sÃ­          | â€”           | URL HTTPS o path local del fichero.                      |
+| `MIRAVIA_FEED_FORMAT` | no          | `csv`       | `csv` / `json` / `xml`.                                  |
+| `MIRAVIA_INTERNAL_URL` | no         | `NEXT_PUBLIC_SITE_URL` | Base URL para llamar a `/api/upload-from-url` desde el cron. |
 
-### Endpoints / páginas
+### Endpoints / pÃ¡ginas
 
-- `GET  /admin/importar/movalia` — UI con botones "Dry run" y "Sincronizar".
-- `POST /api/import/movalia` — dispara `runMovaliaSync()`.
-- `GET  /api/cron/refresh-movalia` — cron nocturno (5:00 UTC).
+- `GET  /admin/importar/miravia` â€” UI con botones "Dry run" y "Sincronizar".
+- `POST /api/import/miravia` â€” dispara `runMiraviaSync()`.
+- `GET  /api/cron/refresh-miravia` â€” cron nocturno (5:00 UTC).
 
 ### Adaptadores
 
-- `lib/movalia/adapters/csv.ts` — parser CSV propio (sin dependencias), soporta
+- `lib/miravia/adapters/csv.ts` â€” parser CSV propio (sin dependencias), soporta
   separadores `,` y `;`, encoding UTF-8 y Latin-1, escapado de comillas. El
-  mapping de columnas se configura en el Setting `movalia.csvMapping` como
+  mapping de columnas se configura en el Setting `miravia.csvMapping` como
   `Record<sourceField, targetField>`.
-- `lib/movalia/adapters/json.ts` — JSON.parse + coerción.
-- `lib/movalia/adapters/xml.ts` — **esqueleto** (TODO: instalar
+- `lib/miravia/adapters/json.ts` â€” JSON.parse + coerciÃ³n.
+- `lib/miravia/adapters/xml.ts` â€” **esqueleto** (TODO: instalar
   `fast-xml-parser` y completar cuando recibamos el primer feed XML real).
 
 ### "1 color = 1 producto"
 
-La sincronización agrupa por `externalId`. Si el feed devuelve un mismo
+La sincronizaciÃ³n agrupa por `externalId`. Si el feed devuelve un mismo
 producto con varios colores en filas separadas, cada color genera un Product
-distinto con su propio slug y galería. Si los agrupa en una sola fila, hay
-que desnormalizar en el adapter — por defecto el CSV asume "una fila por
+distinto con su propio slug y galerÃ­a. Si los agrupa en una sola fila, hay
+que desnormalizar en el adapter â€” por defecto el CSV asume "una fila por
 talla, un externalId por color".
 
-### Cómo probar localmente
+### CÃ³mo probar localmente
 
 Genera un CSV de prueba:
 
 ```bash
-cat > /tmp/movalia-fake.csv <<EOF
+cat > /tmp/miravia-fake.csv <<EOF
 externalId,name,brand,category,colorName,retailPrice,size,ean,stock,imageUrl
 MV001,Camiseta Run,Adidas,Running,Negro,21.99,M,1234567890123,5,
 MV001,Camiseta Run,Adidas,Running,Negro,21.99,L,1234567890124,3,
@@ -118,13 +118,13 @@ EOF
 ```
 
 ```bash
-export MOVALIA_ENABLED=true
-export MOVALIA_FEED_URL=/tmp/movalia-fake.csv
-export MOVALIA_FEED_FORMAT=csv
+export MIRAVIA_ENABLED=true
+export MIRAVIA_FEED_URL=/tmp/miravia-fake.csv
+export MIRAVIA_FEED_FORMAT=csv
 npm run dev
 ```
 
-Y dispara desde `/admin/importar/movalia → Dry run` para verificar que
+Y dispara desde `/admin/importar/miravia â†’ Dry run` para verificar que
 todo se interpreta bien antes de escribir.
 
 ---
@@ -133,25 +133,25 @@ todo se interpreta bien antes de escribir.
 
 Configurados en `vercel.json`:
 
-| Cron                          | Horario UTC | Descripción                                                |
+| Cron                          | Horario UTC | DescripciÃ³n                                                |
 | ----------------------------- | ----------- | ---------------------------------------------------------- |
 | `/api/cron/refresh-amazon`    | 04:00       | Refresca precio + disponibilidad de productos `AMAZON`.    |
-| `/api/cron/refresh-movalia`   | 05:00       | Re-sincroniza Movalia.                                     |
-| `/api/cron/blob-garbage-collect` | 03:00 (dom) | Lista huérfanos en Vercel Blob.                         |
+| `/api/cron/refresh-miravia`   | 05:00       | Re-sincroniza Miravia.                                     |
+| `/api/cron/blob-garbage-collect` | 03:00 (dom) | Lista huÃ©rfanos en Vercel Blob.                         |
 | `/api/cron/sitemap-revalidate` | 06:00       | `revalidateTag("sitemap")` para regenerar sitemap/robots.  |
 
 Todos requieren header `Authorization: Bearer ${CRON_SECRET}`. Vercel inyecta
-ese header automáticamente cuando configures la variable `CRON_SECRET`.
+ese header automÃ¡ticamente cuando configures la variable `CRON_SECRET`.
 
 ---
 
 ## Resend (transactional emails)
 
-| Nombre                      | Obligatoria | Descripción                                  |
+| Nombre                      | Obligatoria | DescripciÃ³n                                  |
 | --------------------------- | ----------- | -------------------------------------------- |
 | `RESEND_API_KEY`            | no          | Sin esto, los emails se loguean y se omiten. |
 | `RESEND_FROM`               | no          | Por defecto `Zona Sport <noreply@zonasport.es>`. |
-| `ADMIN_NOTIFICATION_EMAIL`  | no          | Dónde llegan los avisos de leads nuevos.    |
+| `ADMIN_NOTIFICATION_EMAIL`  | no          | DÃ³nde llegan los avisos de leads nuevos.    |
 
-Los flujos que envían email son `/api/leads`, `/api/newsletter` y
-`/api/privacy/request`. Todos toleran que Resend no esté configurado.
+Los flujos que envÃ­an email son `/api/leads`, `/api/newsletter` y
+`/api/privacy/request`. Todos toleran que Resend no estÃ© configurado.

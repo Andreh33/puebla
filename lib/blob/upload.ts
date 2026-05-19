@@ -2,14 +2,14 @@
  * Pipeline de subida a Vercel Blob.
  *
  * Flujo:
- *   1. Buffer crudo →
- *   2. sharp procesa 3 variantes (WebP) + LQIP →
- *   3. Sube las 3 a Vercel Blob bajo path determinístico →
+ *   1. Buffer crudo â†’
+ *   2. sharp procesa 3 variantes (WebP) + LQIP â†’
+ *   3. Sube las 3 a Vercel Blob bajo path determinÃ­stico â†’
  *   4. (Opcional) Crea registro ProductImage en DB.
  *
  * Requisitos:
  *   - BLOB_READ_WRITE_TOKEN debe estar configurado.
- *   - En entornos sin token, fallamos rápido y claro.
+ *   - En entornos sin token, fallamos rÃ¡pido y claro.
  */
 import { randomUUID } from "node:crypto";
 import { put } from "@vercel/blob";
@@ -23,7 +23,7 @@ import {
 export class BlobConfigError extends Error {
   constructor() {
     super(
-      "Vercel Blob no configurado — añade BLOB_READ_WRITE_TOKEN a .env.local. " +
+      "Vercel Blob no configurado â€” aÃ±ade BLOB_READ_WRITE_TOKEN a .env.local. " +
         "El pipeline no guarda en disco como fallback.",
     );
     this.name = "BlobConfigError";
@@ -44,7 +44,7 @@ function assertBlobConfigured(): string {
 }
 
 export type UploadProductResult = {
-  id: string | null; // null si no se creó registro en DB
+  id: string | null; // null si no se creÃ³ registro en DB
   url: string;        // large
   urlMedium: string;
   urlThumb: string;
@@ -75,7 +75,7 @@ export async function uploadProductImage(
     productId?: string;
     alt: string;
     originalName?: string;
-    sourceType?: string; // "upload" | "url-external" | "amazon" | "movalia"
+    sourceType?: string; // "upload" | "url-external" | "amazon" | "miravia"
     originalUrl?: string;
     position?: number;
   },
@@ -103,7 +103,7 @@ export async function uploadProductImage(
         token,
         contentType: "image/webp",
         addRandomSuffix: false,
-        cacheControlMaxAge: 60 * 60 * 24 * 365, // 1 año
+        cacheControlMaxAge: 60 * 60 * 24 * 365, // 1 aÃ±o
       }),
       put(variantPath(folder, uuid, "medium"), processed.variants.medium.buffer, {
         access: "public",
@@ -160,8 +160,8 @@ export async function uploadProductImage(
 }
 
 /**
- * Sube una imagen genérica (cover blog, logo marca, imagen categoría).
- * No crea registro en DB — el caller actualiza el campo correspondiente.
+ * Sube una imagen genÃ©rica (cover blog, logo marca, imagen categorÃ­a).
+ * No crea registro en DB â€” el caller actualiza el campo correspondiente.
  */
 export async function uploadGenericImage(
   buffer: Buffer,
@@ -226,12 +226,12 @@ export async function deleteBlobByUrl(url: string): Promise<void> {
     await del(url, { token });
   } catch (err) {
     // Vercel Blob lanza si no existe. Solo logamos.
-    console.warn("[blob] deleteBlobByUrl falló:", url, err);
+    console.warn("[blob] deleteBlobByUrl fallÃ³:", url, err);
   }
 }
 
 /**
- * Borra las 3 variantes asociadas a una URL "large". Útil para limpiar tras
+ * Borra las 3 variantes asociadas a una URL "large". Ãštil para limpiar tras
  * eliminar una ProductImage del CRM. Se infieren las URLs reemplazando el
  * sufijo `-large.webp` por `-medium.webp` y `-thumb.webp`.
  */

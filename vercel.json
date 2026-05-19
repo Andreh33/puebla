@@ -11,7 +11,7 @@
       "schedule": "0 4 * * *"
     },
     {
-      "path": "/api/cron/refresh-movalia",
+      "path": "/api/cron/refresh-miravia",
       "schedule": "0 5 * * *"
     },
     {

@@ -1,16 +1,16 @@
 /**
- * Zona Sport — sincronización Movalia.
+ * Zona Sport â€” sincronizaciÃ³n Miravia.
  *
- * Crea un ImportJob source=MOVALIA y recorre el catálogo aplicando upsert
- * por (source=MOVALIA, externalId). "1 color = 1 producto" — si el feed
+ * Crea un ImportJob source=MIRAVIA y recorre el catÃ¡logo aplicando upsert
+ * por (source=MIRAVIA, externalId). "1 color = 1 producto" â€” si el feed
  * agrupa colores en un mismo registro, hay que desnormalizar en el adapter.
  *
  *  - Idempotente: re-ejecutar el sync no duplica productos.
  *  - Respeta `isCustomized` (no sobrescribe name/slug/retailPrice si
- *    el admin marcó el producto como personalizado).
- *  - Descarga la primera imagen vía /api/upload-from-url (opcional;
+ *    el admin marcÃ³ el producto como personalizado).
+ *  - Descarga la primera imagen vÃ­a /api/upload-from-url (opcional;
  *    en entorno cron/headless se necesita CRON_INTERNAL_URL para llamarse a
- *    sí mismo).
+ *    sÃ­ mismo).
  */
 
 import "server-only";
@@ -19,13 +19,13 @@ import { slugifyEs, uniqueSlug } from "@/lib/seo/slug";
 import type { Prisma } from "@prisma/client";
 import type { Gender } from "@prisma/client";
 import {
-  isMovaliaConfigured,
-  MovaliaNotConfiguredError,
-  type MovaliaItem,
-  type MovaliaProvider,
+  isMiraviaConfigured,
+  MiraviaNotConfiguredError,
+  type MiraviaItem,
+  type MiraviaProvider,
 } from "./provider";
-import { createMovaliaCsvProvider } from "./adapters/csv";
-import { createMovaliaJsonProvider } from "./adapters/json";
+import { createMiraviaCsvProvider } from "./adapters/csv";
+import { createMiraviaJsonProvider } from "./adapters/json";
 
 export interface ImportJobResult {
   jobId: string;
@@ -36,9 +36,9 @@ export interface ImportJobResult {
   dryRun: boolean;
 }
 
-export interface RunMovaliaSyncOptions {
+export interface RunMiraviaSyncOptions {
   dryRun?: boolean;
-  provider?: MovaliaProvider; // para tests / casos custom
+  provider?: MiraviaProvider; // para tests / casos custom
   createdBy?: string | null;
 }
 
@@ -46,43 +46,43 @@ export interface RunMovaliaSyncOptions {
 // Provider auto-resolver basado en env vars
 // ---------------------------------------------------------------------------
 
-async function resolveProvider(): Promise<MovaliaProvider> {
-  if (!isMovaliaConfigured()) {
-    throw new MovaliaNotConfiguredError(
-      "MOVALIA_ENABLED debe ser 'true' y MOVALIA_FEED_URL debe estar definido",
+async function resolveProvider(): Promise<MiraviaProvider> {
+  if (!isMiraviaConfigured()) {
+    throw new MiraviaNotConfiguredError(
+      "MIRAVIA_ENABLED debe ser 'true' y MIRAVIA_FEED_URL debe estar definido",
     );
   }
-  const url = process.env.MOVALIA_FEED_URL!;
-  const format = (process.env.MOVALIA_FEED_FORMAT || "csv").toLowerCase();
+  const url = process.env.MIRAVIA_FEED_URL!;
+  const format = (process.env.MIRAVIA_FEED_FORMAT || "csv").toLowerCase();
 
-  // Mapping personalizado guardado en Setting "movalia.csvMapping"
+  // Mapping personalizado guardado en Setting "miravia.csvMapping"
   let mapping: Record<string, string> | undefined;
   try {
     const setting = await db.setting.findUnique({
-      where: { key: "movalia.csvMapping" },
+      where: { key: "miravia.csvMapping" },
     });
     if (setting && setting.value && typeof setting.value === "object") {
       mapping = setting.value as Record<string, string>;
     }
   } catch {
-    // ignora — DB puede no estar disponible en algunos entornos
+    // ignora â€” DB puede no estar disponible en algunos entornos
   }
 
   if (format === "csv") {
-    return createMovaliaCsvProvider({ source: url, mapping });
+    return createMiraviaCsvProvider({ source: url, mapping });
   }
   if (format === "json") {
-    return createMovaliaJsonProvider({ source: url });
+    return createMiraviaJsonProvider({ source: url });
   }
   if (format === "xml") {
-    const { createMovaliaXmlProvider } = await import("./adapters/xml");
-    return createMovaliaXmlProvider({ source: url });
+    const { createMiraviaXmlProvider } = await import("./adapters/xml");
+    return createMiraviaXmlProvider({ source: url });
   }
-  throw new MovaliaNotConfiguredError(`MOVALIA_FEED_FORMAT inválido: ${format}`);
+  throw new MiraviaNotConfiguredError(`MIRAVIA_FEED_FORMAT invÃ¡lido: ${format}`);
 }
 
 // ---------------------------------------------------------------------------
-// Helpers brand/category con caché en memoria
+// Helpers brand/category con cachÃ© en memoria
 // ---------------------------------------------------------------------------
 
 class TaxonomyCache {
@@ -115,7 +115,7 @@ class TaxonomyCache {
   }
 
   async getCategoryId(tx: Prisma.TransactionClient, name: string): Promise<string> {
-    const key = name.trim() || "Sin Categoría";
+    const key = name.trim() || "Sin CategorÃ­a";
     const cached = this.categories.get(key);
     if (cached) return cached;
     const slug = slugifyEs(key);
@@ -164,7 +164,7 @@ function coerceGender(g: string | undefined): Gender {
 }
 
 // ---------------------------------------------------------------------------
-// Upsert de un MovaliaItem
+// Upsert de un MiraviaItem
 // ---------------------------------------------------------------------------
 
 interface UpsertOutcome {
@@ -177,14 +177,14 @@ interface UpsertOutcome {
 async function upsertItem(
   tx: Prisma.TransactionClient,
   taxonomy: TaxonomyCache,
-  item: MovaliaItem,
+  item: MiraviaItem,
 ): Promise<UpsertOutcome> {
   try {
     const brandId = await taxonomy.getBrandId(tx, item.brand);
     const categoryId = await taxonomy.getCategoryId(tx, item.category);
 
     const existing = await tx.product.findUnique({
-      where: { source_externalId: { source: "MOVALIA", externalId: item.externalId } },
+      where: { source_externalId: { source: "MIRAVIA", externalId: item.externalId } },
       select: { id: true, name: true, isCustomized: true },
     });
 
@@ -206,7 +206,7 @@ async function upsertItem(
           description: item.description,
           brandId,
           categoryId,
-          source: "MOVALIA",
+          source: "MIRAVIA",
           externalId: item.externalId,
           modelCode: item.modelCode,
           colorName: item.colorName,
@@ -217,7 +217,7 @@ async function upsertItem(
           costPrice: cost,
           retailPrice: retail,
           status: "DRAFT",
-          tags: ["movalia"],
+          tags: ["miravia"],
         },
         select: { id: true },
       });
@@ -270,7 +270,7 @@ async function upsertItem(
         productId,
         action: "imported",
         changes: {
-          source: "MOVALIA",
+          source: "MIRAVIA",
           externalId: item.externalId,
           retail,
           sizes: item.sizes.length,
@@ -289,12 +289,12 @@ async function upsertItem(
 }
 
 // ---------------------------------------------------------------------------
-// Descarga de imagen principal vía /api/upload-from-url
+// Descarga de imagen principal vÃ­a /api/upload-from-url
 // ---------------------------------------------------------------------------
 
 async function downloadFirstImage(
   productId: string,
-  item: MovaliaItem,
+  item: MiraviaItem,
   internalBaseUrl: string | null,
   cronSecret: string | null,
 ): Promise<void> {
@@ -321,7 +321,7 @@ async function downloadFirstImage(
       });
     }
   } catch (err) {
-    console.warn(`[movalia/sync] fallo imagen producto ${productId}`, err);
+    console.warn(`[miravia/sync] fallo imagen producto ${productId}`, err);
   }
 }
 
@@ -329,14 +329,14 @@ async function downloadFirstImage(
 // Entrada principal
 // ---------------------------------------------------------------------------
 
-export async function runMovaliaSync(
-  opts: RunMovaliaSyncOptions = {},
+export async function runMiraviaSync(
+  opts: RunMiraviaSyncOptions = {},
 ): Promise<ImportJobResult> {
   const provider = opts.provider ?? (await resolveProvider());
 
   const job = await db.importJob.create({
     data: {
-      source: "MOVALIA",
+      source: "MIRAVIA",
       status: "RUNNING",
       startedAt: new Date(),
       createdBy: opts.createdBy ?? null,
@@ -351,7 +351,7 @@ export async function runMovaliaSync(
   const errorList: { row: number; code: string; message: string }[] = [];
 
   const taxonomy = new TaxonomyCache();
-  const internalBase = process.env.MOVALIA_INTERNAL_URL || process.env.NEXT_PUBLIC_SITE_URL || null;
+  const internalBase = process.env.MIRAVIA_INTERNAL_URL || process.env.NEXT_PUBLIC_SITE_URL || null;
   const cronSecret = process.env.CRON_SECRET || null;
 
   try {
@@ -360,7 +360,7 @@ export async function runMovaliaSync(
 
       if (opts.dryRun) {
         const existing = await db.product.findUnique({
-          where: { source_externalId: { source: "MOVALIA", externalId: item.externalId } },
+          where: { source_externalId: { source: "MIRAVIA", externalId: item.externalId } },
           select: { id: true },
         });
         if (existing) updated += 1;
