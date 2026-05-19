@@ -245,6 +245,28 @@ model BlogPost {
 }
 
 // ----------------------------------------------------------------------------
+// Plantillas de descripción de producto
+// Banco de copys genéricos que el admin aplica a productos nuevos con un
+// click. `categorySlug` enlaza con `Category.slug`. Si no hay match
+// específico, se usa la categoría `default` como fallback.
+// ----------------------------------------------------------------------------
+
+model DescriptionTemplate {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  label        String
+  categorySlug String
+  body         String   @db.Text
+  metaShort    String?  @db.Text
+  position     Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([categorySlug, isActive])
+}
+
+// ----------------------------------------------------------------------------
 // CRM: leads y suscriptores
 // ----------------------------------------------------------------------------
 

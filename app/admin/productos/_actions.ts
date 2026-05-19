@@ -190,3 +190,43 @@ export async function forceSaveProductsList(): Promise<void> {
   revalidatePath("/admin/productos");
 }
 
+// ---------------------------------------------------------------------------
+// Generación automática de descripción y meta description
+// ---------------------------------------------------------------------------
+
+export async function generateDescriptionAction(productId: string): Promise<
+  | { ok: true; description: string; metaDescription: string }
+  | { ok: false; error: string }
+> {
+  await requireSession();
+  const { generateAutoDescription } = await import("@/lib/products/description");
+  const result = await generateAutoDescription(productId);
+  if (!result) {
+    return {
+      ok: false,
+      error: "No hay plantillas para esta categoría. Siembra los templates con POST /api/admin/setup primero.",
+    };
+  }
+  return { ok: true, description: result.description, metaDescription: result.metaDescription };
+}
+
+export async function generateMetaDescriptionAction(productId: string): Promise<
+  | { ok: true; metaDescription: string }
+  | { ok: false; error: string }
+> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  const { generateAutoMetaFromProduct } = await import("@/lib/products/description");
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: {
+      name: true,
+      colorName: true,
+      brand: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+    },
+  });
+  if (!product) return { ok: false, error: "Producto no encontrado" };
+  return { ok: true, metaDescription: generateAutoMetaFromProduct(product) };
+}
+

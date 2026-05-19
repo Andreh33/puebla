@@ -43,11 +43,48 @@ export async function createProduct(
   const parsed = ProductSchema.parse(input);
   const slug = await ensureUniqueSlug(parsed.slug || slugifyEs(`${parsed.name}-${parsed.colorName}`));
 
+  // Auto-rellenado: si la descripción y/o metaDescription vienen vacíos,
+  // intentamos generarlos vía plantilla. Esto da al admin un punto de
+  // partida razonable que puede editar después (un click).
+  let autoDescription = parsed.description;
+  let autoMeta = parsed.metaDescription;
+  if (!autoDescription || !autoMeta) {
+    const category = await db.category.findUnique({
+      where: { id: parsed.categoryId },
+      select: { slug: true, name: true },
+    });
+    const brand = await db.brand.findUnique({
+      where: { id: parsed.brandId },
+      select: { name: true },
+    });
+    if (category && brand) {
+      const { pickTemplateForCategory, applyTemplate, generateAutoMetaFromProduct } =
+        await import("@/lib/products/description");
+      const template = await pickTemplateForCategory(category.slug);
+      const productInfo = {
+        name: parsed.name,
+        colorName: parsed.colorName,
+        brand,
+        category: { name: category.name, slug: category.slug },
+      };
+      if (!autoDescription && template) {
+        autoDescription = applyTemplate(template.body, productInfo);
+      }
+      if (!autoMeta) {
+        autoMeta = template?.metaShort
+          ? applyTemplate(template.metaShort, productInfo)
+          : generateAutoMetaFromProduct(productInfo);
+      }
+    }
+  }
+
   const created = await db.$transaction(async (tx) => {
     const product = await tx.product.create({
       data: {
         ...parsed,
         slug,
+        description: autoDescription ?? parsed.description,
+        metaDescription: autoMeta ?? parsed.metaDescription,
         retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
         costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
         salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,

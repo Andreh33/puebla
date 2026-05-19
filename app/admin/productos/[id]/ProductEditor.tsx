@@ -421,9 +421,34 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
               </div>
 
               <div>
-                <Label htmlFor="description">
-                  Descripción <span className="text-xs text-zs-muted">({watched.description?.length ?? 0} caracteres)</span>
-                </Label>
+                <div className="flex items-end justify-between gap-2">
+                  <Label htmlFor="description">
+                    Descripción{" "}
+                    <span className="text-xs text-zs-muted">
+                      ({watched.description?.length ?? 0} caracteres)
+                    </span>
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { generateDescriptionAction } = await import("../_actions");
+                      const res = await generateDescriptionAction(initial!.id);
+                      if (res.ok) {
+                        setValue("description", res.description, { shouldDirty: true });
+                        if (!(watched.metaDescription?.trim().length ?? 0)) {
+                          setValue("metaDescription", res.metaDescription, { shouldDirty: true });
+                        }
+                        toast.success("Descripción generada. Edítala si quieres ajustarla.");
+                      } else {
+                        toast.error(res.error);
+                      }
+                    }}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
+                    title="Aplica una plantilla genérica adaptada a la categoría del producto"
+                  >
+                    ✨ Generar descripción
+                  </button>
+                </div>
                 <Textarea
                   id="description"
                   rows={6}
@@ -824,9 +849,31 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 <Input id="metaTitle" maxLength={70} {...register("metaTitle")} />
               </div>
               <div>
-                <Label htmlFor="metaDescription">
-                  Meta descripción <span className="text-xs text-zs-muted">({(watched.metaDescription ?? "").length}/155)</span>
-                </Label>
+                <div className="flex items-end justify-between gap-2">
+                  <Label htmlFor="metaDescription">
+                    Meta descripción{" "}
+                    <span className="text-xs text-zs-muted">
+                      ({(watched.metaDescription ?? "").length}/155)
+                    </span>
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const { generateMetaDescriptionAction } = await import("../_actions");
+                      const res = await generateMetaDescriptionAction(initial!.id);
+                      if (res.ok) {
+                        setValue("metaDescription", res.metaDescription, { shouldDirty: true });
+                        toast.success("Meta descripción generada.");
+                      } else {
+                        toast.error(res.error);
+                      }
+                    }}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
+                    title="Genera un meta description corto (155 chars max) a partir de marca, color y categoría"
+                  >
+                    ✨ Generar meta
+                  </button>
+                </div>
                 <Textarea id="metaDescription" rows={3} maxLength={170} {...register("metaDescription")} />
               </div>
               <div>

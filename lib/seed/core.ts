@@ -15,6 +15,7 @@ import type { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { DEMO_PRODUCTS } from "../demo-products";
 import { SEED_BLOG_POSTS } from "./blog-posts";
+import { DESCRIPTION_TEMPLATES } from "./description-templates";
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -30,6 +31,7 @@ export type SeedResult = {
     failures?: Array<{ slug: string; error: string }>;
   };
   blogPosts: number;
+  descriptionTemplates: number;
   durationMs: number;
 };
 
@@ -361,6 +363,32 @@ Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lun
     });
   }
 
+  // ----------------------------- DESCRIPTION TEMPLATES --------------------
+  // Banco de ~200 plantillas que el admin aplica con un click desde la
+  // ficha de producto (botón "Generar descripción"). Idempotente por slug.
+  for (const t of DESCRIPTION_TEMPLATES) {
+    await db.descriptionTemplate.upsert({
+      where: { slug: t.slug },
+      update: {
+        label: t.label,
+        categorySlug: t.categorySlug,
+        body: t.body,
+        metaShort: t.metaShort ?? null,
+        position: t.position,
+        isActive: true,
+      },
+      create: {
+        slug: t.slug,
+        label: t.label,
+        categorySlug: t.categorySlug,
+        body: t.body,
+        metaShort: t.metaShort ?? null,
+        position: t.position,
+        isActive: true,
+      },
+    });
+  }
+
   return {
     admin: { email: ownerEmail, created: ownerCreated },
     brands: brands.length,
@@ -374,6 +402,7 @@ Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lun
     },
     // 1 post de bienvenida + los del catálogo.
     blogPosts: 1 + SEED_BLOG_POSTS.length,
+    descriptionTemplates: DESCRIPTION_TEMPLATES.length,
     durationMs: Date.now() - t0,
   };
 }
