@@ -183,6 +183,11 @@ export function ScrollScene() {
       style={{ height: "400vh" }}
       aria-label="Recorrido visual por Zona Sport"
     >
+      {/* H1 semántico oculto para SEO/A11y — los paneles 3D usan h2 visibles */}
+      <h1 className="sr-only">
+        Zona Sport — tienda de deportes en Puebla de la Calzada (Badajoz)
+      </h1>
+
       {/* Canvas sticky 3D — lazy montado tras 1ª interacción/scroll/1500ms */}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-zs-blue-950">
         {shouldMountCanvas && (

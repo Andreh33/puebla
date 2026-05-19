@@ -13,7 +13,7 @@ export const revalidate = 60;
  * POST — registra hits del middleware. Body: `{ id: string }` o `{ ids: string[] }`.
  */
 export async function GET() {
-  const rules = await loadRedirectsFromDb(db);
+  const rules = await loadRedirectsFromDb();
   return NextResponse.json(
     { rules },
     {

@@ -97,24 +97,25 @@ export async function lookupRedirect(
  * Carga reglas activas desde la DB usando Prisma. Solo usable en runtime Node.
  * El consumidor importa `db` y se la pasa para evitar bundlar Prisma en edge.
  */
-// Tipamos de forma laxa para evitar acoplar este módulo al tipo concreto de
-// PrismaClient. El caller pasa `db` desde `@/lib/db`.
-type RedirectRuleDelegate = {
-  findMany: (args: {
-    where: { isActive: boolean };
-    select: { id: true; from: true; to: true; type: true };
-    take: number;
-  }) => Promise<Array<{ id: string; from: string; to: string; type: number }>>;
-};
-
+// NOTA: unstable_cache hace JSON.stringify de los argumentos para componer la
+// cache key. Pasarle PrismaClient (que tiene `_originalClient` circular)
+// rompe el TypeError. Por eso la función es sin args — importa `db`
+// dinámicamente dentro.
 export const loadRedirectsFromDb = unstable_cache(
-  async (prisma: { redirectRule: RedirectRuleDelegate }): Promise<RedirectRecord[]> => {
-    const rules = await prisma.redirectRule.findMany({
-      where: { isActive: true },
-      select: { id: true, from: true, to: true, type: true },
-      take: 5000,
-    });
-    return rules;
+  async (): Promise<RedirectRecord[]> => {
+    try {
+      const { db } = await import("@/lib/db");
+      const rules = await db.redirectRule.findMany({
+        where: { isActive: true },
+        select: { id: true, from: true, to: true, type: true },
+        take: 5000,
+      });
+      return rules;
+    } catch {
+      // Sin DATABASE_URL operativa: no hay redirects. El middleware sigue
+      // sin redirigir (comportamiento por defecto).
+      return [];
+    }
   },
   ["redirects:active"],
   { tags: ["redirects"], revalidate: 60 },

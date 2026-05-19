@@ -9,7 +9,7 @@ import { brandSchema, breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { getBrandBySlug, getBrandProducts } from "@/lib/public-queries";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 type Params = { slug: string };

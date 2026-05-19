@@ -17,7 +17,10 @@ import {
   parseCategoryParams,
 } from "@/lib/public-queries";
 
-export const revalidate = 60;
+// Forzamos SSR dinámico mientras no haya DATABASE_URL real en producción:
+// el fallback demo es server-side y necesita ejecutar en cada request hasta
+// que la BD esté provisionada. Cuando Neon esté activo, vuelve a `revalidate = 60`.
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 type Params = { categoria: string };
