@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
 import { MagneticButton } from "@/components/public/MagneticButton";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
-import { MagneticDot } from "@/components/public/MagneticDot";
 
 /**
  * HomeHero — hero monumental sobre UNA SOLA imagen estática vistosa.
@@ -150,35 +149,6 @@ export function HomeHero() {
         <div className="absolute inset-0 bg-zs-blue-950/60" />
         <div className="absolute inset-0 mix-blend-overlay opacity-[0.07] zs-grain" />
       </div>
-
-      {/* Constelación de dots magnéticos — efecto sutil que reacciona al
-          pointer. Solo desktop con hover fine (móvil queda estático).
-          Decora el hero sin distraer del titular. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-10 hidden lg:block"
-      >
-        <MagneticDot
-          radius={240}
-          strength={0.55}
-          className="absolute left-[8%] top-[22%] h-3 w-3 rounded-full bg-zs-tennis-300 shadow-[0_0_24px_8px_rgba(196,217,76,0.45)]"
-        />
-        <MagneticDot
-          radius={200}
-          strength={0.4}
-          className="absolute right-[12%] top-[18%] h-2 w-2 rounded-full bg-white/80 shadow-[0_0_18px_6px_rgba(255,255,255,0.35)]"
-        />
-        <MagneticDot
-          radius={260}
-          strength={0.5}
-          className="absolute left-[18%] bottom-[28%] h-2.5 w-2.5 rounded-full bg-zs-red-500 shadow-[0_0_22px_8px_rgba(225,60,60,0.4)]"
-        />
-        <MagneticDot
-          radius={220}
-          strength={0.5}
-          className="absolute right-[22%] bottom-[32%] h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_18px_6px_rgba(249,115,22,0.4)]"
-        />
-      </span>
 
       {/* Sticker superior derecho */}
       <div className="pointer-events-none absolute right-4 top-24 z-20 hidden -rotate-6 sm:right-8 sm:top-28 sm:block">
