@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ExternalLink } from "lucide-react";
 import { ADMIN_NAV, MobileSidebarTrigger } from "./Sidebar";
 import { AdminUserDropdown } from "./AdminUserDropdown";
+import { QuickActions } from "./QuickActions";
 
 type Props = {
   user: { name?: string | null; email: string; role: "OWNER" | "EDITOR" };
@@ -52,6 +53,7 @@ export function Topbar({ user, signOutAction }: Props) {
         <h2 className="text-sm font-semibold text-zs-ink sm:text-base">{title}</h2>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
+        <QuickActions />
         <Link
           href="/"
           target="_blank"

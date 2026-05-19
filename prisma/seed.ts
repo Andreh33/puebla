@@ -13,6 +13,8 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { DEMO_PRODUCTS } from "../lib/demo-products";
+import { slugifyEs } from "../lib/seo/slug";
 
 const db = new PrismaClient();
 
@@ -145,6 +147,83 @@ async function main() {
     });
   }
   console.log(`✓ Settings: ${settings.length} claves`);
+
+  // ----------------------------- PRODUCTOS DEMO ---------------------------
+  // Sembramos los 24 productos demo reales (con imágenes de aguirreycia.es
+  // descargadas a public/sample-products/) como Product ACTIVE. Esto garantiza
+  // que al provisionar la DB el cliente tenga catálogo navegable desde el
+  // minuto cero, antes incluso de correr `import:pricat` con los 583 reales.
+  // Idempotente por (source=LOCAL, externalId=demo:<slug>).
+  let demoCreated = 0;
+  let demoSkipped = 0;
+  for (const p of DEMO_PRODUCTS) {
+    try {
+      // Resuelve marca + categoría reales por slug (ya creadas arriba).
+      const brand = await db.brand.upsert({
+        where: { slug: p.brand.slug },
+        update: {},
+        create: { name: p.brand.name, slug: p.brand.slug, isFeatured: true },
+        select: { id: true },
+      });
+      const category = await db.category.upsert({
+        where: { slug: p.category.slug },
+        update: {},
+        create: {
+          name: p.category.name,
+          slug: p.category.slug,
+          position: 99,
+        },
+        select: { id: true },
+      });
+
+      const externalId = `demo:${p.slug}`;
+      const existing = await db.product.findUnique({
+        where: { source_externalId: { source: "LOCAL", externalId } },
+        select: { id: true },
+      });
+      if (existing) {
+        demoSkipped++;
+        continue;
+      }
+
+      await db.product.create({
+        data: {
+          slug: p.slug,
+          name: p.name,
+          shortName: p.shortName,
+          colorName: p.colorName,
+          modelCode: p.modelCode,
+          source: "LOCAL",
+          externalId,
+          gender: "NO_ESPECIFICADO",
+          retailPrice: p.retailPrice.toFixed(2),
+          salePrice: p.salePrice != null ? p.salePrice.toFixed(2) : null,
+          mainImageUrl: p.mainImageUrl,
+          status: "ACTIVE",
+          isFeatured: true,
+          publishedAt: new Date(),
+          brand: { connect: { id: brand.id } },
+          category: { connect: { id: category.id } },
+          images: {
+            create: [
+              {
+                url: p.mainImageUrl,
+                alt: p.name,
+                position: 0,
+                source: "demo-seed",
+              },
+            ],
+          },
+        },
+      });
+      demoCreated++;
+    } catch (err) {
+      console.warn(`  ⚠ demo "${p.slug}" no sembrado: ${(err as Error).message}`);
+    }
+  }
+  // suprimir warning de Slug helper sin uso en algunos modos.
+  void slugifyEs;
+  console.log(`✓ Productos demo: ${demoCreated} creados, ${demoSkipped} ya existían`);
 
   // ----------------------------- POST BIENVENIDA --------------------------
   await db.blogPost.upsert({
