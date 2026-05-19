@@ -313,9 +313,15 @@ export function parseImageUrls(raw: string): string[] {
  * estructura: <p>, <ul>, <li>, <strong>). Solo desescapa los `\n` literales
  * que añade WooCommerce.
  */
+import { cleanDescription as stripDirtyHtml } from "@/lib/products/clean-description";
+
 export function cleanDescription(raw: string): string | null {
   if (!raw) return null;
-  const s = raw.replace(/\\n/g, "\n").trim();
+  // 1) Convierte los \n literales del CSV en saltos reales.
+  // 2) Strip los <span data-url="ca://..."> de scraping AI que el editor
+  //    de WP había dejado (Edge Copilot / Bing Chat). Detalles en
+  //    lib/products/clean-description.ts.
+  const s = stripDirtyHtml(raw.replace(/\\n/g, "\n"));
   return s || null;
 }
 

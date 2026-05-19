@@ -15,7 +15,7 @@
  *   - app/admin/imagenes/...             (galería general)
  */
 import * as React from "react";
-import { UploadCloud, X, Link2, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { UploadCloud, X, Link2, Loader2, AlertCircle, CheckCircle2, Camera, Images } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,6 +92,10 @@ export function UploadDropzone({
   const [urlBusy, setUrlBusy] = React.useState(false);
   const [urlError, setUrlError] = React.useState<string | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  // Input separado con `capture="environment"` — abre la cámara trasera del
+  // móvil directamente. En desktop con webcam también funciona; en móviles
+  // sin cámara cae al picker de galería.
+  const cameraInputRef = React.useRef<HTMLInputElement>(null);
 
   const updateTask = React.useCallback((id: string, patch: Partial<FileTask>) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
@@ -266,6 +270,44 @@ export function UploadDropzone({
               type="file"
               accept={ACCEPT}
               multiple={multiple}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) void handleFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {/* Atajos explícitos: galería (input file estándar) + cámara
+              (input con capture). El dropzone de arriba sigue funcionando
+              para drag&drop. En móvil estos dos botones son los caminos
+              principales — sustituyen al click implícito del dropzone. */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                inputRef.current?.click();
+              }}
+            >
+              <Images className="mr-1.5 h-4 w-4" aria-hidden /> Galería
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                cameraInputRef.current?.click();
+              }}
+            >
+              <Camera className="mr-1.5 h-4 w-4" aria-hidden /> Hacer foto
+            </Button>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.length) void handleFiles(e.target.files);
