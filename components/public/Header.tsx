@@ -44,6 +44,16 @@ const SPORT_NAV: Array<{ label: string; href: string }> = [
   { label: "Contacto", href: "/contacto" },
 ];
 
+/**
+ * Enlaces a páginas (NO son tienda). Aparecen tras un separador en la
+ * pill desktop, para distinguir visualmente «aquí compras» (género) de
+ * «aquí informas» (contacto, blog, instalar app).
+ */
+const PAGE_NAV: Array<{ label: string; href: string }> = [
+  { label: "Contacto", href: "/contacto" },
+  { label: "Blog", href: "/blog" },
+];
+
 const GENDER_TABS: Array<{
   key: MegaMenuKey;
   label: string;
@@ -269,6 +279,47 @@ export function Header() {
                 );
               })}
 
+              {/* Separador entre TIENDA (Mujer/Hombre/Niños) y PÁGINA
+                  (Contacto/Blog/App). El cliente pidió diferenciar
+                  visualmente qué lleva a comprar y qué a información. */}
+              <span className="mx-3 h-5 w-px bg-zs-border" aria-hidden />
+
+              {/* Links a páginas (no son tienda). */}
+              {PAGE_NAV.map((item) => {
+                const active =
+                  pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-zs-surface text-zs-blue-900"
+                        : "text-zs-muted hover:bg-zs-surface hover:text-zs-blue-700",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+
+              {/* Botón "App" — dispara un evento custom que el
+                  PwaInstallPrompt escucha y muestra el modal de instalación
+                  PWA (incluso si ya fue descartado). No es un Link porque
+                  no navega a una URL: invoca un overlay del propio sitio. */}
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent("zs:show-pwa-install"));
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700"
+                title="Instalar Zona Sport en tu dispositivo"
+              >
+                App
+              </button>
+
               {/* OCULTO a petición del cliente: el sub-nav de deportes
                   (Running/Pádel/Montaña/Calzado) y su separador vertical
                   dejan la pill con solo Mujer/Hombre/Niños. Para volver
@@ -444,6 +495,18 @@ export function Header() {
                     </Link>
                   </li>
                 ))}
+                <li className={cn(mobileOpen && "animate-fade-in-up")}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      window.dispatchEvent(new CustomEvent("zs:show-pwa-install"));
+                    }}
+                    className="block w-full rounded-lg px-3 py-2 text-left text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
+                  >
+                    Instalar app
+                  </button>
+                </li>
               </ul>
 
               <a

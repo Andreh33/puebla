@@ -168,7 +168,7 @@ export function HomeHero() {
       <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-44 sm:px-8 sm:pt-48 lg:pt-52">
         <p className="inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
           <span className="inline-block h-px w-8 bg-white/40" />
-          Multimarca · Puebla de la Calzada
+          Con cariño desde Puebla de la Calzada
         </p>
         <div className="flex items-center gap-3">
           <OpenNowBadge className="text-white" tone="dark" />

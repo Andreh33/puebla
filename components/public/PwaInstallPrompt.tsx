@@ -74,9 +74,19 @@ export function PwaInstallPrompt() {
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onAppInstalled);
 
+    // Permitir mostrar el prompt desde otros componentes del sitio (p. ej.
+    // el botón "App" del Header). Ignora `shouldShowPrompt` para que el
+    // usuario pueda invocarlo manualmente aunque haya sido descartado.
+    const onForceShow = () => {
+      if (isStandalone) return; // ya está instalada, nada que hacer
+      setVisible(true);
+    };
+    window.addEventListener("zs:show-pwa-install", onForceShow);
+
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onAppInstalled);
+      window.removeEventListener("zs:show-pwa-install", onForceShow);
     };
   }, []);
 
