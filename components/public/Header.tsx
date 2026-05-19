@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { Search, MessageCircle, Menu, X, ChevronDown } from "lucide-react";
+import { Search, MessageCircle, Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 import { SearchCommand } from "./SearchCommand";
@@ -12,7 +12,29 @@ import { CartIcon } from "./CartIcon";
 import { MegaMenu, MegaMenuMobile } from "./MegaMenu";
 import { MEGA_MENU_KEYS, type MegaMenuKey } from "@/lib/menu/mega-menu";
 
-const NAV_ITEMS: Array<{ label: string; href: string }> = [
+/**
+ * Header estilo "pill flotante" — inspirado en latech (la forma, no los
+ * colores). Estructura:
+ *   1. Top strip oscuro con marquesina infinita de frases (ZS azul + texto
+ *      blanco, separadores ✺ en rojo).
+ *   2. Pill blanca flotante centrada con sombra azul corporativa. Dentro:
+ *      logo (izq) · tabs de género + sub-nav de deportes (centro) · acciones
+ *      (der: search, WhatsApp, carrito, CTA "Comprar" gradiente rojo).
+ *   3. Mega-menú desktop full-width debajo de la pill (heredado).
+ *   4. Drawer móvil debajo, también flotante en pill rounded-3xl.
+ *
+ * Cambios respecto al header anterior:
+ *  - Pasa de `sticky border-b full-width` a `fixed` con pill rounded-full.
+ *  - La marquesina antes vivía en el medio del home (PhrasesMarquee), ahora
+ *    abre el header como top strip — más cercano al estilo del referente.
+ *  - Añade `<div>` spacer al final para empujar el contenido (el contenedor
+ *    es fixed y deja un hueco si no se compensa).
+ *
+ * A11y: focus visible, aria-labels intactos, mega-menú con aria-expanded
+ * sobre los tabs trigger. Mobile drawer mantiene animaciones suaves.
+ */
+
+const SPORT_NAV: Array<{ label: string; href: string }> = [
   { label: "Running", href: "/running" },
   { label: "Pádel", href: "/padel" },
   { label: "Montaña", href: "/montana" },
@@ -22,17 +44,10 @@ const NAV_ITEMS: Array<{ label: string; href: string }> = [
   { label: "Contacto", href: "/contacto" },
 ];
 
-/**
- * Top-nav editorial de género (estilo Nike / Decathlon). Los 3 tabs aparecen
- * por encima de los deportes y se destacan visualmente cuando el pathname
- * empieza por uno de ellos. Al hover desktop disparan el mega-menú; al click
- * navegan a la landing del género.
- */
 const GENDER_TABS: Array<{
   key: MegaMenuKey;
   label: string;
   href: string;
-  /** Match estricto en el pathname público. */
   match: (path: string) => boolean;
 }> = [
   {
@@ -55,11 +70,16 @@ const GENDER_TABS: Array<{
   },
 ];
 
-/**
- * Retardo (ms) entre el `mouseleave` del trigger/panel y el cierre real del
- * mega-menú. Da margen al usuario para mover el cursor del tab al panel sin
- * que el menú se le cierre debajo.
- */
+/** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */
+const TICKER_PHRASES = [
+  "Desde Puebla de la Calzada hasta cualquier parte del mundo",
+  "Años de calidad y trato cercano",
+  "John Smith · +8000 · Joma · Bullpadel · Nox · Salomon · Head · Wilson",
+  "Atendemos por WhatsApp · Recogida en tienda",
+  "Pádel, running, montaña, fitness — todo en una sola tienda",
+  "Asesoramiento real, no postureo",
+] as const;
+
 const MEGA_CLOSE_DELAY_MS = 120;
 
 export function Header() {
@@ -74,9 +94,6 @@ export function Header() {
   const closeTimer = useRef<number | null>(null);
   const triggerIdPrefix = useId();
 
-  // ---------------------------------------------------------------------
-  // Scroll behavior (sticky + auto-hide al scrollear hacia abajo)
-  // ---------------------------------------------------------------------
   useEffect(() => {
     let ticking = false;
     const apply = () => {
@@ -109,21 +126,16 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Cerrar drawer mobile + mega-menú al cambiar de ruta
   useEffect(() => {
     setMobileOpen(false);
     setMegaKey(null);
     setMobileExpanded(null);
   }, [pathname]);
 
-  // Si el header se oculta por scroll, cerramos también el mega-menú.
   useEffect(() => {
     if (hidden) setMegaKey(null);
   }, [hidden]);
 
-  // ---------------------------------------------------------------------
-  // Orquestación del mega-menú (hover + delay close + focus management)
-  // ---------------------------------------------------------------------
   const cancelClose = useCallback(() => {
     if (closeTimer.current != null) {
       window.clearTimeout(closeTimer.current);
@@ -152,7 +164,6 @@ export function Header() {
     setMegaKey(null);
   }, [cancelClose]);
 
-  // Click fuera del panel/triggers cierra el mega-menú.
   const navRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (megaKey === null) return;
@@ -166,7 +177,6 @@ export function Header() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [megaKey]);
 
-  // Limpieza del timer al desmontar
   useEffect(() => () => cancelClose(), [cancelClose]);
 
   return (
@@ -174,186 +184,191 @@ export function Header() {
       <header
         data-hidden={hidden ? "true" : "false"}
         className={cn(
-          "sticky top-0 z-40 w-full border-b transition-all duration-300 will-change-transform",
-          scrolled
-            ? "border-zs-border bg-white/95 backdrop-blur shadow-sm"
-            : "border-transparent bg-white",
-          hidden && !mobileOpen ? "-translate-y-full" : "translate-y-0",
+          "fixed inset-x-0 top-0 z-40 transition-transform duration-300 will-change-transform",
+          hidden && !mobileOpen ? "-translate-y-[120%]" : "translate-y-0",
         )}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:h-20 sm:gap-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex shrink-0 items-center gap-2"
-            aria-label="Zona Sport — Inicio"
+        {/* ─────────────────────────────────────────────────────────────────
+            TOP STRIP — marquesina infinita de frases sobre fondo oscuro
+            ───────────────────────────────────────────────────────────────── */}
+        <div className="overflow-hidden bg-zs-blue-950 text-white">
+          <div
+            className="zs-header-ticker flex w-max items-center gap-10 whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/90 sm:py-2.5"
+            aria-label="Argumentos de la tienda"
           >
-            <Image
-              src="/logo.webp"
-              alt="Zona Sport"
-              width={270}
-              height={186}
-              priority
-              className="h-10 w-auto sm:h-14"
-            />
-          </Link>
-
-          {/* Top-nav de género (desktop) — el switch principal estilo Nike */}
-          <nav
-            ref={navRef}
-            aria-label="Cambio de género"
-            className="hidden flex-1 items-center justify-center gap-1 lg:flex"
-            onMouseLeave={scheduleClose}
-          >
-            {GENDER_TABS.map((tab) => {
-              const active = tab.match(pathname);
-              const expanded = megaKey === tab.key;
-              const triggerId = `${triggerIdPrefix}-mega-trigger-${tab.key}`;
-              return (
-                <Link
-                  key={tab.href}
-                  id={triggerId}
-                  href={tab.href}
-                  aria-current={active ? "page" : undefined}
-                  aria-haspopup="menu"
-                  aria-expanded={expanded}
-                  onMouseEnter={() => openMega(tab.key)}
-                  onFocus={() => openMega(tab.key)}
-                  onClick={() => {
-                    // Click → navega a la landing y cierra el panel.
-                    setMegaKey(null);
-                  }}
-                  className={cn(
-                    "group relative inline-flex items-center px-4 py-2 text-base font-semibold tracking-tight transition-colors sm:text-lg",
-                    active || expanded
-                      ? "text-zs-blue-900"
-                      : "text-zs-ink hover:text-zs-blue-700",
-                  )}
-                >
-                  <span>{tab.label}</span>
-                  {/* Underline animado */}
-                  <span
-                    aria-hidden
-                    className={cn(
-                      "pointer-events-none absolute inset-x-3 -bottom-0.5 h-0.5 origin-left rounded-full bg-zs-blue-900 transition-transform duration-300",
-                      active || expanded
-                        ? "scale-x-100"
-                        : "scale-x-0 group-hover:scale-x-100 group-hover:bg-zs-red-600",
-                    )}
-                  />
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Search fake input (mobile y tablet — antes del nav) */}
-          <SearchCommand
-            trigger={
-              <button
-                type="button"
-                aria-label="Buscar productos"
-                className="hidden h-10 flex-1 items-center gap-2 rounded-xl border border-zs-border bg-zs-surface/80 px-3 text-left text-sm text-zs-muted transition-colors hover:border-zs-blue-300 hover:bg-zs-surface sm:flex lg:hidden"
-              >
-                <Search className="h-4 w-4 shrink-0" />
-                <span className="truncate">Buscar productos…</span>
-              </button>
-            }
-          />
-
-          {/* Acciones */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <SearchCommand
-              trigger={
-                <button
-                  type="button"
-                  aria-label="Buscar (Ctrl+K)"
-                  className="inline-flex h-10 items-center gap-2 rounded-lg px-2 text-zs-ink transition-colors hover:bg-zs-surface sm:hidden lg:inline-flex lg:border lg:border-zs-border lg:bg-zs-surface/60 lg:px-3"
-                >
-                  <Search className="h-5 w-5 lg:h-4 lg:w-4" />
-                  <span className="hidden lg:inline lg:text-sm lg:text-zs-muted">
-                    Buscar
-                  </span>
-                  <kbd className="ml-1 hidden rounded border border-zs-border bg-white px-1.5 py-0.5 font-mono text-[10px] font-semibold text-zs-muted lg:inline-block">
-                    ⌘K
-                  </kbd>
-                </button>
-              }
-            />
-            <a
-              href={whatsappUrl(WhatsAppMessages.generic())}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-              className="hidden h-10 w-10 items-center justify-center rounded-lg text-zs-ink transition-colors hover:bg-zs-surface sm:inline-flex"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </a>
-            <CartIcon />
-            <button
-              type="button"
-              onClick={() => setMobileOpen((v) => !v)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-zs-ink transition-colors hover:bg-zs-surface lg:hidden"
-              aria-label="Abrir menú"
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {[...TICKER_PHRASES, ...TICKER_PHRASES, ...TICKER_PHRASES].map((phrase, i) => (
+              <span key={`${phrase}-${i}`} className="inline-flex items-center gap-10">
+                <span>{phrase}</span>
+                <span aria-hidden className="text-zs-red-500">
+                  ✺
+                </span>
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Mega-menú desktop (vive dentro del <header> para heredar el sticky) */}
-        <MegaMenu
-          activeKey={megaKey}
-          onClose={closeMega}
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
-          triggerId={
-            megaKey
-              ? `${triggerIdPrefix}-mega-trigger-${megaKey}`
-              : undefined
-          }
-        />
-
-        {/* Segunda fila desktop: enlaces de deporte (subordinados al género) */}
-        <div className="hidden border-t border-zs-border/60 bg-white lg:block">
-          <nav
-            aria-label="Navegación por deporte"
-            className="mx-auto flex max-w-7xl items-center justify-center gap-1 px-4 py-2"
+        {/* ─────────────────────────────────────────────────────────────────
+            PILL FLOTANTE — logo + nav + acciones
+            ───────────────────────────────────────────────────────────────── */}
+        <div className="px-3 pt-3 sm:px-5 sm:pt-4">
+          <div
+            ref={navRef}
+            onMouseLeave={scheduleClose}
+            className={cn(
+              "mx-auto flex max-w-[1180px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-2 backdrop-blur-md transition-shadow sm:gap-3 sm:px-4 sm:py-2.5",
+              scrolled ? "shadow-xl" : "shadow-lg",
+            )}
+            style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
           >
-            {NAV_ITEMS.map((item) => {
-              const active =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                    active
-                      ? "bg-zs-surface text-zs-blue-900"
-                      : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+            {/* Logo */}
+            <Link
+              href="/"
+              className="flex shrink-0 items-center gap-2 pl-1 pr-2"
+              aria-label="Zona Sport — Inicio"
+            >
+              <Image
+                src="/logo.webp"
+                alt="Zona Sport"
+                width={270}
+                height={186}
+                priority
+                className="h-10 w-auto sm:h-12"
+              />
+            </Link>
+
+            {/* Nav central desktop */}
+            <nav
+              aria-label="Navegación principal"
+              className="hidden flex-1 items-center justify-center gap-1 lg:flex"
+            >
+              {/* Tabs de género — pill activa estilo LATECH */}
+              {GENDER_TABS.map((tab) => {
+                const active = tab.match(pathname);
+                const expanded = megaKey === tab.key;
+                const triggerId = `${triggerIdPrefix}-mega-trigger-${tab.key}`;
+                return (
+                  <Link
+                    key={tab.href}
+                    id={triggerId}
+                    href={tab.href}
+                    aria-current={active ? "page" : undefined}
+                    aria-haspopup="menu"
+                    aria-expanded={expanded}
+                    onMouseEnter={() => openMega(tab.key)}
+                    onFocus={() => openMega(tab.key)}
+                    onClick={() => setMegaKey(null)}
+                    className={cn(
+                      "inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold tracking-tight transition-all",
+                      active || expanded
+                        ? "bg-zs-blue-950 text-white"
+                        : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+
+              <span className="mx-2 h-5 w-px bg-zs-border" aria-hidden />
+
+              {/* Sub-nav de deportes */}
+              {SPORT_NAV.slice(0, 4).map((item) => {
+                const active =
+                  pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-zs-surface text-zs-blue-900"
+                        : "text-zs-muted hover:bg-zs-surface hover:text-zs-blue-700",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Acciones derecha */}
+            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+              <SearchCommand
+                trigger={
+                  <button
+                    type="button"
+                    aria-label="Buscar (Ctrl+K)"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10"
+                  >
+                    <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                  </button>
+                }
+              />
+              <a
+                href={whatsappUrl(WhatsAppMessages.generic())}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="hidden h-10 w-10 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:inline-flex"
+              >
+                <MessageCircle className="h-[18px] w-[18px]" />
+              </a>
+              <CartIcon />
+
+              {/* CTA gradient — desktop */}
+              <Link
+                href="#catalogo"
+                className="ml-1 hidden h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-zs-red-600 to-[#a01818] px-5 text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-[1.02] sm:inline-flex"
+                style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
+              >
+                Comprar
+                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setMobileOpen((v) => !v)}
+                className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10 lg:hidden"
+                aria-label="Abrir menú"
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Mega-menú desktop — debajo de la pill, contenedor centrado */}
+          <div className="relative mx-auto max-w-[1180px]">
+            <MegaMenu
+              activeKey={megaKey}
+              onClose={closeMega}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+              triggerId={
+                megaKey
+                  ? `${triggerIdPrefix}-mega-trigger-${megaKey}`
+                  : undefined
+              }
+            />
+          </div>
         </div>
 
-        {/* Nav mobile (drawer animado) */}
+        {/* ─────────────────────────────────────────────────────────────────
+            DRAWER MÓVIL — flotante en card rounded-3xl
+            ───────────────────────────────────────────────────────────────── */}
         <div
           className={cn(
-            "grid overflow-hidden bg-white transition-[grid-template-rows,border] duration-300 ease-out lg:hidden",
+            "mx-3 mt-2 overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 ease-out sm:mx-5 lg:hidden",
             mobileOpen
-              ? "grid-rows-[1fr] border-t border-zs-border"
-              : "grid-rows-[0fr] border-t border-t-transparent",
+              ? "max-h-[80vh] opacity-100"
+              : "pointer-events-none max-h-0 opacity-0",
           )}
+          style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
         >
           <nav aria-label="Menú móvil" className="overflow-hidden">
-            <div className="mx-auto max-w-7xl px-4 py-3">
-              {/* Tabs de género — acordeones expandibles con mega-menú embebido */}
+            <div className="max-h-[80vh] overflow-y-auto px-4 py-3">
+              {/* Tabs de género (acordeón con mega-menú embebido) */}
               <div className="mb-3 overflow-hidden rounded-2xl border border-zs-border bg-white">
                 {MEGA_MENU_KEYS.map((key) => {
                   const tabConfig = GENDER_TABS.find((t) => t.key === key)!;
@@ -365,7 +380,6 @@ export function Header() {
                       key={key}
                       className="border-b border-zs-border/60 last:border-b-0"
                     >
-                      {/* Acceso directo a la landing del género + toggle del panel */}
                       <div className="flex items-stretch">
                         <Link
                           href={tabConfig.href}
@@ -412,7 +426,7 @@ export function Header() {
               </div>
 
               <ul className="flex flex-col gap-1">
-                {NAV_ITEMS.map((item, i) => (
+                {SPORT_NAV.map((item, i) => (
                   <li
                     key={item.href}
                     className={cn(mobileOpen && "animate-fade-in-up")}
@@ -428,10 +442,38 @@ export function Header() {
                   </li>
                 ))}
               </ul>
+
+              <a
+                href={whatsappUrl(WhatsAppMessages.generic())}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-zs-red-600 to-[#a01818] px-5 py-3 text-sm font-bold uppercase tracking-wide text-white"
+                style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
+              >
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </a>
             </div>
           </nav>
         </div>
+
+        <style>{`
+          @keyframes zs-header-ticker-scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-33.333%); }
+          }
+          .zs-header-ticker {
+            animation: zs-header-ticker-scroll 38s linear infinite;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .zs-header-ticker { animation: none !important; }
+          }
+        `}</style>
       </header>
+
+      {/* Spacer — el header es fixed, dejamos hueco para que no tape el hero.
+          Aprox: top-strip ~38px + pt-4 (16px) + pill ~64px + margen seguro. */}
+      <div className="h-[136px] sm:h-[148px]" aria-hidden />
     </>
   );
 }

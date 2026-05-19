@@ -8,7 +8,6 @@ import { ProductShowcase } from "@/components/public/home/ProductShowcase";
 import { GenderSplit } from "@/components/public/home/GenderSplit";
 import { StoreEditorial } from "@/components/public/home/StoreEditorial";
 import { StoreMap } from "@/components/public/home/StoreMap";
-import { PhrasesMarquee } from "@/components/public/home/PhrasesMarquee";
 import { WhatsAppNudge } from "@/components/public/home/WhatsAppNudge";
 import { Reveal } from "@/components/public/Reveal";
 import { buildMetadata } from "@/lib/seo/metadata";
@@ -91,9 +90,6 @@ export default async function HomePage() {
 
       {/* 04 — Para ella / Para él / Para los pequeños con fotos reales. */}
       <GenderSplit />
-
-      {/* Marquesina infinita con frases (reemplaza la antigua tira de logos). */}
-      <PhrasesMarquee />
 
       {/* 05 — La tienda con foto Unsplash + testimonial. */}
       <StoreEditorial />
