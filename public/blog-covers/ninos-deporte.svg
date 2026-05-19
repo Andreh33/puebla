@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Niños y deporte">
+  <rect width="1200" height="675" fill="#ffd166"/>
+  <g>
+    <circle cx="200" cy="500" r="120" fill="#e13c3c"/>
+    <circle cx="400" cy="200" r="80" fill="#1c47a0"/>
+    <circle cx="700" cy="450" r="160" fill="#c4d94c"/>
+    <circle cx="1000" cy="200" r="100" fill="#0b1228"/>
+    <circle cx="1080" cy="540" r="60" fill="#9a2a72"/>
+  </g>
+  <g stroke="#0b1228" stroke-width="4" fill="none" opacity="0.5">
+    <line x1="200" y1="500" x2="400" y2="200"/>
+    <line x1="400" y1="200" x2="700" y2="450"/>
+    <line x1="700" y1="450" x2="1000" y2="200"/>
+    <line x1="1000" y1="200" x2="1080" y2="540"/>
+  </g>
+  <text x="60" y="180" font-family="ui-sans-serif,system-ui" font-size="80" font-weight="900" fill="#0b1228" letter-spacing="-2">NIÑOS</text>
+  <text x="60" y="250" font-family="ui-sans-serif,system-ui" font-size="32" font-weight="700" fill="#0b1228" letter-spacing="2" opacity="0.7">Y DEPORTE</text>
+</svg>

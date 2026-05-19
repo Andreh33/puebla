@@ -32,7 +32,7 @@ export const SEED_BLOG_POSTS: ReadonlyArray<SeedBlogPost> = [
     title: "Cómo elegir tu primera pala de pádel: guía 2026 para empezar bien",
     excerpt:
       "Forma, peso, balance, núcleo y precio: los cinco factores que importan al comprar tu primera pala de pádel. Sin tecnicismos vacíos.",
-    coverImageUrl: "/category-photos/padel.webp",
+    coverImageUrl: "/blog-covers/padel-principiante.svg",
     author: "Equipo Zona Sport",
     tags: ["padel", "guias", "principiantes", "equipacion"],
     status: "PUBLISHED",
@@ -91,7 +91,7 @@ Hay clubes con material de prueba en Puebla, Mérida y la capital. Si nos pasas 
     title: "Correr en invierno por Extremadura: rutas, equipación y temperatura",
     excerpt:
       "Qué ponerse según la temperatura, dónde correr cerca de Badajoz cuando hace frío y los errores típicos del runner que empieza en noviembre.",
-    coverImageUrl: "/category-photos/running.webp",
+    coverImageUrl: "/blog-covers/running-invierno.svg",
     author: "Marina Cáceres",
     tags: ["running", "invierno", "extremadura", "equipacion"],
     status: "PUBLISHED",
@@ -151,7 +151,7 @@ Aunque no sudes como en julio, sigues perdiendo líquido. Bebe agua antes de sal
     title: "Trail running en la Sierra de San Pedro: 4 rutas con dificultad creciente",
     excerpt:
       "De 6 km llanos a 22 km con desnivel real. Cuatro rutas en la Sierra de San Pedro para iniciarte y progresar en trail sin salir de Extremadura.",
-    coverImageUrl: "/category-photos/montana.webp",
+    coverImageUrl: "/blog-covers/trail-sierra.svg",
     author: "Iván Macías",
     tags: ["trail", "montana", "rutas", "sierra-de-san-pedro"],
     status: "PUBLISHED",
@@ -216,7 +216,7 @@ A partir de la ruta 3 lleva sales (un sobre / 500 ml agua) y gel rápido cada 45
     title: "Pádel femenino: el boom local en Puebla y Mérida",
     excerpt:
       "El pádel femenino crece más rápido que el masculino en Extremadura. Datos, clubes, ligas y por qué este invierno hay lista de espera en pistas.",
-    coverImageUrl: "/category-photos/padel.webp",
+    coverImageUrl: "/blog-covers/padel-femenino.svg",
     author: "Equipo Zona Sport",
     tags: ["padel", "mujeres", "comunidad", "extremadura"],
     status: "PUBLISHED",
@@ -278,7 +278,7 @@ Si quieres montar grupo, no sabes con quién empezar o necesitas que te orientem
     title: "Cómo cuidar tus zapatillas para que duren el doble",
     excerpt:
       "Lavado, secado, cuándo retirarlas y cinco errores que cargan tu calzado en la primera lavadora. Aplicable a running, casual, pádel y trail.",
-    coverImageUrl: "/category-photos/calzado.webp",
+    coverImageUrl: "/blog-covers/cuidar-zapatillas.svg",
     author: "Equipo Zona Sport",
     tags: ["calzado", "cuidados", "guias"],
     status: "PUBLISHED",
@@ -347,7 +347,7 @@ No esperes a que se rompa la suela. La amortiguación muere antes de que se vea 
     title: "Niños y deporte: a qué edad empezar y qué evitar",
     excerpt:
       "Pediatras, entrenadores y federaciones coinciden en lo básico: hasta los 6 años, juego libre. Después, especializar tarde. Lo que sí y lo que no.",
-    coverImageUrl: "/category-photos/ninos-hero.webp",
+    coverImageUrl: "/blog-covers/ninos-deporte.svg",
     author: "Marina Cáceres",
     tags: ["ninos", "familia", "deporte-base"],
     status: "PUBLISHED",
@@ -439,7 +439,7 @@ para, escucha y cambia de actividad. Forzar deporte a un niño que sufre es la r
     title: "Mochilas y riñoneras: qué llevar y qué dejar en casa",
     excerpt:
       "Equiparse para una salida no es meter cosas por si acaso. Es seleccionar. Te contamos qué entra en una mochila de hidratación, una de día y una riñonera.",
-    coverImageUrl: "/category-photos/complementos.webp",
+    coverImageUrl: "/blog-covers/mochilas.svg",
     author: "Iván Macías",
     tags: ["complementos", "mochilas", "outdoor", "guias"],
     status: "PUBLISHED",
@@ -544,7 +544,7 @@ Si dudas en el modelo o la talla de espalda, pásate por tienda: las mochilas ha
     title: "Plan fin de semana en Badajoz: deporte por la mañana, tapeo por la tarde",
     excerpt:
       "Un plan realista para sábado o domingo: dónde correr o pedalear cerca de Puebla, dónde recuperar fuerzas con comida local y dos cervezas decentes.",
-    coverImageUrl: "/category-photos/hero-runner.webp",
+    coverImageUrl: "/blog-covers/fin-semana-badajoz.svg",
     author: "Equipo Zona Sport",
     tags: ["badajoz", "extremadura", "ocio", "comunidad"],
     status: "PUBLISHED",

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="Running invierno">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c47a0"/>
+      <stop offset="1" stop-color="#0b1228"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g)"/>
+  <g stroke="#c4d94c" stroke-width="6" fill="none" opacity="0.85">
+    <path d="M -50 540 Q 200 420 400 510 T 800 480 T 1250 530"/>
+    <path d="M -50 600 Q 200 480 400 570 T 800 540 T 1250 590" opacity="0.6"/>
+    <path d="M -50 480 Q 200 360 400 450 T 800 420 T 1250 470" opacity="0.4"/>
+  </g>
+  <g fill="#ffffff" opacity="0.95">
+    <circle cx="960" cy="160" r="42"/>
+    <circle cx="220" cy="120" r="3"/>
+    <circle cx="320" cy="200" r="2"/>
+    <circle cx="500" cy="100" r="3"/>
+    <circle cx="720" cy="220" r="2"/>
+    <circle cx="1080" cy="80" r="3"/>
+  </g>
+  <text x="80" y="370" font-family="ui-sans-serif,system-ui" font-size="120" font-weight="900" fill="#ffffff" letter-spacing="-3">RUNNING</text>
+  <text x="80" y="450" font-family="ui-sans-serif,system-ui" font-size="60" font-weight="700" fill="#c4d94c" letter-spacing="-1">INVIERNO</text>
+</svg>
