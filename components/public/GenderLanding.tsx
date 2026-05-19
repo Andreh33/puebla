@@ -182,17 +182,20 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         </section>
       )}
 
-      {/* DEPORTES (siempre visibles) — Running / Pádel / Montaña / Calzado.
-          El user navega por deporte y AL ENTRAR ya ve estas 4 puertas grandes,
-          independientemente de que aún no haya productos del género asociado. */}
+      {/* CATEGORÍAS POR TIPO DE PRENDA — Camisetas / Pantalones / Sudaderas /
+          Calzado. El cliente prefiere navegación por prenda en lugar de por
+          deporte (las landings de deporte ya viven en /running, /padel, etc.).
+          Sin fotos: gradiente brand + tipografía editorial — más limpio y sin
+          riesgo de logos prohibidos en imágenes. Los 4 slugs son categorías
+          ROOT en la DB (camisetas, pantalones, sudaderas, calzado). */}
       <section id="categorias" className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
         <div className="mb-10 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zs-red-600">
-              Tu deporte
+              Por tipo de prenda
             </p>
             <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-zs-blue-900 sm:text-4xl lg:text-5xl">
-              ¿Qué practicas?
+              ¿Qué buscas hoy?
             </h2>
           </div>
           <Link
@@ -206,58 +209,56 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {[
             {
-              slug: "running",
-              name: "Running",
-              copy: "Trail, asfalto y urban",
+              slug: "camisetas",
+              name: "Camisetas",
+              copy: "Manga corta, larga y polos",
               accent: "from-zs-blue-700 to-zs-blue-950",
-              photo: "/category-photos/running.jpg",
+              numeral: "01",
             },
             {
-              slug: "padel",
-              name: "Pádel",
-              copy: "Palas, pelotas y equipación",
+              slug: "pantalones",
+              name: "Pantalones",
+              copy: "Mallas, shorts y chándales",
               accent: "from-zs-red-600 to-zs-red-800",
-              photo: "/category-photos/padel.jpg",
+              numeral: "02",
             },
             {
-              slug: "montana",
-              name: "Montaña",
-              copy: "Trekking, escalada y outdoor",
+              slug: "sudaderas",
+              name: "Sudaderas",
+              copy: "Con capucha, abrigos y forros",
               accent: "from-emerald-700 to-emerald-950",
-              photo: "/category-photos/montana.jpg",
+              numeral: "03",
             },
             {
               slug: "calzado",
               name: "Calzado",
-              copy: "Para deporte y día a día",
+              copy: "Deporte, casual y técnico",
               accent: "from-zs-blue-800 to-zs-blue-950",
-              photo: "/category-photos/calzado.jpg",
+              numeral: "04",
             },
-          ].map((sport) => (
-            <li key={sport.slug}>
+          ].map((prenda) => (
+            <li key={prenda.slug}>
               <Link
-                href={`/${sport.slug}?genero=${config.gender}`}
-                className={`group relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br ${sport.accent} p-5 text-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-6`}
+                href={`/${prenda.slug}?genero=${config.gender}`}
+                className={`group relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br ${prenda.accent} p-5 text-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-6`}
               >
-                <Image
-                  src={sport.photo}
-                  alt=""
-                  fill
-                  sizes="(max-width: 640px) 50vw, 25vw"
-                  className="object-cover opacity-50 mix-blend-overlay transition-transform duration-700 group-hover:scale-110"
-                  aria-hidden
-                />
                 <span
                   aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent"
+                  className="absolute right-4 top-4 font-display text-3xl font-extrabold tracking-tight text-white/20 sm:text-4xl"
+                >
+                  {prenda.numeral}
+                </span>
+                <span
+                  aria-hidden
+                  className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-transparent"
                 />
                 <div className="relative">
                   <h3 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
-                    {sport.name}
+                    {prenda.name}
                   </h3>
-                  <p className="mt-1 text-sm text-white/85">{sport.copy}</p>
+                  <p className="mt-1 text-sm text-white/85">{prenda.copy}</p>
                   <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold">
-                    Ver {sport.name.toLowerCase()}{" "}
+                    Ver {prenda.name.toLowerCase()}{" "}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </span>
                 </div>

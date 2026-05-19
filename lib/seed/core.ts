@@ -106,6 +106,11 @@ export async function runSeed(db: PrismaClient, opts: SeedOptions = {}): Promise
   }
 
   // ----------------------------- CATEGORÍAS PADRE -------------------------
+  // Dos ejes de navegación:
+  //  - Por deporte (running, pádel, montaña, fitness, tenis) — para landings.
+  //  - Por tipo de prenda (camisetas, pantalones, sudaderas, calzado,
+  //    complementos) — usado en GenderLanding como entrada principal.
+  // Todas son ROOT y se filtran por `?genero=mujer|hombre|ninos` desde la URL.
   const rootCategories = [
     { name: "Running", slug: "running", description: "Zapatillas, ropa y técnica para corredores.", position: 1, isFeatured: true },
     { name: "Pádel", slug: "padel", description: "Palas, pelotas y equipación para pádel.", position: 2, isFeatured: true },
@@ -115,6 +120,12 @@ export async function runSeed(db: PrismaClient, opts: SeedOptions = {}): Promise
     { name: "Casual / Urban", slug: "casual", description: "Moda deportiva para la calle.", position: 6 },
     { name: "Complementos", slug: "complementos", description: "Mochilas, calcetines, riñoneras, gorras y accesorios.", position: 7 },
     { name: "Tenis", slug: "tenis", description: "Raquetas, encordados, pelotas y ropa para tenis.", position: 8 },
+    // Por tipo de prenda — usado por GenderLanding 4-tiles.
+    { name: "Camisetas", slug: "camisetas", description: "Camisetas de manga corta, larga y polos técnicos.", position: 10, isFeatured: true },
+    { name: "Pantalones", slug: "pantalones", description: "Pantalones, mallas, shorts y chándales.", position: 11, isFeatured: true },
+    { name: "Sudaderas", slug: "sudaderas", description: "Sudaderas con capucha, forros polares y abrigos ligeros.", position: 12, isFeatured: true },
+    { name: "Abrigos", slug: "abrigos", description: "Chubasqueros, anoraks y cortavientos técnicos.", position: 13 },
+    { name: "Accesorios", slug: "accesorios", description: "Gorras, mochilas, riñoneras, calcetines y guantes.", position: 14 },
   ];
 
   for (const c of rootCategories) {
