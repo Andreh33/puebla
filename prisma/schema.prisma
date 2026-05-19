@@ -1,0 +1,366 @@
+// ============================================================================
+// Zona Sport — Prisma schema
+// Modelo de datos del CRM unificado: productos (1 color = 1 producto), blog,
+// leads, importaciones, redirecciones, ajustes y administradores.
+// ============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum ProductSource {
+  LOCAL
+  MOVALIA
+  AMAZON
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+  SPAM
+}
+
+enum AdminRole {
+  OWNER
+  EDITOR
+}
+
+enum Gender {
+  HOMBRE
+  MUJER
+  UNISEX
+  NINO
+  NINA
+  BEBE
+  NO_ESPECIFICADO
+}
+
+enum ImportSource {
+  XLSX
+  MOVALIA
+  AMAZON
+}
+
+enum ImportStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+// ----------------------------------------------------------------------------
+// Producto (1 color = 1 producto independiente)
+// ----------------------------------------------------------------------------
+
+model Product {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  shortName    String?
+  description  String?       @db.Text
+
+  brandId      String
+  brand        Brand         @relation(fields: [brandId], references: [id])
+
+  categoryId   String
+  category     Category      @relation(fields: [categoryId], references: [id])
+
+  source       ProductSource @default(LOCAL)
+  externalId   String?       // "pricat:030501", ASIN, ID Movalia
+  externalUrl  String?       // URL afiliado Amazon o URL ficha proveedor
+  modelCode    String?       // "M24205"
+  colorName    String        @default("Único")
+  colorHex     String?
+
+  gender       Gender        @default(NO_ESPECIFICADO)
+  sportUse     String?       // "Montañismo/Trekking/Escalada"
+  composition  String?       // "Poliéster 100%"
+
+  costPrice    Decimal?      @db.Decimal(10, 2)
+  retailPrice  Decimal       @db.Decimal(10, 2)
+  salePrice    Decimal?      @db.Decimal(10, 2)
+  taxRate      Decimal       @default(21) @db.Decimal(5, 2)
+
+  mainImageUrl String?
+  images       ProductImage[]
+  sizes        ProductSize[]
+
+  tags         String[]      @default([])
+  status       ProductStatus @default(DRAFT)
+  stock        Int           @default(0)
+  weight       Decimal?      @db.Decimal(8, 3)
+  isFeatured   Boolean       @default(false)
+  isCustomized Boolean       @default(false) // si true, no sobrescribir desde feed
+
+  metaTitle       String?
+  metaDescription String?
+
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  audits       ProductAudit[]
+
+  @@unique([source, externalId])
+  @@index([brandId, status])
+  @@index([categoryId, status])
+  @@index([source])
+  @@index([status, publishedAt])
+  @@index([modelCode])
+  @@index([isFeatured, status])
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url         String                                // URL "large" en Vercel Blob
+  urlThumb    String?                                // 400px
+  urlMedium   String?                                // 800px
+  alt         String                                // SEO obligatorio
+  position    Int      @default(0)
+  width       Int?
+  height      Int?
+  blurDataUrl String?                                // LQIP base64
+  source      String?                                // "upload" | "url-external" | "amazon" | "movalia"
+  originalUrl String?                                // URL de origen si vino de fuera
+  createdAt   DateTime @default(now())
+
+  @@index([productId, position])
+}
+
+model ProductSize {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size        String                                // "M", "L", "42", "8", "ÚNICA"
+  ean         String?                                // EAN-13 del SKU final
+  stock       Int      @default(0)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  retailPrice Decimal? @db.Decimal(10, 2)
+  position    Int      @default(0)
+
+  @@unique([productId, size])
+  @@index([ean])
+}
+
+model ProductAudit {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String?
+  action    String   // "created", "updated", "published", "archived", "imported"
+  changes   Json?    // diff key->{from,to}
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// ----------------------------------------------------------------------------
+// Taxonomía
+// ----------------------------------------------------------------------------
+
+model Brand {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  slug            String    @unique
+  logoUrl         String?
+  description     String?   @db.Text
+  metaTitle       String?
+  metaDescription String?
+  isFeatured      Boolean   @default(false)
+  position        Int       @default(0)
+  products        Product[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Category {
+  id              String     @id @default(cuid())
+  name            String
+  slug            String     @unique
+  parentId        String?
+  parent          Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children        Category[] @relation("CategoryTree")
+  description     String?    @db.Text
+  imageUrl        String?
+  metaTitle       String?
+  metaDescription String?
+  position        Int        @default(0)
+  isFeatured      Boolean    @default(false)
+  products        Product[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([parentId, position])
+}
+
+// ----------------------------------------------------------------------------
+// Blog
+// ----------------------------------------------------------------------------
+
+model BlogPost {
+  id              String     @id @default(cuid())
+  slug            String     @unique
+  title           String
+  excerpt         String?    @db.Text
+  contentMd       String     @db.Text
+  coverImageUrl   String?
+  author          String     @default("Equipo Zona Sport")
+  tags            String[]   @default([])
+  status          PostStatus @default(DRAFT)
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  publishedAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+// ----------------------------------------------------------------------------
+// CRM: leads y suscriptores
+// ----------------------------------------------------------------------------
+
+model Lead {
+  id          String     @id @default(cuid())
+  name        String
+  email       String
+  phone       String?
+  message     String     @db.Text
+  sourcePage  String?
+  productId   String?
+  gdprConsent Boolean    @default(false)
+  status      LeadStatus @default(NEW)
+  notes       String?    @db.Text
+  ipAddress   String?
+  userAgent   String?    @db.Text
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  doiToken       String?
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  source         String?   // "footer", "popup", "checkout"
+  createdAt      DateTime  @default(now())
+}
+
+// ----------------------------------------------------------------------------
+// Admin users (Auth.js Credentials)
+// ----------------------------------------------------------------------------
+
+model AdminUser {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  role          AdminRole @default(EDITOR)
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  failedLogins  Int       @default(0)
+  lockedUntil   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Imports
+// ----------------------------------------------------------------------------
+
+model ImportJob {
+  id            String       @id @default(cuid())
+  source        ImportSource
+  status        ImportStatus @default(PENDING)
+  mode          String?      // "create_update" | "create_only" | "update_only"
+  fileUrl       String?
+  fileName      String?
+  totalRows     Int          @default(0)
+  processedRows Int          @default(0)
+  createdRows   Int          @default(0)
+  updatedRows   Int          @default(0)
+  errorRows     Int          @default(0)
+  errors        Json?
+  options       Json?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdBy     String?
+  createdAt     DateTime     @default(now())
+
+  @@index([status, createdAt])
+}
+
+// ----------------------------------------------------------------------------
+// SEO ops
+// ----------------------------------------------------------------------------
+
+model RedirectRule {
+  id        String   @id @default(cuid())
+  from      String   @unique
+  to        String
+  type      Int      @default(301)
+  hits      Int      @default(0)
+  isActive  Boolean  @default(true)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Settings (key/value JSON)
+// ----------------------------------------------------------------------------
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ----------------------------------------------------------------------------
+// Cart "intent" placeholder (fase 2: Stripe)
+// Guarda intenciones de compra del visitante para conectar con carrito real
+// cuando se integre Stripe. No es un carrito completo.
+// ----------------------------------------------------------------------------
+
+model CartIntent {
+  id          String   @id @default(cuid())
+  sessionId   String   @unique
+  items       Json     // [{ productId, size, qty }]
+  email       String?
+  whatsappRedirected Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([sessionId])
+}

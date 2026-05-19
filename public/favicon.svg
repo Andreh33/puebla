@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="12" fill="#14225b" />
+  <text x="32" y="28" text-anchor="middle" font-family="Manrope,Inter,sans-serif" font-weight="900" font-size="20" fill="#ffffff">ZS</text>
+  <circle cx="32" cy="46" r="8" fill="#c8da46" stroke="#ffffff" stroke-width="1.5" />
+  <path d="M24 46 a8 8 0 0 1 16 0" fill="none" stroke="#ffffff" stroke-width="1.2" />
+</svg>

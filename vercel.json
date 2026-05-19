@@ -1,0 +1,26 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["fra1"],
+  "buildCommand": "prisma generate && next build",
+  "devCommand": "next dev --turbo --port 3000",
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/cron/refresh-amazon",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/refresh-movalia",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/blob-garbage-collect",
+      "schedule": "0 3 * * 0"
+    },
+    {
+      "path": "/api/cron/sitemap-revalidate",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

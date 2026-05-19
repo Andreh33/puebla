@@ -1,0 +1,268 @@
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+/* ============================================================================
+ * Zona Sport — Design tokens
+ * Paleta corporativa basada en el logo:
+ *   - ZONA → azul oscuro intenso
+ *   - SPORT → rojo intenso
+ *   - Acento → verde-amarillo pelota tenis
+ * ============================================================================ */
+
+@theme {
+  /* Marca */
+  --color-zs-blue-50: #eff3fe;
+  --color-zs-blue-100: #dbe5fd;
+  --color-zs-blue-200: #b6c8fa;
+  --color-zs-blue-300: #8ba6f4;
+  --color-zs-blue-400: #5e7eea;
+  --color-zs-blue-500: #3a5cdb;
+  --color-zs-blue-600: #2a44bf;
+  --color-zs-blue-700: #1e3a8a;
+  --color-zs-blue-800: #182d6a;
+  --color-zs-blue-900: #14225b;
+  --color-zs-blue-950: #0b1640;
+
+  --color-zs-red-50: #fef2f2;
+  --color-zs-red-100: #fee2e2;
+  --color-zs-red-200: #fecaca;
+  --color-zs-red-300: #fca5a5;
+  --color-zs-red-400: #f87171;
+  --color-zs-red-500: #ef4444;
+  --color-zs-red-600: #dc2626;
+  --color-zs-red-700: #b91c1c;
+  --color-zs-red-800: #991b1b;
+  --color-zs-red-900: #7f1d1d;
+
+  --color-zs-tennis-100: #f3f8c2;
+  --color-zs-tennis-300: #dde98a;
+  --color-zs-tennis-500: #c8da46;
+  --color-zs-tennis-600: #a8bb34;
+
+  --color-zs-ink: #0b1220;
+  --color-zs-muted: #6b7280;
+  --color-zs-surface: #f8fafc;
+  --color-zs-border: #e5e7eb;
+
+  /* Shadcn neutral mapping (slate) */
+  --color-background: #ffffff;
+  --color-foreground: #0b1220;
+  --color-card: #ffffff;
+  --color-card-foreground: #0b1220;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0b1220;
+  --color-primary: #14225b;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f5f9;
+  --color-secondary-foreground: #0b1220;
+  --color-muted: #f1f5f9;
+  --color-muted-foreground: #64748b;
+  --color-accent: #f1f5f9;
+  --color-accent-foreground: #0b1220;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e2e8f0;
+  --color-input: #e2e8f0;
+  --color-ring: #14225b;
+
+  /* Radios */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  /* Tipografía */
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-display: var(--font-manrope), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Container */
+  --container-3xl: 1600px;
+}
+
+/* ----------------------------------------------------------------------------
+ * Base
+ * ---------------------------------------------------------------------------- */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-zs-blue-700);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Skip to content */
+  .skip-to-content {
+    position: absolute;
+    left: -9999px;
+    z-index: 999;
+    padding: 0.75rem 1rem;
+    background: var(--color-zs-blue-900);
+    color: white;
+    border-radius: 0.5rem;
+  }
+  .skip-to-content:focus {
+    left: 1rem;
+    top: 1rem;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Utilidades específicas Zona Sport
+ * ---------------------------------------------------------------------------- */
+
+@layer utilities {
+  .bg-zs-gradient {
+    background: linear-gradient(135deg, var(--color-zs-blue-900) 0%, var(--color-zs-blue-700) 100%);
+  }
+
+  .text-zs-gradient {
+    background: linear-gradient(90deg, var(--color-zs-blue-900), var(--color-zs-red-600));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-zs-border);
+    border-radius: 3px;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Animaciones
+ * ---------------------------------------------------------------------------- */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* Ripple Material en taps (TapRipple) */
+@keyframes zs-tap-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Pop del badge del carrito al añadir un item. */
+@keyframes zsBump {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.35);
+  }
+  60% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[zsBump_280ms_ease-out\] {
+    animation: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+ * Markdown (blog público)
+ * ---------------------------------------------------------------------------- */
+
+.prose-zs h2 {
+  color: var(--color-zs-blue-900);
+  margin-top: 2.5em;
+}
+.prose-zs h3 {
+  color: var(--color-zs-blue-800);
+}
+.prose-zs a {
+  color: var(--color-zs-blue-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose-zs a:hover {
+  color: var(--color-zs-red-600);
+}
+.prose-zs code {
+  background: var(--color-zs-surface);
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}

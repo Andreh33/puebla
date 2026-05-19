@@ -1,0 +1,53 @@
+name: Lighthouse CI (nightly)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Vercel preview deploy
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN not set — skipping deploy"
+            echo "url=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          npm i -g vercel@latest
+          vercel pull --yes --environment=preview --token=$VERCEL_TOKEN
+          URL=$(vercel deploy --token=$VERCEL_TOKEN)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Install LHCI
+        if: steps.deploy.outputs.url != ''
+        run: npm i -g @lhci/cli@0.13.x
+
+      - name: Run Lighthouse assertions
+        if: steps.deploy.outputs.url != ''
+        env:
+          LHCI_BUILD_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          lhci autorun \
+            --collect.url="$LHCI_BUILD_URL" \
+            --collect.url="$LHCI_BUILD_URL/running" \
+            --assert.preset=lighthouse:recommended \
+            --assert.assertions.categories.performance.minScore=0.7 \
+            --assert.assertions.categories.accessibility.minScore=0.9 \
+            --assert.assertions.categories.seo.minScore=0.9 \
+            --upload.target=temporary-public-storage || echo "LHCI failed but not blocking"

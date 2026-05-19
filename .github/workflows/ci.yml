@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DATABASE_URL: "postgresql://user:pass@localhost:5432/dummy?schema=public"
+  DATABASE_URL_UNPOOLED: "postgresql://user:pass@localhost:5432/dummy?schema=public"
+  NEXTAUTH_SECRET: "ci-dummy-secret-do-not-use"
+  AUTH_SECRET: "ci-dummy-secret-do-not-use"
+  NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+  NEXT_PUBLIC_WHATSAPP_NUMBER: "34689110691"
+  BLOB_READ_WRITE_TOKEN: ""
+  RESEND_API_KEY: ""
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Typecheck
+        run: npm run typecheck --if-present
+
+      - name: Unit tests (Vitest)
+        run: npm test --if-present
+
+      - name: Next.js build
+        run: npm run build
+        env:
+          SKIP_ENV_VALIDATION: "1"
