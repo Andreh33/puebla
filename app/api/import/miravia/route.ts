@@ -1,7 +1,7 @@
 /**
  * POST /api/import/miravia
  * Body: { dryRun?: boolean }
- * Dispara runMiraviaSync(). Solo accesible para sesiÃ³n admin.
+ * Dispara runMiraviaSync(). Solo accesible para sesión admin.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@/lib/auth";

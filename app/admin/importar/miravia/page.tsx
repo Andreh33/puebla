@@ -36,7 +36,7 @@ export default async function MiraviaImportPage() {
     <div>
       <AdminPageHeader
         title="Importar desde Miravia"
-        description="Sincroniza el catÃ¡logo Miravia (CSV/JSON/XML)."
+        description="Sincroniza el catálogo Miravia (CSV/JSON/XML)."
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Importar", href: "/admin/importar/xlsx" },
@@ -80,10 +80,10 @@ export default async function MiraviaImportPage() {
 
       <section className="mt-8">
         <h2 className="mb-3 text-base font-semibold text-zs-blue-900">
-          HistÃ³rico
+          Histórico
         </h2>
         {recent.length === 0 ? (
-          <p className="text-sm text-zs-muted">AÃºn no hay importaciones de Miravia.</p>
+          <p className="text-sm text-zs-muted">Aún no hay importaciones de Miravia.</p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-zs-border bg-white">
             <table className="min-w-full text-sm">

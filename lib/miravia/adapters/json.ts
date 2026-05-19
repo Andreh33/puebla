@@ -49,7 +49,7 @@ function coerce(it: Record<string, unknown>): MiraviaItem | null {
     name,
     description: it.description ? String(it.description) : undefined,
     brand: String(it.brand ?? "Sin Marca"),
-    category: String(it.category ?? "Sin CategorÃ­a"),
+    category: String(it.category ?? "Sin Categoría"),
     colorName: String(it.colorName ?? "Ãšnico"),
     colorHex: it.colorHex ? String(it.colorHex) : undefined,
     gender: it.gender ? String(it.gender) : undefined,

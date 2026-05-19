@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
@@ -44,10 +43,13 @@ export function HomeHero() {
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setReduced(isReduced);
+    if (isReduced && videoRef.current) videoRef.current.pause();
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -96,23 +98,28 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* Foto hero — Unsplash CC0, cenital aéreo de pista de atletismo con
-          corredores en silueta. Sin posibilidad de marcas visibles. */}
-      <div className="absolute inset-0 -z-20" aria-hidden>
-        <Image
-          src="/category-photos/hero-runner.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
+      {/* Video hero EN FIXED — se queda de fondo mientras scrolleas por
+          encima. Las secciones siguientes del home tienen background
+          opaco propio, así que tapan al fixed cuando llegas a ellas.
+          Videezy preview "corredor en puente al atardecer". */}
+      <div className="fixed inset-0 -z-20 h-screen w-screen" aria-hidden>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/videos/hero-runner-bridge.jpg"
+          className="h-full w-full object-cover object-center"
+        >
+          <source src="/videos/hero-runner-bridge.mp4" type="video/mp4" />
+        </video>
       </div>
-      {/* Overlay degradado para legibilidad. Capas:
-           1. Negro sólido 55% para el cuerpo del hero.
-           2. Gradiente vertical más oscuro abajo para el marquee.
-           3. Tinte azul corporativo sutil arriba a la izquierda. */}
-      <div className="absolute inset-0 -z-10" aria-hidden>
+      {/* Overlay degradado para legibilidad. También fixed para acompañar al
+          video — si solo el video fuera fixed, el overlay scrollearía con la
+          sección y dejaría ver el video sin atenuar. */}
+      <div className="fixed inset-0 -z-10 h-screen w-screen" aria-hidden>
         <div className="absolute inset-0 bg-black/55" />
         <div className="absolute inset-0 bg-gradient-to-t from-zs-blue-950 via-zs-blue-950/40 to-zs-blue-950/10" />
         <div className="absolute inset-0 bg-gradient-to-br from-zs-blue-950/55 via-transparent to-transparent" />

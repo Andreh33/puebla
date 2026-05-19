@@ -1,5 +1,5 @@
 /**
- * PÃ¡gina /admin/importar/historial â€” tabla con los Ãºltimos 50 ImportJob
+ * Página /admin/importar/historial â€” tabla con los últimos 50 ImportJob
  * de cualquier source (XLSX, MIRAVIA, AMAZON).
  */
 
@@ -62,7 +62,7 @@ export default async function ImportHistoryPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Historial de importaciones"
-        description="Ãšltimos 50 jobs de importaciÃ³n de catÃ¡logo (PRICAT, Miravia y Amazon)."
+        description="Ãšltimos 50 jobs de importación de catálogo (PRICAT, Miravia y Amazon)."
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Importar" },
@@ -74,7 +74,7 @@ export default async function ImportHistoryPage() {
         <CardContent className="p-0">
           {jobs.length === 0 ? (
             <div className="p-10 text-center text-sm text-zs-muted">
-              AÃºn no se ha lanzado ninguna importaciÃ³n.{" "}
+              Aún no se ha lanzado ninguna importación.{" "}
               <Link
                 href="/admin/importar/xlsx"
                 className="font-semibold text-zs-blue-700 hover:text-zs-red-600"

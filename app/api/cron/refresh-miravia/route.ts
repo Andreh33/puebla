@@ -1,7 +1,7 @@
 /**
  * GET /api/cron/refresh-miravia
  * Auth: Bearer CRON_SECRET. Ejecuta runMiraviaSync() y devuelve resumen.
- * Si Miravia no estÃ¡ configurado, devuelve 200 con `skipped: true`.
+ * Si Miravia no está configurado, devuelve 200 con `skipped: true`.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { runMiraviaSync } from "@/lib/miravia/sync";

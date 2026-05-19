@@ -1,16 +1,16 @@
 /**
- * Zona Sport â€” sincronizaciÃ³n Miravia.
+ * Zona Sport â€” sincronización Miravia.
  *
- * Crea un ImportJob source=MIRAVIA y recorre el catÃ¡logo aplicando upsert
+ * Crea un ImportJob source=MIRAVIA y recorre el catálogo aplicando upsert
  * por (source=MIRAVIA, externalId). "1 color = 1 producto" â€” si el feed
  * agrupa colores en un mismo registro, hay que desnormalizar en el adapter.
  *
  *  - Idempotente: re-ejecutar el sync no duplica productos.
  *  - Respeta `isCustomized` (no sobrescribe name/slug/retailPrice si
- *    el admin marcÃ³ el producto como personalizado).
- *  - Descarga la primera imagen vÃ­a /api/upload-from-url (opcional;
+ *    el admin marcó el producto como personalizado).
+ *  - Descarga la primera imagen vía /api/upload-from-url (opcional;
  *    en entorno cron/headless se necesita CRON_INTERNAL_URL para llamarse a
- *    sÃ­ mismo).
+ *    sí mismo).
  */
 
 import "server-only";
@@ -78,11 +78,11 @@ async function resolveProvider(): Promise<MiraviaProvider> {
     const { createMiraviaXmlProvider } = await import("./adapters/xml");
     return createMiraviaXmlProvider({ source: url });
   }
-  throw new MiraviaNotConfiguredError(`MIRAVIA_FEED_FORMAT invÃ¡lido: ${format}`);
+  throw new MiraviaNotConfiguredError(`MIRAVIA_FEED_FORMAT inválido: ${format}`);
 }
 
 // ---------------------------------------------------------------------------
-// Helpers brand/category con cachÃ© en memoria
+// Helpers brand/category con caché en memoria
 // ---------------------------------------------------------------------------
 
 class TaxonomyCache {
@@ -115,7 +115,7 @@ class TaxonomyCache {
   }
 
   async getCategoryId(tx: Prisma.TransactionClient, name: string): Promise<string> {
-    const key = name.trim() || "Sin CategorÃ­a";
+    const key = name.trim() || "Sin Categoría";
     const cached = this.categories.get(key);
     if (cached) return cached;
     const slug = slugifyEs(key);
@@ -289,7 +289,7 @@ async function upsertItem(
 }
 
 // ---------------------------------------------------------------------------
-// Descarga de imagen principal vÃ­a /api/upload-from-url
+// Descarga de imagen principal vía /api/upload-from-url
 // ---------------------------------------------------------------------------
 
 async function downloadFirstImage(

@@ -1,12 +1,12 @@
 /**
  * Adaptador CSV para Miravia.
  *
- * DiseÃ±o:
+ * Diseño:
  *   - No usamos `csv-parse` (no instalado) â€” parseamos a mano con un mini
  *     parser que respeta comillas, separadores `,` y `;`, escapes "" â†’ ".
- *   - Soporta encodings utf-8 e ISO-8859-1 / Windows-1252 (heurÃ­stica por
- *     bytes anÃ³malos).
- *   - Mapping configurable vÃ­a el parÃ¡metro `mapping` o el Setting
+ *   - Soporta encodings utf-8 e ISO-8859-1 / Windows-1252 (heurística por
+ *     bytes anómalos).
+ *   - Mapping configurable vía el parámetro `mapping` o el Setting
  *     "miravia.csvMapping" (Record<sourceField, targetField>).
  *
  *  Target fields esperados (todos opcionales salvo externalId / name /
@@ -28,7 +28,7 @@ export type CsvMapping = Record<string, string>;
 export interface MiraviaCsvOptions {
   /** Ruta local o URL al fichero (http/https). */
   source: string;
-  /** Mapping origen â†’ destino. Si vacÃ­o, usa los nombres "target" directamente. */
+  /** Mapping origen â†’ destino. Si vacío, usa los nombres "target" directamente. */
   mapping?: CsvMapping;
   /** Separador forzado; si null, auto-detecta entre `,` y `;`. */
   delimiter?: "," | ";";
@@ -37,7 +37,7 @@ export interface MiraviaCsvOptions {
 }
 
 // ---------------------------------------------------------------------------
-// Lector de bytes con decodificaciÃ³n robusta
+// Lector de bytes con decodificación robusta
 // ---------------------------------------------------------------------------
 
 async function readSourceBytes(source: string): Promise<Buffer> {
@@ -51,7 +51,7 @@ async function readSourceBytes(source: string): Promise<Buffer> {
 }
 
 function looksUtf8(buf: Buffer): boolean {
-  // HeurÃ­stica rÃ¡pida: si decodificamos como utf-8 y aparecen "" (replacement),
+  // Heurística rápida: si decodificamos como utf-8 y aparecen "" (replacement),
   // tratamos como latin1.
   try {
     const txt = buf.toString("utf-8");
@@ -78,8 +78,8 @@ function detectDelimiter(headerLine: string): "," | ";" {
 }
 
 /**
- * Parser de lÃ­neas CSV que respeta comillas dobles y escapes "" â†’ ".
- * Acepta cualquier delimitador de un carÃ¡cter.
+ * Parser de líneas CSV que respeta comillas dobles y escapes "" â†’ ".
+ * Acepta cualquier delimitador de un carácter.
  */
 export function parseCsvLine(line: string, delimiter: string): string[] {
   const out: string[] = [];
@@ -122,7 +122,7 @@ export function parseCsvLine(line: string, delimiter: string): string[] {
 }
 
 /**
- * Parser de CSV completo respetando saltos de lÃ­nea dentro de comillas.
+ * Parser de CSV completo respetando saltos de línea dentro de comillas.
  */
 export function parseCsvText(
   text: string,
@@ -173,7 +173,7 @@ export function parseCsvText(
 }
 
 // ---------------------------------------------------------------------------
-// ConversiÃ³n fila CSV â†’ MiraviaItem (agrupando por externalId)
+// Conversión fila CSV â†’ MiraviaItem (agrupando por externalId)
 // ---------------------------------------------------------------------------
 
 function applyMapping(
@@ -185,7 +185,7 @@ function applyMapping(
   for (const [src, tgt] of Object.entries(mapping)) {
     if (row[src] !== undefined) out[tgt] = row[src]!;
   }
-  // mantener campos no mapeados pero Ãºtiles
+  // mantener campos no mapeados pero útiles
   for (const [k, v] of Object.entries(row)) {
     if (!(k in mapping) && out[k] === undefined) out[k] = v;
   }
@@ -226,7 +226,7 @@ function buildItem(
     name: titleCaseEs(head.name) || `Producto ${externalId}`,
     description: head.description || undefined,
     brand: titleCaseEs(head.brand) || "Sin Marca",
-    category: titleCaseEs(head.category) || "Sin CategorÃ­a",
+    category: titleCaseEs(head.category) || "Sin Categoría",
     colorName: titleCaseEs(head.colorName) || "Ãšnico",
     colorHex: head.colorHex || undefined,
     gender: head.gender ? mapGender(head.gender) : undefined,

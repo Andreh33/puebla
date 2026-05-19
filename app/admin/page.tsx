@@ -81,8 +81,8 @@ export default async function AdminDashboard() {
       (i): ActivityItem => ({
         id: i.id,
         kind: "import",
-        title: i.fileName ?? `ImportaciÃ³n ${i.source}`,
-        subtitle: `${i.createdRows} nuevos Â· ${i.updatedRows} actualizados Â· ${i.errorRows} errores`,
+        title: i.fileName ?? `Importación ${i.source}`,
+        subtitle: `${i.createdRows} nuevos · ${i.updatedRows} actualizados · ${i.errorRows} errores`,
         status: i.status,
         href: "/admin/importar/historial",
         createdAt: i.createdAt,
@@ -93,7 +93,7 @@ export default async function AdminDashboard() {
         id: l.id,
         kind: "lead",
         title: l.name,
-        subtitle: `${l.email}${l.sourcePage ? ` Â· ${l.sourcePage}` : ""}`,
+        subtitle: `${l.email}${l.sourcePage ? ` · ${l.sourcePage}` : ""}`,
         status: l.status,
         href: "/admin/leads",
         createdAt: l.createdAt,
@@ -121,11 +121,11 @@ export default async function AdminDashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zs-blue-900">
-          Hola{session?.user?.name ? `, ${session.user.name.split(" ")[0]}` : ""} Â· Bienvenido
+          Hola{session?.user?.name ? `, ${session.user.name.split(" ")[0]}` : ""} · Bienvenido
           al CRM
         </h1>
         <p className="mt-1 text-sm text-zs-muted">
-          Resumen del estado del catÃ¡logo, leads recientes y acciones pendientes.
+          Resumen del estado del catálogo, leads recientes y acciones pendientes.
         </p>
       </div>
 
@@ -146,7 +146,7 @@ export default async function AdminDashboard() {
           <KpiCard
             label="Productos borrador"
             value={products.draft}
-            hint="Pendientes de imagen o publicaciÃ³n"
+            hint="Pendientes de imagen o publicación"
             href="/admin/productos?status=DRAFT"
             icon={AlertCircle}
             tone={products.draft > 0 ? "warning" : "default"}
@@ -160,7 +160,7 @@ export default async function AdminDashboard() {
             tone={products.withoutImage > 0 ? "danger" : "default"}
           />
           <KpiCard
-            label="Leads (7 dÃ­as)"
+            label="Leads (7 días)"
             value={leads.count}
             hint="Formulario de contacto"
             href="/admin/leads"
@@ -190,7 +190,7 @@ export default async function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <TrendingUp className="h-4 w-4 text-zs-blue-700" aria-hidden="true" />
-              Leads Ãºltimos 7 dÃ­as
+              Leads últimos 7 días
             </CardTitle>
             <Badge variant="outline">{leads.count} en total</Badge>
           </CardHeader>
@@ -205,9 +205,9 @@ export default async function AdminDashboard() {
           </CardHeader>
           <CardContent>
             {products.byBrand.length === 0 ? (
-              <p className="text-sm text-zs-muted">AÃºn no hay productos catalogados.</p>
+              <p className="text-sm text-zs-muted">Aún no hay productos catalogados.</p>
             ) : (
-              <ul className="space-y-3" aria-label="DistribuciÃ³n por marca">
+              <ul className="space-y-3" aria-label="Distribución por marca">
                 {products.byBrand.map((b) => {
                   const pct =
                     products.total > 0 ? Math.round((b.count / products.total) * 100) : 0;
@@ -216,7 +216,7 @@ export default async function AdminDashboard() {
                       <div className="mb-1 flex items-center justify-between text-sm">
                         <span className="font-medium text-zs-ink">{b.brandName}</span>
                         <span className="tabular-nums text-zs-muted">
-                          {b.count} Â· {pct}%
+                          {b.count} · {pct}%
                         </span>
                       </div>
                       <div
@@ -250,13 +250,13 @@ export default async function AdminDashboard() {
         </Card>
       </section>
 
-      {/* Acciones rÃ¡pidas */}
+      {/* Acciones rápidas */}
       <section aria-labelledby="quick-actions-heading">
         <h2
           id="quick-actions-heading"
           className="mb-4 text-lg font-semibold text-zs-blue-900"
         >
-          Acciones rÃ¡pidas
+          Acciones rápidas
         </h2>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
@@ -269,7 +269,7 @@ export default async function AdminDashboard() {
             <Link href="/admin/blog/nuevo">Nuevo post de blog</Link>
           </Button>
           <Button asChild variant="outline">
-            <Link href="/admin/imagenes">GalerÃ­a de imÃ¡genes</Link>
+            <Link href="/admin/imagenes">Galería de imágenes</Link>
           </Button>
         </div>
       </section>
@@ -278,13 +278,13 @@ export default async function AdminDashboard() {
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Alertas de configuraciÃ³n</CardTitle>
+            <CardTitle className="text-base">Alertas de configuración</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {alerts.length === 0 ? (
               <div className="flex items-center gap-2 text-sm text-emerald-700">
                 <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                Sin alertas pendientes. Â¡Buen trabajo!
+                Sin alertas pendientes. ¡Buen trabajo!
               </div>
             ) : (
               alerts.map((a) => {

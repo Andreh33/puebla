@@ -5,10 +5,10 @@
  * Body JSON: { url: string, alt: string, productId?: string, type?: "product"|"blog"|"brand"|"category" }
  *
  * Seguridad:
- *   - SesiÃ³n admin.
+ *   - Sesión admin.
  *   - Rate limit 50/h por usuario.
  *   - Allowlist de dominios.
- *   - Timeout fetch 10s, mÃ¡ximo 10 MB.
+ *   - Timeout fetch 10s, máximo 10 MB.
  *   - Content-type real validado por magic bytes.
  */
 import { NextResponse, type NextRequest } from "next/server";
@@ -39,7 +39,7 @@ const ALLOWED_HOSTS = new Set<string>([
   "shop.miravia.com",
   "miravia.com",
   "www.miravia.com",
-  // Mayorista oficial John Smith / +8000 â€” fuente de imÃ¡genes del PRICAT.
+  // Mayorista oficial John Smith / +8000 â€” fuente de imágenes del PRICAT.
   "www.aguirreycia.es",
   "aguirreycia.es",
 ]);
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
   try {
     body = (await req.json()) as Body;
   } catch {
-    return NextResponse.json({ error: "JSON invÃ¡lido" }, { status: 400 });
+    return NextResponse.json({ error: "JSON inválido" }, { status: 400 });
   }
 
   const urlStr = String(body.url ?? "").trim();
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
   try {
     parsed = new URL(urlStr);
   } catch {
-    return NextResponse.json({ error: "URL invÃ¡lida" }, { status: 400 });
+    return NextResponse.json({ error: "URL inválida" }, { status: 400 });
   }
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     return NextResponse.json({ error: "Protocolo no permitido" }, { status: 400 });
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
   const realMime = detectMime(buffer);
   if (!realMime) {
     return NextResponse.json(
-      { error: "El contenido no parece ser una imagen vÃ¡lida" },
+      { error: "El contenido no parece ser una imagen válida" },
       { status: 400 },
     );
   }

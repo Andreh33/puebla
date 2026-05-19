@@ -19,7 +19,7 @@ export function MiraviaImportClient({ enabled }: { enabled: boolean }) {
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        toast.error(json.error || "Error en sincronizaciÃ³n");
+        toast.error(json.error || "Error en sincronización");
         return;
       }
       toast.success(

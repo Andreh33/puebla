@@ -38,7 +38,7 @@ export function createMiraviaXmlProvider(_opts: MiraviaXmlOptions): MiraviaProvi
       throw new MiraviaNotConfiguredError(
         "Adaptador XML no implementado. Instala `fast-xml-parser` y completa lib/miravia/adapters/xml.ts.",
       );
-      // Marca como generator sin emitir items (unreachable despuÃ©s del throw).
+      // Marca como generator sin emitir items (unreachable después del throw).
       yield* [] as MiraviaItem[];
     },
   };

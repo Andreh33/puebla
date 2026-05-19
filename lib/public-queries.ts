@@ -12,11 +12,11 @@ import {
 } from "@/lib/demo-products";
 
 // ---------------------------------------------------------------------------
-// Alias de categorÃ­as "comerciales" â†’ subsets del catÃ¡logo demo
+// Alias de categorías "comerciales" â†’ subsets del catálogo demo
 //
 // La home muestra siempre /running, /padel, /montana, /calzado como entradas
-// destacadas aunque la BD estÃ© vacÃ­a. Mapeamos esos slugs comerciales a
-// subsets temÃ¡ticos del catÃ¡logo demo para que sus pÃ¡ginas no devuelvan 404.
+// destacadas aunque la BD esté vacía. Mapeamos esos slugs comerciales a
+// subsets temáticos del catálogo demo para que sus páginas no devuelvan 404.
 // ---------------------------------------------------------------------------
 
 const DEMO_CATEGORY_ALIASES: Record<
@@ -24,9 +24,9 @@ const DEMO_CATEGORY_ALIASES: Record<
   { name: string; categorySlugs: string[] }
 > = {
   running: { name: "Running", categorySlugs: ["zapatilla", "camiseta-mcorta", "malla", "short-poliester"] },
-  padel: { name: "PÃ¡del", categorySlugs: ["zapatilla", "camiseta-mcorta", "short-poliester"] },
+  padel: { name: "Pádel", categorySlugs: ["zapatilla", "camiseta-mcorta", "short-poliester"] },
   montana: {
-    name: "MontaÃ±a",
+    name: "Montaña",
     categorySlugs: [
       "bota-alta",
       "anorack-treking",
@@ -40,15 +40,15 @@ const DEMO_CATEGORY_ALIASES: Record<
   },
   calzado: { name: "Calzado", categorySlugs: ["zapatilla", "bota-alta"] },
 
-  // --- TaxonomÃ­a del mega-menÃº (Mujer / Hombre / NiÃ±os) ----------------
-  // Cada slug devuelve 200 aunque no haya productos: la categorÃ­a se
-  // resuelve por alias y el listado cae al subset del catÃ¡logo demo mÃ¡s
-  // cercano por heurÃ­stica. Donde no hay match natural, `categorySlugs`
-  // queda vacÃ­o y la pÃ¡gina muestra el estado "sin productos todavÃ­a".
+  // --- Taxonomía del mega-menú (Mujer / Hombre / Niños) ----------------
+  // Cada slug devuelve 200 aunque no haya productos: la categoría se
+  // resuelve por alias y el listado cae al subset del catálogo demo más
+  // cercano por heurística. Donde no hay match natural, `categorySlugs`
+  // queda vacío y la página muestra el estado "sin productos todavía".
   //
   // ROPA
   chandal: {
-    name: "ChÃ¡ndal",
+    name: "Chándal",
     categorySlugs: ["traje-jogging", "traje-entrenamiento-poliester"],
   },
   abrigos: {
@@ -71,33 +71,33 @@ const DEMO_CATEGORY_ALIASES: Record<
     name: "Conjuntos",
     categorySlugs: ["traje-jogging", "traje-entrenamiento-poliester"],
   },
-  banadores: { name: "BaÃ±adores", categorySlugs: ["short-poliester"] },
+  banadores: { name: "Bañadores", categorySlugs: ["short-poliester"] },
 
   // CALZADO
-  "tenis-padel": { name: "Tenis / PÃ¡del", categorySlugs: ["zapatilla"] },
+  "tenis-padel": { name: "Tenis / Pádel", categorySlugs: ["zapatilla"] },
   trail: { name: "Trail", categorySlugs: ["zapatilla", "bota-alta"] },
   baloncesto: { name: "Baloncesto", categorySlugs: ["zapatilla"] },
-  futbol: { name: "FÃºtbol", categorySlugs: ["zapatilla"] },
-  "futbol-sala": { name: "FÃºtbol Sala", categorySlugs: ["zapatilla"] },
+  futbol: { name: "Fútbol", categorySlugs: ["zapatilla"] },
+  "futbol-sala": { name: "Fútbol Sala", categorySlugs: ["zapatilla"] },
   chanclas: { name: "Chanclas", categorySlugs: ["zapatilla"] },
 
-  // ACCESORIOS â€” sin match en el catÃ¡logo demo todavÃ­a. La pÃ¡gina renderiza
-  // hero + categorÃ­a + estado "Pronto en tienda".
+  // ACCESORIOS â€” sin match en el catálogo demo todavía. La página renderiza
+  // hero + categoría + estado "Pronto en tienda".
   gorras: { name: "Gorras", categorySlugs: [] },
   calcetines: { name: "Calcetines", categorySlugs: [] },
   mochilas: { name: "Mochilas", categorySlugs: [] },
   billeteros: { name: "Billeteros", categorySlugs: [] },
-  rinoneras: { name: "RiÃ±oneras", categorySlugs: [] },
+  rinoneras: { name: "Riñoneras", categorySlugs: [] },
   bolsos: { name: "Bolsos", categorySlugs: [] },
-  "gafas-natacion": { name: "Gafas de nataciÃ³n", categorySlugs: [] },
+  "gafas-natacion": { name: "Gafas de natación", categorySlugs: [] },
   guantes: { name: "Guantes", categorySlugs: [] },
   balones: { name: "Balones", categorySlugs: [] },
-  "palas-padel": { name: "Palas de pÃ¡del", categorySlugs: [] },
+  "palas-padel": { name: "Palas de pádel", categorySlugs: [] },
 
   // NIÃ‘OS
-  bebe: { name: "BebÃ©", categorySlugs: [] },
+  bebe: { name: "Bebé", categorySlugs: [] },
 
-  // Mantenemos coherencia con los slugs que sÃ­ estÃ¡n directamente en el demo.
+  // Mantenemos coherencia con los slugs que sí están directamente en el demo.
 };
 
 function aliasProducts(slug: string): DemoProduct[] {
@@ -107,9 +107,9 @@ function aliasProducts(slug: string): DemoProduct[] {
 }
 
 /**
- * Indica si un slug estÃ¡ registrado como alias del mega-menÃº. Ãštil para
- * distinguir "categorÃ­a conocida pero sin productos todavÃ­a" de "categorÃ­a
- * inexistente". En el primer caso queremos mostrar la pÃ¡gina vacÃ­a (con hero
+ * Indica si un slug está registrado como alias del mega-menú. Ãštil para
+ * distinguir "categoría conocida pero sin productos todavía" de "categoría
+ * inexistente". En el primer caso queremos mostrar la página vacía (con hero
  * y CTA) en vez de caer al fallback de "todos los productos demo".
  */
 function isAliasSlug(slug: string): boolean {
@@ -117,18 +117,18 @@ function isAliasSlug(slug: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Datos pÃºblicos: real-or-demo fallback
+// Datos públicos: real-or-demo fallback
 //
 // Estas funciones intentan leer la base de datos real (Prisma â†’ Neon). Si la
-// BD no estÃ¡ aprovisionada o falla por cualquier motivo, devuelven productos
-// del catÃ¡logo de demo que vive en `lib/demo-products.ts` para que la web
-// luzca con artÃ­culos reales (con imÃ¡genes) mientras el cliente termina de
+// BD no está aprovisionada o falla por cualquier motivo, devuelven productos
+// del catálogo de demo que vive en `lib/demo-products.ts` para que la web
+// luzca con artículos reales (con imágenes) mientras el cliente termina de
 // configurar la BD. Cuando haya productos publicados, los reales tienen
-// prioridad y los demo desaparecen automÃ¡ticamente.
+// prioridad y los demo desaparecen automáticamente.
 // ---------------------------------------------------------------------------
 
 /**
- * Shape comÃºn esperado por `ProductCard` y por los listados pÃºblicos. Es un
+ * Shape común esperado por `ProductCard` y por los listados públicos. Es un
  * superconjunto de los campos seleccionados desde Prisma y de `DemoProduct`.
  */
 export type PublicProductCardData = {
@@ -161,7 +161,7 @@ function demoToCard(p: DemoProduct): PublicProductCardData {
   };
 }
 
-// SelecciÃ³n estÃ¡ndar para tarjetas en listados.
+// Selección estándar para tarjetas en listados.
 const productCardSelect = {
   id: true,
   slug: true,
@@ -176,7 +176,7 @@ const productCardSelect = {
 } satisfies Prisma.ProductSelect;
 
 /**
- * Productos destacados para la home. Real â†’ fallback demo (8 Ã­tems).
+ * Productos destacados para la home. Real â†’ fallback demo (8 ítems).
  */
 export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardData[]> {
   try {
@@ -207,7 +207,7 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardD
 }
 
 /**
- * Productos por categorÃ­a (slug). Devuelve datos paginados.
+ * Productos por categoría (slug). Devuelve datos paginados.
  */
 export async function getCategoryProducts(opts: {
   categorySlug: string;
@@ -253,21 +253,21 @@ export async function getCategoryProducts(opts: {
       (err as Error).message,
     );
   }
-  // 1) Match directo por slug de categorÃ­a
+  // 1) Match directo por slug de categoría
   let subset = getDemoProductsByCategory(opts.categorySlug);
-  // 2) Match por alias comercial (running, padel, montana, calzadoâ€¦)
+  // 2) Match por alias comercial (running, padel, montana, calzado…)
   if (subset.length === 0) {
     const aliased = aliasProducts(opts.categorySlug);
     if (aliased.length > 0) subset = aliased;
   }
-  // 3) Si el slug es un alias conocido del mega-menÃº pero sin match natural
-  // (accesorios todavÃ­a sin catÃ¡logo, "BebÃ©"â€¦), devolvemos lista vacÃ­a. La
-  // pÃ¡gina renderiza el hero + estado "Pronto en tienda". Mucho mÃ¡s limpio
-  // que enseÃ±ar productos aleatorios.
+  // 3) Si el slug es un alias conocido del mega-menú pero sin match natural
+  // (accesorios todavía sin catálogo, "Bebé"…), devolvemos lista vacía. La
+  // página renderiza el hero + estado "Pronto en tienda". Mucho más limpio
+  // que enseñar productos aleatorios.
   if (subset.length === 0 && isAliasSlug(opts.categorySlug)) {
     return { products: [], total: 0, isDemo: true };
   }
-  // 4) Ãšltimo recurso: todos los demo â€” vale mÃ¡s enseÃ±ar producto real con
+  // 4) Ãšltimo recurso: todos los demo â€” vale más enseñar producto real con
   // imagen que ninguno.
   const list = subset.length > 0 ? subset : DEMO_PRODUCTS;
   return {
@@ -327,7 +327,7 @@ export async function getBrandProducts(opts: {
     );
   }
   const list = getDemoProductsByBrand(opts.brandSlug);
-  // Si la marca no aparece en el demo, devolvemos lista vacÃ­a (no inventamos
+  // Si la marca no aparece en el demo, devolvemos lista vacía (no inventamos
   // productos de otras marcas) pero con isDemo=true para que la UI pueda dar
   // contexto.
   return {
@@ -338,11 +338,11 @@ export async function getBrandProducts(opts: {
 }
 
 /**
- * Productos filtrados por gÃ©nero (HOMBRE / MUJER / NINO â€¦). Real â†’ demo.
+ * Productos filtrados por género (HOMBRE / MUJER / NINO …). Real â†’ demo.
  *
- * Para HOMBRE y MUJER se incluyen tambiÃ©n los productos UNISEX, alineado con
- * la convenciÃ³n de retailers como Decathlon o Nike (un producto unisex aparece
- * en las dos secciones de gÃ©nero). Para NINO/NINA/BEBE solo se devuelven los
+ * Para HOMBRE y MUJER se incluyen también los productos UNISEX, alineado con
+ * la convención de retailers como Decathlon o Nike (un producto unisex aparece
+ * en las dos secciones de género). Para NINO/NINA/BEBE solo se devuelven los
  * que coincidan estrictamente.
  */
 export async function getProductsByGender(opts: {
@@ -404,9 +404,9 @@ export async function getProductsByGender(opts: {
 }
 
 /**
- * CategorÃ­as presentes en el catÃ¡logo demo para un gÃ©nero dado. Ãštil para la
- * secciÃ³n "CategorÃ­as" de las landings /mujer /hombre /ninos. Si no hay BD
- * real, deduce las categorÃ­as a partir del demo filtrado por gÃ©nero.
+ * Categorías presentes en el catálogo demo para un género dado. Ãštil para la
+ * sección "Categorías" de las landings /mujer /hombre /ninos. Si no hay BD
+ * real, deduce las categorías a partir del demo filtrado por género.
  */
 export async function getCategoriesByGender(g: DemoGender): Promise<
   Array<{ name: string; slug: string; productCount: number; imageUrl: string | null }>
@@ -455,7 +455,7 @@ export async function getCategoriesByGender(g: DemoGender): Promise<
       (err as Error).message,
     );
   }
-  // Fallback demo: agrupar productos filtrados por gÃ©nero en categorÃ­as.
+  // Fallback demo: agrupar productos filtrados por género en categorías.
   const subset = getDemoProductsByGender(g);
   const map = new Map<string, { name: string; slug: string; productCount: number; imageUrl: string | null }>();
   for (const p of subset) {
@@ -532,7 +532,7 @@ export async function getBrandList(): Promise<{ brands: PublicBrandSummary[]; is
 }
 
 /**
- * Detalle de marca por slug. Real â†’ demo si la marca estÃ¡ en el catÃ¡logo demo.
+ * Detalle de marca por slug. Real â†’ demo si la marca está en el catálogo demo.
  */
 export type PublicBrandDetail = {
   id: string;
@@ -572,7 +572,7 @@ export async function getBrandBySlug(slug: string): Promise<PublicBrandDetail | 
 }
 
 /**
- * Listado de categorÃ­as destacadas para la home. Real â†’ fallback demo.
+ * Listado de categorías destacadas para la home. Real â†’ fallback demo.
  */
 export type PublicCategorySummary = {
   id: string;
@@ -595,35 +595,35 @@ export async function getFeaturedCategories(): Promise<PublicCategorySummary[]> 
     console.warn("[demo] getFeaturedCategories â†’ fallback demo:", (err as Error).message);
   }
   // Fallback demo: usamos los slugs comerciales (running/padel/montana/calzado)
-  // porque son mÃ¡s descriptivos para el visitante que las categorÃ­as PRICAT
+  // porque son más descriptivos para el visitante que las categorías PRICAT
   // ("Bota Alta", "Pantalon Poliester"...).
   return [
     {
       id: "demo-cat-running",
       name: "Running",
       slug: "running",
-      description: "Zapatillas, camisetas y mallas tÃ©cnicas",
+      description: "Zapatillas, camisetas y mallas técnicas",
       imageUrl: null,
     },
     {
       id: "demo-cat-montana",
-      name: "MontaÃ±a",
+      name: "Montaña",
       slug: "montana",
       description: "Anoraks, polares y botas para el outdoor",
       imageUrl: null,
     },
     {
       id: "demo-cat-padel",
-      name: "PÃ¡del",
+      name: "Pádel",
       slug: "padel",
-      description: "Calzado y equipaciÃ³n para tu deporte",
+      description: "Calzado y equipación para tu deporte",
       imageUrl: null,
     },
     {
       id: "demo-cat-calzado",
       name: "Calzado",
       slug: "calzado",
-      description: "Zapatillas y botas para todos los dÃ­as",
+      description: "Zapatillas y botas para todos los días",
       imageUrl: null,
     },
   ];
@@ -657,7 +657,7 @@ export async function getFeaturedBrands(take = 6): Promise<
 }
 
 /**
- * CategorÃ­a por slug (para landing pages /[categoria]). Real â†’ demo si existe.
+ * Categoría por slug (para landing pages /[categoria]). Real â†’ demo si existe.
  */
 export type PublicCategoryDetail = {
   id: string;
@@ -732,7 +732,7 @@ const RESERVED_SLUGS = new Set([
   "api",
   "admin",
   "login",
-  // Landings de gÃ©nero â€” tienen su propio route static en /mujer /hombre /ninos
+  // Landings de género â€” tienen su propio route static en /mujer /hombre /ninos
   "mujer",
   "hombre",
   "ninos",
@@ -820,7 +820,7 @@ export function buildProductWhere(opts: {
 
 export async function getCategoryFacets(categoryId: string) {
   // Calculamos counts independientes para cada faceta sobre los productos activos
-  // de la categorÃ­a (sin filtros aplicados â€” los counts ayudan al usuario a elegir).
+  // de la categoría (sin filtros aplicados â€” los counts ayudan al usuario a elegir).
   const baseWhere = { status: "ACTIVE" as const, categoryId };
 
   const [brands, genders, colors, sizes, priceRange] = await Promise.all([

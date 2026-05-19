@@ -4,12 +4,12 @@
  * Flujo:
  *   1. Buffer crudo â†’
  *   2. sharp procesa 3 variantes (WebP) + LQIP â†’
- *   3. Sube las 3 a Vercel Blob bajo path determinÃ­stico â†’
+ *   3. Sube las 3 a Vercel Blob bajo path determinístico â†’
  *   4. (Opcional) Crea registro ProductImage en DB.
  *
  * Requisitos:
  *   - BLOB_READ_WRITE_TOKEN debe estar configurado.
- *   - En entornos sin token, fallamos rÃ¡pido y claro.
+ *   - En entornos sin token, fallamos rápido y claro.
  */
 import { randomUUID } from "node:crypto";
 import { put } from "@vercel/blob";
@@ -23,7 +23,7 @@ import {
 export class BlobConfigError extends Error {
   constructor() {
     super(
-      "Vercel Blob no configurado â€” aÃ±ade BLOB_READ_WRITE_TOKEN a .env.local. " +
+      "Vercel Blob no configurado â€” añade BLOB_READ_WRITE_TOKEN a .env.local. " +
         "El pipeline no guarda en disco como fallback.",
     );
     this.name = "BlobConfigError";
@@ -44,7 +44,7 @@ function assertBlobConfigured(): string {
 }
 
 export type UploadProductResult = {
-  id: string | null; // null si no se creÃ³ registro en DB
+  id: string | null; // null si no se creó registro en DB
   url: string;        // large
   urlMedium: string;
   urlThumb: string;
@@ -103,7 +103,7 @@ export async function uploadProductImage(
         token,
         contentType: "image/webp",
         addRandomSuffix: false,
-        cacheControlMaxAge: 60 * 60 * 24 * 365, // 1 aÃ±o
+        cacheControlMaxAge: 60 * 60 * 24 * 365, // 1 año
       }),
       put(variantPath(folder, uuid, "medium"), processed.variants.medium.buffer, {
         access: "public",
@@ -160,7 +160,7 @@ export async function uploadProductImage(
 }
 
 /**
- * Sube una imagen genÃ©rica (cover blog, logo marca, imagen categorÃ­a).
+ * Sube una imagen genérica (cover blog, logo marca, imagen categoría).
  * No crea registro en DB â€” el caller actualiza el campo correspondiente.
  */
 export async function uploadGenericImage(
@@ -226,7 +226,7 @@ export async function deleteBlobByUrl(url: string): Promise<void> {
     await del(url, { token });
   } catch (err) {
     // Vercel Blob lanza si no existe. Solo logamos.
-    console.warn("[blob] deleteBlobByUrl fallÃ³:", url, err);
+    console.warn("[blob] deleteBlobByUrl falló:", url, err);
   }
 }
 

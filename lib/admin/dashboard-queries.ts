@@ -174,7 +174,7 @@ export async function getRecentLeads(days = 7): Promise<RecentLeads> {
       }),
     ]);
 
-    // Construye serie diaria continua (rellena dÃ­as sin leads con 0)
+    // Construye serie diaria continua (rellena días sin leads con 0)
     const bucket = new Map<string, number>();
     for (let i = 0; i < days; i++) {
       const d = new Date(since);
@@ -253,7 +253,7 @@ export async function getBlogStats(): Promise<BlogStats> {
 }
 
 // ---------------------------------------------------------------------------
-// Alertas de configuraciÃ³n
+// Alertas de configuración
 // ---------------------------------------------------------------------------
 
 type NapValue = {
@@ -287,7 +287,7 @@ export async function getSettingsAlerts(): Promise<SettingsAlert[]> {
         severity: productsNoImage > 50 ? "warning" : "info",
         title: `${productsNoImage} productos sin imagen principal`,
         description:
-          "Los productos sin imagen no pueden publicarse. Sube imÃ¡genes desde la ficha o usa el emparejado por cÃ³digo.",
+          "Los productos sin imagen no pueden publicarse. Sube imágenes desde la ficha o usa el emparejado por código.",
         href: "/admin/productos?noImage=1",
       });
     }
@@ -297,7 +297,7 @@ export async function getSettingsAlerts(): Promise<SettingsAlert[]> {
         severity: "info",
         title: `${productsNoMeta} productos activos sin meta description`,
         description:
-          "Los productos sin meta description pierden CTR en buscadores. RevÃ­salos en el listado.",
+          "Los productos sin meta description pierden CTR en buscadores. Revísalos en el listado.",
         href: "/admin/productos?status=ACTIVE",
       });
     }
@@ -322,14 +322,14 @@ export async function getSettingsAlerts(): Promise<SettingsAlert[]> {
       alerts.push({
         id: "nap-incomplete",
         severity: "warning",
-        title: "ConfiguraciÃ³n de empresa (NAP) incompleta",
+        title: "Configuración de empresa (NAP) incompleta",
         description:
-          "Completa CIF, telÃ©fono, email y direcciÃ³n en Ajustes para cumplir RGPD y mejorar el SEO local.",
+          "Completa CIF, teléfono, email y dirección en Ajustes para cumplir RGPD y mejorar el SEO local.",
         href: "/admin/ajustes",
       });
     }
   } catch {
-    // si la DB no estÃ¡ disponible, no devolver alertas (no romper dashboard)
+    // si la DB no está disponible, no devolver alertas (no romper dashboard)
   }
   return alerts;
 }

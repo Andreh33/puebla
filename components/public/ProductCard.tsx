@@ -43,7 +43,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
         className,
       )}
-      aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} Â· ${formatPriceEUR(final.toNumber())}`}
+      aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zs-surface">
         {product.mainImageUrl ? (
@@ -106,9 +106,9 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
           )}
         </div>
       </div>
-      {/* Tilt 3D sutil â€” sÃ³lo se aplica en pointer fino (desktop), no marea.
+      {/* Tilt 3D sutil â€” sólo se aplica en pointer fino (desktop), no marea.
           Definido inline para no contaminar globals con un selector demasiado
-          especÃ­fico; sÃ³lo este componente lo activa. */}
+          específico; sólo este componente lo activa. */}
       <style>{`
         @media (hover: hover) and (pointer: fine) {
           .zs-tilt { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease, translate 600ms ease; }
