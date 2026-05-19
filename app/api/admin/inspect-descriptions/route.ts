@@ -21,12 +21,12 @@ export async function GET(req: NextRequest) {
     where: {
       description: { not: null },
       OR: [
-        { sku: { in: ["8510", "4021", "39940"] } },
-        { externalId: { in: ["woocommerce:38764"] } },
+        { sku: { in: ["8520", "8510"] } },
+        { externalId: { in: ["woocommerce:38862", "woocommerce:38764"] } },
         { description: { contains: "data-url" } },
         { description: { contains: "ca://" } },
         { description: { contains: "tabindex" } },
-        { description: { contains: "role=\"button\"" } },
+        { description: { contains: "Camara_butilica" } },
       ],
     },
     select: {
