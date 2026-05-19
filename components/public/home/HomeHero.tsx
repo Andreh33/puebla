@@ -142,12 +142,11 @@ export function HomeHero() {
           <source src="/videos/hero-runner-bridge.mp4" type="video/mp4" />
         </video>
       </div>
-      {/* Overlay gris neutro al 55% (sin el tinte azul corporativo previo
-          ni el gradient navy). También fixed para acompañar al video. La
-          textura zs-grain se mantiene a opacidad muy baja como acabado
-          editorial pero ya no aporta color. */}
+      {/* Overlay azul corporativo (zs-blue-950 navy) al 60% — reemplaza
+          al gris previo. Acompaña al video en position: fixed. La textura
+          zs-grain se mantiene a opacidad muy baja como acabado editorial. */}
       <div className="fixed inset-0 -z-10 h-screen w-screen" aria-hidden>
-        <div className="absolute inset-0 bg-gray-500/55" />
+        <div className="absolute inset-0 bg-zs-blue-950/60" />
         <div className="absolute inset-0 mix-blend-overlay opacity-[0.07] zs-grain" />
       </div>
 
