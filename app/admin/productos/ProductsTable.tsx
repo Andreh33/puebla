@@ -67,8 +67,10 @@ import {
   bulkAction,
   deleteProductAction,
   duplicateProductAction,
+  updateProductPriceAction,
   updateProductSkuAction,
   updateProductStatusAction,
+  updateProductStockAction,
   type BulkActionType,
 } from "./_actions";
 
@@ -169,6 +171,170 @@ function EditableSkuCell({
         <span aria-hidden className="absolute right-1 top-1.5 h-3 w-3 animate-pulse rounded-full bg-zs-blue-300" />
       )}
     </div>
+  );
+}
+
+/**
+ * Celda PVP editable. Acepta coma o punto como decimal. Persiste al blur
+ * o Enter. Muestra con formato es-ES (€), pero al editar deja el número
+ * sin formato. Si el producto tiene salePrice, aquí solo editamos el PVP
+ * base (retailPrice). Para gestionar la oferta hay que entrar a la ficha.
+ */
+function EditablePriceCell({
+  id,
+  initialRetailPrice,
+  initialSalePrice,
+}: {
+  id: string;
+  initialRetailPrice: string;
+  initialSalePrice: string | null;
+}) {
+  const [value, setValue] = React.useState(initialRetailPrice);
+  const [saved, setSaved] = React.useState(initialRetailPrice);
+  const [editing, setEditing] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const commit = React.useCallback(async () => {
+    if (value === saved) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    const res = await updateProductPriceAction(id, value);
+    setSaving(false);
+    setEditing(false);
+    if (res.ok) {
+      setSaved(res.retailPrice);
+      setValue(res.retailPrice);
+      toast.success(`PVP guardado: ${formatPriceEUR(res.retailPrice)}`);
+    } else {
+      setValue(saved);
+      toast.error(res.error);
+    }
+  }, [id, value, saved]);
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditing(true);
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }}
+        className="block w-full rounded-md px-1 py-1 text-right font-mono text-sm transition-colors hover:bg-zs-blue-50"
+        title="Click para editar PVP"
+      >
+        {initialSalePrice ? (
+          <span>
+            <span className="text-zs-red-600">{formatPriceEUR(initialSalePrice)}</span>{" "}
+            <span className="text-xs text-zs-muted line-through">{formatPriceEUR(saved)}</span>
+          </span>
+        ) : (
+          formatPriceEUR(saved)
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
+      <input
+        ref={inputRef}
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            inputRef.current?.blur();
+          } else if (e.key === "Escape") {
+            setValue(saved);
+            setEditing(false);
+          }
+        }}
+        disabled={saving}
+        className="h-7 w-24 rounded-md border border-zs-blue-700 bg-white px-2 text-right font-mono text-sm focus:outline-none focus:ring-2 focus:ring-zs-blue-100"
+      />
+      <span aria-hidden className="absolute right-2 top-1.5 text-xs text-zs-muted">€</span>
+    </div>
+  );
+}
+
+/**
+ * Celda de stock editable. Acepta enteros >= 0.
+ */
+function EditableStockCell({ id, initialStock }: { id: string; initialStock: number }) {
+  const [value, setValue] = React.useState(String(initialStock));
+  const [saved, setSaved] = React.useState(initialStock);
+  const [editing, setEditing] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const commit = React.useCallback(async () => {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed === saved) {
+      setEditing(false);
+      return;
+    }
+    setSaving(true);
+    const res = await updateProductStockAction(id, value);
+    setSaving(false);
+    setEditing(false);
+    if (res.ok) {
+      setSaved(res.stock);
+      setValue(String(res.stock));
+      toast.success(`Stock: ${res.stock}`);
+    } else {
+      setValue(String(saved));
+      toast.error(res.error);
+    }
+  }, [id, value, saved]);
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditing(true);
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }}
+        className={`block w-full rounded-md px-1 py-1 text-right font-mono text-sm transition-colors hover:bg-zs-blue-50 ${
+          saved === 0 ? "text-zs-red-600 font-semibold" : "text-zs-ink"
+        }`}
+        title="Click para editar stock"
+      >
+        {saved}
+      </button>
+    );
+  }
+
+  return (
+    <input
+      ref={inputRef}
+      type="number"
+      min={0}
+      step={1}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          inputRef.current?.blur();
+        } else if (e.key === "Escape") {
+          setValue(String(saved));
+          setEditing(false);
+        }
+      }}
+      onClick={(e) => e.stopPropagation()}
+      disabled={saving}
+      className="h-7 w-20 rounded-md border border-zs-blue-700 bg-white px-2 text-right font-mono text-sm focus:outline-none focus:ring-2 focus:ring-zs-blue-100"
+    />
   );
 }
 
@@ -435,27 +601,18 @@ export function ProductsTable({
         accessorKey: "retailPrice",
         header: () => <div className="text-right">PVP</div>,
         cell: ({ row }) => (
-          <div className="text-right font-mono text-sm">
-            {row.original.salePrice ? (
-              <div>
-                <div className="text-zs-red-600">
-                  {formatPriceEUR(row.original.salePrice)}
-                </div>
-                <div className="text-xs text-zs-muted line-through">
-                  {formatPriceEUR(row.original.retailPrice)}
-                </div>
-              </div>
-            ) : (
-              formatPriceEUR(row.original.retailPrice)
-            )}
-          </div>
+          <EditablePriceCell
+            id={row.original.id}
+            initialRetailPrice={row.original.retailPrice}
+            initialSalePrice={row.original.salePrice}
+          />
         ),
       },
       {
         accessorKey: "stock",
         header: () => <div className="text-right">Stock</div>,
         cell: ({ row }) => (
-          <div className="text-right font-mono text-sm tabular-nums">{row.original.stock}</div>
+          <EditableStockCell id={row.original.id} initialStock={row.original.stock} />
         ),
       },
       {

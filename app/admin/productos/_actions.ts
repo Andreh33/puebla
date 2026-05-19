@@ -149,6 +149,60 @@ export async function updateProductSkuAction(
   }
 }
 
+export async function updateProductPriceAction(
+  id: string,
+  raw: string,
+): Promise<{ ok: true; retailPrice: string } | { ok: false; error: string }> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  const normalized = raw.replace(",", ".").trim();
+  if (normalized === "") return { ok: false, error: "El PVP no puede estar vacío" };
+  const value = Number(normalized);
+  if (!Number.isFinite(value) || value < 0) {
+    return { ok: false, error: "PVP inválido" };
+  }
+  if (value > 99999) {
+    return { ok: false, error: "PVP máximo 99 999 €" };
+  }
+  try {
+    const updated = await db.product.update({
+      where: { id },
+      data: { retailPrice: value.toFixed(2) },
+      select: { retailPrice: true },
+    });
+    revalidatePath("/admin/productos");
+    return { ok: true, retailPrice: updated.retailPrice.toString() };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message ?? "Error guardando PVP" };
+  }
+}
+
+export async function updateProductStockAction(
+  id: string,
+  raw: string,
+): Promise<{ ok: true; stock: number } | { ok: false; error: string }> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  const value = Number(raw.trim());
+  if (!Number.isInteger(value) || value < 0) {
+    return { ok: false, error: "Stock inválido (entero ≥ 0)" };
+  }
+  if (value > 1_000_000) {
+    return { ok: false, error: "Stock máximo 1 000 000" };
+  }
+  try {
+    const updated = await db.product.update({
+      where: { id },
+      data: { stock: value },
+      select: { stock: true },
+    });
+    revalidatePath("/admin/productos");
+    return { ok: true, stock: updated.stock };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message ?? "Error guardando stock" };
+  }
+}
+
 export async function updateProductStatusAction(
   id: string,
   statusRaw: string,

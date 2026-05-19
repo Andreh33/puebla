@@ -47,11 +47,35 @@ export function HomeHero() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setReduced(isReduced);
-    if (isReduced && videoRef.current) videoRef.current.pause();
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
+  }, []);
+
+  // Forzar reproducción del video en CADA visita. Algunos navegadores
+  // (Safari iOS, Chrome con autoplay restringido) ignoran el atributo
+  // `autoplay` si la pestaña entra en background o el bundle JS termina
+  // antes de que se cumplan las heurísticas. Llamamos a play() en el
+  // efecto post-hidratación y volvemos a intentar cuando la pestaña
+  // vuelve a primer plano. Silenciamos rejections (algunos browsers las
+  // lanzan aunque el video sí esté reproduciendo). Se reproduce SIEMPRE,
+  // independientemente de prefers-reduced-motion (decisión del cliente).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const v = videoRef.current;
+    if (!v) return;
+    const tryPlay = () => {
+      void v.play().catch(() => {
+        /* ignored — autoplay puede estar bloqueado puntualmente */
+      });
+    };
+    tryPlay();
+    document.addEventListener("visibilitychange", tryPlay);
+    window.addEventListener("focus", tryPlay);
+    return () => {
+      document.removeEventListener("visibilitychange", tryPlay);
+      window.removeEventListener("focus", tryPlay);
+    };
   }, []);
 
   // Parallax sutil del título según pointer (solo desktop con hover fine).
@@ -109,8 +133,10 @@ export function HomeHero() {
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           poster="/videos/hero-runner-bridge.jpg"
+          disablePictureInPicture
+          disableRemotePlayback
           className="h-full w-full object-cover object-center"
         >
           <source src="/videos/hero-runner-bridge.mp4" type="video/mp4" />
@@ -183,7 +209,7 @@ export function HomeHero() {
                   opacity: mounted || reduced ? 1 : 0,
                   color:
                     word === "esperando."
-                      ? "var(--color-zs-red-500)"
+                      ? "#f97316" /* orange-500 — cambio de rojo a naranja por petición del cliente */
                       : undefined,
                 }}
               >
@@ -261,8 +287,12 @@ export function HomeHero() {
         <Link
           href="#catalogo"
           data-cursor="Ofertas"
-          className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-zs-red-600 via-zs-red-600 to-[#7a1e1e] p-6 text-white transition-transform hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
-          style={{ boxShadow: "var(--shadow-zs-rojo-glow-lg)" }}
+          /* Banner cambiado de rojo a naranja por petición del cliente.
+             Glow naranja inline para coherencia (el token --shadow-zs-rojo-glow
+             sigue siendo rojo y se sigue usando en otros sitios como el CTA
+             principal "Comprar ahora"). */
+          className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-orange-500 via-orange-500 to-orange-800 p-6 text-white transition-transform hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
+          style={{ boxShadow: "0 14px 40px -10px rgba(249, 115, 22, 0.55)" }}
         >
           <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay zs-grain" aria-hidden />
           <div className="flex flex-1 items-center gap-5 sm:gap-7">
@@ -284,7 +314,7 @@ export function HomeHero() {
               </p>
             </div>
           </div>
-          <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold uppercase tracking-[0.06em] text-zs-red-600 transition-transform group-hover:translate-x-1">
+          <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold uppercase tracking-[0.06em] text-orange-600 transition-transform group-hover:translate-x-1">
             Ver ofertas
             <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
           </span>
