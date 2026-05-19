@@ -93,16 +93,41 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* Foto de fondo a viewport completo */}
+      {/* Video heroico a viewport completo. Pesa ~2.1 MB (H.264 720p), con
+          poster como primer frame para no parpadear mientras carga. Autoplay
+          silenciado y loop para que la transición sea continua. Si el
+          navegador no puede reproducirlo (data-saver, error de codec), se
+          muestra el poster como fondo estático.
+
+          NOTA: no usamos `<Image />` aquí porque queremos video real, sin
+          marcas visibles (cliente no vende Nike/Adidas). El video viene de
+          Pexels con licencia comercial libre. */}
       <div className="absolute inset-0 -z-20" aria-hidden>
-        <Image
-          src="/category-photos/running.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
+        {reduced ? (
+          // prefers-reduced-motion → mostrar solo el poster, sin reproducir video.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src="/videos/hero-running.jpg"
+            alt=""
+            className="h-full w-full object-cover object-center"
+          />
+        ) : (
+          <video
+            className="h-full w-full object-cover object-center"
+            poster="/videos/hero-running.jpg"
+            src="/videos/hero-running.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            // Si por lo que sea el video falla, dejamos el poster visible.
+            onError={(e) => {
+              const v = e.currentTarget;
+              v.style.display = "none";
+            }}
+          />
+        )}
       </div>
       {/* Overlay degradado para legibilidad. Capas:
            1. Negro sólido 50% para el cuerpo del hero.

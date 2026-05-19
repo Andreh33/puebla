@@ -134,43 +134,78 @@ export function GenderSplit() {
         })}
       </div>
 
-      {/* Tercera card "Para los pequeños" */}
+      {/* Tercera card "Para los pequeños" — mismo peso visual que las dos
+          principales: ocupa 64svh con mínimo 540px y tipografía hasta 8rem,
+          imagen bleed completa a la derecha y CTA grande tipo botón. */}
       <Link
         href="/ninos"
         data-cursor="Niños"
-        className="group relative isolate flex h-[34svh] min-h-[280px] w-full overflow-hidden bg-zs-tennis-300 text-zs-blue-950"
+        className="group relative isolate flex h-[64svh] min-h-[540px] w-full overflow-hidden bg-zs-tennis-500 text-zs-blue-950 lg:h-[70svh]"
       >
         <Image
           src="/category-photos/ninos-hero.jpg"
           alt=""
           fill
           sizes="100vw"
-          className="object-cover object-center opacity-90 transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+          className="object-cover object-center opacity-90 transition-transform duration-[1600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+        />
+        {/* Velo gradiente: blanco-tenis a la izquierda, despeja a la derecha
+            para dejar respirar la foto. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-gradient-to-r from-zs-tennis-500/95 via-zs-tennis-500/55 to-transparent"
         />
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-r from-zs-tennis-300/85 via-zs-tennis-300/40 to-transparent"
+          className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-zs-blue-950/30 to-transparent"
         />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-[1600px] items-center justify-between gap-6 px-6 sm:px-12 lg:px-16">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-zs-blue-950/75">
+
+        <div className="relative z-10 mx-auto grid h-full w-full max-w-[1600px] grid-cols-1 items-center gap-6 px-6 py-12 sm:px-12 lg:grid-cols-[1.1fr_1fr] lg:px-16 lg:py-16">
+          <div className="flex flex-col gap-6">
+            <p className="inline-flex items-center gap-3 self-start rounded-full bg-zs-blue-950 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.32em] text-zs-tennis-300">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-zs-tennis-300" />
               Para los pequeños
             </p>
             <h3
-              className="mt-3 font-display font-black leading-[0.9] tracking-[-0.035em]"
-              style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
+              className="font-display font-black leading-[0.86] tracking-[-0.04em]"
+              style={{ fontSize: "clamp(2.75rem, 8vw, 8rem)" }}
             >
               Que no paren.
             </h3>
-            <p className="mt-3 max-w-md text-sm text-zs-blue-950/75 sm:text-base">
-              Calzado, ropa y equipación para niños y niñas. Tallas, marcas y
-              precios que tu economía agradece.
+            <p className="max-w-lg text-base text-zs-blue-950/80 sm:text-lg">
+              Niño y niña — calzado, ropa, equipación. Tallas que duran lo justo
+              porque crecen rápido. Marcas y precios que tu economía agradece.
             </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex h-12 items-center gap-2 rounded-xl bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-zs-tennis-300 shadow-lg transition group-hover:bg-zs-red-600 group-hover:text-white">
+                Entrar a Niños
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
+              </span>
+              <span className="hidden text-[12px] font-semibold uppercase tracking-[0.2em] text-zs-blue-950/70 sm:inline">
+                Niño · Niña · Bebé
+              </span>
+            </div>
           </div>
-          <span className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-full border border-zs-blue-950/25 bg-white/40 backdrop-blur transition-all duration-500 group-hover:bg-zs-blue-950 group-hover:text-white sm:flex">
-            <ArrowUpRight className="h-5 w-5 transition-transform duration-500 group-hover:rotate-45" />
-          </span>
+
+          {/* Espacio derecho — la foto del fondo respira aquí sin texto encima. */}
+          <div className="hidden lg:block" aria-hidden />
         </div>
+
+        {/* Sub-tabs decorativos abajo-izquierda en desktop, anuncian los 2 sub-géneros */}
+        <ul
+          aria-hidden
+          className="pointer-events-none absolute bottom-6 left-6 z-10 hidden gap-2 sm:flex lg:left-16"
+        >
+          {["Niño", "Niña", "Bebé"].map((label) => (
+            <li
+              key={label}
+              className="rounded-full border border-zs-blue-950/25 bg-white/45 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-zs-blue-950 backdrop-blur"
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
       </Link>
     </section>
   );

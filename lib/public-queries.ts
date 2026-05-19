@@ -39,6 +39,64 @@ const DEMO_CATEGORY_ALIASES: Record<
     ],
   },
   calzado: { name: "Calzado", categorySlugs: ["zapatilla", "bota-alta"] },
+
+  // --- Taxonomía del mega-menú (Mujer / Hombre / Niños) ----------------
+  // Cada slug devuelve 200 aunque no haya productos: la categoría se
+  // resuelve por alias y el listado cae al subset del catálogo demo más
+  // cercano por heurística. Donde no hay match natural, `categorySlugs`
+  // queda vacío y la página muestra el estado "sin productos todavía".
+  //
+  // ROPA
+  chandal: {
+    name: "Chándal",
+    categorySlugs: ["traje-jogging", "traje-entrenamiento-poliester"],
+  },
+  abrigos: {
+    name: "Abrigos",
+    categorySlugs: ["anorack-treking", "anorack-cazadora", "anorack-parka", "chubasquero"],
+  },
+  cortavientos: { name: "Cortavientos", categorySlugs: ["chubasquero"] },
+  polos: { name: "Polos", categorySlugs: ["camiseta-mcorta"] },
+  pantalones: {
+    name: "Pantalones",
+    categorySlugs: ["pantalon-poliester", "pantalon-aventura", "pantalon-nieve"],
+  },
+  camisetas: {
+    name: "Camisetas",
+    categorySlugs: ["camiseta-mcorta", "camiseta-mlarga"],
+  },
+  sudaderas: { name: "Sudaderas", categorySlugs: ["sudadera"] },
+  mallas: { name: "Mallas", categorySlugs: ["malla"] },
+  conjuntos: {
+    name: "Conjuntos",
+    categorySlugs: ["traje-jogging", "traje-entrenamiento-poliester"],
+  },
+  banadores: { name: "Bañadores", categorySlugs: ["short-poliester"] },
+
+  // CALZADO
+  "tenis-padel": { name: "Tenis / Pádel", categorySlugs: ["zapatilla"] },
+  trail: { name: "Trail", categorySlugs: ["zapatilla", "bota-alta"] },
+  baloncesto: { name: "Baloncesto", categorySlugs: ["zapatilla"] },
+  futbol: { name: "Fútbol", categorySlugs: ["zapatilla"] },
+  "futbol-sala": { name: "Fútbol Sala", categorySlugs: ["zapatilla"] },
+  chanclas: { name: "Chanclas", categorySlugs: ["zapatilla"] },
+
+  // ACCESORIOS — sin match en el catálogo demo todavía. La página renderiza
+  // hero + categoría + estado "Pronto en tienda".
+  gorras: { name: "Gorras", categorySlugs: [] },
+  calcetines: { name: "Calcetines", categorySlugs: [] },
+  mochilas: { name: "Mochilas", categorySlugs: [] },
+  billeteros: { name: "Billeteros", categorySlugs: [] },
+  rinoneras: { name: "Riñoneras", categorySlugs: [] },
+  bolsos: { name: "Bolsos", categorySlugs: [] },
+  "gafas-natacion": { name: "Gafas de natación", categorySlugs: [] },
+  guantes: { name: "Guantes", categorySlugs: [] },
+  balones: { name: "Balones", categorySlugs: [] },
+  "palas-padel": { name: "Palas de pádel", categorySlugs: [] },
+
+  // NIÑOS
+  bebe: { name: "Bebé", categorySlugs: [] },
+
   // Mantenemos coherencia con los slugs que sí están directamente en el demo.
 };
 
@@ -46,6 +104,16 @@ function aliasProducts(slug: string): DemoProduct[] {
   const alias = DEMO_CATEGORY_ALIASES[slug];
   if (!alias) return [];
   return DEMO_PRODUCTS.filter((p) => alias.categorySlugs.includes(p.category.slug));
+}
+
+/**
+ * Indica si un slug está registrado como alias del mega-menú. Útil para
+ * distinguir "categoría conocida pero sin productos todavía" de "categoría
+ * inexistente". En el primer caso queremos mostrar la página vacía (con hero
+ * y CTA) en vez de caer al fallback de "todos los productos demo".
+ */
+function isAliasSlug(slug: string): boolean {
+  return Object.prototype.hasOwnProperty.call(DEMO_CATEGORY_ALIASES, slug);
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +260,14 @@ export async function getCategoryProducts(opts: {
     const aliased = aliasProducts(opts.categorySlug);
     if (aliased.length > 0) subset = aliased;
   }
-  // 3) Último recurso: todos los demo — vale más enseñar producto real con
+  // 3) Si el slug es un alias conocido del mega-menú pero sin match natural
+  // (accesorios todavía sin catálogo, "Bebé"…), devolvemos lista vacía. La
+  // página renderiza el hero + estado "Pronto en tienda". Mucho más limpio
+  // que enseñar productos aleatorios.
+  if (subset.length === 0 && isAliasSlug(opts.categorySlug)) {
+    return { products: [], total: 0, isDemo: true };
+  }
+  // 4) Último recurso: todos los demo — vale más enseñar producto real con
   // imagen que ninguno.
   const list = subset.length > 0 ? subset : DEMO_PRODUCTS;
   return {
