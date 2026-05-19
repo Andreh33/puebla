@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
@@ -7,20 +8,21 @@ import { MagneticButton } from "@/components/public/MagneticButton";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 /**
- * HomeHero — hero monumental sobre un VIDEO en bucle (runner CC0, sin marcas).
+ * HomeHero — hero monumental sobre UNA SOLA imagen estática vistosa.
  *
- * El video (`/videos/hero-running.mp4`, 2.1 MB H.264 720p, Pexels CC0)
- * se reproduce muted/loop/playsInline para autoplay legal en todos los
- * navegadores. La JPG poster (`/videos/hero-running.jpg`) hace de fallback
- * mientras descarga y para `prefers-reduced-motion: reduce` (pausamos via
- * ref tras hidratar para no introducir hydration mismatch).
- *
- * No hay foto solapada — el video es el único fondo. Overlay degradado
- * oscuro garantiza legibilidad del titular.
+ * Decisión tras varias iteraciones:
+ *  1. Inicialmente había <video> + <Image> solapada → cliente pidió quitar.
+ *  2. Probamos foto Unsplash que resultó ser una nadadora (mal etiquetada).
+ *  3. Probamos video Pexels (3192305): hoy apunta a una reunión de oficina.
+ *  4. Probamos video Mixkit (32812): pista de atletismo con shorts Adidas.
+ *  5. Final: cenital aéreo de pista de atletismo color terracota con
+ *     corredores en SILUETA (Unsplash CC0, photo-1502904550040). Sin ropa
+ *     identificable → cero riesgo de marcas prohibidas. Atmosférico,
+ *     dramático, inequívocamente deportivo.
  *
  * A11y:
  *  - H1 visible con headline real.
- *  - `prefers-reduced-motion` → pausamos el video.
+ *  - Respeta `prefers-reduced-motion`.
  *  - Contraste AA por overlay 55% + gradientes.
  */
 
@@ -42,15 +44,10 @@ export function HomeHero() {
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setReduced(isReduced);
-    if (isReduced && videoRef.current) {
-      videoRef.current.pause();
-    }
+    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -99,21 +96,17 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* Video de fondo — runner CC0 Pexels, sin marcas. Poster JPG mientras carga
-          y para reduced-motion (pausado en useEffect). NO hay imagen solapada. */}
+      {/* Foto hero — Unsplash CC0, cenital aéreo de pista de atletismo con
+          corredores en silueta. Sin posibilidad de marcas visibles. */}
       <div className="absolute inset-0 -z-20" aria-hidden>
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/videos/hero-running.jpg"
-          className="h-full w-full object-cover object-center"
-        >
-          <source src="/videos/hero-running.mp4" type="video/mp4" />
-        </video>
+        <Image
+          src="/category-photos/hero-runner.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
       </div>
       {/* Overlay degradado para legibilidad. Capas:
            1. Negro sólido 55% para el cuerpo del hero.
