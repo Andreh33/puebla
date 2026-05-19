@@ -21,9 +21,11 @@ export async function GET(req: NextRequest) {
     where: {
       description: { not: null },
       OR: [
-        { name: { contains: "JOMA", mode: "insensitive" } },
-        { name: { contains: "BALON", mode: "insensitive" } },
-        { name: { contains: "PUMA", mode: "insensitive" } },
+        { name: { contains: "CHANDAL", mode: "insensitive" } },
+        { name: { contains: "BEBÉ", mode: "insensitive" } },
+        { name: { contains: "BEBE", mode: "insensitive" } },
+        { description: { contains: "data-url", mode: "insensitive" } },
+        { description: { contains: "tabindex", mode: "insensitive" } },
       ],
     },
     select: {
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
       name: true,
       description: true,
     },
-    take: 5,
+    take: 10,
   });
 
   return NextResponse.json({
