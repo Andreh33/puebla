@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
@@ -8,16 +7,20 @@ import { MagneticButton } from "@/components/public/MagneticButton";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 /**
- * HomeHero — hero comercial monumental sobre UNA SOLA imagen estática.
+ * HomeHero — hero monumental sobre un VIDEO en bucle (runner CC0, sin marcas).
  *
- * Decisión: el cliente pidió retirar tanto el `<video>` (hero-running.mp4)
- * como la `<Image>` solapada que había encima. En su lugar ponemos una única
- * foto Unsplash CC0 (`/category-photos/hero-runner.jpg`) con overlay
- * degradado oscuro. Sin marcas Nike/Adidas visibles.
+ * El video (`/videos/hero-running.mp4`, 2.1 MB H.264 720p, Pexels CC0)
+ * se reproduce muted/loop/playsInline para autoplay legal en todos los
+ * navegadores. La JPG poster (`/videos/hero-running.jpg`) hace de fallback
+ * mientras descarga y para `prefers-reduced-motion: reduce` (pausamos via
+ * ref tras hidratar para no introducir hydration mismatch).
+ *
+ * No hay foto solapada — el video es el único fondo. Overlay degradado
+ * oscuro garantiza legibilidad del titular.
  *
  * A11y:
  *  - H1 visible con headline real.
- *  - Mantiene `prefers-reduced-motion`.
+ *  - `prefers-reduced-motion` → pausamos el video.
  *  - Contraste AA por overlay 55% + gradientes.
  */
 
@@ -39,10 +42,15 @@ export function HomeHero() {
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const isReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setReduced(isReduced);
+    if (isReduced && videoRef.current) {
+      videoRef.current.pause();
+    }
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -91,16 +99,21 @@ export function HomeHero() {
       className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
       style={{ minHeight: "100svh" }}
     >
-      {/* UNA SOLA foto hero — Unsplash CC0, runner cinematográfico sin marcas. */}
+      {/* Video de fondo — runner CC0 Pexels, sin marcas. Poster JPG mientras carga
+          y para reduced-motion (pausado en useEffect). NO hay imagen solapada. */}
       <div className="absolute inset-0 -z-20" aria-hidden>
-        <Image
-          src="/category-photos/hero-runner.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/videos/hero-running.jpg"
+          className="h-full w-full object-cover object-center"
+        >
+          <source src="/videos/hero-running.mp4" type="video/mp4" />
+        </video>
       </div>
       {/* Overlay degradado para legibilidad. Capas:
            1. Negro sólido 55% para el cuerpo del hero.
