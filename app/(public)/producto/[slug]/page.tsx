@@ -8,6 +8,7 @@ import { db } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, productSchema, jsonLd } from "@/lib/seo/schema-org";
 import { formatPriceEUR } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/utils/html";
 import { effectivePrice } from "@/lib/price";
 import { ProductGallery } from "@/components/public/ProductGallery";
 import { ProductActions } from "@/components/public/ProductActions";
@@ -335,12 +336,23 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         <div className="mt-12 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             {product.description ? (
-              <article className="prose prose-zs max-w-none">
-                <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {product.description}
-                </ReactMarkdown>
-              </article>
+              /<[a-z][\s\S]*?>/i.test(product.description) ? (
+                // Descripciones importadas desde WooCommerce vienen como HTML
+                // (<ul><li><strong>…</strong></li></ul>). React Markdown las
+                // muestra como texto plano con los tags visibles. Renderizamos
+                // como HTML sanitizado (allowlist: ul/li/strong/p/em/h2…h6/a).
+                <article className="prose prose-zs max-w-none">
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }} />
+                </article>
+              ) : (
+                <article className="prose prose-zs max-w-none">
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {product.description}
+                  </ReactMarkdown>
+                </article>
+              )
             ) : (
               <div>
                 <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
+import { stripHtml } from "@/lib/utils/html";
 
 export type ProductCardProduct = {
   id: string;
@@ -33,7 +34,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
     product.salePrice != null ? Number(product.salePrice) : null,
   );
 
-  const title = product.shortName || product.name;
+  const title = stripHtml(product.shortName || product.name);
   const isAmazon = product.source === "AMAZON";
 
   return (

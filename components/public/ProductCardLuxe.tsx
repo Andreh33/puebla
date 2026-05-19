@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
+import { stripHtml } from "@/lib/utils/html";
 import { useSwipe } from "@/hooks/use-swipe";
 import type { ProductCardProduct } from "@/components/public/ProductCard";
 
@@ -43,7 +44,10 @@ export function ProductCardLuxe({
     product.salePrice != null ? Number(product.salePrice) : null,
   );
 
-  const title = product.shortName || product.name;
+  // Strip HTML del nombre: feeds antiguos vienen con `<strong>` y spans
+  // de scraping AI. En cards queremos texto plano para layout estable;
+  // la ficha completa ya renderiza HTML real.
+  const title = stripHtml(product.shortName || product.name);
   const isAmazon = product.source === "AMAZON";
   const secondary = product.secondaryImageUrl ?? null;
   const ref = useRef<HTMLAnchorElement | null>(null);
