@@ -66,7 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: jsonLd(websiteSchema()) }}
         />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="min-h-screen overflow-x-hidden bg-background text-foreground antialiased">
         <a href="#main" className="skip-to-content">
           Saltar al contenido
         </a>

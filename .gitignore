@@ -78,3 +78,13 @@ prisma/*.db-journal
 
 # bootstrap-only token, never commit
 .setup-token.tmp
+
+# Local-only artifacts
+videomovil/
+.playwright-mcp/
+home-desktop.png
+.tmp-hero-photos/
+.tmp-hero-candidates/
+.tmp-hero-frames/
+.tmp-hero-v2/
+debug-video-frames/

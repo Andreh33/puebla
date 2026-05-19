@@ -140,16 +140,11 @@ export function HomeHero() {
           Multimarca · Puebla de la Calzada
         </p>
         <div className="flex items-center gap-3">
-          <OpenNowBadge className="hidden items-center text-white sm:inline-flex" tone="dark" />
+          <OpenNowBadge className="text-white" tone="dark" />
           <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/55 sm:block">
             Est. 1998 — Badajoz
           </p>
         </div>
-      </div>
-
-      {/* OpenNowBadge solo-móvil, justo debajo del eyebrow */}
-      <div className="relative mx-auto mt-4 max-w-[1600px] px-4 sm:hidden">
-        <OpenNowBadge tone="dark" />
       </div>
 
       {/* Titular monumental */}
@@ -321,7 +316,7 @@ export function HomeHero() {
       </div>
 
       {/* Marquee inferior de marcas */}
-      <div className="relative border-t border-white/10 bg-black/45 py-5">
+      <div className="relative overflow-hidden border-t border-white/10 bg-black/45 py-5">
         <div className="zs-brand-track flex w-max items-center gap-12 whitespace-nowrap text-white/75">
           {[...BRANDS_TICKER, ...BRANDS_TICKER, ...BRANDS_TICKER].map((b, i) => (
             <span

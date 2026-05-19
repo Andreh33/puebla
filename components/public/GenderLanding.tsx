@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { BrandsMarquee } from "@/components/public/BrandsMarquee";
+import { GenderHero } from "@/components/public/GenderHero";
 import { jsonLd, breadcrumbSchema } from "@/lib/seo/schema-org";
 import {
   getCategoriesByGender,
@@ -12,9 +13,10 @@ import {
 import type { DemoGender } from "@/lib/demo-products";
 
 /**
- * Configuración editorial por género. Mantiene el copy en castellano natural y
- * los colores dentro de la paleta corporativa (zs-blue / zs-red) — sin
- * estereotipos cromáticos.
+ * Configuración editorial por género. Conserva la info que necesitan las
+ * páginas (slug, label, gender, seoLead) y el sub-bloque de identidad. El
+ * headline/eyebrow/tagline del HERO foto-top vive en `GenderHero` —
+ * mantenemos aquí los antiguos como fallback documental y para SEO.
  */
 export const GENDER_LANDINGS: Record<
   "mujer" | "hombre" | "ninos",
@@ -26,8 +28,6 @@ export const GENDER_LANDINGS: Record<
     /** Subtítulo editorial mostrado bajo el headline. */
     tagline: string;
     eyebrow: string;
-    /** Clases de gradiente del hero. */
-    heroAccent: string;
     /** Texto descriptivo para SEO / hero párrafo largo. */
     seoLead: string;
   }
@@ -37,9 +37,8 @@ export const GENDER_LANDINGS: Record<
     slug: "mujer",
     label: "Mujer",
     eyebrow: "Para ella",
-    headline: "Para ella",
+    headline: "Su deporte, sin postureo.",
     tagline: "Calzado, ropa técnica y equipación pensada para entrenar mejor.",
-    heroAccent: "from-zs-blue-900 via-zs-blue-800 to-zs-red-700",
     seoLead:
       "Selección Zona Sport para mujer: zapatillas de running, mallas técnicas, camisetas deportivas y equipación de las marcas que trabajamos en tienda.",
   },
@@ -48,9 +47,8 @@ export const GENDER_LANDINGS: Record<
     slug: "hombre",
     label: "Hombre",
     eyebrow: "Para él",
-    headline: "Para él",
+    headline: "Equipación para entrenar, competir y disfrutar.",
     tagline: "Equípate con lo que más rinde: calzado, técnico y outdoor.",
-    heroAccent: "from-zs-blue-950 via-zs-blue-900 to-zs-blue-700",
     seoLead:
       "Selección Zona Sport para hombre: zapatillas de running y pádel, camisetas, pantalones técnicos, abrigos y equipación de las mejores marcas multideporte.",
   },
@@ -59,9 +57,8 @@ export const GENDER_LANDINGS: Record<
     slug: "ninos",
     label: "Niños",
     eyebrow: "Para los pequeños",
-    headline: "Para los pequeños",
+    headline: "Que crezcan moviéndose.",
     tagline: "Material deportivo cómodo y resistente para que disfruten del deporte.",
-    heroAccent: "from-zs-red-700 via-zs-blue-800 to-zs-blue-900",
     seoLead:
       "Selección Zona Sport para niños y niñas: calzado, ropa deportiva y outdoor que aguanta el ritmo del día a día. Asesoramos la talla en tienda sin compromiso.",
   },
@@ -73,9 +70,9 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").r
 
 /**
  * Landing editorial para /mujer, /hombre y /ninos. Estructura:
- *  1. Breadcrumbs
- *  2. Hero editorial con tipografía display y producto destacado lateral
- *  3. "Categorías" — solo categorías con productos del género
+ *  1. HERO foto-top fullbleed (GenderHero) — anula el padding del <main>
+ *  2. Breadcrumbs + tira de producto destacado (si existe)
+ *  3. "Deportes" — Running / Pádel / Montaña / Calzado + sub-categorías
  *  4. Grid de productos top 8 con ProductCardLuxe
  *  5. "Marcas que trabajan para ti" — mini marquee
  *  6. JSON-LD CollectionPage + breadcrumbs
@@ -118,7 +115,19 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         dangerouslySetInnerHTML={{ __html: jsonLd(collectionLd) }}
       />
 
-      {/* Breadcrumbs */}
+      {/* Anula el padding-top del <main> público para que la foto del hero
+          quede DETRÁS de la pill flotante del Header (mismo truco que el home).
+          El GenderHero internamente añade `pt-44 sm:pt-48 lg:pt-52` para que el
+          texto del hero no quede tapado por la pill. */}
+      <div className="-mt-[136px] sm:-mt-[148px]" />
+
+      {/* HERO foto-top — fullbleed con foto landscape, igual concepto que
+          HomeHero pero más compacto. Sustituye al antiguo hero de gradiente. */}
+      <GenderHero gender={config.slug} productCount={productsRes.total} />
+
+      {/* Breadcrumbs (movidos debajo del hero, como en el home tras una sección
+          de portada). Mantienen el SEO + accesibilidad sin romper el impacto
+          visual de la foto. */}
       <nav aria-label="Migas de pan" className="border-b border-zs-border bg-white">
         <ol className="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-4 py-3 text-xs text-zs-muted">
           {breadcrumbs.map((b, i) => (
@@ -138,72 +147,40 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         </ol>
       </nav>
 
-      {/* HERO editorial */}
-      <section
-        className={`relative overflow-hidden bg-gradient-to-br ${config.heroAccent} text-white`}
-      >
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:py-20 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:py-28">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
-              {config.eyebrow}
-            </p>
-            <h1 className="mt-3 font-display text-balance text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl lg:text-8xl">
-              {config.headline}
-            </h1>
-            <p className="mt-5 max-w-xl text-balance text-base text-white/85 sm:text-lg">
-              {config.tagline}
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link
-                href="#productos"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-white px-5 py-3 text-sm font-bold text-zs-blue-900 transition hover:bg-zs-surface"
-              >
-                Ver selección <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="#categorias"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/40 bg-white/5 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"
-              >
-                Explorar por categoría
-              </Link>
-            </div>
-            {productsRes.total > 0 && (
-              <p className="mt-6 text-sm text-white/65">
-                {productsRes.total}{" "}
-                {productsRes.total === 1 ? "producto" : "productos"} disponibles
-              </p>
-            )}
-          </div>
-
-          {/* Producto editorial lateral */}
-          {heroProduct?.mainImageUrl && (
-            <div className="relative hidden aspect-[4/5] w-full max-w-md justify-self-end overflow-hidden rounded-3xl bg-white/10 backdrop-blur-sm lg:block">
+      {/* Producto destacado lateral — antes vivía dentro del hero gradiente.
+          Lo mantenemos como tira editorial bajo el breadcrumb cuando hay
+          producto principal: foto a la izquierda + título a la derecha. */}
+      {heroProduct?.mainImageUrl && (
+        <section className="border-b border-zs-border bg-white">
+          <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-8 sm:py-8">
+            <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-2xl bg-zs-surface sm:w-28">
               <Image
                 src={heroProduct.mainImageUrl}
                 alt={heroProduct.name}
                 fill
-                sizes="(max-width: 1024px) 0px, 40vw"
-                className="object-contain p-6 transition duration-700 hover:scale-[1.03]"
-                priority
+                sizes="(max-width: 640px) 96px, 112px"
+                className="object-contain p-2"
               />
-              <Link
-                href={`/producto/${heroProduct.slug}`}
-                className="absolute inset-x-4 bottom-4 inline-flex items-center justify-between rounded-2xl bg-white/95 px-4 py-3 text-zs-blue-900 shadow-lg backdrop-blur transition hover:bg-white"
-              >
-                <span className="flex flex-col text-left">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zs-red-600">
-                    Destacado
-                  </span>
-                  <span className="line-clamp-1 text-sm font-semibold">
-                    {heroProduct.brand?.name} {heroProduct.shortName ?? heroProduct.name}
-                  </span>
-                </span>
-                <ArrowRight className="h-4 w-4 shrink-0" />
-              </Link>
             </div>
-          )}
-        </div>
-      </section>
+            <Link
+              href={`/producto/${heroProduct.slug}`}
+              className="group flex items-center justify-between gap-4"
+            >
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-zs-red-600">
+                  Producto destacado · {config.label}
+                </p>
+                <p className="mt-1 truncate text-base font-semibold text-zs-blue-900 sm:text-lg">
+                  {heroProduct.brand?.name} {heroProduct.shortName ?? heroProduct.name}
+                </p>
+              </div>
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zs-border text-zs-blue-700 transition-all group-hover:border-zs-red-600 group-hover:bg-zs-red-600 group-hover:text-white">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* DEPORTES (siempre visibles) — Running / Pádel / Montaña / Calzado.
           El user navega por deporte y AL ENTRAR ya ve estas 4 puertas grandes,

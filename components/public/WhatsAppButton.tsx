@@ -28,8 +28,8 @@ export function WhatsAppButton({
         aria-label="Abrir conversación de WhatsApp"
         className={cn(
           "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-105 active:scale-95 sm:bottom-6 sm:right-6",
-          // Offset extra en mobile para no chocar con BottomNav (h-16 ~= 4rem)
-          "bottom-[calc(4rem+env(safe-area-inset-bottom)+12px)] md:bottom-6",
+          // BottomNav retirada; respetar solo safe-area iOS.
+          "bottom-[calc(env(safe-area-inset-bottom)+16px)] md:bottom-6",
           className,
         )}
       >
