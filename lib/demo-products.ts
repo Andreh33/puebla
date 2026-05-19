@@ -9,6 +9,19 @@
  * Las imágenes viven en `public/sample-products/<slug>.webp`.
  */
 
+/**
+ * Géneros soportados (espejo del enum Prisma `Gender`). Si Prisma añade nuevos
+ * valores hay que reflejarlos aquí.
+ */
+export type DemoGender =
+  | "HOMBRE"
+  | "MUJER"
+  | "UNISEX"
+  | "NINO"
+  | "NINA"
+  | "BEBE"
+  | "NO_ESPECIFICADO";
+
 export interface DemoProduct {
   id: string;
   slug: string;
@@ -22,10 +35,66 @@ export interface DemoProduct {
   modelCode: string;
   brand: { name: string; slug: string };
   category: { name: string; slug: string };
+  /**
+   * Género del catálogo de demo. Para los productos del PRICAT real lo
+   * inferimos por heurística (ver `inferDemoGender` más abajo). Cuando llegue
+   * la BD real, este campo se sustituye por `product.gender` de Prisma.
+   */
+  gender: DemoGender;
   isDemo: true;
 }
 
-export const DEMO_PRODUCTS: DemoProduct[] = [
+/**
+ * Heurística para inferir género desde un producto del PRICAT cuando no hay
+ * metadatos explícitos. Se usa una sola vez al construir `DEMO_PRODUCTS` y
+ * está documentada para que sea trivial revisarla en code review.
+ *
+ * Reglas:
+ *  - Categoría "Malla" → MUJER (la única malla del catálogo es ANUKET, modelo
+ *    de mujer en el PRICAT de John Smith).
+ *  - Sufijo " M" en modelCode o nombre → HOMBRE (convención John Smith /
+ *    +8000 para sus líneas masculinas: CASTELO M, COTO M, HOCEN, etc.).
+ *  - Camisetas y bermudas con modelos en castellano masculino (ERIC, GESEL,
+ *    VILALBA, COIROS, ERRO, ARANGE, HORNOC) → HOMBRE.
+ *  - Resto (calzado, anoraks, pantalones de nieve, chubasqueros, polares y
+ *    accesorios outdoor) → UNISEX. Es la opción más conservadora cuando el
+ *    modelo se vende a ambos géneros sin diferenciar.
+ */
+function inferDemoGender(input: {
+  category: { slug: string };
+  modelCode: string;
+  name: string;
+}): DemoGender {
+  const catSlug = input.category.slug.toLowerCase();
+  const code = input.modelCode.toUpperCase();
+  const name = input.name.toUpperCase();
+
+  // Categorías exclusivamente femeninas en el PRICAT cargado.
+  if (catSlug === "malla") return "MUJER";
+
+  // Sufijo " M" → línea hombre.
+  if (/\sM(\s|$)/.test(code) || /\sM(\s|$)/.test(name)) return "HOMBRE";
+
+  // Modelos masculinos identificados manualmente del PRICAT.
+  const HOMBRE_MODELS = new Set([
+    "ERIC",
+    "GESEL",
+    "VILALBA",
+    "COIROS",
+    "ERRO 24I",
+    "ARANGE",
+    "HORNOC",
+    "HOCEN 24I",
+  ]);
+  if (HOMBRE_MODELS.has(code)) return "HOMBRE";
+
+  // Por defecto: calzado, abrigos técnicos y outdoor → UNISEX.
+  return "UNISEX";
+}
+
+type DemoProductRaw = Omit<DemoProduct, "gender">;
+
+const DEMO_PRODUCTS_RAW: DemoProductRaw[] = [
   {
     "id": "demo-rewik-004000",
     "slug": "zapatilla-john-smith-rewik-azul-marino",
@@ -532,6 +601,17 @@ export const DEMO_PRODUCTS: DemoProduct[] = [
   }
 ];
 
+/**
+ * Catálogo final con `gender` resuelto por heurística. Se mantiene
+ * `DEMO_PRODUCTS_RAW` separado para que el script de regeneración
+ * (`scripts/download-demo-products.ts`) pueda sobreescribirlo sin tocar la
+ * lógica de asignación de género.
+ */
+export const DEMO_PRODUCTS: DemoProduct[] = DEMO_PRODUCTS_RAW.map((p) => ({
+  ...p,
+  gender: inferDemoGender(p),
+}));
+
 export const DEMO_FEATURED: DemoProduct[] = DEMO_PRODUCTS.slice(0, 8);
 
 export function getDemoProductsByCategory(slug: string): DemoProduct[] {
@@ -540,6 +620,21 @@ export function getDemoProductsByCategory(slug: string): DemoProduct[] {
 
 export function getDemoProductsByBrand(slug: string): DemoProduct[] {
   return DEMO_PRODUCTS.filter((p) => p.brand.slug === slug);
+}
+
+/**
+ * Productos del demo filtrados por género. Si el género solicitado es
+ * "UNISEX" (o un genérico análogo), se devuelven todos los productos
+ * etiquetados como UNISEX. Para HOMBRE/MUJER también se incluyen los UNISEX
+ * (un producto unisex puede mostrarse perfectamente en /hombre y /mujer), tal
+ * como hacen Decathlon o Nike. Para NINO/NINA/BEBE solo se devuelven los que
+ * coincidan exactamente — no inferimos infantil del adulto.
+ */
+export function getDemoProductsByGender(g: DemoGender): DemoProduct[] {
+  if (g === "HOMBRE" || g === "MUJER") {
+    return DEMO_PRODUCTS.filter((p) => p.gender === g || p.gender === "UNISEX");
+  }
+  return DEMO_PRODUCTS.filter((p) => p.gender === g);
 }
 
 /**

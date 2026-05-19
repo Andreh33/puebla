@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Search, MessageCircle, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,36 @@ const NAV_ITEMS: Array<{ label: string; href: string }> = [
   { label: "Contacto", href: "/contacto" },
 ];
 
+/**
+ * Top-nav editorial de género (estilo Nike / Decathlon). Los 3 tabs aparecen
+ * por encima de los deportes y se destacan visualmente cuando el pathname
+ * empieza por uno de ellos.
+ */
+const GENDER_TABS: Array<{
+  label: string;
+  href: string;
+  /** Match estricto en el pathname público. */
+  match: (path: string) => boolean;
+}> = [
+  {
+    label: "Mujer",
+    href: "/mujer",
+    match: (p) => p === "/mujer" || p.startsWith("/mujer/"),
+  },
+  {
+    label: "Hombre",
+    href: "/hombre",
+    match: (p) => p === "/hombre" || p.startsWith("/hombre/"),
+  },
+  {
+    label: "Niños",
+    href: "/ninos",
+    match: (p) => p === "/ninos" || p.startsWith("/ninos/"),
+  },
+];
+
 export function Header() {
+  const pathname = usePathname() ?? "/";
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -58,26 +88,13 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Cerrar drawer mobile al cambiar de ruta
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
   return (
     <>
-      {/* Banner superior anunciable (editable desde /admin/ajustes) */}
-      <div className="bg-zs-blue-900 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-2 text-xs sm:text-sm">
-          <span className="hidden sm:inline">⚡</span>
-          <span>
-            Pagos online próximamente · Mientras tanto, atendemos por{" "}
-            <a
-              href={whatsappUrl(WhatsAppMessages.generic())}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-zs-tennis-300"
-            >
-              WhatsApp
-            </a>
-          </span>
-        </div>
-      </div>
-
       <header
         data-hidden={hidden ? "true" : "false"}
         className={cn(
@@ -105,6 +122,41 @@ export function Header() {
             />
           </Link>
 
+          {/* Top-nav de género (desktop) — el switch principal estilo Nike */}
+          <nav
+            aria-label="Cambio de género"
+            className="hidden flex-1 items-center justify-center gap-1 lg:flex"
+          >
+            {GENDER_TABS.map((tab) => {
+              const active = tab.match(pathname);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "group relative inline-flex items-center px-4 py-2 text-base font-semibold tracking-tight transition-colors sm:text-lg",
+                    active
+                      ? "text-zs-blue-900"
+                      : "text-zs-ink hover:text-zs-blue-700",
+                  )}
+                >
+                  <span>{tab.label}</span>
+                  {/* Underline animado */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute inset-x-3 -bottom-0.5 h-0.5 origin-left rounded-full bg-zs-blue-900 transition-transform duration-300",
+                      active
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100 group-hover:bg-zs-red-600",
+                    )}
+                  />
+                </Link>
+              );
+            })}
+          </nav>
+
           {/* Search fake input (mobile y tablet — antes del nav) */}
           <SearchCommand
             trigger={
@@ -118,19 +170,6 @@ export function Header() {
               </button>
             }
           />
-
-          {/* Nav desktop */}
-          <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-zs-ink transition-colors hover:bg-zs-surface hover:text-zs-blue-700"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
 
           {/* Acciones */}
           <div className="flex items-center gap-1 sm:gap-2">
@@ -173,6 +212,34 @@ export function Header() {
           </div>
         </div>
 
+        {/* Segunda fila desktop: enlaces de deporte (subordinados al género) */}
+        <div className="hidden border-t border-zs-border/60 bg-white lg:block">
+          <nav
+            aria-label="Navegación por deporte"
+            className="mx-auto flex max-w-7xl items-center justify-center gap-1 px-4 py-2"
+          >
+            {NAV_ITEMS.map((item) => {
+              const active =
+                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-zs-surface text-zs-blue-900"
+                      : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
         {/* Nav mobile (drawer animado) */}
         <div
           className={cn(
@@ -182,24 +249,54 @@ export function Header() {
               : "grid-rows-[0fr] border-t border-t-transparent",
           )}
         >
-          <nav className="overflow-hidden">
-            <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
-              {NAV_ITEMS.map((item, i) => (
-                <li
-                  key={item.href}
-                  className={cn(mobileOpen && "animate-fade-in-up")}
-                  style={mobileOpen ? { animationDelay: `${i * 30}ms` } : undefined}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="block rounded-lg px-3 py-2 text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
+          <nav aria-label="Menú móvil" className="overflow-hidden">
+            <div className="mx-auto max-w-7xl px-4 py-3">
+              {/* Tabs de género — destacados también en mobile */}
+              <div
+                role="tablist"
+                aria-label="Cambio de género"
+                className="mb-3 grid grid-cols-3 gap-1.5 rounded-2xl bg-zs-surface p-1.5"
+              >
+                {GENDER_TABS.map((tab) => {
+                  const active = tab.match(pathname);
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition-colors",
+                        active
+                          ? "bg-white text-zs-blue-900 shadow-sm"
+                          : "text-zs-ink hover:text-zs-blue-700",
+                      )}
+                    >
+                      {tab.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <ul className="flex flex-col gap-1">
+                {NAV_ITEMS.map((item, i) => (
+                  <li
+                    key={item.href}
+                    className={cn(mobileOpen && "animate-fade-in-up")}
+                    style={mobileOpen ? { animationDelay: `${i * 30}ms` } : undefined}
                   >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="block rounded-lg px-3 py-2 text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </nav>
         </div>
       </header>

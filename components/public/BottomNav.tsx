@@ -9,6 +9,16 @@ import { SearchCommand } from "./SearchCommand";
 import { CartDrawer } from "./CartDrawer";
 import { useCart } from "@/lib/cart/use-cart";
 
+/**
+ * Quick-switch de género mostrado por encima de la BottomNav. Permite saltar
+ * a /mujer /hombre /ninos sin abrir el drawer del header.
+ */
+const GENDER_QUICK: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
+  { label: "Mujer", href: "/mujer", match: (p) => p === "/mujer" || p.startsWith("/mujer/") },
+  { label: "Hombre", href: "/hombre", match: (p) => p === "/hombre" || p.startsWith("/hombre/") },
+  { label: "Niños", href: "/ninos", match: (p) => p === "/ninos" || p.startsWith("/ninos/") },
+];
+
 type Item = {
   key: "home" | "search" | "cart" | "account";
   label: string;
@@ -52,8 +62,8 @@ export function BottomNav() {
 
   return (
     <>
-      {/* Spacer para que el contenido no quede tapado por la barra */}
-      <div aria-hidden className="h-16 md:hidden" />
+      {/* Spacer para que el contenido no quede tapado por la barra (incluye fila de género) */}
+      <div aria-hidden className="h-24 md:hidden" />
 
       <nav
         aria-label="Navegación principal mobile"
@@ -65,6 +75,33 @@ export function BottomNav() {
           "shadow-[0_-8px_24px_-12px_rgba(20,34,91,0.18)]",
         )}
       >
+        {/* Quick switch de género — fila superior compacta */}
+        <div
+          role="tablist"
+          aria-label="Cambio rápido de género"
+          className="mx-auto flex max-w-md items-stretch gap-1 px-3 pt-2"
+        >
+          {GENDER_QUICK.map((g) => {
+            const active = g.match(pathname);
+            return (
+              <Link
+                key={g.href}
+                href={g.href}
+                role="tab"
+                aria-selected={active}
+                className={cn(
+                  "flex flex-1 items-center justify-center rounded-full px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-colors",
+                  active
+                    ? "bg-zs-blue-900 text-white"
+                    : "bg-zs-surface text-zs-ink hover:bg-zs-blue-50 hover:text-zs-blue-900",
+                )}
+              >
+                {g.label}
+              </Link>
+            );
+          })}
+        </div>
+
         <ul className="mx-auto grid max-w-md grid-cols-4">
           {ITEMS.map((item) => {
             const active = item.match

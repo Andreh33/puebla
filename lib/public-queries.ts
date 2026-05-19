@@ -6,6 +6,8 @@ import {
   getDemoCategories,
   getDemoProductsByBrand,
   getDemoProductsByCategory,
+  getDemoProductsByGender,
+  type DemoGender,
   type DemoProduct,
 } from "@/lib/demo-products";
 
@@ -258,6 +260,144 @@ export async function getBrandProducts(opts: {
     total: list.length,
     isDemo: true,
   };
+}
+
+/**
+ * Productos filtrados por género (HOMBRE / MUJER / NINO …). Real → demo.
+ *
+ * Para HOMBRE y MUJER se incluyen también los productos UNISEX, alineado con
+ * la convención de retailers como Decathlon o Nike (un producto unisex aparece
+ * en las dos secciones de género). Para NINO/NINA/BEBE solo se devuelven los
+ * que coincidan estrictamente.
+ */
+export async function getProductsByGender(opts: {
+  gender: DemoGender;
+  take?: number;
+  skip?: number;
+}): Promise<{ products: PublicProductCardData[]; total: number; isDemo: boolean }> {
+  const take = opts.take ?? 8;
+  const skip = opts.skip ?? 0;
+  try {
+    const includeUnisex = opts.gender === "HOMBRE" || opts.gender === "MUJER";
+    const genderFilter = includeUnisex
+      ? { in: [opts.gender, "UNISEX"] as DemoGender[] }
+      : { equals: opts.gender };
+    const where: Prisma.ProductWhereInput = {
+      status: "ACTIVE",
+      gender: genderFilter as never,
+    };
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where,
+        orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
+        skip,
+        take,
+        select: productCardSelect,
+      }),
+      db.product.count({ where }),
+    ]);
+    if (products.length > 0 || total > 0) {
+      return {
+        products: products.map((p) => ({
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          shortName: p.shortName,
+          colorName: p.colorName,
+          mainImageUrl: p.mainImageUrl,
+          retailPrice: Number(p.retailPrice),
+          salePrice: p.salePrice != null ? Number(p.salePrice) : null,
+          source: p.source,
+          brand: p.brand,
+        })),
+        total,
+        isDemo: false,
+      };
+    }
+  } catch (err) {
+    console.warn(
+      `[demo] getProductsByGender(${opts.gender}) → fallback demo:`,
+      (err as Error).message,
+    );
+  }
+  const list = getDemoProductsByGender(opts.gender);
+  return {
+    products: list.slice(skip, skip + take).map(demoToCard),
+    total: list.length,
+    isDemo: true,
+  };
+}
+
+/**
+ * Categorías presentes en el catálogo demo para un género dado. Útil para la
+ * sección "Categorías" de las landings /mujer /hombre /ninos. Si no hay BD
+ * real, deduce las categorías a partir del demo filtrado por género.
+ */
+export async function getCategoriesByGender(g: DemoGender): Promise<
+  Array<{ name: string; slug: string; productCount: number; imageUrl: string | null }>
+> {
+  try {
+    const includeUnisex = g === "HOMBRE" || g === "MUJER";
+    const genderValues = includeUnisex ? [g, "UNISEX"] : [g];
+    const real = await db.category.findMany({
+      where: {
+        products: {
+          some: {
+            status: "ACTIVE",
+            gender: { in: genderValues as never },
+          },
+        },
+      },
+      orderBy: [{ position: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        imageUrl: true,
+        _count: {
+          select: {
+            products: {
+              where: {
+                status: "ACTIVE",
+                gender: { in: genderValues as never },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (real.length > 0) {
+      return real.map((c) => ({
+        name: c.name,
+        slug: c.slug,
+        productCount: c._count.products,
+        imageUrl: c.imageUrl,
+      }));
+    }
+  } catch (err) {
+    console.warn(
+      `[demo] getCategoriesByGender(${g}) → fallback demo:`,
+      (err as Error).message,
+    );
+  }
+  // Fallback demo: agrupar productos filtrados por género en categorías.
+  const subset = getDemoProductsByGender(g);
+  const map = new Map<string, { name: string; slug: string; productCount: number; imageUrl: string | null }>();
+  for (const p of subset) {
+    const existing = map.get(p.category.slug);
+    if (existing) {
+      existing.productCount += 1;
+    } else {
+      map.set(p.category.slug, {
+        name: p.category.name,
+        slug: p.category.slug,
+        productCount: 1,
+        // Imagen representativa: la del primer producto encontrado.
+        imageUrl: p.mainImageUrl,
+      });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.productCount - a.productCount);
 }
 
 /**
@@ -517,6 +657,11 @@ const RESERVED_SLUGS = new Set([
   "api",
   "admin",
   "login",
+  // Landings de género — tienen su propio route static en /mujer /hombre /ninos
+  "mujer",
+  "hombre",
+  "ninos",
+  "carrito",
 ]);
 
 export function isReservedSlug(slug: string): boolean {

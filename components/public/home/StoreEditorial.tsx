@@ -1,0 +1,129 @@
+import Image from "next/image";
+import { ArrowUpRight, MapPin, MessageCircle } from "lucide-react";
+import { Reveal } from "@/components/public/Reveal";
+import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
+
+/**
+ * StoreEditorial — sustituye "Visítanos en Puebla de la Calzada" con su mapa
+ * iframe enorme por una composición editorial:
+ *
+ *   - Foto ambiente grande (placeholder: producto sobre fondo cálido) en la
+ *     izquierda con un marco rasante.
+ *   - Coordenadas + dirección + 3 stat blocks tipo "5 min Montijo · 15 Mérida
+ *     · 30 Badajoz".
+ *   - CTAs duales: WhatsApp + Maps. El mapa real queda como link, no como
+ *     iframe enorme.
+ *
+ * Fondo off-white para cambiar de tono respecto a las secciones azul/oscuro.
+ */
+export function StoreEditorial() {
+  return (
+    <section className="relative bg-zs-surface py-24 sm:py-32 lg:py-40">
+      <header className="mx-auto mb-14 max-w-[1600px] px-4 sm:mb-20 sm:px-8">
+        <Reveal variant="fade-up">
+          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-zs-muted">
+            <span className="inline-block h-px w-8 bg-zs-blue-900/30" />
+            04 — La tienda
+          </p>
+        </Reveal>
+      </header>
+
+      <div className="mx-auto grid max-w-[1600px] gap-12 px-4 sm:px-8 lg:grid-cols-12 lg:gap-16">
+        {/* Foto ambiente */}
+        <Reveal className="lg:col-span-7" variant="fade-up">
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#e8e0d5] via-[#d7c9b6] to-[#b59a78]">
+            <Image
+              src="/sample-products/bota-alta-john-smith-libel-high-24i-blanco.webp"
+              alt="Interior Zona Sport — selección de producto"
+              fill
+              sizes="(max-width: 1024px) 100vw, 60vw"
+              className="object-contain p-12 sm:p-20"
+            />
+            {/* Etiqueta tienda */}
+            <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full bg-zs-blue-950/85 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-white backdrop-blur">
+              <MapPin className="h-3 w-3" />
+              C. Silos, 3 · 06490
+            </div>
+            {/* Coordenadas ed */}
+            <div className="absolute bottom-6 right-6 text-right font-mono text-[10px] uppercase tracking-[0.18em] text-zs-blue-950/70">
+              38.8821° N<br />
+              6.6164° W
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Copy + stats + CTAs */}
+        <div className="space-y-10 lg:col-span-5 lg:pt-6">
+          <Reveal variant="fade-up" delay={100}>
+            <h2
+              className="font-display font-bold leading-[0.92] tracking-[-0.035em] text-zs-blue-950"
+              style={{ fontSize: "clamp(2.25rem, 5.5vw, 4.5rem)" }}
+            >
+              Puebla de la Calzada.<br />
+              <span className="text-zs-muted/70">A diez minutos de ti.</span>
+            </h2>
+          </Reveal>
+          <Reveal variant="fade-up" delay={180}>
+            <p className="max-w-md text-base leading-relaxed text-zs-muted">
+              Estamos en pleno centro, frente al ayuntamiento. Ven a probarte
+              la zapatilla, a pesar la mochila, a ver el color real bajo luz
+              de verdad. Te asesoramos sin prisa.
+            </p>
+          </Reveal>
+
+          <Reveal variant="fade-up" delay={240}>
+            <dl className="grid grid-cols-3 gap-6 border-y border-zs-blue-900/10 py-8">
+              {[
+                { k: "5 min", v: "Montijo" },
+                { k: "15 min", v: "Mérida" },
+                { k: "30 min", v: "Badajoz" },
+              ].map((s) => (
+                <div key={s.v}>
+                  <dt className="font-display text-3xl font-bold leading-none tracking-tight text-zs-blue-950 sm:text-4xl">
+                    {s.k}
+                  </dt>
+                  <dd className="mt-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-zs-muted">
+                    {s.v}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Reveal>
+
+          <Reveal variant="fade-up" delay={300}>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={whatsappUrl(WhatsAppMessages.generic())}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="WhatsApp"
+                className="group inline-flex h-14 items-center gap-2.5 rounded-full bg-zs-blue-950 px-7 text-sm font-semibold text-white transition-colors hover:bg-zs-blue-900"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Reservar por WhatsApp
+              </a>
+              <a
+                href="https://maps.google.com/?q=C.+Silos,+3,+06490+Puebla+de+la+Calzada,+Badajoz"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="Maps"
+                className="group inline-flex h-14 items-center gap-3 rounded-full border border-zs-blue-950/15 pl-7 pr-3 text-sm font-semibold text-zs-blue-950 transition-colors hover:bg-zs-blue-950 hover:text-white"
+              >
+                Abrir en Maps
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-zs-blue-950 text-white transition-transform group-hover:rotate-45 group-hover:bg-white group-hover:text-zs-blue-950">
+                  <ArrowUpRight className="h-4 w-4" />
+                </span>
+              </a>
+            </div>
+          </Reveal>
+
+          <Reveal variant="fade-up" delay={360}>
+            <p className="text-xs uppercase tracking-[0.22em] text-zs-muted/80">
+              L–V 10:00 – 14:00 · 17:00 – 20:30 — S 10:00 – 14:00
+            </p>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}

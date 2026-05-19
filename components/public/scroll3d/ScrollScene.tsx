@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Mountain, MapPin, MessageCircle, Compass } from "lucide-react";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 import { SceneLoader } from "./SceneLoader";
@@ -31,7 +31,17 @@ const ScrollSceneCanvas = dynamic(
  *  - En `prefers-reduced-motion` o mobile estrecho, renderizamos fallback
  *    estático.
  */
-export function ScrollScene() {
+type ScrollSceneProps = {
+  /**
+   * Render alternativo cuando no hay WebGL, hay prefers-reduced-motion, o
+   * todavía no estamos hidratados. Si no se pasa, cae al StaticHeroFallback
+   * histórico (foto plana). El home pasa <HomeHero /> para evitar el viejo
+   * fallback "WordPress-y".
+   */
+  fallback?: ReactNode;
+};
+
+export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollProgress = useRef(0);
   const [enabled, setEnabled] = useState(true);
@@ -62,24 +72,14 @@ export function ScrollScene() {
     setHydrated(true);
   }, []);
 
-  // Lazy: el canvas 3D sólo se monta tras 1ª interacción / scroll / 1500 ms.
-  // El bundle Three+drei (~600 KB) no compite con el LCP.
+  // El canvas 3D se monta justo después de la hidratación. El bundle Three+drei
+  // se descarga en paralelo a la home; mientras tanto el SceneLoader es visible.
   const [shouldMountCanvas, setShouldMountCanvas] = useState(false);
   useEffect(() => {
     if (!hydrated || !webglOk) return;
-    const mount = () => setShouldMountCanvas(true);
-    window.addEventListener("scroll", mount, { once: true, passive: true });
-    window.addEventListener("pointermove", mount, { once: true });
-    window.addEventListener("touchstart", mount, { once: true, passive: true });
-    window.addEventListener("keydown", mount, { once: true });
-    const t = setTimeout(mount, 1500);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener("scroll", mount);
-      window.removeEventListener("pointermove", mount);
-      window.removeEventListener("touchstart", mount);
-      window.removeEventListener("keydown", mount);
-    };
+    // Pequeño delay para no competir con LCP (CSS+fonts), pero garantizado.
+    const t = setTimeout(() => setShouldMountCanvas(true), 120);
+    return () => clearTimeout(t);
   }, [hydrated, webglOk]);
 
   // Failsafe: si tras 8 s no terminó (red lenta, GPU lenta, asset corrupto),
@@ -90,7 +90,10 @@ export function ScrollScene() {
     return () => clearTimeout(t);
   }, [enabled]);
 
-  // Detección de capabilities en cliente
+  // Detección de capabilities en cliente.
+  // Si el usuario tiene `prefers-reduced-motion` activado (común en Windows con
+  // "animaciones en Windows" off), NO desactivamos la escena: la mantenemos
+  // pero en modo `low` (sin rocas / partículas / cámara cinemática).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -98,8 +101,7 @@ export function ScrollScene() {
     const lowCpu =
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory !== undefined &&
       ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) < 4;
-    if (reduced) setEnabled(false);
-    if (narrow || lowCpu) setLow(true);
+    if (narrow || lowCpu || reduced) setLow(true);
   }, []);
 
   // Calcula scrollProgress según la posición del contenedor
@@ -172,8 +174,11 @@ export function ScrollScene() {
   // Mientras no hayamos hidratado, o si está deshabilitado / sin WebGL:
   // hero estático. Esto evita el hydration mismatch (server + primer render
   // del cliente devuelven exactamente lo mismo).
+  // Fallback estático solo si WebGL no está disponible o aún no hidratamos.
+  // `enabled` se conserva por si el usuario lo desactiva manualmente desde
+  // ajustes (no implementado todavía pero el flag está listo).
   if (!hydrated || !enabled || !webglOk) {
-    return <StaticHeroFallback />;
+    return <>{fallback ?? <StaticHeroFallback />}</>;
   }
 
   return (

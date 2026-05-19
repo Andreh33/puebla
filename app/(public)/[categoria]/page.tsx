@@ -7,6 +7,7 @@ import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { ProductFilters } from "@/components/public/ProductFilters";
+import { GenderChips } from "@/components/public/GenderChips";
 import { EmptyState } from "@/components/public/EmptyState";
 import {
   buildProductWhere,
@@ -263,6 +264,9 @@ export default async function CategoryPage({
           </div>
 
           <div className="space-y-6">
+            {/* Chips de género — más prominentes que el filtro en sidebar */}
+            <GenderChips />
+
             {products.length === 0 ? (
               <EmptyState
                 variant="no-products"
