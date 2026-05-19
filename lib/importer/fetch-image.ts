@@ -51,14 +51,25 @@ export async function fetchImageBytes(url: string): Promise<FetchImageResult> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
   try {
+    // UA de browser real: el WordPress del cliente (Wordfence / WAF) bloquea
+    // UAs que se autoidentifican como bots devolviendo HTTP 403. Headers
+    // completos al estilo Chrome desktop para pasar filtros conservadores.
     const res = await fetch(parsed.toString(), {
       signal: ctrl.signal,
       redirect: "follow",
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; ZonaSportBot/1.0; +https://zonasport.es)",
-        Accept: "image/*",
-        // Algunos CDNs requieren Referer del propio dominio.
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        Accept:
+          "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Sec-Fetch-Dest": "image",
+        "Sec-Fetch-Mode": "no-cors",
+        "Sec-Fetch-Site": "cross-site",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+        // Algunos CDNs requieren Referer del propio dominio (a su raíz).
         Referer: `${parsed.protocol}//${parsed.hostname}/`,
       },
     });
