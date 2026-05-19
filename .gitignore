@@ -74,3 +74,7 @@ prisma/*.db-journal
 *.log
 
 .vercel
+.env*.local
+
+# bootstrap-only token, never commit
+.setup-token.tmp
