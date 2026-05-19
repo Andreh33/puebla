@@ -21,11 +21,12 @@ export async function GET(req: NextRequest) {
     where: {
       description: { not: null },
       OR: [
-        { name: { contains: "CHANDAL", mode: "insensitive" } },
-        { name: { contains: "BEBÉ", mode: "insensitive" } },
-        { name: { contains: "BEBE", mode: "insensitive" } },
-        { description: { contains: "data-url", mode: "insensitive" } },
-        { description: { contains: "tabindex", mode: "insensitive" } },
+        { sku: { in: ["8510", "4021", "39940"] } },
+        { externalId: { in: ["woocommerce:38764"] } },
+        { description: { contains: "data-url" } },
+        { description: { contains: "ca://" } },
+        { description: { contains: "tabindex" } },
+        { description: { contains: "role=\"button\"" } },
       ],
     },
     select: {
