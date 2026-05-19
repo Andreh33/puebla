@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
       slug: true,
       name: true,
       description: true,
+      status: true,
+      mainImageUrl: true,
     },
     take: 10,
   });
@@ -44,6 +46,8 @@ export async function GET(req: NextRequest) {
     samples: samples.map((s) => ({
       slug: s.slug,
       name: s.name,
+      status: s.status,
+      hasMainImage: !!s.mainImageUrl,
       descriptionLen: s.description?.length ?? 0,
       descriptionPreview: s.description?.slice(0, 500),
       hasDirty: hasDirtySpans(s.description),
