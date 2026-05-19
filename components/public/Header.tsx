@@ -10,7 +10,7 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 import { SearchCommand } from "./SearchCommand";
 import { CartIcon } from "./CartIcon";
 import { MegaMenu, MegaMenuMobile } from "./MegaMenu";
-import { MEGA_MENU_KEYS, type MegaMenuKey } from "@/lib/menu/mega-menu";
+import type { MegaMenuKey } from "@/lib/menu/mega-menu";
 
 /**
  * Header estilo "pill flotante" — inspirado en latech (la forma, no los
@@ -84,12 +84,10 @@ const GENDER_TABS: Array<{
     href: "/hombre",
     match: (p) => p === "/hombre" || p.startsWith("/hombre/"),
   },
-  {
-    key: "ninos",
-    label: "Niños",
-    href: "/ninos",
-    match: (p) => p === "/ninos" || p.startsWith("/ninos/"),
-  },
+  // "Niños" eliminado del switch principal a petición del cliente:
+  // Niño y Niña pasan a ser entradas separadas en SUBTABS_NINOS,
+  // justo después de los géneros, para que se vea claramente la
+  // separación de catálogos infantiles por sexo.
 ];
 
 /** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */
@@ -457,10 +455,13 @@ export function Header() {
         >
           <nav aria-label="Menú móvil" className="overflow-hidden">
             <div className="max-h-[80vh] overflow-y-auto px-4 py-3">
-              {/* Tabs de género (acordeón con mega-menú embebido) */}
+              {/* Tabs de género (acordeón con mega-menú embebido).
+                  Iteramos GENDER_TABS (mujer/hombre) — ya no incluimos
+                  Niños porque el cliente lo separó en dos entradas
+                  Niño y Niña (sin mega-menú, links directos abajo). */}
               <div className="mb-3 overflow-hidden rounded-2xl border border-zs-border bg-white">
-                {MEGA_MENU_KEYS.map((key) => {
-                  const tabConfig = GENDER_TABS.find((t) => t.key === key)!;
+                {GENDER_TABS.map((tabConfig) => {
+                  const key = tabConfig.key;
                   const active = tabConfig.match(pathname);
                   const expanded = mobileExpanded === key;
                   const contentId = `${triggerIdPrefix}-mobile-${key}`;
@@ -513,6 +514,30 @@ export function Header() {
                   );
                 })}
               </div>
+
+              {/* Niño / Niña / Accesorios (links simples, sin mega-menú) */}
+              <ul className="mb-3 grid grid-cols-3 gap-2">
+                {SUBTABS_NINOS.map((item) => {
+                  const active =
+                    pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "block rounded-lg px-3 py-2 text-center text-sm font-bold uppercase tracking-wider",
+                          active
+                            ? "bg-zs-blue-950 text-white"
+                            : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
 
               <ul className="flex flex-col gap-1">
                 {SPORT_NAV.map((item, i) => (
