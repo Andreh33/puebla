@@ -43,7 +43,7 @@ async function main() {
   const totalCalzado = Number(
     (await db.$queryRawUnsafe<{ c: number }[]>(
       `SELECT COUNT(*)::int as c FROM "Product" p JOIN "Category" c ON c.id=p."primaryCategoryId" WHERE c.slug LIKE '%-calzado'`,
-    ))[0].c,
+    ))[0]?.c ?? 0,
   );
   const rows = await db.$queryRawUnsafe<{ id: string; name: string; sportUse: string | null; brand: string | null }[]>(
     `SELECT p.id, p.name, p."sportUse", b.name as brand
