@@ -227,7 +227,7 @@ productos. **Reutilizadas (NO redirigen):** `hombre`, `mujer`, `accesorios`.
 | `/conjuntos` (82) | **/nino/textil** | niño60 · niña15 · H6 · M1 |
 | `/chandal` (79) | **/hombre/textil** | H35 · niño33 · M6 · niña5 |
 | `/infantil` (59) | **/nino/textil** (+ enlace a /nina/textil) | niño36 · niña23 |
-| `/bebe` (53) | **/nina/calzado** | niña-calz25 · niño-calz18 · niña-tex9 · niño-tex1 |
+| `/bebe` (53) | **/nino/calzado** | niña-calz25 · niño-calz18 · niña-tex9 · niño-tex1 — **excepción consciente al criterio "por volumen"**: aunque hay más niña, se redirige al hub del *primary fijo* de BEBE (§5) para que la 301 lleve donde vive el canonical SEO |
 | `/abrigos` (51) | **/hombre/textil** | H22 · M11 · niña10 · niño5 · err3 |
 | `/mallas` (45) | **/mujer/textil** | M44 · M-calz1 |
 | `/banador` (36) | **/hombre/textil** | H18 · niño17 · niña1 |
@@ -241,16 +241,18 @@ productos. **Reutilizadas (NO redirigen):** `hombre`, `mujer`, `accesorios`.
 | `/uncategorized` (1) | **/accesorios/mochilas** | mochilas1 |
 | `/ropa` (1) | **/mujer/textil** | M1 |
 | `/pantalon-corto` (1) | **/mujer/textil** | M1 |
-| `/bota-alta` (1) | **/hombre/calzado** (su único producto va a errors.csv) | err:no_gender1 |
+| `/bota-alta` (1) | **/hombre/calzado** | el único producto es NO_ESPECIFICADO y entra en `migration-errors.csv` para etiquetar a mano; la 301 apunta donde irían naturalmente las botas altas masculinas |
+| `/running` (0) | **/hombre/calzado** | vacía; nav-link → calzado running general (Bloque 3 lo afinará con `?tipo=running`) |
+| `/montana` (0) | **/hombre/calzado** | vacía; nav-link → calzado montaña/trail (Bloque 3 lo afinará con `?tipo=trail`) |
 
 ### Categorías vacías (0 productos)
 Hay **~43 categorías seed sin productos** (`/sudaderas`, `/zapatilla`, `/calcetin`,
 `/anorack-parka`, etc.). No estorban (no se mostrarían), pero:
-- **Enlazadas en el nav** (Header/Footer `SPORT_NAV`): `/running`, `/montana`
-  (además de `/padel` y `/calzado` ya cubiertos). **Decisión pendiente:** redirigir
-  `/running` y `/montana` a un destino sensato (p.ej. `/hombre/calzado` o
-  `/catalogo`) **o** actualizar el nav en Bloque 4. Lo dejo apuntado; no es parte
-  del script de datos.
+- **Enlazadas en el nav** (Header/Footer `SPORT_NAV`): `/running` y `/montana`
+  → **decididas** (ver tabla): ambas 301 a `/hombre/calzado`. Cuando el Bloque 3
+  introduzca `footwearType`, estas redirecciones se **afinan** a
+  `/hombre/calzado?tipo=running` y `/hombre/calzado?tipo=trail` respectivamente.
+  (`/padel`→/accesorios/padel y `/calzado`→/hombre/calzado ya están en la tabla.)
 - El resto (seed huérfano) → opcional limpiarlas en un paso posterior; no las toca
   esta migración.
 
@@ -339,9 +341,32 @@ etiquetarlos a mano. No se borran, no se inventan categorías comodín.
 **D4 — Redirecciones por volumen (tabla concreta en §9).**
 Calculadas ejecutando el clasificador sobre los productos reales de dev. Donde un
 slug viejo reparte entre varias destino, gana la de mayor volumen y el resto quedan
-como enlace secundario en la página destino (Bloque 4). Pendiente: decidir destino
-de `/running` y `/montana` (vacías pero enlazadas en nav). Se quitan los redirects
-`/nino`,`/nina` de `next.config.ts`.
+como enlace secundario en la página destino (Bloque 4). **Excepción consciente:**
+`/bebe`→/nino/calzado (no /nina) por coherencia con el primary fijo de BEBE (§5).
+`/running` y `/montana` → /hombre/calzado (afinables con `?tipo=` en Bloque 3). Se
+quitan los redirects `/nino`,`/nina` de `next.config.ts`.
 
 **D5 — m2m hoy afecta a 1 producto.** Confirmado. Se mantiene por futureproofing
 (importaciones futuras de pádel y marcas con UNISEX adulto en textil/calzado).
+
+---
+
+## 13. Tareas post-Bloque 2 (TODO)
+
+Dependen del Bloque 2 pero **no son parte de él** (se hacen en bloques/PRs posteriores):
+
+- [ ] **Filtro "Sin categorizar" en admin.** Añadir en `/admin/productos` un filtro
+  `where: { primaryCategoryId: null }` para revisar los 6 productos de
+  `migration-errors.csv` y etiquetarlos a mano. (D3)
+- [ ] **Limpieza del nav `SPORT_NAV`** en `Header.tsx` y `Footer.tsx`. Reemplazar
+  `/running`, `/montana`, `/padel`, `/calzado` por la nueva estructura. (Bloque 4,
+  al construir los hubs.)
+- [ ] **Housekeeping categorías vacías** (~43 seed leftover). PR aparte, no urgente.
+- [ ] **Ruta anidada `[seccion]/[familia]`** en `app/(public)/`. Resuelve la URL
+  `/hombre/textil` buscando `slug = ${seccion}-${familia}`. (D1, requerido para que
+  los productos sean accesibles vía URL pública tras la migración.)
+- [ ] **Reescribir `buildProductWhere` y `getCategoryFacets`** para filtrar por
+  `primaryCategoryId` / `categories[]` en lugar de `categoryId`. (Precondición de la
+  contractiva §10.)
+- [ ] **Afinar redirects** `/running`→`/hombre/calzado?tipo=running` y
+  `/montana`→`/hombre/calzado?tipo=trail` cuando exista `footwearType` (Bloque 3).
