@@ -17,21 +17,16 @@ Estrategia **expand/contract** sin downtime: (1) migración aditiva → (2) scri
 de datos idempotente → (3) migración contractiva. Cada paso requiere **OK manual**
 y se prueba en la branch Neon **dev-claude-code** antes de tocar producción.
 
-Orden de aplicación y puntos de OK:
-- (a) aplicar migración aditiva en dev
-- (b) ejecutar `migrate-categories.ts --dry-run` (resumen, sin escribir)
-- (c) ejecutar el script en real en dev (resumen + `migration-errors.csv`)
-- (d) generar (sin aplicar) la migración contractiva
+Puntos de OK: (a) migración aditiva en dev · (b) script `--dry-run` · (c) script
+real en dev + CSV · (d) generar (sin aplicar) la contractiva.
 
 ---
 
 ## 2. Árbol de categorías nuevas (18 categorías)
 
 `hombre`, `mujer`, `accesorios` **ya existen** como Category → se **reutilizan**
-como raíz. `nino`, `nina` se **crean**. Las hijas se crean todas. Como
-`Category.slug` es `@unique` global, los slugs de las hijas llevan prefijo del
-padre (`hombre-textil`), y la **URL pública** se compone `/<padre>/<familia>` vía
-ruta anidada (frontend, fuera de este bloque de datos).
+como raíz (no se redirigen). `nino`, `nina` se **crean**. Las hijas se crean todas.
+Slugs de hijas con prefijo del padre (ver Decisión 1, §12).
 
 | name | slug (único) | URL | parent | position | metaTitle | metaDescription |
 |---|---|---|---|---|---|---|
@@ -54,25 +49,19 @@ ruta anidada (frontend, fuera de este bloque de datos).
 | Pádel | `accesorios-padel` | /accesorios/padel | accesorios | 4 | Pádel — Palas, paleteros y accesorios \| Zona Sport | Palas, paleteros y complementos de pádel. |
 | Otros | `accesorios-otros` | /accesorios/otros | accesorios | 5 | Complementos deportivos \| Zona Sport | Gorras, guantes, gafas, espinilleras y más complementos. |
 
-> Nota: `metaTitle`/`metaDescription` son sugerencias; ajustables. Las raíces
-> `/hombre`,`/mujer`,`/nino`,`/nina` serán páginas **hub** (Bloque 4); `/accesorios`
-> es listado normal con subcategorías.
+> `metaTitle`/`metaDescription` son sugerencias ajustables. `/hombre`,`/mujer`,
+> `/nino`,`/nina` serán **hubs** (Bloque 4); `/accesorios` listado con subcategorías.
 
 ---
 
 ## 3. Clasificador (anexo — código en `lib/categories/classify.ts`)
 
-No se copia aquí el código (fuente única ya commiteada). Estrategia:
-1. **Primera palabra** normalizada (sin tildes, sin signos iniciales). Orden:
-   calzado → padel-gear → mochilas → balones → calcetines → otros → textil.
-2. **Regla ambigüedad** `\bPADEL\b` (palabra completa) → `accesorios:padel`, **solo
-   si** la 1ª palabra no fue un tipo concreto (evita falsos positivos de la marca
-   *Bullpadel* y de marketing tipo "…OF PADEL").
-3. **Pasada 2**: escaneo del name completo (para nombres marca-primero), misma
-   precedencia, excluyendo tokens ambiguos (`TOP`, `GRIP`, `MEDIA`…).
-4. Si nada casa → `UNCLASSIFIED`.
-
-Lo usan: `scripts/classify-report.ts` (verificación) y `scripts/migrate-categories.ts`.
+Fuente única ya commiteada (no se copia aquí). Estrategia: (1) primera palabra
+normalizada con precedencia calzado→padel-gear→mochilas→balones→calcetines→otros→
+textil; (2) regla `\bPADEL\b` palabra completa → pádel solo si la 1ª palabra no fue
+tipo concreto (evita falsos positivos *Bullpadel* / "…OF PADEL"); (3) pasada 2 de
+escaneo del name; (4) `UNCLASSIFIED`. Lo usan `scripts/classify-report.ts` y
+`scripts/migrate-categories.ts`.
 
 ---
 
@@ -93,13 +82,12 @@ Lo usan: `scripts/classify-report.ts` (verificación) y `scripts/migrate-categor
 | /accesorios/balones | 28 | incluye baloncesto (subcat genérica) |
 | /accesorios/mochilas | 27 | |
 | /accesorios/padel | 15 | palas, paleteros, raqueteros, toallita |
-| **migration-errors.csv** | **6** | 5 UNCLASSIFIED + 1 NO_ESPECIFICADO+calzado ("Bota Alta … (copia)") |
+| **migration-errors.csv** | **6** | 5 UNCLASSIFIED + 1 NO_ESPECIFICADO+calzado |
 
-Suma: 1356 productos colocados + 1 fila pivote extra (BEBE) + 6 a revisar = 1362. ✅
-Reconciliación familia×género al 100% (ver `scripts/classify-report.ts`).
-
-UNCLASSIFIED a etiquetar a mano: `MIZUNO WAVE ULTIMA 17`, `JOMA VIPER … RVIPES2612`,
-`JOLUVI HEAT STORMY/DIPA/TERRAIN` (marca+modelo sin palabra de tipo).
+Suma: 1356 colocados + 1 fila pivote extra (BEBE) + 6 a revisar = 1362. ✅
+Reconciliación familia×género al 100%. Los 6 de errores: `MIZUNO WAVE ULTIMA 17`,
+`JOMA VIPER … RVIPES2612`, `JOLUVI HEAT STORMY/DIPA/TERRAIN` (UNCLASSIFIED) +
+`Bota Alta +8000 TOVIR Negro (copia)` (NO_ESPECIFICADO+calzado).
 
 ---
 
@@ -107,47 +95,42 @@ UNCLASSIFIED a etiquetar a mano: `MIZUNO WAVE ULTIMA 17`, `JOMA VIPER … RVIPES
 
 `assignCategories(product)` → `{ primary: string; all: string[] }`:
 
-| gender del producto | familia | entradas en pivote (`all`) | `primaryCategoryId` |
+| gender | familia | entradas pivote (`all`) | `primaryCategoryId` |
 |---|---|---|---|
 | HOMBRE | textil/calzado | `[/hombre/<fam>]` (1) | /hombre/\<fam\> |
 | MUJER | textil/calzado | `[/mujer/<fam>]` (1) | /mujer/\<fam\> |
 | NINO | textil/calzado | `[/nino/<fam>]` (1) | /nino/\<fam\> |
 | NINA | textil/calzado | `[/nina/<fam>]` (1) | /nina/\<fam\> |
-| UNISEX (adulto) | textil/calzado | `[/hombre/<fam>, /mujer/<fam>]` (2) | /hombre/\<fam\> (criterio fijo) |
+| UNISEX (adulto) | textil/calzado | `[/hombre/<fam>, /mujer/<fam>]` (2) | /hombre/\<fam\> |
 | BEBE / UNISEX junior | textil/calzado | `[/nino/<fam>, /nina/<fam>]` (2) | /nino/\<fam\> |
 | NO_ESPECIFICADO + textil/calzado | — | — → `migration-errors.csv` | — |
 | cualquiera + **accesorios** | accesorios:\<sub\> | `[/accesorios/<sub>]` (1, **ignora género**) | /accesorios/\<sub\> |
 
-> Con los datos actuales: los 30 UNISEX son todos accesorios (no duplican) y solo
-> hay 1 producto BEBE (textil) → la duplicación m2m hoy afecta a **1 producto**.
-> El m2m sigue siendo necesario para futuras importaciones de UNISEX adulto.
+> Datos actuales: los 30 UNISEX son todos accesorios (no duplican) y solo hay 1
+> producto BEBE (textil) → la duplicación m2m hoy afecta a **1 producto**.
 
 ---
 
 ## 6. Diff de `prisma/schema.prisma`
 
-Como habrá **3 relaciones** Product↔Category, Prisma exige nombrarlas todas.
+3 relaciones Product↔Category → Prisma exige nombrarlas todas.
 
 ```diff
  model Product {
-   // …
    categoryId        String
 -  category          Category      @relation(fields: [categoryId], references: [id])
-+  category          Category      @relation("LegacyCategory", fields: [categoryId], references: [id])  // SE MANTIENE durante expand
++  category          Category      @relation("LegacyCategory", fields: [categoryId], references: [id])  // SE MANTIENE en expand
 +  primaryCategoryId String?                                                                            // NUEVO (nullable temporal)
 +  primaryCategory   Category?     @relation("PrimaryCategory", fields: [primaryCategoryId], references: [id])
 +  categories        ProductCategory[]                                                                  // NUEVO m2m
-   // …
 +  @@index([primaryCategoryId])
  }
 
  model Category {
-   // …
 -  products        Product[]
-+  products        Product[]          @relation("LegacyCategory")    // relación antigua (se mantiene en expand)
++  products        Product[]          @relation("LegacyCategory")    // se mantiene en expand
 +  primaryFor      Product[]          @relation("PrimaryCategory")   // NUEVO
 +  categoryLinks   ProductCategory[]  @relation("CategoryProducts")  // NUEVO
-   // …
  }
 
 +model ProductCategory {
@@ -160,16 +143,16 @@ Como habrá **3 relaciones** Product↔Category, Prisma exige nombrarlas todas.
 +}
 ```
 
-**Se mantiene intacto en la fase expand:** `Product.categoryId`, la relación
-`category`/`products` (renombrada a `LegacyCategory`, mismo SQL), y todos los datos.
-`onDelete: Cascade` en el pivote por ambos lados. No se usa `@map`.
+Se mantiene intacto en expand: `Product.categoryId`, su relación (solo se le pone
+nombre `LegacyCategory` — **no cambia ninguna columna SQL**), y todos los datos.
+`onDelete: Cascade` en el pivote por ambos lados. Sin `@map` (ver Decisión 2, §12).
 
 ---
 
 ## 7. SQL de la migración aditiva (preview — NO aplicada)
 
 Lo que generaría `prisma migrate dev --create-only --name product_categories_m2m_additive`
-(el rename de relación es a nivel de schema Prisma, no genera SQL):
+(el rename de relación es a nivel Prisma, no genera SQL):
 
 ```sql
 -- CreateTable
@@ -178,24 +161,18 @@ CREATE TABLE "ProductCategory" (
     "categoryId" TEXT NOT NULL,
     CONSTRAINT "ProductCategory_pkey" PRIMARY KEY ("productId","categoryId")
 );
-
 -- CreateIndex
 CREATE INDEX "ProductCategory_categoryId_idx" ON "ProductCategory"("categoryId");
-
 -- AlterTable
 ALTER TABLE "Product" ADD COLUMN "primaryCategoryId" TEXT;
-
 -- CreateIndex
 CREATE INDEX "Product_primaryCategoryId_idx" ON "Product"("primaryCategoryId");
-
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_primaryCategoryId_fkey"
   FOREIGN KEY ("primaryCategoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
 -- AddForeignKey
 ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_productId_fkey"
   FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
 -- AddForeignKey
 ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_categoryId_fkey"
   FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -210,107 +187,161 @@ ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_categoryId_fkey"
 ```
 import { PrismaClient } from "@prisma/client";
 import { classify } from "../lib/categories/classify";
-
 const DRY_RUN = process.argv.includes("--dry-run");
-
-// Árbol de categorías destino (slug → {name, parentSlug, position, meta})
-const TREE = [ …las 18 de la sección 2… ];
-
-// Mapa familia → subcategoría destino
-function familyToSlug(fam, gender): { primary, all[] }   // sección 5
+const TREE = [ …las 18 categorías de §2… ];
+function assignCategories(name, gender): { primary, all[] } | { error: motivo }   // §5
 
 async function main() {
-  // STEP 1 — Categorías: upsert por slug (idempotente). Crea raíces primero,
-  //          luego hijas (necesitan parentId). Reutiliza hombre/mujer/accesorios.
-  // STEP 2 — Para cada producto: classify(name) + assignCategories(gender,fam).
-  //          Si UNCLASSIFIED o (NO_ESPECIFICADO && !accesorio) → errores[].
-  // STEP 3 — Idempotente: si product.primaryCategoryId != null → SKIP.
-  //          Si no: set primaryCategoryId + upsert ProductCategory por cada `all`.
-  // STEP 4 — RedirectRule: para cada categoría vieja, redirección 301 a la nueva
-  //          URL con MÁS productos migrados desde ella (sección 9).
-  // STEP 5 — Resumen por categoría + escribe migration-errors.csv (productId,name,gender,motivo).
+  // STEP 1 — Categorías: upsert por slug (idempotente). Raíces primero, luego
+  //          hijas (parentId). Reutiliza hombre/mujer/accesorios.
+  // STEP 2 — Por producto: classify(name) + assignCategories(gender,fam).
+  // STEP 3 — Idempotente (skip si primaryCategoryId != null). Si OK:
+  //          set primaryCategoryId + upsert ProductCategory por cada `all`.
+  //          Si error (UNCLASSIFIED | NO_ESPECIFICADO no-accesorio):
+  //          → DEJAR primaryCategoryId = NULL y categories = [] (sin pivote),
+  //            y añadir fila a migration-errors.csv. (ver Decisión 3, §12)
+  // STEP 4 — RedirectRule: upsert 301 por cada slug viejo → URL nueva (§9).
+  // STEP 5 — Resumen por categoría + escribe migration-errors.csv.
 }
 ```
 
-- **Idempotencia:** clave de skip = `Product.primaryCategoryId IS NOT NULL`. Las
-  categorías por `upsert` on `slug`. El pivote por `upsert` on `@@id(productId,categoryId)`.
-  `RedirectRule` por `upsert` on `from`.
-- **Transacciones:** modo real aplica en `prisma.$transaction` por **lotes de 100**
-  productos (evita transacción gigante; cada lote atómico).
-- **`migration-errors.csv`:** columnas `productId,name,gender,motivo`
-  (`UNCLASSIFIED` | `NO_ESPECIFICADO_no_accesorio`).
-- **Ejecución:**
-  - `npx tsx --env-file=.env.local scripts/migrate-categories.ts --dry-run` → steps
-    1-4 en memoria, sin escribir a BD, imprime qué haría + CSV simulado. **Obligatorio antes del real.**
-  - `npx tsx --env-file=.env.local scripts/migrate-categories.ts` → aplica de verdad.
+- **Idempotencia:** skip = `Product.primaryCategoryId IS NOT NULL`. Categorías por
+  `upsert(slug)`. Pivote por `upsert(@@id)`. `RedirectRule` por `upsert(from)`.
+- **Transacciones:** modo real en `prisma.$transaction` por **lotes de 100**.
+- **`migration-errors.csv`:** `productId,name,gender,motivo`.
+- **Ejecución:** `--dry-run` (steps 1-4 en memoria, sin escribir, **obligatorio**)
+  → real (`npx tsx --env-file=.env.local scripts/migrate-categories.ts`).
 - **Nunca** toca `ProductSize.stock` ni borra productos.
 
 ---
 
-## 9. Plan de redirecciones 301
+## 9. Plan de redirecciones 301 (tabla concreta, calculada por volumen en dev)
 
-Criterio: cada slug viejo redirige a la **nueva URL donde migró la pluralidad**
-de sus productos (lo calcula el script en STEP 4). Cuando empata o se reparte,
-se elige la de mayor volumen y las demás quedan como enlace secundario en la
-página destino (Bloque 4 / listados). Reutilizadas (no redirigen): `hombre`,
-`mujer`, `accesorios`.
+Criterio: cada slug viejo → la nueva URL donde migra la **pluralidad** de sus
+productos. **Reutilizadas (NO redirigen):** `hombre`, `mujer`, `accesorios`.
 
-| slug viejo | → destino (criterio volumen) |
-|---|---|
-| `calzado` | /hombre/calzado |
-| `camisetas`, `conjuntos`, `chandal`, `abrigos`, `cortavientos`, `ropa`, `pantalon-corto` | /hombre/textil |
-| `mallas`, `faldas`, `banador`, `banadores` | /mujer/textil |
-| `infantil` | /nino/textil (+ enlace a /nina/textil) |
-| `bebe` | /nino/calzado |
-| `padel`, `complementos-padel` | /accesorios/padel |
-| `baloncesto` | /nino/calzado (son botas; sus balones ya van por name a /accesorios/balones) |
-| `chanclas`, `bota-alta` | /hombre/calzado |
-| `uncategorized` | /accesorios/mochilas (su único producto es una mochila) |
+| slug viejo (nº prod) | → destino 301 | distribución real |
+|---|---|---|
+| `/calzado` (328) | **/hombre/calzado** | H125 · niña80 · niño62 · M59 · err2 |
+| `/camisetas` (156) | **/hombre/textil** | H79 · M54 · niño19 · niña4 |
+| `/conjuntos` (82) | **/nino/textil** | niño60 · niña15 · H6 · M1 |
+| `/chandal` (79) | **/hombre/textil** | H35 · niño33 · M6 · niña5 |
+| `/infantil` (59) | **/nino/textil** (+ enlace a /nina/textil) | niño36 · niña23 |
+| `/bebe` (53) | **/nina/calzado** | niña-calz25 · niño-calz18 · niña-tex9 · niño-tex1 |
+| `/abrigos` (51) | **/hombre/textil** | H22 · M11 · niña10 · niño5 · err3 |
+| `/mallas` (45) | **/mujer/textil** | M44 · M-calz1 |
+| `/banador` (36) | **/hombre/textil** | H18 · niño17 · niña1 |
+| `/cortavientos` (21) | **/mujer/textil** | M15 · H5 · niña1 |
+| `/faldas` (13) | **/mujer/textil** | M13 |
+| `/padel` (10) | **/accesorios/padel** | padel10 |
+| `/complementos-padel` (4) | **/accesorios/padel** | padel4 |
+| `/banadores` (4) | **/nina/textil** | niña3 · M1 |
+| `/baloncesto` (3) | **/nino/calzado** | niño-calz3 |
+| `/chanclas` (2) | **/nina/calzado** | niña-calz2 |
+| `/uncategorized` (1) | **/accesorios/mochilas** | mochilas1 |
+| `/ropa` (1) | **/mujer/textil** | M1 |
+| `/pantalon-corto` (1) | **/mujer/textil** | M1 |
+| `/bota-alta` (1) | **/hombre/calzado** (su único producto va a errors.csv) | err:no_gender1 |
 
-> Los destinos definitivos los fija el script por volumen real; la tabla son los
-> esperados. Se escriben en `RedirectRule` (las sirve `middleware.ts`).
-> **Además:** quitar de `next.config.ts` los redirects `/nino`→/catalogo y
-> `/nina`→/catalogo (ahora son hubs).
+### Categorías vacías (0 productos)
+Hay **~43 categorías seed sin productos** (`/sudaderas`, `/zapatilla`, `/calcetin`,
+`/anorack-parka`, etc.). No estorban (no se mostrarían), pero:
+- **Enlazadas en el nav** (Header/Footer `SPORT_NAV`): `/running`, `/montana`
+  (además de `/padel` y `/calzado` ya cubiertos). **Decisión pendiente:** redirigir
+  `/running` y `/montana` a un destino sensato (p.ej. `/hombre/calzado` o
+  `/catalogo`) **o** actualizar el nav en Bloque 4. Lo dejo apuntado; no es parte
+  del script de datos.
+- El resto (seed huérfano) → opcional limpiarlas en un paso posterior; no las toca
+  esta migración.
+
+**Además:** quitar de `next.config.ts` los redirects `/nino`→/catalogo y
+`/nina`→/catalogo (ahora son hubs). Las `RedirectRule` las sirve `middleware.ts`.
 
 ---
 
 ## 10. Migración contractiva (`product_categories_m2m_contract`) — solo se GENERA
 
-Se genera al final del Bloque 2 con `--create-only`, **no se aplica** hasta el PR
-de producción. Hace:
+Se genera al final con `--create-only`, **no se aplica** hasta el PR de producción:
 
 ```sql
--- DropForeignKey
 ALTER TABLE "Product" DROP CONSTRAINT "Product_categoryId_fkey";
--- DropIndex (el @@index([categoryId, status]) antiguo)
 DROP INDEX "Product_categoryId_status_idx";
--- AlterTable
 ALTER TABLE "Product" ALTER COLUMN "primaryCategoryId" SET NOT NULL;
 ALTER TABLE "Product" DROP COLUMN "categoryId";
 ```
 
-**Requisitos previos para aplicarla (punto de no retorno):**
-1. `grep -rn "categoryId" app/ components/ lib/` → **0 referencias** a `Product.categoryId`
-   (todo el código usa `primaryCategory`/`categories[]`).
-2. `SELECT COUNT(*) FROM "Product" WHERE "primaryCategoryId" IS NULL` → **0**.
-3. Backup hecho (sección 11).
+Y a nivel Prisma: la relación `LegacyCategory` desaparece y `primaryCategory` se
+**renombra a `category`** (la app vuelve a `product.category`, ahora apuntando a
+`primaryCategoryId`). Ver Decisión 2 (§12).
+
+**Requisitos previos (punto de no retorno):**
+1. `grep -rn "categoryId" app/ components/ lib/` → 0 referencias a `Product.categoryId`.
+   Inventario actual: **37 archivos** tocan `categoryId`/`category` (críticos:
+   `lib/public-queries.ts` buildProductWhere/getCategoryFacets, `lib/products/queries.ts`
+   y `mutations.ts`, importers `process-job`/`process-woocommerce-job`/`miravia/sync`,
+   `app/admin/productos/[id]/ProductEditor.tsx`, `app/(public)/[categoria]/page.tsx`).
+2. `SELECT COUNT(*) FROM "Product" WHERE "primaryCategoryId" IS NULL` → 0
+   (salvo los de `migration-errors.csv`, que se etiquetan antes a mano).
+3. Backup hecho (§11).
 
 ---
 
 ## 11. Runbook de aplicación a producción (se añadirá a `docs/MIGRATIONS.md`)
 
-1. **Backup completo de prod** (`pg_dump` de la branch `main` de Neon) →
-   `/backups/pre-categorias-refactor-<fecha>.sql` + backup específico de
-   `product_size`.
-2. **Deploy migración aditiva** (PR 1): crea pivote + `primaryCategoryId` nullable.
-   No rompe nada (todo el código sigue usando `categoryId`).
-3. **Ejecutar `scripts/migrate-categories.ts`** contra prod (con `DATABASE_URL` de
-   prod, fuera de build). Primero `--dry-run`, revisar, luego real.
-4. **Verificar** conteos en prod (== sección 4) + revisar `migration-errors.csv`.
-5. **PR 2**: cambiar el código de la app a `primaryCategory`/`categories[]`,
-   páginas hub (Bloque 4), rutas anidadas, quitar redirects de `next.config`.
-6. **PR 3 (contractiva)**: tras confirmar los 2 requisitos de la sección 10,
-   aplicar `product_categories_m2m_contract`.
+1. **Backup completo de prod** (`pg_dump` branch `main` de Neon) +
+   backup específico de `product_size`.
+2. **Deploy migración aditiva** (PR 1): pivote + `primaryCategoryId` nullable. No
+   rompe nada (el código sigue usando `categoryId`).
+3. **Ejecutar `migrate-categories.ts`** contra prod (fuera de build): `--dry-run` →
+   revisar → real.
+4. **Verificar** conteos (== §4) + revisar `migration-errors.csv` + etiquetar a mano
+   los 6.
+5. **PR 2**: código a `primaryCategory`/`categories[]`, hubs (Bloque 4), rutas
+   anidadas, quitar redirects de `next.config`, actualizar nav.
+6. **PR 3 (contractiva)**: tras los 2 requisitos de §10.
 
 Cada deploy = una migración Prisma; `migrate deploy` las aplica en orden. Cero
-`db push`. (Ver `docs/MIGRATIONS.md` para el flujo general y el gate de baseline.)
+`db push`.
+
+---
+
+## 12. Decisiones de diseño — detalle y justificación
+
+**D1 — Slugs de hijas con prefijo del padre (`hombre-textil`).**
+El schema actual tiene `Category.slug @unique` **global** (no compuesto). Lo
+**mantenemos** para no romper los lookups existentes por slug único
+(`getCategoryBySlug(slug)`, sitemap, etc.). Con prefijo padre la unicidad global se
+cumple sin colisiones. La URL pública `/hombre/textil` se resolverá con una **ruta
+anidada de App Router** `app/(public)/[seccion]/[familia]/page.tsx`, que busca la
+categoría por `slug = ${seccion}-${familia}` (o por `parent.slug + nombre`). El slug
+`hombre-textil` nunca es visible para el usuario.
+*Alternativa (no elegida):* `@@unique([parentId, slug])` con slugs limpios
+(`textil`) — más bonito pero exige quitar el `@unique` global de `slug` y reescribir
+todos los lookups por slug a lookups con contexto de padre (más churn y riesgo).
+**→ Nota para el frontend (Bloque listados):** crear la ruta anidada `[seccion]/[familia]`.
+
+**D2 — Renombrar relación a `LegacyCategory` (churn temporal).**
+Es **solo el nombre de la relación en el schema Prisma** (`@relation("LegacyCategory")`).
+**NO cambia ningún nombre de columna SQL** — la columna sigue siendo `categoryId` y
+la FK `Product_categoryId_fkey`. En la contracción (§10) se elimina `LegacyCategory`
+y `primaryCategory` se renombra a `category`, de modo que **la app vuelve a usar
+`product.category`** (apuntando ya a `primaryCategoryId`). El churn es transitorio y
+solo en TypeScript/Prisma.
+
+**D3 — Los 6 productos sin categorizar.**
+El script los deja con **`primaryCategoryId = NULL` y `categories = []`** (sin
+entradas en el pivote). Efecto: **no se muestran en público** (los listados filtran
+por categoría), pero **existen en BD** intactos (incluido su stock). Se registran en
+`migration-errors.csv` y se podrán ver en `/admin/productos` con un **filtro "Sin
+categorizar"** (`where: { primaryCategoryId: null }`) que añadiremos al panel para
+etiquetarlos a mano. No se borran, no se inventan categorías comodín.
+
+**D4 — Redirecciones por volumen (tabla concreta en §9).**
+Calculadas ejecutando el clasificador sobre los productos reales de dev. Donde un
+slug viejo reparte entre varias destino, gana la de mayor volumen y el resto quedan
+como enlace secundario en la página destino (Bloque 4). Pendiente: decidir destino
+de `/running` y `/montana` (vacías pero enlazadas en nav). Se quitan los redirects
+`/nino`,`/nina` de `next.config.ts`.
+
+**D5 — m2m hoy afecta a 1 producto.** Confirmado. Se mantiene por futureproofing
+(importaciones futuras de pádel y marcas con UNISEX adulto en textil/calzado).
