@@ -45,22 +45,51 @@ const SAFE_ATTRS: Record<string, Set<string>> = {
 
 export function stripHtml(input: string | null | undefined): string {
   if (!input) return "";
-  // 1) Strip todo entre `<` y `>` no importa el tag.
+  // 1) Strip todo entre `<` y `>` (tags completos).
   let out = input.replace(/<[^>]*>/g, " ");
-  // 2) Decode entidades comunes.
+  // 2) Strip tags TRUNCADOS sin `>` de cierre. Causa: el feed truncó el
+  //    nombre/short a N chars cortando en medio de `<span tabindex="0"
+  //    role="button" data-url="ca://s` — sin `>` el regex anterior no
+  //    lo pilla. Solo aplica si tras `<` viene `/` o letra (tag real),
+  //    no toca "precio < 50".
+  out = out.replace(/<\/?[a-z][^>]*$/i, "");
+  // 3) Decode entidades comunes. &amp; al final por si venía doblemente
+  //    escapado (&amp;amp; → &amp; → &).
   out = out
     .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/gi, "'")
     .replace(/&hellip;/gi, "…")
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
     .replace(/&#8217;/g, "'")
     .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"');
-  // 3) Colapsa espacios.
+    .replace(/&#8221;/g, '"')
+    .replace(/&amp;/gi, "&");
+  // 4) Colapsa espacios.
   return out.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Decodifica entidades HTML en un texto plano (sin tocar tags). Útil para
+ * campos como Brand.name = "Go&amp;win" → "Go&win".
+ */
+export function decodeEntities(input: string | null | undefined): string {
+  if (!input) return "";
+  return input
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&hellip;/gi, "…")
+    .replace(/&#8217;/g, "'")
+    .replace(/&amp;/gi, "&")
+    .trim();
 }
 
 export function sanitizeHtml(input: string | null | undefined): string {

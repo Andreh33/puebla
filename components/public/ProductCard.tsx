@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
-import { stripHtml } from "@/lib/utils/html";
+import { stripHtml, decodeEntities } from "@/lib/utils/html";
 
 export type ProductCardProduct = {
   id: string;
@@ -69,7 +69,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         <div className="pointer-events-none absolute inset-x-2 top-2 flex items-start justify-between gap-2">
           {product.brand?.name ? (
             <Badge variant="secondary" className="bg-white/95 text-zs-blue-900 shadow-sm backdrop-blur">
-              {product.brand.name}
+              {decodeEntities(product.brand.name)}
             </Badge>
           ) : (
             <span />

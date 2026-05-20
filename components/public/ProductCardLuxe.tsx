@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
-import { stripHtml } from "@/lib/utils/html";
+import { stripHtml, decodeEntities } from "@/lib/utils/html";
 import { useSwipe } from "@/hooks/use-swipe";
 import type { ProductCardProduct } from "@/components/public/ProductCard";
 
@@ -136,7 +136,7 @@ export function ProductCardLuxe({
               variant="secondary"
               className="bg-white/95 text-zs-blue-900 shadow-sm backdrop-blur"
             >
-              {product.brand.name}
+              {decodeEntities(product.brand.name)}
             </Badge>
           ) : (
             <span />

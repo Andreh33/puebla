@@ -12,7 +12,12 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { stripHtml, cleanProductName, sanitizeHtml } from "@/lib/utils/html";
+import {
+  stripHtml,
+  cleanProductName,
+  sanitizeHtml,
+  decodeEntities,
+} from "@/lib/utils/html";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,8 +130,31 @@ export async function POST(req: NextRequest) {
     if (rows.length < BATCH) break;
   }
 
+  // Marcas con entidades HTML sin decodificar ("Go&amp;win" → "Go&win").
+  let brandsFixed = 0;
+  const brandRows = await db.brand.findMany({
+    select: { id: true, name: true, slug: true },
+  });
+  for (const b of brandRows) {
+    if (!/&[a-z]+;|&#\d+;/i.test(b.name)) continue;
+    const fixed = decodeEntities(b.name);
+    if (fixed && fixed !== b.name) {
+      // El name de Brand es @unique; si ya existe otra con el name
+      // decodificado, no lo tocamos para evitar colisión.
+      const clash = await db.brand.findFirst({
+        where: { name: fixed, id: { not: b.id } },
+        select: { id: true },
+      });
+      if (!clash) {
+        await db.brand.update({ where: { id: b.id }, data: { name: fixed } });
+        brandsFixed++;
+      }
+    }
+  }
+
   return NextResponse.json({
     ok: true,
+    brandsFixed,
     scanned,
     cleaned,
     skipped,
