@@ -82,6 +82,7 @@ export default async function CatalogoPage({
         salePrice: true,
         source: true,
         brand: { select: { name: true, slug: true } },
+        sizes: { select: { stock: true } },
       },
     }),
     db.product.groupBy({
@@ -152,6 +153,7 @@ export default async function CatalogoPage({
     salePrice: p.salePrice != null ? Number(p.salePrice) : null,
     source: p.source,
     brand: p.brand,
+    totalStock: p.sizes.reduce((acc, s) => acc + s.stock, 0),
   }));
 
   const totalPages = Math.max(1, Math.ceil(count / perPage));

@@ -144,6 +144,7 @@ export default async function CategoryPage({
             salePrice: true,
             source: true,
             brand: { select: { name: true, slug: true } },
+            sizes: { select: { stock: true } },
           },
         }),
       ]);
@@ -159,6 +160,7 @@ export default async function CategoryPage({
         salePrice: p.salePrice != null ? Number(p.salePrice) : null,
         source: p.source,
         brand: p.brand,
+        totalStock: p.sizes.reduce((acc, s) => acc + s.stock, 0),
       }));
     } catch (err) {
       console.warn("[categoria] BD respondió category pero falló product query:", (err as Error).message);

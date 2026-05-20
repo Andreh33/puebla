@@ -10,7 +10,7 @@ import { effectivePrice } from "@/lib/price";
 import { cn } from "@/lib/utils";
 import { stripHtml, decodeEntities } from "@/lib/utils/html";
 import { useSwipe } from "@/hooks/use-swipe";
-import type { ProductCardProduct } from "@/components/public/ProductCard";
+import { stockBadge, type ProductCardProduct } from "@/components/public/ProductCard";
 
 type Props = {
   product: ProductCardProduct & { secondaryImageUrl?: string | null };
@@ -143,6 +143,12 @@ export function ProductCardLuxe({
             <span />
           )}
           <div className="flex flex-col items-end gap-1">
+            {(() => {
+              const sb = stockBadge(product.totalStock);
+              return sb ? (
+                <Badge className={cn("shadow-sm", sb.cls)}>{sb.label}</Badge>
+              ) : null;
+            })()}
             {onSale && (
               <Badge variant="sale" className="shadow-sm">
                 -{discountPct}%
