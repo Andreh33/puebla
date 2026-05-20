@@ -104,11 +104,10 @@ en **dos migraciones separadas, sin downtime ni pérdida**:
 
 ## Comandos útiles
 
-- Crear migración nueva (en local, contra la rama Neon de desarrollo):
-  ```bash
-  npx prisma migrate dev --name <nombre>
-  ```
-- Aplicar pendientes (lo que hace el build):
+- Crear migración nueva: **NO usar `prisma migrate dev`** (ver política abajo).
+  Escribir el `prisma/migrations/<timestamp>_<nombre>/migration.sql` **a mano**, o
+  generar el SQL con `prisma migrate diff ... --script > migration.sql` y revisarlo.
+- Aplicar pendientes (lo que hace el build y lo que usamos en dev):
   ```bash
   npx prisma migrate deploy
   ```
@@ -117,9 +116,32 @@ en **dos migraciones separadas, sin downtime ni pérdida**:
   npx prisma migrate status
   ```
 
+## Política de migraciones de este repo (IMPORTANTE)
+
+**Este repo NO usa `prisma migrate dev`.** Las migraciones se escriben a mano (o se
+generan con `migrate diff` exportando a archivo) y se aplican con `migrate deploy`.
+
+**Razón:** el repo combina el datamodel de Prisma con **SQL crudo** que no se puede
+representar en el schema — el Full Text Search (`searchVector tsvector`, índices GIN
+con `gin_trgm_ops`, triggers) vive en `0001_init_fts/migration.sql`. Como esos
+objetos no están en el datamodel, `prisma migrate dev` los interpreta como "drift" y
+propone **`DROP` destructivo** sobre ellos (verificado: intentó borrar
+`Product.searchVector` con 1362 valores y `BlogPost.searchVector`). Además
+`migrate dev` es interactivo y no corre en entornos no-TTY.
+
+Flujo correcto para una migración nueva:
+1. Editar `prisma/schema.prisma`.
+2. Crear `prisma/migrations/<YYYYMMDDHHMMSS>_<nombre>/migration.sql` a mano con el
+   SQL **aditivo/seguro** (sin DROP de objetos FTS).
+3. `npx prisma migrate deploy` (aplica los `.sql` tal cual, sin diff contra el
+   datamodel → no toca el FTS).
+4. `npx prisma generate` para el client.
+5. Verificar con `migrate status` + queries.
+
 ## Reglas
 
 - **Nunca** volver a `db push --accept-data-loss` en el build.
+- **Nunca** `prisma migrate dev` (ver política arriba).
 - Toda migración pasa por `prisma/migrations/` y se prueba en la rama Neon antes
   de mergear.
 - Los scripts de datos (`scripts/*.ts`) **no** corren en build: se ejecutan a
