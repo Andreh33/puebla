@@ -138,10 +138,32 @@ Flujo correcto para una migración nueva:
 4. `npx prisma generate` para el client.
 5. Verificar con `migrate status` + queries.
 
+## Migraciones diferidas con `prisma/migrations-pending/`
+
+**Problema:** `prisma migrate deploy` aplica **todas** las migraciones pendientes de
+`prisma/migrations/`, en orden. En una estrategia **expand/contract** entre bloques,
+la migración contractiva (p.ej. `DROP COLUMN categoryId`) se escribe pronto pero **no
+debe aplicarse hasta una fase posterior** (cuando el código deje de usar la columna).
+Si se deja en `prisma/migrations/`, cualquier `migrate deploy` intermedio la aplicaría
+y rompería la app.
+
+**Solución:** carpeta hermana **`prisma/migrations-pending/`** (fuera de
+`prisma/migrations/`). Prisma **no la escanea** → ignora esas migraciones
+automáticamente. No es un paso manual recurrente.
+
+- **Diferir:** `git mv prisma/migrations/<carpeta> prisma/migrations-pending/`. Añadir
+  entrada al `prisma/migrations-pending/README.md` (qué es, requisitos, cuándo aplicar).
+- **Reactivar (cuando llegue su fase):** `git mv prisma/migrations-pending/<carpeta>
+  prisma/migrations/<carpeta>` → `migrate status` la lista como pendiente → `migrate
+  deploy` siguiendo el runbook (backup → deploy → verificaciones).
+- Estado actual: `20260520195203_product_categories_m2m_contract` (contractiva del
+  Bloque 2) está diferida ahí; se reactiva en el Bloque 5.
+
 ## Reglas
 
 - **Nunca** volver a `db push --accept-data-loss` en el build.
 - **Nunca** `prisma migrate dev` (ver política arriba).
+- Migración generada pero no aplicable aún → `prisma/migrations-pending/` (ver arriba).
 - Toda migración pasa por `prisma/migrations/` y se prueba en la rama Neon antes
   de mergear.
 - Los scripts de datos (`scripts/*.ts`) **no** corren en build: se ejecutan a
