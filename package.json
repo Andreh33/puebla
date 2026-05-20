@@ -22,6 +22,7 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "seed": "tsx --env-file=.env.local prisma/seed.ts",
+    "create:admin": "tsx --env-file=.env.local scripts/create-admin.ts",
     "import:pricat": "tsx --env-file=.env.local scripts/import-pricat.ts",
     "setup:db": "tsx --env-file=.env.local scripts/setup-db.ts",
     "audit:visual": "tsx --env-file=.env.local scripts/visual-audit.ts",
