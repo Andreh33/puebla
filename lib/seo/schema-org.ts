@@ -48,7 +48,11 @@ export const STORE_HOURS = [
   },
 ];
 
-export const AREA_SERVED = [
+/**
+ * Ciudades locales — se mantienen para reforzar el SEO local de cercanía
+ * (Puebla de la Calzada y comarca de las Vegas Bajas / Mérida / Badajoz).
+ */
+export const AREA_SERVED_CITIES = [
   "Puebla de la Calzada",
   "Montijo",
   "Lobón",
@@ -60,6 +64,16 @@ export const AREA_SERVED = [
   "Torremayor",
   "Calamonte",
 ].map((name) => ({ "@type": "City", name }));
+
+/**
+ * Área de servicio del negocio: ahora se envía a toda España. Exponemos el
+ * país como ámbito principal y mantenemos además las ciudades locales para no
+ * perder señal de SEO de proximidad.
+ */
+export const AREA_SERVED = [
+  { "@type": "Country", name: "España" },
+  ...AREA_SERVED_CITIES,
+];
 
 const DEFAULT_SAME_AS: string[] = [
   // Rellenar con perfiles reales (Instagram, Facebook, Google Business, etc.)

@@ -307,7 +307,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               </li>
               <li className="flex items-start gap-2">
                 <Truck className="mt-0.5 h-4 w-4 text-zs-blue-700" />
-                <span>Envíos a Extremadura</span>
+                <span>Envíos a toda España</span>
               </li>
               <li className="flex items-start gap-2">
                 <RotateCcw className="mt-0.5 h-4 w-4 text-zs-blue-700" />
@@ -402,7 +402,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                       </li>
                       <li className="flex items-start gap-2">
                         <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
-                        Envío a Extremadura disponible bajo consulta.
+                        Envío a toda España disponible bajo consulta.
                       </li>
                       <li className="flex items-start gap-2">
                         <Check className="mt-0.5 h-4 w-4 text-emerald-600" />
