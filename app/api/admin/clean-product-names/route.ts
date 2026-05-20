@@ -36,7 +36,9 @@ function checkAuth(req: NextRequest): NextResponse | null {
 
 function hasHtml(s: string | null | undefined): boolean {
   if (!s) return false;
-  return /<[a-z][^>]*>|&[a-z]+;|&#\d+;/i.test(s);
+  // Detecta: tag completo (<span>), tag truncado sin cierre (<span al
+  // final o <span seguido de espacio/attrs sin `>`), y entidades HTML.
+  return /<\/?[a-z][a-z0-9]*(?:\s|>|$)|&[a-z]+;|&#\d+;/i.test(s);
 }
 
 export async function POST(req: NextRequest) {
