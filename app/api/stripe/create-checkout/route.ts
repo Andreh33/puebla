@@ -21,6 +21,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getStripe, missingStripeEnv, warnIfStripeMissing } from "@/lib/stripe/client";
 import type { CreateCheckoutResponse } from "@/lib/stripe/types";
+import { db } from "@/lib/db";
+import { effectivePrice } from "@/lib/price";
+import { cleanProductName } from "@/lib/utils/html";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,10 +53,6 @@ function siteUrl(): string {
     /\/$/,
     "",
   );
-}
-
-function toCents(eur: number): number {
-  return Math.round(eur * 100);
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckoutResponse>> {
@@ -99,29 +98,94 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
     parsed.data;
 
   const base = siteUrl();
+
+  // SEGURIDAD: nunca confiamos en el `price` del body. Re-consultamos el precio
+  // real de cada producto en BD y construimos el unit_amount en servidor. Así
+  // un cliente no puede manipular el JSON para pagar 0,01 €. La talla/color sí
+  // vienen del cliente (son su seleccin de variante, no afectan al precio).
+  const productIds = [...new Set(items.map((it) => it.productId))];
+  const dbProducts = await db.product.findMany({
+    where: { id: { in: productIds }, status: "ACTIVE" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      sku: true,
+      retailPrice: true,
+      salePrice: true,
+      mainImageUrl: true,
+      brand: { select: { name: true } },
+    },
+  });
+  const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
   // El tipo concreto `Stripe.Checkout.SessionCreateParams.LineItem` no se
   // re-exporta como sub-namespace en el SDK actual; dejamos que TS infiera
   // la forma del objeto y la valida al pasarlo a `sessions.create`.
-  const lineItems = items.map((it) => ({
-    quantity: it.qty,
+  const lineItems: Array<{
+    quantity: number;
     price_data: {
-      currency: "eur",
-      unit_amount: toCents(it.price),
+      currency: string;
+      unit_amount: number;
       product_data: {
-        name: it.name,
-        description: [it.brand, it.colorName, it.size]
-          .filter(Boolean)
-          .join(" · "),
-        images: it.imageUrl ? [it.imageUrl] : undefined,
-        metadata: {
-          zs_product_id: it.productId,
-          zs_slug: it.slug,
-          zs_size: it.size ?? "",
-          zs_color: it.colorName,
+        name: string;
+        description: string;
+        images?: string[];
+        metadata: Record<string, string>;
+      };
+    };
+  }> = [];
+
+  for (const it of items) {
+    const p = productMap.get(it.productId);
+    if (!p) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        {
+          ok: false,
+          error: "product_unavailable",
+          message: `El producto "${it.name}" ya no está disponible. Actualiza el carrito.`,
+        },
+        { status: 409 },
+      );
+    }
+    const { final } = effectivePrice(p.retailPrice, p.salePrice);
+    const unitAmount = final.times(100).toDecimalPlaces(0).toNumber();
+    if (!Number.isFinite(unitAmount) || unitAmount < 0) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        {
+          ok: false,
+          error: "invalid_price",
+          message: `Precio no válido para "${p.name}".`,
+        },
+        { status: 409 },
+      );
+    }
+    const img =
+      p.mainImageUrl && /^https?:\/\//i.test(p.mainImageUrl)
+        ? [p.mainImageUrl]
+        : undefined;
+    lineItems.push({
+      quantity: it.qty,
+      price_data: {
+        currency: "eur",
+        unit_amount: unitAmount,
+        product_data: {
+          name: cleanProductName(p.name) || it.name,
+          description: [p.brand?.name, it.colorName, it.size]
+            .filter(Boolean)
+            .join(" · "),
+          images: img,
+          metadata: {
+            zs_product_id: p.id,
+            zs_slug: p.slug,
+            zs_sku: p.sku ?? "",
+            zs_size: it.size ?? "",
+            zs_color: it.colorName,
+          },
         },
       },
-    },
-  }));
+    });
+  }
 
   try {
     const session = await stripe.checkout.sessions.create({

@@ -126,7 +126,7 @@ export default async function CategoryPage({
   } else {
     const where = buildProductWhere({ categoryId: category.id, filters });
     try {
-      const [count, list, f] = await Promise.all([
+      const [count, list] = await Promise.all([
         db.product.count({ where }),
         db.product.findMany({
           where,
@@ -146,7 +146,6 @@ export default async function CategoryPage({
             brand: { select: { name: true, slug: true } },
           },
         }),
-        getCategoryFacets(category.id),
       ]);
       total = count;
       products = list.map((p) => ({
@@ -161,7 +160,6 @@ export default async function CategoryPage({
         source: p.source,
         brand: p.brand,
       }));
-      facets = f;
     } catch (err) {
       console.warn("[categoria] BD respondió category pero falló product query:", (err as Error).message);
       // Caemos a demo aunque la categoría existiera en BD (consulta de productos rota).
@@ -172,6 +170,14 @@ export default async function CategoryPage({
       });
       products = res.products;
       total = res.total;
+    }
+
+    // Facets en su PROPIO try: si los groupBy fallan, dejamos las facets
+    // vacías (sidebar sin counts) pero NO tiramos el listado real a demo.
+    try {
+      facets = await getCategoryFacets(category.id);
+    } catch (err) {
+      console.warn("[categoria] facets fallaron, sidebar sin counts:", (err as Error).message);
     }
   }
 

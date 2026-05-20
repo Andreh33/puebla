@@ -30,14 +30,15 @@ function fromCents(amount: number | null | undefined): Prisma.Decimal {
  * types) o primitivos. Devuelve siempre un `number`.
  */
 function decToNumber(d: unknown): number {
+  const safe = (n: number) => (Number.isFinite(n) ? n : 0);
   if (d == null) return 0;
-  if (typeof d === "number") return d;
-  if (typeof d === "string") return Number(d);
+  if (typeof d === "number") return safe(d);
+  if (typeof d === "string") return safe(Number(d));
   if (typeof d === "object" && d !== null) {
     // Prisma.Decimal y DecimalJsLike exponen toString() o toFixed()
     const obj = d as { toString?: () => string; toFixed?: () => string };
-    if (typeof obj.toString === "function") return Number(obj.toString());
-    if (typeof obj.toFixed === "function") return Number(obj.toFixed());
+    if (typeof obj.toString === "function") return safe(Number(obj.toString()));
+    if (typeof obj.toFixed === "function") return safe(Number(obj.toFixed()));
   }
   return 0;
 }
@@ -116,8 +117,11 @@ export async function createOrderFromCheckout(
   if (existing) return existing;
 
   const items = buildItemsFromSession(expandedSession);
-  const subtotalCents = items.reduce(
-    (acc, it) => acc + decToNumber(it.subtotal) * 100,
+  // Subtotal en cntimos ENTEROS directamente desde Stripe (`amount_subtotal`
+  // por lnea ya viene en cntimos). Evita el round-trip Decimal-euros → float
+  // que reintroduca error de coma flotante (19.99*100 = 1998.9999…).
+  const subtotalCents = (expandedSession.line_items?.data ?? []).reduce(
+    (acc, li) => acc + (li.amount_subtotal ?? 0),
     0,
   );
   const totalCents = expandedSession.amount_total ?? subtotalCents;

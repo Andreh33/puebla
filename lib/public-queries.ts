@@ -764,6 +764,12 @@ export function parseCategoryParams(searchParams: Record<string, string | string
     const n = Number(v);
     return Number.isFinite(n) ? n : undefined;
   };
+  // perPage: respeta `?perPage=` de la query (con tope de seguridad) y, si no
+  // viene, devuelve undefined para que cada página aplique su propio default
+  // (catálogo 24, categoría 12) vía `filters.perPage ?? N`.
+  const perPageRaw = num(searchParams.perPage);
+  const perPage =
+    perPageRaw == null ? undefined : Math.min(48, Math.max(1, Math.floor(perPageRaw)));
   return {
     marca: arr(searchParams.marca),
     genero: arr(searchParams.genero),
@@ -774,7 +780,7 @@ export function parseCategoryParams(searchParams: Record<string, string | string
     oferta: searchParams.oferta === "1",
     nuevo: searchParams.nuevo === "1",
     page: Math.max(1, num(searchParams.page) ?? 1),
-    perPage: 12,
+    perPage,
   };
 }
 

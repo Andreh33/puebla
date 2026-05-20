@@ -50,8 +50,9 @@ export function effectivePrice(retail: Decimal | number, sale?: Decimal | number
   const s = sale == null ? null : sale instanceof Decimal ? sale : new Decimal(sale);
   const final = s && s.lt(r) ? s : r;
   const onSale = !!(s && s.lt(r));
-  const discountPct = onSale
-    ? Math.round((1 - final.div(r).toNumber()) * 100)
-    : 0;
+  // r.gt(0) evita division por cero (producto a 0 con "oferta" negativa
+  // daria Infinity). Sin precio de referencia positivo no hay % de descuento.
+  const discountPct =
+    onSale && r.gt(0) ? Math.round((1 - final.div(r).toNumber()) * 100) : 0;
   return { final, retail: r, onSale, discountPct };
 }
