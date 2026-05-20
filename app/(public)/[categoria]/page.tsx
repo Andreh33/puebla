@@ -266,7 +266,14 @@ export default async function CategoryPage({
       <section className="mx-auto max-w-7xl px-4 py-10 lg:py-14">
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
           <div className="space-y-4">
-            <ProductFilters data={facets} resultsCount={total} />
+            {/* Filtros abiertos por defecto (1ª visita, móvil/tablet) sólo en
+                categorías raíz que son listados — p.ej. /accesorios. En
+                subcategorías mantenemos el comportamiento actual. */}
+            <ProductFilters
+              data={facets}
+              resultsCount={total}
+              autoOpenFirstVisit={!category.parent}
+            />
           </div>
 
           <div className="space-y-6">

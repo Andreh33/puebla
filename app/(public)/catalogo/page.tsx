@@ -219,7 +219,7 @@ export default async function CatalogoPage({
       <section className="mx-auto max-w-7xl px-4 py-10 lg:py-14">
         <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
           <div className="space-y-4">
-            <ProductFilters data={facets} resultsCount={count} />
+            <ProductFilters data={facets} resultsCount={count} autoOpenFirstVisit />
           </div>
 
           <div className="space-y-6">

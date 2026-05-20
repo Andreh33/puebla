@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +24,14 @@ type Props = {
   data: FiltersData;
   /** Resultados estimados para mostrar en el botón "Aplicar (X)". */
   resultsCount?: number;
+  /**
+   * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
+   * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
+   * Guarda un flag `zs_filters_shown` en sessionStorage para no repetirlo en
+   * navegaciones posteriores. En desktop el sidebar ya está siempre visible.
+   * Se activa sólo en las categorías raíz que son listados (ver páginas).
+   */
+  autoOpenFirstVisit?: boolean;
 };
 
 const GENDER_LABELS: Record<string, string> = {
@@ -38,12 +46,28 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+
+  // Auto-apertura del panel de filtros en móvil/tablet (< lg) la primera vez
+  // de la sesión. En desktop el sidebar ya está siempre visible y abierto, así
+  // que aquí sólo nos interesa el rango donde los filtros están escondidos
+  // tras el botón "Filtrar". El flag de sesión evita ser pesado en cada visita.
+  useEffect(() => {
+    if (!autoOpenFirstVisit || typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 1023.98px)").matches) return;
+    try {
+      if (sessionStorage.getItem("zs_filters_shown") === "1") return;
+      sessionStorage.setItem("zs_filters_shown", "1");
+    } catch {
+      // sessionStorage no disponible: abrimos igualmente esta vez.
+    }
+    setOpen(true);
+  }, [autoOpenFirstVisit]);
 
   const get = (k: string): string[] => {
     const v = searchParams.get(k);
