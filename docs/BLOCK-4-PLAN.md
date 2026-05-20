@@ -204,14 +204,15 @@ género→familia solo tiene `*-textil` (una sola familia, sin sub-tipo de prend
 Si reescribimos todo a `/[seccion]/textil`, **todas las prendas colapsan a un
 único enlace** y se pierde la navegación por prenda.
 
-**Opciones (decisión §6.c):**
+**Opciones (decisión §6.c) → ELEGIDA: R2-colapsado (ver §9.6).**
 - **R1** — Mantener "Ropa" del megamenú con los slugs de prenda actuales
   (`/camisetas?genero=…`) — siguen resolviendo vía categorías/alias existentes —
   y solo migrar "Calzado". Pragmático: no perdemos granularidad de prenda.
-- **R2** — Colapsar "Ropa" a un solo "Ver todo textil" → `/[seccion]/textil`.
-  Pierde granularidad; no recomendado sin un filtro de prenda (sería un Bloque 5+).
+- **R2** ✅ — Colapsar "Ropa" a un solo "Ropa" → `/[seccion]/textil`. Los slugs
+  viejos redirigen igual a `/[seccion]/textil` por `RedirectRule` del Bloque 2.
+  Granularidad por prenda diferida a `garmentType` (§10, Bloque 6 futuro).
 - **R3** — Introducir un campo `garmentType` análogo a `footwearType` (fuera de
-  alcance de Bloque 4; sería un bloque nuevo).
+  alcance de Bloque 4; sería un bloque nuevo → §10).
 
 ### ⚠️ Conflicto 3 — `/nino` `/nina` `/ninos`
 El usuario pide hubs `/nino` y `/nina`. Hoy redirigen a `/catalogo` (next.config)
@@ -256,6 +257,9 @@ admin · esquema Prisma · ninguna migración.
 
 ## §6. Decisiones pendientes (necesito tu OK antes de Fase 4.1)
 
+> **RESUELTO 2026-05-21 → ver §9 (DECISIONES CERRADAS).** Se conserva el detalle
+> de opciones abajo como registro de la deliberación.
+
 **a) Tratamiento visual de las 2 tarjetas hub.**
    - Opción A: gradient sólido de marca + tipografía editorial (como el bloque
      actual "Por tipo de prenda", sin riesgo de imágenes). ← recomendada de inicio.
@@ -289,20 +293,70 @@ admin · esquema Prisma · ninguna migración.
 
 ---
 
-## §7. Plan de implementación por pasos (tras tu OK)
+## §7. Plan de implementación por pasos (CONFIRMADO — OK usuario 2026-05-21)
 
-- **(a)** Crear `[seccion]/[familia]/page.tsx`. Smoke: `/hombre/calzado` = 125
-  productos; `/mujer/textil` = 188; combo inválido = 404; filtro tipo visible
-  solo en `*/calzado`.
-- **(b)** Añadir CSS del borde animado a `globals.css` + crear `GenderHub`
-  (sin uso aún). Verificar `prefers-reduced-motion`.
-- **(c)** Integrar `GenderHub` en `GenderLanding` (hombre/mujer) y crear/reescribir
-  `/nino` `/nina` (según §6.d). Prueba visual mobile + desktop.
-- **(d)** Limpiar `Header` `SPORT_NAV` + megamenú (según §6.c).
-- **(e)** Limpiar `Footer`. Ajustar `next.config` + `RESERVED_SLUGS` si aplica.
-- **(f)** Verificación end-to-end: Header → hub → familia → producto. typecheck + build.
+- **(a)** Crear `app/(public)/[seccion]/[familia]/page.tsx`. Resolver
+  `${seccion}-${familia}`. **Smoke obligatorio (4 combos, productos reales):**
+  `/hombre/calzado`=125 · `/mujer/calzado`=60 · `/nino/textil`=189 ·
+  `/nina/textil`=72 pivote (71 primary). Combo inválido → 404. Filtro "Tipo de
+  calzado" visible solo en `*/calzado`. **PARA tras (a)** con el smoke verificado.
+- **(b)** Crear `GenderHub` + CSS borde animado (`@property --zs-angle` +
+  `@keyframes`). Generar `previews/calzado-color-comparison.html` (o screenshots)
+  comparando los 3 amarillos (#c8da46 · #FACC15 · #EAB308) en la tarjeta CALZADO.
+  Verificar `prefers-reduced-motion`. **PARA tras enseñar el preview** (cierra
+  decisión de color).
+- **(c)** Integrar `GenderHub` en `GenderLanding` (sustitución quirúrgica del
+  bloque "Por tipo de prenda") para `/hombre`, `/mujer`; crear `/nino`, `/nina`
+  reales con `GenderHub`. Prueba visual mobile + desktop.
+- **(d)** Quitar redirects `/nino`→`/catalogo` y `/nina`→`/catalogo` de
+  `next.config.ts`. Añadir `/ninos`→`/nino` **301**. Actualizar `RESERVED_SLUGS`
+  (`nino`, `nina`).
+- **(e)** Limpiar `Header` `SPORT_NAV` (quitar `/running` `/montana` `/padel`
+  `/calzado` sueltos) + migrar megamenú (**C1** calzado + **R1-colapsado** ropa).
+- **(f)** Limpiar `Footer` (mismo criterio que Header).
+- **(g)** Smoke end-to-end: Header → hub → familia → producto; y `/ninos`→`/nino`.
+  typecheck + build.
 
-Cada paso = commit atómico. PARO entre pasos según tu cadencia habitual.
+Cada paso = commit atómico. PARO entre pasos según la cadencia del usuario.
+
+---
+
+## §9. DECISIONES CERRADAS (OK del usuario 2026-05-21)
+
+1. **Visual tarjetas** = **A (gradient sólido de marca)**, sin foto. ✅
+2. **Color CALZADO** = pre-cerrado a `zs-tennis-500 #c8da46`, pero **decisión
+   final colgada** hasta el preview comparativo del paso (b) con `#c8da46` ·
+   `#FACC15` (yellow-400) · `#EAB308` (yellow-500). TEXTIL = `zs-blue-700`. ⏳
+3. **Header mobile** = mantener drawer/acordeón actual; solo limpiar links. ✅
+4. **`GenderLanding`** = sustitución quirúrgica: mantener hero + productos
+   destacados + marcas; cambiar solo el bloque "Por tipo de prenda" (4 cards)
+   por `GenderHub` (2 tarjetas). ✅
+5. **C1 — megamenú Calzado** = migrar a `/[seccion]/calzado?tipo=…`:
+   - Primer ítem de la lista = **"Calzado"** general SIN filtro tipo
+     (`/[seccion]/calzado`).
+   - Resto, mapeo 1:1 (`running`, `trail`, `tenis`, `padel`, `futbol`,
+     `futbol-sala`, `casual`, `baloncesto`, `chanclas` → `?tipo=…`).
+   - `tenis-padel` (combinado) se **desdobla** en 2 items: Tenis + Pádel. ✅
+6. **R1-colapsado — megamenú Ropa** = colapsar la sección "Ropa" a **UN solo
+   enlace** `/[seccion]/textil` con label "Ropa". Justificación: los slugs viejos
+   de prenda redirigen igualmente a `/[seccion]/textil` por `RedirectRule` del
+   Bloque 2. (Se pierde temporalmente la granularidad por prenda → ver §10.) ✅
+7. **C3 — `/nino` `/nina` reales** = crear hubs reales con `GenderHub`; quitar
+   redirects de `next.config`; `/ninos`→`/nino` **301**; añadir `nino`/`nina` a
+   `RESERVED_SLUGS`. ✅
+
+---
+
+## §10. TODOs post-Bloque-4
+
+- **[Bloque 6 futuro] `Product.garmentType` + filtro multi en `/[seccion]/textil`**
+  — análogo a `footwearType` del Bloque 3. Devolvería la granularidad por prenda
+  (camisetas, pantalones, sudaderas, chándal, mallas…) que en Bloque 4 colapsamos
+  a un único enlace "Ropa" (decisión §9.6). Implica: campo aditivo en schema +
+  clasificador por nombre + facet + filtro UI + migración de datos, todo bajo la
+  misma política expand/contract y `migrate deploy`.
+- **`/ninos` → `/nino` (301):** el plural combinado se retira del modelo
+  género→familia separado; queda solo como redirect permanente.
 
 ---
 
