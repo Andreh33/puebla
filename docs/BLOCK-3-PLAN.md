@@ -1,43 +1,34 @@
 # Bloque 3 — `footwearType` + filtro "Tipo de calzado"
 
-> Estado: **PLAN — pendiente de OK**. Nada aplicado a dev ni a producción.
+> Estado: **PLAN — pendiente de OK** (reglas marca+modelo de §4 y arranque de pasos).
 > Reglas vigentes: cero prod, sin push, sin `migrate dev`, no se toca
 > `ProductSize.stock` ni el FTS, `Product.categoryId` sigue intacto (expand/contract).
 
 ## 1. Resumen ejecutivo
 
 Añadimos `Product.footwearType` (String? nullable) para clasificar el calzado por
-uso (running, trail, tenis, pádel, casual, baloncesto, fútbol, fútbol sala,
-chanclas) y un filtro "Tipo de calzado" en las 4 páginas de calzado. Infra:
-columna + índice (migración aditiva a mano + `migrate deploy`), módulo único
-`lib/categories/footwear.ts`, selector en el admin, filtro en el sidebar público
-integrado en el **mismo `AND`** de Prisma que el resto (blindado con test Vitest).
-
-⚠️ **Hallazgo que condiciona el bloque:** el auto-mapeo previsto desde `sportUse`
-**no es viable** — ver §4/§5.
+uso (9 tipos) y un filtro "Tipo de calzado" multi en las 4 páginas de calzado.
+Población: `inferFootwearType` de **3 pasadas** (sportUse → name → marca+modelo),
++ etiquetado manual (selector en ficha admin + acción bulk). Integración del filtro
+en el **mismo `AND`** de Prisma que el resto, y de paso el filtro de talla pasa a ser
+**stock-aware** (`stock > 0`). Todo blindado con test Vitest del bug combinado.
 
 ## 2. Cambio en `prisma/schema.prisma`
 
 ```diff
  model Product {
-   // …
    sportUse     String?
 +  footwearType String?       // running|trail|tenis|padel|casual|baloncesto|futbol|futbol_sala|chanclas
-   // …
 +  @@index([footwearType])
  }
 ```
 
-**Decisión: `String?` (no enum Prisma).** Justificación:
-- Un `enum` Prisma genera **churn de migración** cada vez que se añade/quita un
-  valor (crea `ALTER TYPE`, y en este repo evitamos `migrate dev`).
-- La lista de valores ya está **controlada en código** por `FOOTWEAR_TYPES`
-  (constante exportada), validada por Zod en el admin y por el clasificador. No
-  necesitamos que Postgres la imponga.
-- `String?` es además consistente con `sportUse String?` que ya existe.
+**Decisión: `String?` (no enum Prisma)** — un enum genera churn de migración
+(`ALTER TYPE`, y aquí evitamos `migrate dev`); la lista ya está controlada en código
+por `FOOTWEAR_TYPES` (validada por Zod en admin + clasificador); es consistente con
+`sportUse String?`.
 
-`FOOTWEAR_TYPES` se define en `lib/categories/footwear.ts` (junto al clasificador),
-fuente única para auto-mapeo + admin + filtro público:
+`lib/categories/footwear.ts` (fuente única para auto-mapeo + admin + filtro):
 ```ts
 export const FOOTWEAR_TYPES = ["running","trail","tenis","padel","casual","baloncesto","futbol","futbol_sala","chanclas"] as const;
 export type FootwearType = (typeof FOOTWEAR_TYPES)[number];
@@ -52,154 +43,158 @@ CREATE INDEX "Product_footwearType_idx" ON "Product"("footwearType");
 ```
 100% aditivo. Cero DROP. Sin efecto sobre FTS, `ProductSize`, ni datos existentes.
 
-## 4. Auto-mapeo → `footwearType` · ⚠️ HALLAZGO Y DECISIÓN
+## 4. Población de `footwearType` — `inferFootwearType` de 3 pasadas
 
-**El plan original (auto-mapear desde `sportUse`) NO funciona con los datos reales:**
-- De los **375** productos en familia calzado (`Category.slug LIKE '%-calzado'`),
-  **los 375 tienen `sportUse = NULL`** (100%). El auto-mapeo por `sportUse`
-  clasificaría **0 productos**.
-- Probé un auto-mapeo alternativo **por `name`** (RUN, TRAIL, INDOOR/SALA, BOTA,
-  CHANCLA, BASKET…): cobertura **31,5% (118/375)**, **257 sin clasificar** (nombres
-  de modelo tipo "JOMA POINT/SLAM", "MIZUNO WAVE", "BABOLAT MOVEA/PREMURA",
-  "+8000 TIGOR" — sin keyword de tipo).
+Hallazgo (verificado en dev): los **375 calzados tienen `sportUse = NULL`** (auto por
+sportUse = 0%); auto por **name** ≈ **31,5%** (118/375). Por eso el modelo es dual +
+lookup, **fuente única** en `lib/categories/footwear.ts`:
 
-Distribución del auto-mapeo por nombre (borrador):
-```
- 37 chanclas · 23 futbol · 23 casual · 16 futbol_sala · 7 running · 5 trail · 4 padel · 3 baloncesto · 257 (null)
-```
-
-**Función propuesta (señal dual, fuente única `lib/categories/footwear.ts`):**
 ```ts
-export function inferFootwearType(sportUse: string | null, name: string): FootwearType | null
+export function inferFootwearType(opts: {
+  sportUse: string | null; name: string; brand?: string | null;
+}): FootwearType | null
 ```
-1. Si `sportUse` tiene valor → tabla de keywords de `sportUse` (futureproof: PRICATs
-   futuros que sí traigan `sportUse` se clasifican solos).
-2. Si no → fallback a keywords de `name`.
-3. Si nada casa → `null`.
 
-Tabla `sportUse` (para el futuro) — orden importa (`futbol_sala` ANTES que `futbol`):
-| `sportUse` contiene | tipo |
-|---|---|
-| RUNNING, JOGGIN, JOGGING | running |
-| TRAIL, MONTAÑISMO, TREKKING, MONTAÑA, SENDERISMO | trail |
-| TENIS | tenis |
-| PADEL, PÁDEL | padel |
-| URBAN, CASUAL, LIFESTYLE, MODA | casual |
-| BALONCESTO, BASKET | baloncesto |
-| FUTBOL SALA, FÚTBOL SALA, FUTSAL, SALA | futbol_sala |
-| FUTBOL, FÚTBOL | futbol |
-| CHANCLA, CHANCLAS, SANDALIA | chanclas |
-| resto / vacío | null |
+1. **Pasada 1 — `sportUse`** (futureproof; hoy 0% pero PRICATs futuros lo traerán).
+   Orden importa: `futbol_sala` ANTES que `futbol`.
+   | `sportUse` contiene | tipo |
+   |---|---|
+   | RUNNING, JOGGIN, JOGGING | running |
+   | TRAIL, MONTAÑISMO, TREKKING, MONTAÑA, SENDERISMO | trail |
+   | TENIS | tenis · PADEL/PÁDEL | padel |
+   | URBAN, CASUAL, LIFESTYLE, MODA | casual |
+   | BALONCESTO, BASKET | baloncesto |
+   | FUTBOL SALA, FÚTBOL SALA, FUTSAL, SALA | futbol_sala |
+   | FUTBOL, FÚTBOL | futbol · CHANCLA(S)/SANDALIA | chanclas |
 
-Tabla `name` (la que aplica HOY) — mismas familias, keywords sobre el nombre
-normalizado con word-boundary; `INDOOR`/`SALA` → futbol_sala, `BOTA`/`FG`/`AG` →
-futbol, marcas casual (`MUSTANG`) → casual.
+2. **Pasada 2 — `name` keywords** (word-boundary, ~31,5% hoy):
+   `CHANCLA/SANDALIA→chanclas`, `BASKET/BALONCESTO→baloncesto`,
+   `SALA/INDOOR/FUTSAL→futbol_sala`, `RUNNING/RUN/JOGGING→running`,
+   `TRAIL/TREKKING/MONTAÑA/GTX→trail`, `TENIS→tenis`, `PADEL→padel`,
+   `URBAN/CASUAL/LIFESTYLE/MODA/SNEAKER/MUSTANG→casual`, `BOTA/FG/AG→futbol`.
 
-### Decisión necesaria (te la dejo para OK)
-- **Opción A — manual only:** `footwearType` arranca NULL en los 375; se etiqueta a
-  mano desde el admin. Cero riesgo de misclasificación, pero 375 a mano.
-- **Opción B (recomendada) — name-based seed + manual:** auto-mapea el ~31,5% obvio
-  (chanclas/futbol_sala/running/trail/casual/etc.), deja 257 NULL para etiquetado
-  manual progresivo. El filtro público solo muestra tipos con productos. Mejor
-  arranque sin coste, mejora con el tiempo.
-- **Opción C — lookup marca+modelo:** mapear "MIZUNO WAVE"→running,
-  "BABOLAT MOVEA/PREMURA"→padel, "JOMA SLAM/OPEN"→padel/tenis… Alto esfuerzo,
-  frágil, mantenimiento continuo. **No recomendada.**
+3. **Pasada 3 — lookup marca+modelo** (`MARCA_MODELO_LOOKUP`) — **reglas APROBADAS**
+   (evidencia verificada en dev, 0 falsos positivos). Clave = `${BRAND}` (regla de
+   marca completa) o `${BRAND}|${LINEA}` (LINEA = palabra de modelo tras la marca):
 
-Mi voto: **Opción B**, con `inferFootwearType` dual (sportUse-first, name-fallback).
-La infraestructura del bloque (columna, admin, filtro, facetas, test) es el valor
-real y se construye igual; `footwearType` se va poblando.
+   | regla | tipo | nº | evidencia |
+   |---|---|---|---|
+   | marca `+8000` (toda) | trail | 19 | verificado: los 19 son zapatillas de montaña (TIGOR/TELMEN/TOCLA/TAJAR/TRISA), 0 outliers |
+   | `MIZUNO\|WAVE` | running | 20 | Wave Ultima/Rider/Skyrise |
+   | `MIZUNO\|NEO` | running | 4 | Neo Zen |
+   | `PUMA\|FUTURE` | futbol | 9 | Future MG/FG/AG (botas) |
+   | `PUMA\|ULTRA` | futbol | 6 | Ultra MG (botas) |
+   | `ASICS\|PATRIOT` | running | 4 | Patriot = running |
+   | `BABOLAT\|JET` | tenis | 4 | Jet Tere Clay = tenis |
+
+   **NO entran en pasada 3** (ya resueltos por pasada 2, evita ambigüedad de orden):
+   `MUSTANG`→casual (keyword), `PUMA|POPCAT`→chanclas (keyword `CHANCLA`). El grueso
+   de JOMA y resto de BABOLAT/JHAYBER quedan **sin regla → NULL → manual** (ambiguos).
+
+4. **Resto → `null`** → etiquetado manual (selector ficha + acción bulk).
+
+> Cobertura estimada tras pasadas 2+3 ≈ **49%** (~184/375); el resto (~191) NULL →
+> manual. Pasada 1 hoy aporta 0 (sportUse vacío). Cifra real se confirma con la
+> verificación de cobertura tras escribir `footwear.ts`.
 
 ## 5. Verificación previa (ejecutada en dev)
 
 ```
-Productos en familia calzado: 375
-Reparto por sportUse: 375 (NULL)   ← 100% vacío
-Auto-mapeo por nombre: 118 clasificados (31,5%) · 257 NULL
+Calzado: 375 · sportUse: 375 NULL (100%) · name-based: 118 (31,5%) · 257 NULL
+name-based: 37 chanclas·23 futbol·23 casual·16 futbol_sala·7 running·5 trail·4 padel·3 baloncesto
 ```
-No hay valores raros tipo FITNESS/INDOOR como `sportUse` (porque `sportUse` está
-vacío). La señal real es el `name`, con la cobertura limitada de arriba.
+Verificación marca+modelo (pasada 3): se ejecuta y se aprueban reglas antes de
+escribir `footwear.ts` (ver final del documento).
 
-## 6. Edición desde admin (`/admin/productos/[id]`)
+## 6. Edición desde admin — selector en ficha (`ProductEditor`)
 
-- `<Select>` "Tipo de calzado" en la pestaña "General" de `ProductEditor.tsx`.
-- 9 opciones (`FOOTWEAR_TYPES`) + "(sin asignar)" (= `null`).
-- **Solo visible si el producto está en familia calzado** — comprobar con
-  `primaryCategory.slug.endsWith('-calzado')` (el editor ya carga la categoría).
-- Guarda con la mutación normal del editor (`lib/products/mutations.ts`).
-- Validación Zod: `z.enum(FOOTWEAR_TYPES).nullable()`.
+`<Select>` "Tipo de calzado" en pestaña "General", 9 opciones + "(sin asignar)"
+(`null`). **Solo visible si** `primaryCategory.slug.endsWith('-calzado')`. Guarda con
+la mutación normal. Zod: `z.enum(FOOTWEAR_TYPES).nullable()`.
 
-## 7. UI del filtro público
+## 7. UI del filtro público — multi, CSV en URL
 
-- Grupo `<FilterGroup>` "Tipo de calzado" en el sidebar de `ProductFilters.tsx`,
-  **solo** en las 4 páginas de calzado (`/hombre/calzado`, `/mujer/calzado`,
-  `/nino/calzado`, `/nina/calzado`). NO en accesorios ni textil → se pasa por prop
-  (p.ej. `showFootwearFilter`) desde la página, true solo si la categoría es
-  `*-calzado`.
-- Checkboxes con contador por tipo (de la faceta, según los demás filtros).
-- **Multi-selección** (recomendado) — coherente con marca/color/talla que ya son
-  multi. Query param `?tipo=running,trail` (CSV, igual que `marca`/`color`/`talla`).
+Grupo `<FilterGroup>` "Tipo de calzado" en `ProductFilters.tsx`, **solo** en las 4
+páginas de calzado (prop `showFootwearFilter`, true si la categoría es `*-calzado`).
+Checkboxes con contador (faceta). NO en accesorios ni textil.
 
-## 8. Integración con `buildProductWhere` y `getCategoryFacets`
+**Multi-selección, patrón idéntico a `marca`/`color`/`talla`:**
+- **Parse:** `searchParams.get("tipo")?.split(",").filter(Boolean)` → `string[]`.
+- **Serialize:** al togglear, `sp.set("tipo", next.join(","))` o `sp.delete("tipo")`
+  si vacío; `?tipo=running,trail`.
+- **Sync URL:** `router.push` con `scroll:false` (mismo `pushParams`/`toggleMulti`
+  que ya usa `ProductFilters`). Reutiliza la maquinaria existente, solo añade la key
+  `tipo`.
+- **Chips activos:** "Tipo: Running" con su `onRemove` (igual que el resto).
 
-- En `buildProductWhere` (`lib/public-queries.ts`): añadir `footwearType` al **mismo
-  array `AND`** donde van color/talla (NUNCA OR ni campo suelto). Patrón idéntico al
-  fix de filtros combinados ya probado:
-  ```ts
-  // Respeta el patrón del fix de filtros combinados: cada filtro va en su propio
-  // AND, intersección estricta. footwearType es escalar → in[].
-  if (filters.tipo?.length) andClauses.push({ footwearType: { in: filters.tipo } });
-  ```
-- En `parseCategoryParams`: parsear `tipo` como lista CSV (igual que `talla`).
-- En `getCategoryFacets`: añadir faceta `footwearTypes` (groupBy `footwearType`
-  where `status ACTIVE` + categoría), para el contador del sidebar.
-- `ProductFilters` y `FiltersData` ganan el campo `footwearTypes: FacetItem[]`.
+## 8. `buildProductWhere` + `getCategoryFacets`
 
-## 9. Test Vitest del bug combinado (OBLIGATORIO)
+En `buildProductWhere` (`lib/public-queries.ts`), **mismo array `AND`** (intersección
+estricta; patrón del fix de filtros combinados — NUNCA OR ni campo suelto):
 
-Patrón del repo: unit puro (`tests/unit/*.test.ts`, `import` + `expect`).
-`buildProductWhere` es **función pura** (devuelve el `where`, sin BD) → se testea
-aseverando la **estructura del objeto** (no hace falta mock de Prisma).
-
-`tests/unit/product-filters-where.test.ts`:
-- **(a) Regresión bug original:** `buildProductWhere({ filters: { color:["negro"], talla:["40"], marca:["joma"] }})` → el `where.AND` contiene una cláusula `sizes: { some: { size: { equals:"40" } } }` y otra de color, **ANDed** (no OR a nivel raíz). Se asevera que talla está como `some:{size equals 40}` (intersección) y que no hay ninguna cláusula que permita otras tallas → blinda "no aparece talla 43".
-- **(b) Filtro nuevo combinado:** `+ tipo:["padel"]` → el `where` incluye además
-  `footwearType: { in:["padel"] }` dentro del AND, junto a los otros 3. Se asevera
-  que los 4 coexisten (intersección).
-- **(c) Stock + talla:** *requiere* que el filtro de talla sea **stock-aware**
-  (`sizes: { some: { size equals t, stock: { gt: 0 } } }`). ⚠️ Eso es un cambio de
-  **Bloque 1-facetas** (hoy el filtro de talla NO exige stock>0). **Decisión:** o
-  incluimos ese pequeño cambio en B3 (recomendado, va en el mismo AND), o el
-  escenario (c) se difiere a Bloque 1-facetas. Si se incluye: el test asevera que
-  `talla:["40"]` produce `some:{ size equals 40, stock:{gt:0} }`.
-
-Además un test de `inferFootwearType` (varias entradas sportUse y name → tipo).
-
-## 10. Actualización de redirecciones
-
-Al final del bloque, las dos RedirectRule de deporte se afinan (UPDATE de `to`):
+```ts
+// footwearType (escalar) — intersección con el resto de filtros del AND.
+if (filters.tipo?.length) andClauses.push({ footwearType: { in: filters.tipo } });
 ```
-/running  : /hombre/calzado  →  /hombre/calzado?tipo=running
-/montana  : /hombre/calzado  →  /hombre/calzado?tipo=trail
+
+Y el **filtro de talla pasa a stock-aware** (cambio aprobado, mismo AND):
+```ts
+// ANTES: sizes: { some: { size: { in: tallas } } }
+// AHORA: exige stock > 0 en la talla concreta (consistencia con Bloque 1).
+andClauses.push({ OR: tallas.map((t) => ({
+  sizes: { some: { size: { equals: t, mode: "insensitive" }, stock: { gt: 0 } } },
+})) });
 ```
-Se ejecuta como `UPDATE` idempotente en `RedirectRule` (parte del
-`scripts/migrate-footweartype.ts`, STEP final, o script pequeño aparte). Acción
-explícita, documentada aquí.
+
+`parseCategoryParams`: parsear `tipo` como lista CSV (igual que `talla`).
+`getCategoryFacets`: añadir faceta `footwearTypes` (groupBy `footwearType`, where
+`status ACTIVE` + categoría). `FiltersData`/`ProductFilters` ganan `footwearTypes`.
+
+## 9. Test Vitest del bug combinado (OBLIGATORIO) — `tests/unit/product-filters-where.test.ts`
+
+`buildProductWhere` es función pura → se asevera la estructura del `where` (sin BD,
+sin mock), patrón unit del repo. Los 3 escenarios, **todos en Bloque 3**:
+- **(a) Regresión bug original:** `{ color:["negro"], talla:["40"], marca:["joma"] }`
+  → `where.AND` con cláusula de color y cláusula de talla `some:{size equals 40,...}`,
+  ANDed (no OR raíz). Blinda "no aparece talla 43".
+- **(b) Filtro nuevo combinado:** `+ tipo:["padel"]` → el AND incluye además
+  `footwearType:{ in:["padel"] }` junto a los otros 3 (intersección de los 4).
+- **(c) Stock + talla:** la cláusula de talla incluye `stock:{ gt:0 }` dentro del
+  `some` → solo cuenta si esa talla tiene stock. (Incluido en B3 — mismo AND.)
+- Extra: test de `inferFootwearType` (sportUse, name y marca+modelo → tipo esperado).
+
+## 10. Actualización de redirecciones (paso h)
+
+UPDATE idempotente de `RedirectRule.to`:
+```
+/running : /hombre/calzado → /hombre/calzado?tipo=running
+/montana : /hombre/calzado → /hombre/calzado?tipo=trail
+```
+Parte de `scripts/migrate-footweartype.ts` (STEP final) o script aparte.
 
 ## 11. Orden de aplicación (puntos de OK)
 
 - **(a)** Migración aditiva en dev (schema `footwearType` + SQL a mano + `migrate deploy`).
-- **(b)** `scripts/migrate-footweartype.ts --dry-run` — resumen de qué clasificaría
-  (con la opción elegida en §4).
+- **(b)** `scripts/migrate-footweartype.ts --dry-run` — resumen de pasadas 1+2+3 + NULL.
 - **(c)** Script en modo real en dev.
-- **(d)** UI admin (selector en `ProductEditor`).
-- **(e)** UI público (filtro lateral en las 4 páginas de calzado + facetas).
-- **(f)** Test Vitest del bug combinado (3 escenarios).
-- **(g)** UPDATE de RedirectRule (`/running`, `/montana`).
+- **(d)** UI admin: selector "Tipo de calzado" en `ProductEditor` (solo familia calzado).
+- **(e)** UI admin: acción **bulk** "Asignar tipo de calzado" en `/admin/productos`
+  (reusa la infra `bulkAction`/`bulkSetCategory`). Dialog con dropdown de 9 tipos;
+  **solo si todos los seleccionados son familia calzado** (si no, mensaje "Selecciona
+  solo productos de calzado para esta acción"). Para etiquetar los 257 NULL en lote.
+- **(f)** UI público: filtro multi en `/[seccion]/calzado` + integración
+  `buildProductWhere` (footwearType + talla stock-aware) + facetas.
+- **(g)** Test Vitest (3 escenarios + `inferFootwearType`).
+- **(h)** UPDATE de `RedirectRule` (`/running`→`?tipo=running`, `/montana`→`?tipo=trail`).
 
-## Decisiones que necesito que confirmes antes de (a)
-1. **§4 — estrategia de población de `footwearType`:** A (manual), **B (name-seed +
-   manual, recomendada)**, o C (lookup marca+modelo).
-2. **§7 — filtro multi** (`?tipo=running,trail`) — confirmas.
-3. **§9(c) — incluir el filtro de talla stock-aware en B3** (pequeño cambio en el
-   AND) o diferirlo a Bloque 1-facetas.
+## Decisiones confirmadas
+- §4 Población: **Opción B reforzada** (dual + lookup marca+modelo con evidencia).
+- §7 Filtro: **multi** CSV `?tipo=running,trail`.
+- §9(c): filtro de talla **stock-aware** incluido en B3.
+- Bloque 1-facetas queda reducido a la **UI de contadores** del sidebar (independiente
+  de la query, que ya se hace stock-aware aquí).
+
+## Reglas marca+modelo APROBADAS (pasada 3)
+7 reglas (ver §4): `+8000`→trail (marca, 19 verificados sin outliers), `MIZUNO|WAVE`
+y `MIZUNO|NEO`→running, `PUMA|FUTURE` y `PUMA|ULTRA`→futbol, `ASICS|PATRIOT`→running,
+`BABOLAT|JET`→tenis. `MUSTANG`/`POPCAT` se quedan en pasada 2 (no se duplican en p3).
