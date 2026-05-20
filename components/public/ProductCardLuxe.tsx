@@ -44,10 +44,11 @@ export function ProductCardLuxe({
     product.salePrice != null ? Number(product.salePrice) : null,
   );
 
-  // Strip HTML del nombre: feeds antiguos vienen con `<strong>` y spans
-  // de scraping AI. En cards queremos texto plano para layout estable;
-  // la ficha completa ya renderiza HTML real.
-  const title = stripHtml(product.shortName || product.name);
+  // Usamos `name` (nombre real) y NO `shortName`: en el feed WooCommerce
+  // el shortName es la primera frase de la descripción, no un título.
+  // Igualamos la card a lo que muestra la ficha del producto. stripHtml
+  // por si el feed dejó <strong> o spans en el name.
+  const title = stripHtml(product.name || product.shortName);
   const isAmazon = product.source === "AMAZON";
   const secondary = product.secondaryImageUrl ?? null;
   const ref = useRef<HTMLAnchorElement | null>(null);

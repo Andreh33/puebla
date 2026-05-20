@@ -34,7 +34,12 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
     product.salePrice != null ? Number(product.salePrice) : null,
   );
 
-  const title = stripHtml(product.shortName || product.name);
+  // Usamos `name` (nombre real: "CHÁNDAL JOMA BEBÉ NARANJA GRIS") y NO
+  // `shortName`: en el feed WooCommerce el shortName es la primera frase
+  // de la descripción ("El chándal Joma... está fabricado en..."), no un
+  // título. La ficha del producto sí muestra el name correcto; aquí lo
+  // igualamos para que la card "por fuera" coincida con la ficha.
+  const title = stripHtml(product.name || product.shortName);
   const isAmazon = product.source === "AMAZON";
 
   return (

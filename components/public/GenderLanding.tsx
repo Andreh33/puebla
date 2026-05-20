@@ -172,7 +172,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
                   Producto destacado · {config.label}
                 </p>
                 <p className="mt-1 truncate text-base font-semibold text-zs-blue-900 sm:text-lg">
-                  {heroProduct.brand?.name} {stripHtml(heroProduct.shortName ?? heroProduct.name)}
+                  {heroProduct.brand?.name} {stripHtml(heroProduct.name)}
                 </p>
               </div>
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zs-border text-zs-blue-700 transition-all group-hover:border-zs-red-600 group-hover:bg-zs-red-600 group-hover:text-white">
