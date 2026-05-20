@@ -198,3 +198,31 @@ Parte de `scripts/migrate-footweartype.ts` (STEP final) o script aparte.
 7 reglas (ver §4): `+8000`→trail (marca, 19 verificados sin outliers), `MIZUNO|WAVE`
 y `MIZUNO|NEO`→running, `PUMA|FUTURE` y `PUMA|ULTRA`→futbol, `ASICS|PATRIOT`→running,
 `BABOLAT|JET`→tenis. `MUSTANG`/`POPCAT` se quedan en pasada 2 (no se duplican en p3).
+
+## 12. Migración parcial de filtrado por categoría (paso f, opción C)
+
+Hallazgo: las páginas de categoría nuevas (`hombre-calzado`…) filtraban por el
+`categoryId` ANTIGUO → 0 productos (los productos se enlazan ahora vía
+`primaryCategoryId`/pivote del Bloque 2). **Smoke verificado en dev:** `hombre-calzado`
+pivote=125 (=§4) · primary=125 · categoryId-antiguo=**0**; `nina-textil` pivote=72
+(con dup BEBE) · primary=71.
+
+En el paso (f) se migran **SOLO las 2 funciones públicas** de `lib/public-queries.ts`
+(`buildProductWhere` y `getCategoryFacets`) a filtrar por la relación m2m:
+`where: { categories: { some: { categoryId: id } }, … }`. Se usa el **pivote** (no
+`primaryCategoryId`) porque en listados públicos queremos **apariciones** (un BEBE
+textil aparece en `/nino/textil` y `/nina/textil`), no el canonical SEO. El resto del
+código sigue con `categoryId` (ver §13). El `andClauses[]` (color/talla/marca/género/
+precio — fix de filtros combinados) queda **intocado**.
+
+## 13. TODOs post-Bloque 3 (no se hacen ahora)
+
+- [ ] **Facetas filter-aware.** Hoy `getCategoryFacets` da counts INDEPENDIENTES (no
+  respetan otros filtros activos) — patrón consistente para marca/color/talla/
+  footwearType. Hacer que respeten los demás filtros es una mejora **transversal**
+  (afecta a las 4-5 facetas a la vez) que **cambia la firma** de `getCategoryFacets`
+  (debe recibir los filtros activos). Pendiente, fuera del Bloque 3.
+- [ ] **Migración completa `categoryId` → `primaryCategoryId`/`categories[]`.** El paso
+  (f) solo migró las 2 funciones públicas. Quedan ~35 archivos (admin, importers,
+  `mutations.ts`, etc.) usando `categoryId`. Es **Bloque 5 PR2**, ANTES de aplicar la
+  migración contractiva (que retira `categoryId`). Ver `docs/BLOCK-2-PLAN.md` §10.
