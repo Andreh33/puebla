@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
 
 export type FacetItem = { value: string; label: string; count: number };
 
@@ -16,6 +17,8 @@ export type FiltersData = {
   genders: FacetItem[];
   colors: FacetItem[];
   sizes: FacetItem[];
+  /** Bloque 3: tipos de calzado (solo presente/usado en páginas de calzado). */
+  footwearTypes?: FacetItem[];
   priceMin: number;
   priceMax: number;
 };
@@ -24,6 +27,8 @@ type Props = {
   data: FiltersData;
   /** Resultados estimados para mostrar en el botón "Aplicar (X)". */
   resultsCount?: number;
+  /** Bloque 3: muestra el FilterGroup "Tipo de calzado". Solo en páginas de calzado. */
+  showFootwearFilter?: boolean;
   /**
    * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
    * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
@@ -46,7 +51,7 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -78,6 +83,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props
   const activeGenders = get("genero");
   const activeColors = get("color");
   const activeSizes = get("talla");
+  const activeTipo = get("tipo");
   const activeOnSale = searchParams.get("oferta") === "1";
   const activeNew = searchParams.get("nuevo") === "1";
   const priceMin = searchParams.get("min");
@@ -89,11 +95,12 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props
       activeGenders.length +
       activeColors.length +
       activeSizes.length +
+      activeTipo.length +
       (activeOnSale ? 1 : 0) +
       (activeNew ? 1 : 0) +
       (priceMin ? 1 : 0) +
       (priceMax ? 1 : 0),
-    [activeBrands, activeGenders, activeColors, activeSizes, activeOnSale, activeNew, priceMin, priceMax],
+    [activeBrands, activeGenders, activeColors, activeSizes, activeTipo, activeOnSale, activeNew, priceMin, priceMax],
   );
 
   const pushParams = useCallback(
@@ -156,6 +163,10 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props
       const label = data.sizes.find((s) => s.value === v)?.label ?? v;
       out.push({ id: `talla:${v}`, label: `Talla ${label}`, onRemove: () => removeMulti("talla", v) });
     }
+    for (const v of activeTipo) {
+      const label = FOOTWEAR_TYPE_LABELS[v as keyof typeof FOOTWEAR_TYPE_LABELS] ?? v;
+      out.push({ id: `tipo:${v}`, label, onRemove: () => removeMulti("tipo", v) });
+    }
     if (priceMin)
       out.push({ id: "min", label: `≥ ${priceMin}€`, onRemove: () => setPrice("min", "") });
     if (priceMax)
@@ -169,6 +180,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props
     activeGenders,
     activeColors,
     activeSizes,
+    activeTipo,
     priceMin,
     priceMax,
     data,
@@ -268,6 +280,27 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit }: Props
                 >
                   {s.label}
                 </button>
+              );
+            })}
+          </div>
+        </FilterGroup>
+      )}
+
+      {/* Bloque 3: tipo de calzado. Solo en páginas de calzado (showFootwearFilter). */}
+      {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
+        <FilterGroup title="Tipo de calzado">
+          <div className="flex flex-col gap-1.5">
+            {data.footwearTypes.map((t) => {
+              const on = activeTipo.includes(t.value);
+              const label = FOOTWEAR_TYPE_LABELS[t.value as keyof typeof FOOTWEAR_TYPE_LABELS] ?? t.label;
+              return (
+                <label key={t.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <Checkbox checked={on} onCheckedChange={() => toggleMulti("tipo", t.value)} />
+                    <span>{label}</span>
+                  </span>
+                  <span className="text-xs text-zs-muted">{t.count}</span>
+                </label>
               );
             })}
           </div>

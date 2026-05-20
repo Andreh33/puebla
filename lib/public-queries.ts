@@ -748,6 +748,7 @@ export type CategoryFilterParams = {
   genero?: string[];
   color?: string[];
   talla?: string[];
+  tipo?: string[]; // Bloque 3: tipo de calzado (footwearType)
   min?: number;
   max?: number;
   oferta?: boolean;
@@ -775,6 +776,7 @@ export function parseCategoryParams(searchParams: Record<string, string | string
     genero: arr(searchParams.genero),
     color: arr(searchParams.color),
     talla: arr(searchParams.talla),
+    tipo: arr(searchParams.tipo),
     min: num(searchParams.min),
     max: num(searchParams.max),
     oferta: searchParams.oferta === "1",
@@ -791,7 +793,11 @@ export function buildProductWhere(opts: {
 }): Prisma.ProductWhereInput {
   const { categoryId, brandId, filters } = opts;
   const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
-  if (categoryId) where.categoryId = categoryId;
+  // Bloque 3 §12: filtrado por categoría vía pivote m2m del Bloque 2 (apariciones
+  // públicas, incluye dup UNISEX/BEBE). El categoryId antiguo NO se reasignó al
+  // árbol nuevo (smoke en dev: 0 productos). Se mantiene mientras conviven ambos
+  // modelos (expand); el resto del código migra en Bloque 5 PR2 antes de la contractiva.
+  if (categoryId) where.categories = { some: { categoryId } };
   if (brandId) where.brandId = brandId;
 
   if (filters.marca && filters.marca.length) {
@@ -822,15 +828,23 @@ export function buildProductWhere(opts: {
   // o variaciones de caja ("L" vs "l", "UNICA" vs "Unica"). Usamos
   // equals insensitive vía OR para tolerarlo.
   if (filters.talla && filters.talla.length) {
+    // Bloque 3: stock-aware. Solo devuelve productos con stock > 0 en alguna de
+    // las tallas pedidas (consistente con la ficha del Bloque 1: tallas con stock).
     andClauses.push({
       OR: filters.talla.map((t) => ({
         sizes: {
           some: {
             size: { equals: t, mode: "insensitive" as const },
+            stock: { gt: 0 },
           },
         },
       })),
     });
+  }
+  // Bloque 3: filtro multi de tipo de calzado. Va en el MISMO andClauses para
+  // preservar la combinación AND (fix de filtros combinados intocado). Sin valor → se ignora.
+  if (filters.tipo && filters.tipo.length > 0) {
+    andClauses.push({ footwearType: { in: filters.tipo } });
   }
   if (andClauses.length > 0) {
     where.AND = andClauses;
@@ -855,9 +869,11 @@ export function buildProductWhere(opts: {
 export async function getCategoryFacets(categoryId: string) {
   // Calculamos counts independientes para cada faceta sobre los productos activos
   // de la categoría (sin filtros aplicados â€” los counts ayudan al usuario a elegir).
-  const baseWhere = { status: "ACTIVE" as const, categoryId };
+  // Bloque 3 §12: filtrado por pivote m2m (igual que buildProductWhere). Facetas
+  // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
+  const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId } } };
 
-  const [brands, genders, colors, sizes, priceRange] = await Promise.all([
+  const [brands, genders, colors, sizes, priceRange, footwearGroups] = await Promise.all([
     db.product.groupBy({
       by: ["brandId"],
       where: baseWhere,
@@ -889,6 +905,12 @@ export async function getCategoryFacets(categoryId: string) {
       _min: { retailPrice: true },
       _max: { retailPrice: true },
     }),
+    db.product.groupBy({
+      by: ["footwearType"],
+      where: { ...baseWhere, footwearType: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { footwearType: "desc" } },
+    }),
   ]);
 
   const brandIds = brands.map((b) => b.brandId);
@@ -918,6 +940,11 @@ export async function getCategoryFacets(categoryId: string) {
       .filter((c) => c.colorName && c.colorName !== "Ãšnico")
       .map((c) => ({ value: c.colorName, label: c.colorName, count: c._count._all })),
     sizes: sizes.map((s) => ({ value: s.size, label: s.size, count: s._count._all })),
+    // Bloque 3: value = clave footwearType; el label legible lo aplica ProductFilters
+    // con FOOTWEAR_TYPE_LABELS (igual que genders, que devuelve la clave cruda).
+    footwearTypes: footwearGroups
+      .filter((f) => f.footwearType)
+      .map((f) => ({ value: f.footwearType as string, label: f.footwearType as string, count: f._count._all })),
     priceMin: priceRange._min.retailPrice ? Number(priceRange._min.retailPrice) : 0,
     priceMax: priceRange._max.retailPrice ? Number(priceRange._max.retailPrice) : 500,
   };

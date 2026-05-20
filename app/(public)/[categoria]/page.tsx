@@ -105,6 +105,7 @@ export default async function CategoryPage({
     genders: [],
     colors: [],
     sizes: [],
+    footwearTypes: [],
     priceMin: 0,
     priceMax: 500,
   };
@@ -275,6 +276,7 @@ export default async function CategoryPage({
               data={facets}
               resultsCount={total}
               autoOpenFirstVisit={!category.parent}
+              showFootwearFilter={category.slug?.endsWith("-calzado") ?? false}
             />
           </div>
 
