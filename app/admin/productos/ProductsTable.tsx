@@ -53,6 +53,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -61,6 +69,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPriceEUR } from "@/lib/utils";
+import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS, type FootwearType } from "@/lib/categories/footwear";
 import type { ProductListResult } from "@/lib/products/queries";
 import {
   archiveProductAction,
@@ -121,6 +130,7 @@ const COLUMN_RESPONSIVE: Record<string, string> = {
   brand: "hidden md:table-cell",
   category: "hidden xl:table-cell",
   gender: "hidden lg:table-cell",
+  footwearType: "hidden xl:table-cell",
   sizes: "hidden xl:table-cell",
   source: "hidden lg:table-cell",
   status: "",
@@ -528,6 +538,8 @@ export function ProductsTable({
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete">(null);
+  const [footwearOpen, setFootwearOpen] = React.useState(false);
+  const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
 
   const qInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -551,6 +563,7 @@ export function ProductsTable({
   const categorySel = (searchParams?.get("category") ?? "").split(",").filter(Boolean);
   const gender = (searchParams?.get("gender") ?? "").split(",").filter(Boolean);
   const noImage = searchParams?.get("noImage") === "1";
+  const sinTipoCalzado = searchParams?.get("sinTipoCalzado") === "1";
   const pageSize = Number(searchParams?.get("pageSize") ?? 50);
   const page = Number(searchParams?.get("page") ?? 1);
   const sort = searchParams?.get("sort") ?? "createdAt_desc";
@@ -582,7 +595,7 @@ export function ProductsTable({
 
   function clearAll() {
     updateParams((sp) => {
-      ["q", "source", "status", "brand", "category", "gender", "noImage", "minPrice", "maxPrice", "tag", "page"].forEach(
+      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "minPrice", "maxPrice", "tag", "page"].forEach(
         (k) => sp.delete(k),
       );
     });
@@ -693,6 +706,22 @@ export function ProductsTable({
         cell: ({ row }) => (
           <span className="text-xs text-zs-muted">{GENDER_LABEL[row.original.gender] ?? "â€”"}</span>
         ),
+      },
+      {
+        id: "footwearType",
+        header: "Tipo",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.footwearType) {
+            return (
+              <Badge variant="secondary" className="text-[11px]">
+                {FOOTWEAR_TYPE_LABELS[r.footwearType as FootwearType] ?? r.footwearType}
+              </Badge>
+            );
+          }
+          if (r.isCalzado) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
+          return null;
+        },
       },
       {
         id: "sizes",
@@ -879,8 +908,20 @@ export function ProductsTable({
             />
             Sin imagen
           </label>
+          <label className="flex items-center gap-2 rounded-xl border border-zs-border bg-white px-3 py-2 text-xs font-medium text-zs-ink">
+            <Checkbox
+              checked={sinTipoCalzado}
+              onCheckedChange={(v) =>
+                updateParams((sp) => {
+                  if (v) sp.set("sinTipoCalzado", "1");
+                  else sp.delete("sinTipoCalzado");
+                }, { resetPage: true })
+              }
+            />
+            Sin tipo de calzado
+          </label>
 
-          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage) && (
+          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado) && (
             <Button variant="ghost" size="sm" onClick={clearAll}>
               <X className="h-4 w-4" />
               Limpiar filtros
@@ -948,6 +989,16 @@ export function ProductsTable({
             </Button>
             <Button size="sm" variant="outline" onClick={() => handleBulk({ kind: "archive" })}>
               Archivar
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setFootwearValue("__none__");
+                setFootwearOpen(true);
+              }}
+            >
+              Tipo de calzado
             </Button>
             <Button size="sm" variant="destructive" onClick={() => setBulkConfirm("delete")}>
               Eliminar
@@ -1195,6 +1246,67 @@ export function ProductsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk: asignar tipo de calzado (doble validación — cliente bloquea si hay
+          no-calzado; el server action vuelve a validar de forma autoritativa). */}
+      <Dialog open={footwearOpen} onOpenChange={setFootwearOpen}>
+        <DialogContent>
+          {(() => {
+            const selRows = initialData.rows.filter((r) => selectedIds.includes(r.id));
+            const nonCalzado = selRows.filter((r) => !r.isCalzado);
+            const allCalzado = selRows.length > 0 && nonCalzado.length === 0;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Asignar tipo de calzado a {selectedIds.length} producto(s)</DialogTitle>
+                  <DialogDescription>Solo aplica a productos de familia calzado.</DialogDescription>
+                </DialogHeader>
+                {!allCalzado ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    {nonCalzado.length} de los seleccionados no son de calzado (p.ej.{" "}
+                    {nonCalzado.slice(0, 3).map((r) => `"${r.name}"`).join(", ")}
+                    {nonCalzado.length > 3 ? " …" : ""}). Selecciona solo productos de calzado para esta acción.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zs-ink">Tipo de calzado</label>
+                    <Select value={footwearValue} onValueChange={setFootwearValue}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {FOOTWEAR_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {FOOTWEAR_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFootwearOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={!allCalzado}
+                    onClick={async () => {
+                      await handleBulk({
+                        kind: "footwearType",
+                        footwearType: footwearValue === "__none__" ? null : (footwearValue as FootwearType),
+                      });
+                      setFootwearOpen(false);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

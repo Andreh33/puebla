@@ -33,6 +33,7 @@ export default async function ProductosPage({
     statuses: parseList(sp.status) as ProductListFilters["statuses"],
     tags: parseList(sp.tag),
     noImage: sp.noImage === "1",
+    footwearTypeNull: sp.sinTipoCalzado === "1",
     minPrice: sp.minPrice ? Number(sp.minPrice) : undefined,
     maxPrice: sp.maxPrice ? Number(sp.maxPrice) : undefined,
     page: sp.page ? Number(sp.page) : 1,

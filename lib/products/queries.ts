@@ -21,6 +21,8 @@ export interface ProductListFilters {
   statuses?: ProductStatusFilter[];
   tags?: string[];
   noImage?: boolean;
+  /** Bloque 3: calzado SIN footwearType asignado (para etiquetar los NULL). */
+  footwearTypeNull?: boolean;
   minPrice?: number;
   maxPrice?: number;
   isFeatured?: boolean;
@@ -44,6 +46,8 @@ export interface ProductListResult {
     brand: { id: string; name: string };
     category: { id: string; name: string };
     gender: string;
+    footwearType: string | null;
+    isCalzado: boolean;
     source: string;
     status: string;
     retailPrice: string;
@@ -89,6 +93,9 @@ function buildWhere(f: ProductListFilters): Prisma.ProductWhereInput {
   if (f.statuses && f.statuses.length) AND.push({ status: { in: f.statuses } });
   if (f.tags && f.tags.length) AND.push({ tags: { hasSome: f.tags } });
   if (f.noImage) AND.push({ mainImageUrl: null });
+  // Bloque 3: calzado sin footwearType (mismo AND — patrón filtros combinados).
+  if (f.footwearTypeNull)
+    AND.push({ footwearType: null, primaryCategory: { slug: { endsWith: "-calzado" } } });
   if (f.minPrice != null) AND.push({ retailPrice: { gte: f.minPrice } });
   if (f.maxPrice != null) AND.push({ retailPrice: { lte: f.maxPrice } });
   if (f.isFeatured != null) AND.push({ isFeatured: f.isFeatured });
@@ -131,6 +138,7 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       include: {
         brand: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
+        primaryCategory: { select: { slug: true } }, // Bloque 3: para isCalzado + bulk footwearType
         _count: { select: { sizes: true } },
       },
     }),
@@ -154,6 +162,8 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       brand: r.brand,
       category: r.category,
       gender: r.gender,
+      footwearType: r.footwearType,
+      isCalzado: r.primaryCategory?.slug?.endsWith("-calzado") ?? false,
       source: r.source,
       status: r.status,
       retailPrice: r.retailPrice.toString(),
