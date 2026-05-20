@@ -117,6 +117,9 @@ model Product {
 
   gender       Gender        @default(NO_ESPECIFICADO)
   sportUse     String?       // "Montañismo/Trekking/Escalada"
+  // Bloque 3: tipo de calzado (solo familia calzado). Lista controlada por
+  // FOOTWEAR_TYPES en lib/categories/footwear.ts (no enum Prisma — evita churn).
+  footwearType String?       // running|trail|tenis|padel|casual|baloncesto|futbol|futbol_sala|chanclas
   composition  String?       // "Poliéster 100%"
 
   costPrice    Decimal?      @db.Decimal(10, 2)
@@ -148,6 +151,7 @@ model Product {
   @@index([brandId, status])
   @@index([categoryId, status])
   @@index([primaryCategoryId])
+  @@index([footwearType])
   @@index([source])
   @@index([status, publishedAt])
   @@index([modelCode])
