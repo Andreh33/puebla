@@ -173,7 +173,8 @@ export async function getProductById(id: string) {
     where: { id },
     include: {
       brand: true,
-      category: true,
+      category: true, // relación antigua (Bloque 2 expand/contract) — se mantiene
+      primaryCategory: { select: { slug: true } }, // Bloque 3: condiciona el selector de tipo de calzado
       images: { orderBy: { position: "asc" } },
       sizes: { orderBy: { position: "asc" } },
       audits: { orderBy: { createdAt: "desc" }, take: 50 },

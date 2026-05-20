@@ -48,6 +48,8 @@ export default async function EditProductPage({
     colorHex: product.colorHex,
     gender: product.gender,
     sportUse: product.sportUse,
+    footwearType: product.footwearType,
+    primaryCategorySlug: product.primaryCategory?.slug ?? null,
     composition: product.composition,
     costPrice: product.costPrice ? Number(product.costPrice) : null,
     retailPrice: Number(product.retailPrice),

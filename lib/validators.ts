@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FOOTWEAR_TYPES } from "@/lib/categories/footwear";
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -78,6 +79,10 @@ export const ProductSchema = z.object({
     .or(z.literal("")),
   gender: z.enum(["HOMBRE", "MUJER", "UNISEX", "NINO", "NINA", "BEBE", "NO_ESPECIFICADO"]),
   sportUse: z.string().max(120).optional().nullable(),
+  // Bloque 3: tipo de calzado (solo familia calzado). optional() → compatible con
+  // create/duplicate/importers que no envíen el campo (undefined = Prisma no lo toca);
+  // nullable() → el editor envía null para "(sin asignar)".
+  footwearType: z.enum(FOOTWEAR_TYPES).nullable().optional(),
   composition: z.string().max(500).optional().nullable(),
   costPrice: z.number().min(0).optional().nullable(),
   retailPrice: z.number().min(0),
