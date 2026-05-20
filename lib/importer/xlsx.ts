@@ -1,17 +1,23 @@
 /**
- * Zona Sport — lector streaming del PRICAT (.xlsx) con exceljs.
+ * Zona Sport — lector del PRICAT (y feeds genéricos) sobre el lector universal.
  *
- * - Acepta la ruta de un fichero local (xlsx).
- * - Localiza la hoja "Catálogo" o, si no existe, la primera hoja.
- * - Detecta dinámicamente las cabeceras buscando los nombres oficiales del PRICAT.
- * - Expone un AsyncGenerator de filas crudas (clave → valor) y otro de filas normalizadas.
- * - Agrupa por `código artículo` (que es la clave de fila — única en este dataset)
- *   pero también devuelve la `productKey` (modelo+Cód.color) para que el `process-job`
- *   pueda agrupar productos con varias tallas.
+ * Antes este módulo leía SOLO .xlsx con exceljs. Ahora delega la lectura del
+ * fichero en `lib/importer/read-table.ts` (SheetJS), que soporta xlsx, xls,
+ * xlsb, ods, fods, csv, tsv y txt. Toda la lógica de negocio (mapeo de
+ * cabeceras PRICAT, agrupado por modelo+color, normalización) se mantiene.
+ *
+ * - Localiza dinámicamente las cabeceras buscando los nombres oficiales del
+ *   PRICAT; si no las encuentra, intenta un mapeo "genérico" (Nombre/Name →
+ *   descripción, Precio/Price → PVP, etc.) para tolerar tablas arbitrarias.
+ * - Expone los mismos generadores que antes (`iterPricatRawRows`,
+ *   `iterPricatProductGroups`), de modo que `process-job.ts` no cambia.
+ * - Agrupa por `productKey` (modelo+Cód.color) para producto = modelo+color.
  */
 
-import ExcelJS from "exceljs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { readTable, type ReadTableResult } from "./read-table";
+import { buildGenericHeaderMap, detectFeedKind } from "./detect-feed";
 import { normalizePricatRow, type NormalizedPricatRow } from "./normalize";
 
 // ---------------------------------------------------------------------------
@@ -41,104 +47,34 @@ export const PRICAT_HEADERS = {
 
 type PricatColumnKey = keyof typeof PRICAT_HEADERS;
 
-export type PricatColumnIndex = Record<PricatColumnKey, number | null>;
-
 // ---------------------------------------------------------------------------
-// Util: convertir valor de celda exceljs a un primitivo simple
+// HYPERLINK helper (conservado por compatibilidad de import; readTable ya
+// resuelve los HYPERLINK, pero algunos consumidores externos lo usan).
 // ---------------------------------------------------------------------------
 
-/**
- * Extrae el primer argumento string de una fórmula tipo `HYPERLINK("url", "label")`.
- * Devuelve null si la fórmula no es un HYPERLINK o no tiene URL parseable.
- */
 function extractHyperlinkUrl(formula: string): string | null {
   const m = formula.match(/HYPERLINK\s*\(\s*"([^"]+)"/i);
-  return m ? m[1] ?? null : null;
+  return m ? (m[1] ?? null) : null;
 }
 
-export function cellValue(value: ExcelJS.CellValue | undefined | null): unknown {
+/**
+ * Normaliza un valor de celda a primitivo simple. Mantiene la firma histórica
+ * para no romper imports; con readTable las celdas ya llegan como string.
+ */
+export function cellValue(value: unknown): unknown {
   if (value === null || value === undefined) return null;
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    return value;
+  if (typeof value === "string") {
+    // Si por lo que sea nos llega una fórmula HYPERLINK como string, la resolvemos.
+    const url = extractHyperlinkUrl(value);
+    return url ?? value;
   }
+  if (typeof value === "number" || typeof value === "boolean") return value;
   if (value instanceof Date) return value.toISOString();
-  if (typeof value === "object") {
-    // Hyperlink {text, hyperlink} o {formula, result}
-    if ("hyperlink" in value && typeof (value as { hyperlink?: unknown }).hyperlink === "string") {
-      return (value as { hyperlink: string }).hyperlink;
-    }
-    if ("formula" in value && typeof (value as { formula?: unknown }).formula === "string") {
-      const formula = (value as { formula: string }).formula;
-      // HYPERLINK("https://...", "label") — prioritario: extraemos la URL real.
-      const url = extractHyperlinkUrl(formula);
-      if (url) return url;
-      // Fallback: usamos el resultado evaluado si está, o devolvemos vacío.
-      if ("result" in value && value.result !== undefined && value.result !== null) {
-        return cellValue(value.result as ExcelJS.CellValue);
-      }
-      return null;
-    }
-    if ("text" in value && typeof (value as { text?: unknown }).text === "string") {
-      return (value as { text: string }).text;
-    }
-    if ("result" in value && value.result !== undefined && value.result !== null) {
-      return cellValue(value.result as ExcelJS.CellValue);
-    }
-    if ("richText" in value && Array.isArray((value as { richText?: unknown }).richText)) {
-      return (value as { richText: { text: string }[] }).richText
-        .map((rt) => rt.text)
-        .join("");
-    }
-  }
   return String(value);
 }
 
 // ---------------------------------------------------------------------------
-// Localiza el índice de columna (1-based) para cada cabecera conocida
-// ---------------------------------------------------------------------------
-
-function buildColumnIndex(headerRow: ExcelJS.Row): PricatColumnIndex {
-  const idx: PricatColumnIndex = {
-    altaBaja: null,
-    modelo: null,
-    codigoModelo: null,
-    descripcionModelo: null,
-    tipo: null,
-    usoDeportivo: null,
-    marca: null,
-    codigoArticulo: null,
-    descripcionArt: null,
-    codColor: null,
-    color: null,
-    talla: null,
-    perfil: null,
-    composicion: null,
-    tarifa: null,
-    pvp: null,
-    ean: null,
-    url: null,
-  };
-
-  const colCount = headerRow.cellCount;
-  for (let c = 1; c <= colCount; c += 1) {
-    const raw = headerRow.getCell(c).value;
-    const text = String(cellValue(raw) ?? "")
-      .trim()
-      .toLowerCase();
-    if (!text) continue;
-    for (const key of Object.keys(PRICAT_HEADERS) as PricatColumnKey[]) {
-      if (idx[key] !== null) continue;
-      if (PRICAT_HEADERS[key].some((h) => h.toLowerCase() === text)) {
-        idx[key] = c;
-        break;
-      }
-    }
-  }
-  return idx;
-}
-
-// ---------------------------------------------------------------------------
-// Itera filas crudas (objeto con keys del PRICAT)
+// Fila cruda PRICAT (idéntica a la versión anterior — process-job depende)
 // ---------------------------------------------------------------------------
 
 export interface RawPricatRow {
@@ -163,98 +99,130 @@ export interface RawPricatRow {
   url: unknown;
 }
 
-function pick(row: ExcelJS.Row, col: number | null): unknown {
-  if (col === null) return null;
-  return cellValue(row.getCell(col).value);
+// ---------------------------------------------------------------------------
+// Resolución cabecera real → clave PRICAT
+// ---------------------------------------------------------------------------
+
+type ColumnMap = Partial<Record<PricatColumnKey, string>>;
+
+/**
+ * Mapea las cabeceras reales del fichero a las claves del PRICAT. Primero
+ * intenta el matcheo oficial (PRICAT_HEADERS); si el feed es "generic" o
+ * faltan columnas críticas, completa con los alias genéricos de detect-feed.
+ */
+function buildColumnMap(headers: string[]): ColumnMap {
+  const map: ColumnMap = {};
+  const byLower = new Map<string, string>();
+  for (const h of headers) byLower.set(h.trim().toLowerCase(), h);
+
+  for (const key of Object.keys(PRICAT_HEADERS) as PricatColumnKey[]) {
+    for (const candidate of PRICAT_HEADERS[key]) {
+      const real = byLower.get(candidate.toLowerCase());
+      if (real) {
+        map[key] = real;
+        break;
+      }
+    }
+  }
+
+  // Si no se reconoció el núcleo PRICAT, intentamos mapeo genérico para tolerar
+  // tablas arbitrarias (un Excel manual, otro export). No pisa lo ya mapeado.
+  const kind = detectFeedKind(headers);
+  if (kind === "generic" || !map.modelo || !map.codigoArticulo) {
+    const generic = buildGenericHeaderMap(headers);
+    for (const [k, real] of Object.entries(generic) as [PricatColumnKey, string][]) {
+      if (!map[k]) map[k] = real;
+    }
+  }
+
+  return map;
 }
 
-function readRow(row: ExcelJS.Row, idx: PricatColumnIndex, rowNumber: number): RawPricatRow {
+function readField(row: Record<string, string>, header: string | undefined): unknown {
+  if (!header) return null;
+  const v = row[header];
+  if (v === undefined || v === null || v === "") return null;
+  return v;
+}
+
+function toRawRow(
+  row: Record<string, string>,
+  map: ColumnMap,
+  rowNumber: number,
+): RawPricatRow {
   return {
     rowNumber,
-    altaBaja: pick(row, idx.altaBaja),
-    modelo: pick(row, idx.modelo),
-    codigoModelo: pick(row, idx.codigoModelo),
-    descripcionModelo: pick(row, idx.descripcionModelo),
-    tipo: pick(row, idx.tipo),
-    usoDeportivo: pick(row, idx.usoDeportivo),
-    marca: pick(row, idx.marca),
-    codigoArticulo: pick(row, idx.codigoArticulo),
-    descripcionArt: pick(row, idx.descripcionArt),
-    codColor: pick(row, idx.codColor),
-    color: pick(row, idx.color),
-    talla: pick(row, idx.talla),
-    perfil: pick(row, idx.perfil),
-    composicion: pick(row, idx.composicion),
-    tarifa: pick(row, idx.tarifa),
-    pvp: pick(row, idx.pvp),
-    ean: pick(row, idx.ean),
-    url: pick(row, idx.url),
+    altaBaja: readField(row, map.altaBaja),
+    modelo: readField(row, map.modelo),
+    codigoModelo: readField(row, map.codigoModelo),
+    descripcionModelo: readField(row, map.descripcionModelo),
+    tipo: readField(row, map.tipo),
+    usoDeportivo: readField(row, map.usoDeportivo),
+    marca: readField(row, map.marca),
+    codigoArticulo: readField(row, map.codigoArticulo),
+    descripcionArt: readField(row, map.descripcionArt),
+    codColor: readField(row, map.codColor),
+    color: readField(row, map.color),
+    talla: readField(row, map.talla),
+    perfil: readField(row, map.perfil),
+    composicion: readField(row, map.composicion),
+    tarifa: readField(row, map.tarifa),
+    pvp: readField(row, map.pvp),
+    ean: readField(row, map.ean),
+    url: readField(row, map.url),
   };
 }
 
 // ---------------------------------------------------------------------------
-// Streaming reader (memoria contenida): exceljs no tiene un streaming "lazy"
-// por hoja sin opt-in, pero usamos el reader que va emitiendo filas.
-// Para mantener simplicidad y robustez (incluye precios y formatos), abrimos
-// el workbook completo pero NO acumulamos filas en memoria: las yield-eamos
-// según se piden.
+// Lectura del fichero (cualquier formato) → tabla universal
 // ---------------------------------------------------------------------------
 
-async function openWorksheet(filePath: string): Promise<ExcelJS.Worksheet> {
-  const wb = new ExcelJS.Workbook();
+async function loadTable(filePath: string): Promise<ReadTableResult> {
   const absolute = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
-  await wb.xlsx.readFile(absolute);
-  const ws =
-    wb.getWorksheet("Catálogo") ??
-    wb.getWorksheet("Catalogo") ??
-    wb.worksheets[0];
-  if (!ws) throw new Error("No se encontró ninguna hoja en el fichero xlsx");
-  return ws;
+  const buffer = await readFile(absolute);
+  return readTable(buffer, path.basename(absolute));
 }
 
 /**
- * Total de filas con datos (estimación basada en `rowCount`).
+ * Total de filas de datos (sin cabecera).
  */
 export async function countPricatRows(filePath: string): Promise<number> {
-  const ws = await openWorksheet(filePath);
-  // rowCount incluye la cabecera
-  return Math.max(0, ws.rowCount - 1);
+  const { rows } = await loadTable(filePath);
+  return rows.length;
 }
 
 /**
- * Itera filas crudas en orden de aparición. Yields un objeto por fila con datos.
+ * Itera filas crudas en orden de aparición.
+ *
+ * El `rowNumber` que reportamos es 1-based respecto a la primera fila de DATOS
+ * + 1 (para que "fila 2" ≈ primera fila de datos en una hoja con cabecera en la
+ * fila 1), manteniendo el espíritu del diagnóstico anterior basado en exceljs.
  */
 export async function* iterPricatRawRows(filePath: string): AsyncGenerator<RawPricatRow> {
-  const ws = await openWorksheet(filePath);
-  const headerRow = ws.getRow(1);
-  const idx = buildColumnIndex(headerRow);
+  const { rows, headers } = await loadTable(filePath);
+  const map = buildColumnMap(headers);
 
-  // Comprobación mínima: códigoArticulo, modelo y color son críticos
-  if (idx.modelo === null || idx.codigoArticulo === null || idx.color === null) {
+  // Comprobación mínima: necesitamos al menos modelo + artículo + color, o sus
+  // equivalentes genéricos. Si ni siquiera hay "modelo"/equivalente, abortamos.
+  if (!map.modelo || !map.codigoArticulo) {
     throw new Error(
-      "Cabeceras requeridas no encontradas. Esperado: 'modelo', 'código artículo' y 'color'.",
+      "Cabeceras requeridas no encontradas. Esperado: 'modelo' y 'código artículo' (o equivalentes Nombre/Referencia/SKU).",
     );
   }
 
-  for (let i = 2; i <= ws.rowCount; i += 1) {
-    const row = ws.getRow(i);
-    if (!row || row.cellCount === 0) continue;
-    const raw = readRow(row, idx, i);
-    // Saltar filas totalmente vacías
+  let i = 0;
+  for (const row of rows) {
+    i += 1;
+    const raw = toRawRow(row, map, i + 1); // +1 → fila aprox. en la hoja
     if (!raw.modelo && !raw.codigoArticulo) continue;
     yield raw;
   }
 }
 
 /**
- * Itera filas normalizadas, agrupadas por `productKey` (modelo+Cód.color).
- * Cada grupo emitido contiene 1..N filas (variantes de talla del mismo producto).
- *
- * IMPORTANTE: como exceljs ordena las filas en orden natural y las filas del
- * mismo producto suelen aparecer consecutivas (mismo modelo+color), agrupamos
- * de forma "rolling": cuando cambia la `productKey`, emitimos el grupo previo.
- * En el peor caso (filas del mismo producto dispersas), la idempotencia por
- * `externalId` en el upsert resuelve el solapamiento.
+ * Itera filas normalizadas agrupadas por `productKey` (modelo+Cód.color).
+ * Mismo contrato que la versión exceljs: las filas inválidas se emiten con
+ * productKey "__ERROR__:<row>" para que process-job las registre sin romper.
  */
 export async function* iterPricatProductGroups(
   filePath: string,
@@ -267,8 +235,6 @@ export async function* iterPricatProductGroups(
     try {
       normalized = normalizePricatRow(raw);
     } catch (err) {
-      // Fila inválida: la propagamos con productKey "__ERROR__:<row>" para que
-      // el process-job pueda registrar el error sin romper el stream.
       const message = err instanceof Error ? err.message : String(err);
       yield {
         productKey: `__ERROR__:${raw.rowNumber}`,

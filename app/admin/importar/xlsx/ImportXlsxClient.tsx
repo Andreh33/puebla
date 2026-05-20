@@ -91,7 +91,34 @@ interface JobState {
   errors?: JobError[] | null;
 }
 
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 20 * 1024 * 1024;
+
+// Extensiones aceptadas por el importador universal (deben coincidir con
+// lib/importer/read-table.ts → SUPPORTED_TABLE_EXTENSIONS).
+const ACCEPTED_EXTENSIONS = [
+  ".xlsx",
+  ".xlsm",
+  ".xlsb",
+  ".xls",
+  ".ods",
+  ".fods",
+  ".csv",
+  ".tsv",
+  ".txt",
+  ".dif",
+];
+
+// `accept` del <input>: extensiones + MIME types comunes.
+const ACCEPT_ATTR = [
+  ...ACCEPTED_EXTENSIONS,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
+  "application/vnd.oasis.opendocument.spreadsheet",
+  "text/csv",
+  "text/tab-separated-values",
+  "text/plain",
+].join(",");
 
 // ---------------------------------------------------------------------------
 // Componente
@@ -105,6 +132,9 @@ export function ImportXlsxClient() {
     "idle" | "previewing" | "preview-ready" | "uploading" | "polling" | "done" | "failed"
   >("idle");
   const [preview, setPreview] = React.useState<PreviewRow[]>([]);
+  const [detected, setDetected] = React.useState<{ feedKind: string; format: string } | null>(
+    null,
+  );
   const [job, setJob] = React.useState<JobState | null>(null);
   const [serverError, setServerError] = React.useState<string | null>(null);
 
@@ -151,9 +181,12 @@ export function ImportXlsxClient() {
   // ---------------------------------------------------------------------------
 
   const validateFile = (f: File): string | null => {
-    if (!f.name.toLowerCase().endsWith(".xlsx")) return "Sólo se aceptan ficheros .xlsx";
+    const lower = f.name.toLowerCase();
+    if (!ACCEPTED_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
+      return "Formato no soportado. Acepta: Excel (.xlsx, .xls, .xlsb), ODS, CSV, TSV o TXT";
+    }
     if (f.size === 0) return "El fichero está vacío";
-    if (f.size > MAX_SIZE) return `Máximo 10MB (este pesa ${(f.size / 1024 / 1024).toFixed(1)}MB)`;
+    if (f.size > MAX_SIZE) return `Máximo 20MB (este pesa ${(f.size / 1024 / 1024).toFixed(1)}MB)`;
     return null;
   };
 
@@ -175,9 +208,17 @@ export function ImportXlsxClient() {
     fd.append("file", f);
     try {
       const res = await fetch("/api/import/xlsx/preview", { method: "POST", body: fd });
-      const data = (await res.json()) as { rows?: PreviewRow[]; error?: string };
+      const data = (await res.json()) as {
+        rows?: PreviewRow[];
+        feedKind?: string;
+        format?: string;
+        error?: string;
+      };
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
       setPreview(data.rows ?? []);
+      setDetected(
+        data.feedKind ? { feedKind: data.feedKind, format: data.format ?? "?" } : null,
+      );
       setPhase("preview-ready");
     } catch (e) {
       setServerError(e instanceof Error ? e.message : String(e));
@@ -241,6 +282,7 @@ export function ImportXlsxClient() {
     setFileError(null);
     setServerError(null);
     setPreview([]);
+    setDetected(null);
     setJob(null);
     setPhase("idle");
   };
@@ -257,9 +299,11 @@ export function ImportXlsxClient() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Subir archivo PRICAT</CardTitle>
+        <CardTitle>Subir catálogo</CardTitle>
         <CardDescription>
-          Arrastra el .xlsx aquí o haz clic para seleccionarlo. Máximo 10MB.
+          Arrastra tu archivo (Excel, CSV, ODS…) o haz clic para seleccionarlo. Detectamos
+          automáticamente si es un PRICAT, un export de WooCommerce o una tabla genérica.
+          Máximo 20MB.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -285,7 +329,7 @@ export function ImportXlsxClient() {
               <input
                 id="xlsx-file"
                 type="file"
-                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                accept={ACCEPT_ATTR}
                 onChange={onInputChange}
                 className="sr-only"
               />
@@ -303,8 +347,12 @@ export function ImportXlsxClient() {
                 <>
                   <UploadCloud className="h-10 w-10 text-zs-muted" />
                   <div>
-                    <p className="font-semibold text-zs-ink">Arrastra el archivo .xlsx aquí</p>
-                    <p className="text-xs text-zs-muted">o haz clic para seleccionar</p>
+                    <p className="font-semibold text-zs-ink">
+                      Arrastra tu archivo (Excel, CSV, ODS…) aquí
+                    </p>
+                    <p className="text-xs text-zs-muted">
+                      .xlsx · .xls · .xlsb · .ods · .csv · .tsv · .txt — o haz clic para seleccionar
+                    </p>
                   </div>
                 </>
               )}
@@ -344,7 +392,14 @@ export function ImportXlsxClient() {
                       Vista previa (primeras 10 filas)
                     </h4>
                   </div>
-                  <Badge variant="outline">{preview.length} filas</Badge>
+                  <div className="flex items-center gap-2">
+                    {detected && (
+                      <Badge variant="outline" className="uppercase">
+                        {detected.format} · {feedKindLabel(detected.feedKind)}
+                      </Badge>
+                    )}
+                    <Badge variant="outline">{preview.length} filas</Badge>
+                  </div>
                 </div>
                 <div className="max-h-96 overflow-auto">
                   <table className="w-full text-xs">
@@ -553,6 +608,19 @@ export function ImportXlsxClient() {
       </CardContent>
     </Card>
   );
+}
+
+function feedKindLabel(kind: string): string {
+  switch (kind) {
+    case "woocommerce":
+      return "WooCommerce";
+    case "pricat":
+      return "PRICAT";
+    case "generic":
+      return "Genérico";
+    default:
+      return kind;
+  }
 }
 
 function Stat({

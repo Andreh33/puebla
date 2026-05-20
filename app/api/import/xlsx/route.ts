@@ -1,11 +1,19 @@
 /**
- * POST /api/import/xlsx
+ * POST /api/import/xlsx  (importador UNIVERSAL de tablas)
  *
- * Recibe un fichero .xlsx (multipart/form-data) + opciones de import,
- * crea un `ImportJob` en estado PENDING y dispara `processImportJob`
- * fire-and-forget para procesar en background.
+ * Pese al nombre histórico "xlsx", este endpoint acepta CUALQUIER tabla:
+ *   .xlsx .xls .xlsb .ods .fods .csv .tsv .txt  (hasta 20 MB).
  *
- * Devuelve { jobId } al cliente, que hará polling a /api/import/jobs/[id].
+ * Flujo:
+ *   1. Guarda el fichero en /tmp (ephemeral en Vercel).
+ *   2. `readTable` → cabeceras + formato detectado.
+ *   3. `detectFeedKind(headers)` → enruta:
+ *        · "woocommerce" → processWooCommerceImportJob
+ *        · "pricat" | "generic" → processImportJob (pipeline PRICAT)
+ *   4. Crea un ImportJob (source XLSX o WOOCOMMERCE) y procesa con `after()`.
+ *
+ * Persistimos formato + feedKind como breadcrumb INFO en errors[] para que el
+ * cliente lo vea en el polling ("Formato: xlsx · Feed: woocommerce · 1362 filas").
  */
 
 import { NextResponse, after } from "next/server";
@@ -16,18 +24,20 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ImportOptionsSchema } from "@/lib/validators";
 import { processImportJob } from "@/lib/importer/process-job";
-import type { Prisma } from "@prisma/client";
+import { processWooCommerceImportJob } from "@/lib/importer/process-woocommerce-job";
+import { readTable, isSupportedTableExtension } from "@/lib/importer/read-table";
+import { detectFeedKind } from "@/lib/importer/detect-feed";
+import type { Prisma, ImportSource } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 // El procesado vive DENTRO de la misma function execution vía `after()`:
-// Next.js garantiza que las tareas registradas con `after` corren después
-// de devolver la response pero antes de que termine la function. Sin esto,
-// el `void (async () => ...)` previo se mataba en cuanto el handler
-// retornaba — el job quedaba en PENDING para siempre.
+// Next.js garantiza que las tareas registradas con `after` corren después de
+// devolver la response pero antes de que termine la function. maxDuration=300
+// porque catálogos grandes + descarga de imágenes son lentos.
 export const maxDuration = 300;
 
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -59,14 +69,16 @@ export async function POST(req: Request) {
   }
   if (file.size > MAX_SIZE_BYTES) {
     return NextResponse.json(
-      { error: `El archivo excede el máximo de 10MB (${(file.size / 1024 / 1024).toFixed(1)}MB)` },
+      { error: `El archivo excede el máximo de 20MB (${(file.size / 1024 / 1024).toFixed(1)}MB)` },
       { status: 413 },
     );
   }
-  const lowerName = file.name.toLowerCase();
-  if (!lowerName.endsWith(".xlsx")) {
+  if (!isSupportedTableExtension(file.name)) {
     return NextResponse.json(
-      { error: "Sólo se aceptan ficheros .xlsx" },
+      {
+        error:
+          "Formato no soportado. Acepta: .xlsx, .xls, .xlsb, .ods, .fods, .csv, .tsv, .txt",
+      },
       { status: 415 },
     );
   }
@@ -76,8 +88,7 @@ export async function POST(req: Request) {
     optionsRaw && typeof optionsRaw === "string" ? JSON.parse(optionsRaw) : {},
   );
 
-  // Guardar en /tmp local. En producción Vercel, /tmp es escribible (ephemeral)
-  // y suficiente para que `processImportJob` lo lea hasta finalizar.
+  // Guardar en /tmp local (escribible y suficiente para que el procesador lo lea).
   const dir = path.join(tmpdir(), "zs-imports");
   await mkdir(dir, { recursive: true });
   const safeBaseName = file.name.replace(/[^\w.\-]+/g, "_");
@@ -85,33 +96,67 @@ export async function POST(req: Request) {
   const buffer = Buffer.from(await file.arrayBuffer());
   await writeFile(filePath, buffer);
 
+  // Autodetección de tipo de feed leyendo solo las cabeceras del fichero.
+  let feedKind: "pricat" | "woocommerce" | "generic" = "pricat";
+  let format = "desconocido";
+  let detectedRows = 0;
+  try {
+    const table = await readTable(buffer, file.name);
+    format = table.format;
+    detectedRows = table.rows.length;
+    feedKind = detectFeedKind(table.headers);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: `No se pudo leer el archivo: ${message}` },
+      { status: 422 },
+    );
+  }
+
+  const source: ImportSource = feedKind === "woocommerce" ? "WOOCOMMERCE" : "XLSX";
+  const breadcrumb = {
+    row: 0,
+    code: "INFO",
+    message: `Formato: ${format} · Feed: ${feedKind} · ${detectedRows} filas`,
+  };
+
   const job = await db.importJob.create({
     data: {
-      source: "XLSX",
+      source,
       status: "PENDING",
       mode: options.mode,
       fileUrl: filePath,
       fileName: file.name,
       options: options as unknown as Prisma.InputJsonValue,
+      errors: [breadcrumb] as unknown as Prisma.InputJsonValue,
       createdBy: session.user.id,
     },
     select: { id: true },
   });
 
-  // Procesado garantizado con `after()`: corre tras devolver la response al
-  // cliente, pero dentro de la misma function execution (maxDuration=300).
-  // Si processImportJob lanza, lo capturamos y persistimos FAILED con el
-  // mensaje + stack truncado para que el cliente lo vea en el polling.
+  // Procesado garantizado con `after()`: corre tras devolver la response, pero
+  // dentro de la misma function execution (maxDuration=300). Enrutamos según
+  // el feed detectado. Si el procesador lanza, persistimos FAILED + stack.
   after(async () => {
     const t0 = Date.now();
-    console.log(`[import:xlsx] job ${job.id} → arranque after() · file=${file.name} · size=${(file.size / 1024).toFixed(1)} KB`);
+    console.log(
+      `[import:tabla] job ${job.id} → arranque after() · file=${file.name} · format=${format} · feed=${feedKind} · size=${(file.size / 1024).toFixed(1)} KB`,
+    );
     try {
-      await processImportJob(job.id);
-      console.log(`[import:xlsx] job ${job.id} → done en ${((Date.now() - t0) / 1000).toFixed(1)} s`);
+      if (feedKind === "woocommerce") {
+        await processWooCommerceImportJob(job.id);
+      } else {
+        await processImportJob(job.id);
+      }
+      console.log(
+        `[import:tabla] job ${job.id} → done en ${((Date.now() - t0) / 1000).toFixed(1)} s`,
+      );
     } catch (err) {
       const e = err as Error;
-      console.error(`[import:xlsx] job ${job.id} FAILED tras ${((Date.now() - t0) / 1000).toFixed(1)} s:`, e);
-      // Persistimos el error en el job para que se vea en /api/import/jobs/[id].
+      console.error(
+        `[import:tabla] job ${job.id} FAILED tras ${((Date.now() - t0) / 1000).toFixed(1)} s:`,
+        e,
+      );
       await db.importJob
         .update({
           where: { id: job.id },
@@ -119,6 +164,7 @@ export async function POST(req: Request) {
             status: "FAILED",
             finishedAt: new Date(),
             errors: [
+              breadcrumb,
               {
                 row: 0,
                 code: "PROCESS_ERROR",
@@ -133,10 +179,16 @@ export async function POST(req: Request) {
           },
         })
         .catch((dbErr) => {
-          console.error(`[import:xlsx] no pude persistir FAILED:`, dbErr);
+          console.error(`[import:tabla] no pude persistir FAILED:`, dbErr);
         });
     }
   });
 
-  return NextResponse.json({ jobId: job.id }, { status: 202 });
+  return NextResponse.json({ jobId: job.id, feedKind, format }, { status: 202 });
 }
+
+// Nota sobre breadcrumbs: tanto processImportJob como processWooCommerceImportJob
+// reescriben errors[] al arrancar (con sus propios breadcrumbs INFO). El INFO de
+// "Formato/Feed" que persistimos aquí es visible mientras el job está PENDING y
+// queda registrado en el log de arranque; los procesadores añaden los suyos
+// encima en cuanto pasan a RUNNING.

@@ -58,6 +58,10 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "sharp",
     "exceljs",
+    // SheetJS (lector universal de tablas: xlsx/xls/ods/csv…). Es CommonJS
+    // Node-only; lo dejamos external para que el bundler de producción no lo
+    // procese y se cargue tal cual en runtime Node.
+    "xlsx",
     "@prisma/client",
     "bcryptjs",
     // paapi5-nodejs-sdk usa imports relativos sin "./" que el bundler de
