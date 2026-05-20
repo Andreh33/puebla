@@ -55,14 +55,11 @@ const PAGE_NAV: Array<{ label: string; href: string }> = [
 ];
 
 /**
- * Sub-tabs para infantil: Niño / Niña / Accesorios. Aparecen tras los
- * GENDER_TABS principales en la pill desktop, justo antes del separador
- * a PAGE_NAV. Los slugs sin tildes son los canónicos; las URLs con tilde
- * se redirigen aquí desde next.config.ts.
+ * Sub-tab simple: Accesorios. Niño y Niña ahora son tabs con mega-menú
+ * (viven en GENDER_TABS). Accesorios sigue como link directo porque no
+ * tiene desplegable propio — lleva a la categoría root.
  */
 const SUBTABS_NINOS: Array<{ label: string; href: string }> = [
-  { label: "Niño", href: "/nino" },
-  { label: "Niña", href: "/nina" },
   { label: "Accesorios", href: "/accesorios" },
 ];
 
@@ -84,10 +81,21 @@ const GENDER_TABS: Array<{
     href: "/hombre",
     match: (p) => p === "/hombre" || p.startsWith("/hombre/"),
   },
-  // "Niños" eliminado del switch principal a petición del cliente:
-  // Niño y Niña pasan a ser entradas separadas en SUBTABS_NINOS,
-  // justo después de los géneros, para que se vea claramente la
-  // separación de catálogos infantiles por sexo.
+  // Niño y Niña: tabs con su propio mega-menú (ROPA/CALZADO/ACCESORIOS),
+  // igual que Mujer/Hombre. El href /nino|/nina redirige (next.config) a
+  // /catalogo?genero=NINO|NINA. El `match` cubre ambas variantes.
+  {
+    key: "nino",
+    label: "Niño",
+    href: "/nino",
+    match: (p) => p === "/nino" || p.startsWith("/nino/") || p === "/ninos",
+  },
+  {
+    key: "nina",
+    label: "Niña",
+    href: "/nina",
+    match: (p) => p === "/nina" || p.startsWith("/nina/"),
+  },
 ];
 
 /** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */

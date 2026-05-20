@@ -30,10 +30,10 @@ export type MegaMenuSection = {
   groups: MegaMenuGroup[];
 };
 
-/** Tab raíz del mega-menú (Mujer / Hombre / Niños). */
+/** Tab raíz del mega-menú (Mujer / Hombre / Niño / Niña). */
 export type MegaMenuTab = {
-  /** Slug del landing (`/mujer`, `/hombre`, `/ninos`). */
-  href: "/mujer" | "/hombre" | "/ninos";
+  /** Slug del landing (`/mujer`, `/hombre`, `/nino`, `/nina`, `/ninos`). */
+  href: "/mujer" | "/hombre" | "/ninos" | "/nino" | "/nina";
   label: string;
   /** Imagen lifestyle sticky en el panel desktop. */
   heroImage: string;
@@ -176,6 +176,8 @@ export const MEGA_MENU: {
   mujer: MegaMenuTab;
   hombre: MegaMenuTab;
   ninos: MegaMenuTab;
+  nino: MegaMenuTab;
+  nina: MegaMenuTab;
 } = {
   mujer: {
     href: "/mujer",
@@ -221,10 +223,40 @@ export const MEGA_MENU: {
     // independiente debajo de las dos columnas de ropa/calzado.
     sharedAccessories: ACCESORIOS_NINOS,
   },
+  // Niño y Niña como tabs independientes con su propio mega-menú (a
+  // petición del cliente: misma experiencia desplegable que Mujer/Hombre,
+  // no links planos). Cada uno con una sección única (ROPA + CALZADO +
+  // ACCESORIOS) en lugar de la versión combinada "ninos".
+  nino: {
+    href: "/nino",
+    label: "Niño",
+    heroImage: "/category-photos/ninos-hero.webp",
+    sections: [
+      {
+        gender: "NINO",
+        label: "Niño",
+        groups: [ROPA_NINO, CALZADO_NINO, ACCESORIOS_NINOS],
+      },
+    ],
+  },
+  nina: {
+    href: "/nina",
+    label: "Niña",
+    heroImage: "/category-photos/ninos-hero.webp",
+    sections: [
+      {
+        gender: "NINA",
+        label: "Niña",
+        groups: [ROPA_NINA, CALZADO_NINA, ACCESORIOS_NINOS],
+      },
+    ],
+  },
 };
 
 export type MegaMenuKey = keyof typeof MEGA_MENU;
-export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "ninos"];
+// El header usa mujer/hombre/nino/nina (el combinado "ninos" queda
+// definido por compat con /ninos pero no se dispara desde el header).
+export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina"];
 
 /**
  * Construye la URL navegable para un item del mega-menú.
