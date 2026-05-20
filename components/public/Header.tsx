@@ -108,7 +108,10 @@ const TICKER_PHRASES = [
   "Asesoramiento real, no postureo",
 ] as const;
 
-const MEGA_CLOSE_DELAY_MS = 120;
+// Delay generoso al cerrar el mega-menú: da tiempo a cruzar el gap entre
+// la pill flotante y el panel sin que se cierre debajo del cursor. El
+// puente invisible del MegaMenu cubre el hueco; este margen es el colchón.
+const MEGA_CLOSE_DELAY_MS = 260;
 
 export function Header() {
   const pathname = usePathname() ?? "/";

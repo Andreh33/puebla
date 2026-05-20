@@ -293,7 +293,13 @@ export function HomeHero() {
           style={{ boxShadow: "0 14px 40px -10px rgba(249, 115, 22, 0.55)" }}
         >
           <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay zs-grain" aria-hidden />
-          <div className="flex flex-1 items-center gap-5 sm:gap-7">
+          {/* Brillo que barre el banner de lado a lado en bucle. Banda
+              diagonal blanca semitransparente que cruza con `zs-shine-sweep`.
+              Respeta prefers-reduced-motion (no anima). */}
+          <span aria-hidden className="zs-shine pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+            <span className="zs-shine-bar" />
+          </span>
+          <div className="relative flex flex-1 items-center gap-5 sm:gap-7">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 backdrop-blur sm:h-16 sm:w-16">
               <Sparkles className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.25} />
             </span>
@@ -382,8 +388,33 @@ export function HomeHero() {
         .zs-brand-track {
           animation: zs-brand-scroll 38s linear infinite;
         }
+        /* Brillo que barre el banner de ofertas de lado a lado. La banda
+           diagonal arranca fuera por la izquierda y cruza hasta salir por
+           la derecha, con una pausa entre pasadas. */
+        .zs-shine-bar {
+          position: absolute;
+          top: -50%;
+          left: -75%;
+          width: 50%;
+          height: 200%;
+          transform: skewX(-20deg);
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.05) 40%,
+            rgba(255, 255, 255, 0.45) 50%,
+            rgba(255, 255, 255, 0.05) 60%,
+            transparent 100%
+          );
+          animation: zs-shine-sweep 3.8s ease-in-out infinite;
+        }
+        @keyframes zs-shine-sweep {
+          0% { left: -75%; }
+          55%, 100% { left: 130%; }
+        }
         @media (prefers-reduced-motion: reduce) {
           .zs-brand-track { animation: none !important; }
+          .zs-shine-bar { animation: none !important; opacity: 0; }
         }
       `}</style>
     </section>

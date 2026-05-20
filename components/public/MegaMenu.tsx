@@ -79,6 +79,14 @@ export function MegaMenu({
           : "pointer-events-none -translate-y-2 opacity-0",
       )}
     >
+      {/* Puente invisible: extiende la zona de hover ~20px hacia arriba para
+          cubrir el gap entre la pill flotante del header y el panel. Sin esto
+          el cursor "cae" en zona muerta al bajar y el menú se cierra antes
+          de llegar. Como es hijo del panel (que tiene onMouseEnter), mantiene
+          el hover vivo al cruzar el hueco. */}
+      {open && (
+        <span aria-hidden className="absolute inset-x-0 -top-5 h-5" />
+      )}
       {tab && (
         <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
