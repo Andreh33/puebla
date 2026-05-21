@@ -4,6 +4,7 @@ import { db, type Prisma } from "@/lib/db";
 import { slugifyEs, uniqueSlug } from "@/lib/seo/slug";
 import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
 import type { FootwearType } from "@/lib/categories/footwear";
+import type { GarmentType } from "@/lib/categories/garment";
 import type { z } from "zod";
 
 export type ProductInput = z.infer<typeof ProductSchema>;
@@ -407,6 +408,52 @@ export async function bulkSetFootwearType(
       userId,
       action: "bulk_footweartype",
       changes: { footwearType: { to: footwearType } } as Prisma.InputJsonValue,
+    })),
+  });
+  return res.count;
+}
+
+/**
+ * Bloque 6: asigna garmentType en lote. Solo productos de FAMILIA TEXTIL.
+ * Guard autoritativo (servidor): si algún seleccionado NO es textil (calzado/
+ * accesorios) o no tiene primaryCategory (sin categorizar), aborta con error
+ * enumerable. Doble validación con el cliente (que también filtra por isTextil).
+ */
+export async function bulkSetGarmentType(
+  ids: string[],
+  garmentType: GarmentType | null,
+  userId?: string,
+) {
+  if (!ids.length) return 0;
+  const nonTextilWhere: Prisma.ProductWhereInput = {
+    id: { in: ids },
+    OR: [
+      { primaryCategoryId: null }, // sin categorizar (los 6 del Bloque 2)
+      { primaryCategory: { slug: { not: { endsWith: "-textil" } } } }, // calzado/accesorios
+    ],
+  };
+  const nonTextilSample = await db.product.findMany({
+    where: nonTextilWhere,
+    select: { id: true, name: true },
+    take: 3,
+  });
+  if (nonTextilSample.length > 0) {
+    const total = await db.product.count({ where: nonTextilWhere });
+    const names = nonTextilSample.map((p) => p.name).join('", "');
+    throw new Error(
+      `${total} producto(s) seleccionado(s) no son de textil. Ejemplos: "${names}"${total > 3 ? " …" : ""}`,
+    );
+  }
+  const res = await db.product.updateMany({
+    where: { id: { in: ids } },
+    data: { garmentType },
+  });
+  await db.productAudit.createMany({
+    data: ids.map((productId) => ({
+      productId,
+      userId,
+      action: "bulk_garmenttype",
+      changes: { garmentType: { to: garmentType } } as Prisma.InputJsonValue,
     })),
   });
   return res.count;
