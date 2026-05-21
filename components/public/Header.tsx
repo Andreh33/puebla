@@ -199,14 +199,48 @@ export function Header() {
   useEffect(() => {
     if (megaKey === null) return;
     const onDocClick = (e: MouseEvent) => {
-      if (!navRef.current) return;
-      if (!navRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inNav = navRef.current?.contains(target) ?? false;
+      // El panel cuelga FUERA de navRef (es hermano de la pill). Sin contemplarlo,
+      // pulsar una opción del panel cierra el menú en `mousedown` y desmonta el
+      // enlace ANTES de que el click navegue → el enlace no lleva a ningún sitio.
+      const inPanel = document.querySelector('[role="menu"]')?.contains(target) ?? false;
+      if (!inNav && !inPanel) {
         setMegaKey(null);
       }
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [megaKey]);
+
+  // Cierre del mega-menú por POSICIÓN del cursor. Mientras hay un tab abierto,
+  // seguimos el puntero: si está dentro de la "zona caliente" (pill + el hueco
+  // + el panel) lo mantenemos abierto; si sale, programamos el cierre. Es
+  // robusto frente a los problemas de mouseenter/mouseleave con el panel
+  // `absolute` (el panel cuelga fuera de la caja del wrapper) y frente a los
+  // reflows de la home que disparaban `mouseleave` espurios en reposo.
+  useEffect(() => {
+    if (megaKey === null) return;
+    const onMove = (e: PointerEvent) => {
+      const pill = navRef.current?.getBoundingClientRect();
+      if (!pill) return;
+      const panel = document
+        .querySelector('[role="menu"]')
+        ?.getBoundingClientRect();
+      const left = panel ? Math.min(pill.left, panel.left) : pill.left;
+      const right = panel ? Math.max(pill.right, panel.right) : pill.right;
+      const bottom = panel && panel.bottom > pill.bottom ? panel.bottom : pill.bottom;
+      const inside =
+        e.clientX >= left &&
+        e.clientX <= right &&
+        e.clientY >= pill.top &&
+        e.clientY <= bottom;
+      if (inside) cancelClose();
+      else scheduleClose();
+    };
+    document.addEventListener("pointermove", onMove);
+    return () => document.removeEventListener("pointermove", onMove);
+  }, [megaKey, cancelClose, scheduleClose]);
 
   useEffect(() => () => cancelClose(), [cancelClose]);
 
@@ -244,7 +278,6 @@ export function Header() {
         <div className="px-3 pt-3 sm:px-5 sm:pt-4">
           <div
             ref={navRef}
-            onMouseLeave={scheduleClose}
             className={cn(
               "mx-auto flex max-w-[1180px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-2.5 backdrop-blur-md transition-shadow sm:gap-3 sm:px-4 sm:py-3",
               scrolled ? "shadow-xl" : "shadow-lg",
@@ -436,20 +469,24 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mega-menú desktop — debajo de la pill, contenedor centrado */}
-          <div className="relative mx-auto max-w-[1180px]">
-            <MegaMenu
-              activeKey={megaKey}
-              onClose={closeMega}
-              onMouseEnter={cancelClose}
-              onMouseLeave={scheduleClose}
-              triggerId={
-                megaKey
-                  ? `${triggerIdPrefix}-mega-trigger-${megaKey}`
-                  : undefined
-              }
-            />
-          </div>
+          {/* Mega-menú desktop — el panel se PORTALIZA a <body> (no vive aquí
+              dentro del header). El header tiene `will-change-transform`, lo
+              que lo promueve a capa GPU propia; con el panel anidado, el
+              wrapper transformado de la home + el vídeo `fixed` capturaban los
+              clics aunque el panel se pintara encima (bug de hit-testing entre
+              capas compositadas). Al portalizarlo a <body> como hermano del
+              contenido, `position:fixed` + z gana el hit-test. Le pasamos
+              `navRef` (la pill) como ancla para posicionarlo donde estaba. */}
+          <MegaMenu
+            activeKey={megaKey}
+            onClose={closeMega}
+            anchorRef={navRef}
+            triggerId={
+              megaKey
+                ? `${triggerIdPrefix}-mega-trigger-${megaKey}`
+                : undefined
+            }
+          />
         </div>
 
         {/* ─────────────────────────────────────────────────────────────────

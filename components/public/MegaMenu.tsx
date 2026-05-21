@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -27,27 +28,46 @@ export type MegaMenuProps = {
   activeKey: MegaMenuKey | null;
   /** Handler para que el contenido pueda solicitar cierre (link clicked, Esc). */
   onClose: () => void;
-  /**
-   * Handlers para que el panel mantenga el "hover bridge" — si el usuario mueve
-   * el cursor desde el tab al panel sin salir, se mantiene abierto.
-   */
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
   /** id del elemento que dispara el panel — para aria-labelledby. */
   triggerId?: string;
+  /**
+   * Ref a la pill del header. El panel se portaliza a <body> y se posiciona
+   * `fixed` justo bajo esta caja (mismo ancho/izquierda que la pill), de modo
+   * que queda pixel-idéntico a cuando vivía dentro del header pero sin heredar
+   * su capa compositada (que rompía el hit-testing de los enlaces).
+   */
+  anchorRef?: RefObject<HTMLDivElement | null>;
 };
 
 export function MegaMenu({
   activeKey,
   onClose,
-  onMouseEnter,
-  onMouseLeave,
   triggerId,
+  anchorRef,
 }: MegaMenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const open = activeKey !== null;
   const tab = open ? MEGA_MENU[activeKey] : null;
+
+  // El portal sólo existe en cliente (document.body no está en SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  // Posición `fixed` del panel = caja de la pill (anchorRef). Se mide al abrir
+  // y al redimensionar. Mientras está abierto el header no se oculta, así que
+  // la caja es estable.
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  useEffect(() => {
+    if (!open) return;
+    const measure = () => {
+      const r = anchorRef?.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom, left: r.left, width: r.width });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [open, anchorRef]);
 
   // Cerrar al pulsar Escape mientras el panel está abierto.
   useEffect(() => {
@@ -62,31 +82,22 @@ export function MegaMenu({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  return (
+  const panel = (
     <div
       ref={panelRef}
       id={panelId}
       role="menu"
       aria-labelledby={triggerId}
       aria-hidden={!open}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      style={{ top: pos.top, left: pos.left, width: pos.width }}
       className={cn(
-        "absolute left-0 right-0 top-full z-30 hidden border-b border-zs-border bg-white/95 backdrop-blur-xl shadow-2xl",
+        "fixed z-[60] hidden border-b border-zs-border bg-white/95 backdrop-blur-xl shadow-2xl",
         "transition-[opacity,transform] duration-200 ease-out lg:block",
         open
           ? "pointer-events-auto translate-y-0 opacity-100"
           : "pointer-events-none -translate-y-2 opacity-0",
       )}
     >
-      {/* Puente invisible: extiende la zona de hover ~20px hacia arriba para
-          cubrir el gap entre la pill flotante del header y el panel. Sin esto
-          el cursor "cae" en zona muerta al bajar y el menú se cierra antes
-          de llegar. Como es hijo del panel (que tiene onMouseEnter), mantiene
-          el hover vivo al cruzar el hueco. */}
-      {open && (
-        <span aria-hidden className="absolute inset-x-0 -top-5 h-5" />
-      )}
       {tab && (
         <div className="mx-auto max-w-7xl px-6 py-8">
           <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
@@ -140,21 +151,14 @@ export function MegaMenu({
                   onItemClick={onClose}
                 />
               ))}
-
-              {/* Accesorios compartidos (sólo Niños) */}
-              {tab.sharedAccessories && (
-                <SharedAccessoriesRow
-                  group={tab.sharedAccessories}
-                  sections={tab.sections}
-                  onItemClick={onClose}
-                />
-              )}
             </div>
           </div>
         </div>
       )}
     </div>
   );
+
+  return mounted ? createPortal(panel, document.body) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,56 +215,6 @@ function GroupColumn({
             <Link
               role="menuitem"
               href={buildMegaMenuHref(item, gender)}
-              onClick={onItemClick}
-              className="group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none"
-            >
-              <span className="relative">
-                {item.label}
-                <span
-                  aria-hidden
-                  className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
-                />
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-/**
- * Fila de accesorios compartida (sólo Niños). Mostramos un único bloque que
- * navega usando el género del primer sub-tab (NINO) por convención: la
- * sub-categoría de accesorio no tiene género propio en la taxonomía del
- * cliente — un balón es un balón sea para niño o niña.
- *
- * Para que el filtro `genero` siga teniendo sentido, exponemos un toggle
- * de chips (Niño / Niña) que cambia el query param de los links.
- */
-function SharedAccessoriesRow({
-  group,
-  sections,
-  onItemClick,
-}: {
-  group: MegaMenuGroup;
-  sections: MegaMenuSection[];
-  onItemClick: () => void;
-}) {
-  // Por defecto los accesorios de Niños usan el primer sub-género disponible.
-  const defaultGender = sections[0]?.gender ?? "NINO";
-
-  return (
-    <div className="rounded-2xl border border-zs-border bg-zs-surface/50 p-5">
-      <h4 className="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-zs-ink">
-        {group.title}
-      </h4>
-      <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5">
-        {group.items.map((item) => (
-          <li key={`accesorios-${item.label}`}>
-            <Link
-              role="menuitem"
-              href={buildMegaMenuHref(item, defaultGender)}
               onClick={onItemClick}
               className="group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none"
             >
@@ -357,29 +311,6 @@ export function MegaMenuMobile({
               </div>
             ))}
 
-            {tab.sharedAccessories && (
-              <div>
-                <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-zs-muted">
-                  {tab.sharedAccessories.title}
-                </p>
-                <ul className="grid grid-cols-2 gap-x-3">
-                  {tab.sharedAccessories.items.map((item) => (
-                    <li key={`accesorios-${item.label}`}>
-                      <Link
-                        href={buildMegaMenuHref(
-                          item,
-                          tab.sections[0]?.gender ?? "NINO",
-                        )}
-                        onClick={onLinkClick}
-                        className="block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         </div>
       </div>
