@@ -736,6 +736,10 @@ const RESERVED_SLUGS = new Set([
   "mujer",
   "hombre",
   "ninos",
+  // Niño y Niña: hubs propios en /nino y /nina (Bloque 4). Reservados para que
+  // la ruta [categoria] no los capture como categoría del catálogo.
+  "nino",
+  "nina",
   "carrito",
 ]);
 

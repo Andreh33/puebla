@@ -26,11 +26,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      // Atajos de género para el header: /nino, /nina, /accesorios.
-      // /accesorios ya existe como categoría root; /nino y /nina redirigen
-      // al catálogo filtrado por género para evitar duplicar páginas.
-      { source: "/nino", destination: "/catalogo?genero=NINO", permanent: false },
-      { source: "/nina", destination: "/catalogo?genero=NINA", permanent: false },
+      // /nino y /nina YA NO redirigen: desde el Bloque 4 son hubs reales
+      // (app/(public)/nino|nina/page.tsx con GenderLanding + GenderHub).
+      //
+      // El plural combinado /ninos se retira en favor del modelo
+      // género→familia separado por hubs; el tráfico legacy redirige al hub
+      // de niño por defecto (301 permanente; Next emite 308, equivalente).
+      { source: "/ninos", destination: "/nino", permanent: true },
     ];
   },
   async headers() {
