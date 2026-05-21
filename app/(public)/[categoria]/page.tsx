@@ -106,6 +106,7 @@ export default async function CategoryPage({
     colors: [],
     sizes: [],
     footwearTypes: [],
+    garmentTypes: [],
     priceMin: 0,
     priceMax: 500,
   };

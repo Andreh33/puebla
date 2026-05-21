@@ -122,6 +122,7 @@ export default async function SeccionFamiliaPage({
     colors: [],
     sizes: [],
     footwearTypes: [],
+    garmentTypes: [],
     priceMin: 0,
     priceMax: 500,
   };

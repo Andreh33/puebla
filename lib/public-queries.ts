@@ -753,6 +753,7 @@ export type CategoryFilterParams = {
   color?: string[];
   talla?: string[];
   tipo?: string[]; // Bloque 3: tipo de calzado (footwearType)
+  prenda?: string[]; // Bloque 6: tipo de prenda (garmentType)
   min?: number;
   max?: number;
   oferta?: boolean;
@@ -781,6 +782,7 @@ export function parseCategoryParams(searchParams: Record<string, string | string
     color: arr(searchParams.color),
     talla: arr(searchParams.talla),
     tipo: arr(searchParams.tipo),
+    prenda: arr(searchParams.prenda),
     min: num(searchParams.min),
     max: num(searchParams.max),
     oferta: searchParams.oferta === "1",
@@ -850,6 +852,10 @@ export function buildProductWhere(opts: {
   if (filters.tipo && filters.tipo.length > 0) {
     andClauses.push({ footwearType: { in: filters.tipo } });
   }
+  // Bloque 6: filtro multi de tipo de prenda (textil). Mismo andClauses (intersección AND).
+  if (filters.prenda && filters.prenda.length > 0) {
+    andClauses.push({ garmentType: { in: filters.prenda } });
+  }
   if (andClauses.length > 0) {
     where.AND = andClauses;
   }
@@ -877,7 +883,7 @@ export async function getCategoryFacets(categoryId: string) {
   // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
   const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId } } };
 
-  const [brands, genders, colors, sizes, priceRange, footwearGroups] = await Promise.all([
+  const [brands, genders, colors, sizes, priceRange, footwearGroups, garmentGroups] = await Promise.all([
     db.product.groupBy({
       by: ["brandId"],
       where: baseWhere,
@@ -915,6 +921,12 @@ export async function getCategoryFacets(categoryId: string) {
       _count: { _all: true },
       orderBy: { _count: { footwearType: "desc" } },
     }),
+    db.product.groupBy({
+      by: ["garmentType"],
+      where: { ...baseWhere, garmentType: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { garmentType: "desc" } },
+    }),
   ]);
 
   const brandIds = brands.map((b) => b.brandId);
@@ -949,6 +961,11 @@ export async function getCategoryFacets(categoryId: string) {
     footwearTypes: footwearGroups
       .filter((f) => f.footwearType)
       .map((f) => ({ value: f.footwearType as string, label: f.footwearType as string, count: f._count._all })),
+    // Bloque 6: value = clave garmentType; el label legible lo aplica ProductFilters
+    // con GARMENT_TYPE_LABELS (igual que footwearTypes/genders, clave cruda).
+    garmentTypes: garmentGroups
+      .filter((g) => g.garmentType)
+      .map((g) => ({ value: g.garmentType as string, label: g.garmentType as string, count: g._count._all })),
     priceMin: priceRange._min.retailPrice ? Number(priceRange._min.retailPrice) : 0,
     priceMax: priceRange._max.retailPrice ? Number(priceRange._max.retailPrice) : 500,
   };

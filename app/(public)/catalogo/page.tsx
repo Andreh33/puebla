@@ -139,6 +139,7 @@ export default async function CatalogoPage({
       .map((c) => ({ value: c.colorName, label: c.colorName, count: c._count._all })),
     sizes: sizes.map((s) => ({ value: s.size, label: s.size, count: s._count._all })),
     footwearTypes: [], // catálogo no muestra el filtro de tipo (solo páginas de calzado)
+    garmentTypes: [], // idem: el catálogo no muestra el filtro de prenda
     priceMin: 0,
     priceMax: 500,
   };
