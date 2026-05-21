@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
+import { selectAnimatedBorderIds } from "@/lib/products/visual";
 import { ProductFilters } from "@/components/public/ProductFilters";
 import { EmptyState } from "@/components/public/EmptyState";
 import {
@@ -225,6 +226,9 @@ export default async function SeccionFamiliaPage({
     return qs ? `/${seccion}/${familia}?${qs}` : `/${seccion}/${familia}`;
   };
 
+  // Borde pastel animado en ~20% del listado actual (no del catálogo total).
+  const animatedIds = selectAnimatedBorderIds(products);
+
   return (
     <>
       <script
@@ -299,7 +303,12 @@ export default async function SeccionFamiliaPage({
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
                 {products.map((p, i) => (
-                  <ProductCard key={p.id} priority={i < 4} product={p} />
+                  <ProductCard
+                    key={p.id}
+                    priority={i < 4}
+                    product={p}
+                    animated={animatedIds.has(p.id)}
+                  />
                 ))}
               </div>
             )}

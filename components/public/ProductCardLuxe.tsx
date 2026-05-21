@@ -18,6 +18,12 @@ type Props = {
   priority?: boolean;
   sizes?: string;
   className?: string;
+  /**
+   * Controla el borde pastel animado. Si el listado lo pasa (selección ~20% del
+   * listado actual vía selectAnimatedBorderIds) tiene prioridad; si se omite,
+   * fallback al hash determinista por slug (hasAnimatedBorder).
+   */
+  animated?: boolean;
   /** Callback opcional para abrir un "quick view" tipo Sheet. */
   onQuickView?: (product: ProductCardProduct) => void;
 };
@@ -38,6 +44,7 @@ export function ProductCardLuxe({
   priority = false,
   sizes,
   className,
+  animated,
   onQuickView,
 }: Props) {
   const { final, retail, onSale, discountPct } = effectivePrice(
@@ -52,8 +59,9 @@ export function ProductCardLuxe({
   const title = stripHtml(product.name || product.shortName);
   const isAmazon = product.source === "AMAZON";
   const secondary = product.secondaryImageUrl ?? null;
-  // ~20% de las cards llevan borde pastel animado (determinista por slug).
-  const animatedBorder = hasAnimatedBorder(product.slug);
+  // Borde pastel animado: si el listado pasa `animated` (selección ~20% del
+  // listado actual) lo respetamos; si no, fallback al hash por slug.
+  const animatedBorder = animated ?? hasAnimatedBorder(product.slug);
   const ref = useRef<HTMLAnchorElement | null>(null);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [mobileIndex, setMobileIndex] = useState(0);

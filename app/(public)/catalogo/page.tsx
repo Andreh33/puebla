@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
+import { selectAnimatedBorderIds } from "@/lib/products/visual";
 import { ProductFilters } from "@/components/public/ProductFilters";
 import { GenderChips } from "@/components/public/GenderChips";
 import { EmptyState } from "@/components/public/EmptyState";
@@ -159,6 +160,9 @@ export default async function CatalogoPage({
     totalStock: p.sizes.reduce((acc, s) => acc + s.stock, 0),
   }));
 
+  // Borde pastel animado en ~20% del listado actual (no del catálogo total).
+  const animatedIds = selectAnimatedBorderIds(productsMapped);
+
   const totalPages = Math.max(1, Math.ceil(count / perPage));
   const currentPage = Math.min(currentPageRequested, totalPages);
 
@@ -237,7 +241,7 @@ export default async function CatalogoPage({
                 <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {productsMapped.map((p) => (
                     <li key={p.id}>
-                      <ProductCard product={p} />
+                      <ProductCard product={p} animated={animatedIds.has(p.id)} />
                     </li>
                   ))}
                 </ul>
