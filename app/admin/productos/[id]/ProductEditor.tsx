@@ -52,7 +52,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
 import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
-import { GARMENT_TYPES, GARMENT_TYPE_LABELS } from "@/lib/categories/garment";
+import { GARMENT_TYPES, GARMENT_TYPE_LABELS, GARMENT_VARIANTS, GARMENT_VARIANT_LABELS, VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
 import { slugifyEs } from "@/lib/seo/slug";
 import { formatDateTimeES } from "@/lib/utils";
 import {
@@ -92,6 +92,7 @@ interface EditorProps {
     sportUse: string | null;
     footwearType: string | null;
     garmentType: string | null;
+    garmentVariant: string | null;
     primaryCategorySlug: string | null;
     composition: string | null;
     costPrice: number | null;
@@ -193,6 +194,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     sportUse: initial?.sportUse ?? null,
     footwearType: (initial?.footwearType as FormValues["footwearType"]) ?? null,
     garmentType: (initial?.garmentType as FormValues["garmentType"]) ?? null,
+    garmentVariant: (initial?.garmentVariant as FormValues["garmentVariant"]) ?? null,
     composition: initial?.composition ?? null,
     costPrice: initial?.costPrice ?? null,
     retailPrice: initial?.retailPrice ?? 0,
@@ -237,6 +239,16 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watched.name, watched.colorName, mode]);
+
+  // Bloque 6 §18: si garmentType cambia a un tipo incompatible con la variante
+  // actual, limpiar garmentVariant (evita estados inconsistentes en el form).
+  React.useEffect(() => {
+    if (watched.garmentVariant && watched.garmentType) {
+      const expectedType = VARIANT_TO_TYPE[watched.garmentVariant as GarmentVariant];
+      if (expectedType !== watched.garmentType) setValue("garmentVariant", null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watched.garmentType]);
 
   // Slug validation debounced
   React.useEffect(() => {
@@ -567,6 +579,31 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         {GARMENT_TYPES.map((t) => (
                           <SelectItem key={t} value={t}>
                             {GARMENT_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {/* Variante de prenda — solo si garmentType ∈ camiseta/pantalon/mallas
+                    (Bloque 6 §18). Reactivo a watched.garmentType. "__none__" = null. */}
+                {watched.garmentType && ["camiseta", "pantalon", "mallas"].includes(watched.garmentType) && (
+                  <div>
+                    <Label htmlFor="garmentVariant">Variante de {watched.garmentType}</Label>
+                    <Select
+                      value={watched.garmentVariant ?? "__none__"}
+                      onValueChange={(v) =>
+                        setValue("garmentVariant", v === "__none__" ? null : (v as FormValues["garmentVariant"]))
+                      }
+                    >
+                      <SelectTrigger id="garmentVariant">
+                        <SelectValue placeholder="(sin asignar)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {GARMENT_VARIANTS.filter((v) => VARIANT_TO_TYPE[v] === watched.garmentType).map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {GARMENT_VARIANT_LABELS[v]}
                           </SelectItem>
                         ))}
                       </SelectContent>
