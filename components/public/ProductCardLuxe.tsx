@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { stripHtml, decodeEntities } from "@/lib/utils/html";
 import { useSwipe } from "@/hooks/use-swipe";
 import { stockBadge, type ProductCardProduct } from "@/components/public/ProductCard";
+import { hasAnimatedBorder } from "@/lib/products/visual";
 
 type Props = {
   product: ProductCardProduct & { secondaryImageUrl?: string | null };
@@ -51,6 +52,8 @@ export function ProductCardLuxe({
   const title = stripHtml(product.name || product.shortName);
   const isAmazon = product.source === "AMAZON";
   const secondary = product.secondaryImageUrl ?? null;
+  // ~20% de las cards llevan borde pastel animado (determinista por slug).
+  const animatedBorder = hasAnimatedBorder(product.slug);
   const ref = useRef<HTMLAnchorElement | null>(null);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [mobileIndex, setMobileIndex] = useState(0);
@@ -83,6 +86,7 @@ export function ProductCardLuxe({
       className={cn(
         "zs-tilt-luxe group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out",
         "hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow-lg)]",
+        animatedBorder && "product-card--animated",
         className,
       )}
       aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}

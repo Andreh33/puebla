@@ -366,3 +366,22 @@
     opacity: 0.8;
   }
 }
+
+/* Bloque 7 (7.5): borde pastel animado en ~20% de las cards (determinista por
+   slug, ver lib/products/visual.ts). La animación de border-color prevalece
+   sobre `border-zs-border` (propiedad animada). Mismo grosor 1px → sin layout shift. */
+@keyframes zs-pastel-border {
+  0% { border-color: #f9c6d3; }
+  25% { border-color: #c6dcf9; }
+  50% { border-color: #c6f9d6; }
+  75% { border-color: #f9eec6; }
+  100% { border-color: #f9c6d3; }
+}
+.product-card--animated {
+  animation: zs-pastel-border 8s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card--animated {
+    animation: none;
+  }
+}
