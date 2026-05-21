@@ -259,6 +259,63 @@
 }
 
 /* ----------------------------------------------------------------------------
+ * Borde cónico animado (Bloque 4 — tarjetas hub TEXTIL/CALZADO)
+ *
+ * Técnica "gradient border via padding": el wrapper `.zs-animated-border` lleva
+ * un conic-gradient de marca como fondo y un padding fino; la tarjeta interior
+ * (`.zs-animated-border__inner`) tapa el centro con su color sólido, dejando
+ * ver solo el borde. Animar el conic requiere registrar el ángulo con
+ * `@property` (un custom property normal NO interpola en keyframes).
+ *
+ * Soporte: la animación se activa solo bajo `@supports (background: paint(angle))`
+ * — proxy de Houdini que es true en Chrome/Edge/Safari y false en Firefox.
+ * Así Firefox muestra el borde (gradiente estático) sin parpadeos. Y
+ * `prefers-reduced-motion: reduce` lo detiene en todos.
+ * Nombres `--color-zs-*` = tokens reales declarados en @theme.
+ * ---------------------------------------------------------------------------- */
+
+@property --zs-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes zs-spin-border {
+  to {
+    --zs-angle: 360deg;
+  }
+}
+
+.zs-animated-border {
+  position: relative;
+  padding: 3px; /* grosor del borde */
+  border-radius: 1.5rem;
+  background: conic-gradient(
+    from var(--zs-angle, 0deg),
+    var(--color-zs-blue-700) 0%,
+    var(--color-zs-red-600) 50%,
+    var(--color-zs-blue-700) 100%
+  );
+}
+
+/* La tarjeta interior tapa el centro; su radio = exterior − padding. */
+.zs-animated-border__inner {
+  border-radius: calc(1.5rem - 3px);
+}
+
+@supports (background: paint(angle)) {
+  .zs-animated-border {
+    animation: zs-spin-border 6s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zs-animated-border {
+    animation: none;
+  }
+}
+
+/* ----------------------------------------------------------------------------
  * Markdown (blog público)
  * ---------------------------------------------------------------------------- */
 
