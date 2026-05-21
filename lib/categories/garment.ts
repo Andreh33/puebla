@@ -147,3 +147,95 @@ export function inferGarmentType(input: InferGarmentInput): GarmentType | null {
     matchByFuzzy(input.name)
   );
 }
+
+// ---------------------------------------------------------------------------
+// Variante fina de prenda (Bloque 6 §18 Fase 3.5)
+// ---------------------------------------------------------------------------
+
+export const GARMENT_VARIANTS = [
+  "manga_corta", "manga_larga", "top", "tirantes",
+  "pantalon_corto", "pantalon_largo",
+  "mallas_cortas", "mallas_largas", "mallas_piratas",
+] as const;
+
+export type GarmentVariant = (typeof GARMENT_VARIANTS)[number];
+
+export const GARMENT_VARIANT_LABELS: Record<GarmentVariant, string> = {
+  manga_corta: "Manga corta",
+  manga_larga: "Manga larga",
+  top: "Top",
+  tirantes: "Tirantes",
+  pantalon_corto: "Pantalón corto",
+  pantalon_largo: "Pantalón largo",
+  mallas_cortas: "Mallas cortas",
+  mallas_largas: "Mallas largas",
+  mallas_piratas: "Mallas piratas",
+};
+
+/**
+ * Mapeo variante → garmentType esperado. La variante SOLO aplica si el garmentType
+ * del producto coincide con esta familia. Sirve además para inferir el filtro de
+ * prenda cuando el público marca solo una variante (?variante= sin ?prenda=).
+ */
+export const VARIANT_TO_TYPE: Record<GarmentVariant, "camiseta" | "pantalon" | "mallas"> = {
+  manga_corta: "camiseta",
+  manga_larga: "camiseta",
+  top: "camiseta",
+  tirantes: "camiseta",
+  pantalon_corto: "pantalon",
+  pantalon_largo: "pantalon",
+  mallas_cortas: "mallas",
+  mallas_largas: "mallas",
+  mallas_piratas: "mallas",
+};
+
+/** garmentTypes que admiten variante fina (fuera de estos, inferGarmentVariant → null). */
+export const TYPES_WITH_VARIANT = ["camiseta", "pantalon", "mallas"] as const;
+
+/** Normaliza para el parser de variante: MAYÚS + sin diacríticos, CONSERVA espacios/símbolos. */
+function normName(s: string): string {
+  return s
+    .replace(/[áàäâ]/gi, "a")
+    .replace(/[éèëê]/gi, "e")
+    .replace(/[íìïî]/gi, "i")
+    .replace(/[óòöô]/gi, "o")
+    .replace(/[úùü]/gi, "u")
+    .replace(/ñ/gi, "n")
+    .toUpperCase();
+}
+
+/**
+ * Infiere la variante fina por tokens del nombre. SOLO aplica si garmentType ∈
+ * {camiseta, pantalon, mallas}; fuera de esos tipos (o sin garmentType) → null.
+ * Parser base (Bloque 6 §18); ampliable con sinónimos vistos en el dry-run (3.5.3).
+ */
+export function inferGarmentVariant(
+  name: string,
+  garmentType: string | null | undefined,
+): GarmentVariant | null {
+  if (!garmentType) return null;
+  const n = normName(name);
+
+  if (garmentType === "camiseta") {
+    if (/\bMANGA[S]?\s+CORTA[S]?\b/.test(n) || /\bM\.?\s*CORTA[S]?\b/.test(n)) return "manga_corta";
+    if (/\bMANGA[S]?\s+LARGA[S]?\b/.test(n) || /\bM\.?\s*LARGA[S]?\b/.test(n)) return "manga_larga";
+    if (/\bTOP\b/.test(n)) return "top";
+    if (/\bTIRANTES?\b/.test(n) || /\bSIN\s+MANGAS?\b/.test(n)) return "tirantes";
+    return null;
+  }
+
+  if (garmentType === "pantalon") {
+    if (/\bPANTALON\s+CORTO[S]?\b/.test(n) || /\bPANT\.?\s+CORTO[S]?\b/.test(n) || /\bSHORT[S]?\b/.test(n)) return "pantalon_corto";
+    if (/\bPANTALON\s+LARGO[S]?\b/.test(n) || /\bPANT\.?\s+LARGO[S]?\b/.test(n)) return "pantalon_largo";
+    return null;
+  }
+
+  if (garmentType === "mallas") {
+    if (/\b(PIRATA[S]?|CAPRI|3\/4)\b/.test(n)) return "mallas_piratas";
+    if (/\bMALLA[S]?\s+CORTA[S]?\b/.test(n)) return "mallas_cortas";
+    if (/\bMALLA[S]?\s+LARGA[S]?\b/.test(n) || /\bLEGGING[S]?\b/.test(n)) return "mallas_largas";
+    return null;
+  }
+
+  return null;
+}
