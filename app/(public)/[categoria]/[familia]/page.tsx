@@ -282,6 +282,7 @@ export default async function SeccionFamiliaPage({
               data={facets}
               resultsCount={total}
               showFootwearFilter={familia === "calzado"}
+              showGarmentFilter={familia === "textil"}
             />
           </div>
 
