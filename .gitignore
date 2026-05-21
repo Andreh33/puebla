@@ -100,3 +100,4 @@ scripts/migration-errors.csv.dry-run
 
 # Screenshots de validación visual de bloques (efímeros)
 previews/screenshot-*.png
+previews/smoke-*.png
