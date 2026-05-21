@@ -6,12 +6,16 @@ import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 const COLS = [
   {
+    // Bloque 4: navegación por hubs género→familia. Antes había un sub-nav de
+    // deportes (Running/Pádel/Montaña/Calzado) con slugs que dejaron de existir
+    // tras el Bloque 2. Reemplazado por los 5 hubs + Marcas.
     title: "Tienda",
     links: [
-      { label: "Running", href: "/running" },
-      { label: "Pádel", href: "/padel" },
-      { label: "Montaña", href: "/montana" },
-      { label: "Calzado", href: "/calzado" },
+      { label: "Hombre", href: "/hombre" },
+      { label: "Mujer", href: "/mujer" },
+      { label: "Niño", href: "/nino" },
+      { label: "Niña", href: "/nina" },
+      { label: "Accesorios", href: "/accesorios" },
       { label: "Marcas", href: "/marcas" },
     ],
   },
