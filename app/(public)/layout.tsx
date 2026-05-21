@@ -4,6 +4,7 @@ import { WhatsAppButton } from "@/components/public/WhatsAppButton";
 import { PwaInstallPrompt } from "@/components/public/PwaInstallPrompt";
 import { PageLoader } from "@/components/public/PageLoader";
 import { DotsBackground } from "@/components/public/DotsBackground";
+import { AppPromoBanner } from "@/components/public/AppPromoBanner";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Footer />
       <WhatsAppButton variant="floating" />
       <PwaInstallPrompt />
+      <AppPromoBanner />
     </>
   );
 }
