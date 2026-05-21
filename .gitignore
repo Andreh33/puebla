@@ -106,3 +106,6 @@ previews/smoke-*.png
 scripts/garment-errors.csv
 scripts/garment-variant-errors.csv
 scripts/footwear-errors.csv
+
+# Registro local de backup branch Neon (Fase 4, no commitear)
+.backup-*.local
