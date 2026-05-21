@@ -410,3 +410,36 @@ el backfill; son afinamientos opcionales vía bulk admin tras aplicar.
   (su token P2 natural). Volumen bajo. Decisión aprobada: **dejarlo como está**;
   reetiquetar a `cortavientos` vía bulk admin tras el backfill si se desea. (Si en
   el futuro el volumen creciera, valorar mover `CHUBASQUERO` a override P0.)
+
+---
+
+## 18. Fase 3.5 — garmentVariant (decidida sobre la marcha)
+
+> (En la instrucción se planteó como "§17"; ese número ya estaba ocupado por las
+> observaciones post-backfill, así que esta sección va como §18.)
+
+Tras la validación de Fase 3 (exploración de variantes Woo), el usuario confirma que
+quiere `garmentVariant` dentro de Bloque 6 (no en un Bloque 7 futuro). **La jerarquía
+Woo NO se preservó en la BD**: las categorías granulares son cascarones vacíos a nivel
+ROOT y los productos viven en las categorías anchas → la granularidad se recupera del
+**nombre**, no de categorías. Decisiones cerradas:
+
+- Campo nuevo `Product.garmentVariant String?` + `@@index([garmentVariant])`.
+  **No reasigna `garmentType`** (los pantalones cortos siguen siendo
+  `garmentType=pantalon`, no se mueven a `bermuda`).
+- Vocabulario de **9 valores**:
+  - `manga_corta`, `manga_larga`, `top`, `tirantes` (aplican a `camiseta`)
+  - `pantalon_corto`, `pantalon_largo` (aplican a `pantalon`)
+  - `mallas_cortas`, `mallas_largas`, `mallas_piratas` (aplican a `mallas`)
+- Clasificador `inferGarmentVariant(name)` por parser de tokens en el nombre. Calco
+  metodológico de la Pasada 2 de `garmentType`. Sin dependencia de la categoría antigua
+  (la jerarquía Woo está aplastada).
+- UI público: **sub-filtros anidados** condicionales bajo cada `garmentType` con
+  variantes. Al marcar "Camisetas" aparecen Manga corta / Manga larga / Top / Tirantes.
+- URL: `?prenda=camiseta&variante=manga_corta,manga_larga`.
+- **8 sub-pasos** (3.5.1 a 3.5.8): aditiva BD, clasificador, backfill, capa de datos
+  admin, UI admin, capa de datos público, UI público, smoke.
+
+Cobertura estimada: **~270 productos** enriquecibles según el export Woo (manga corta
+108, manga larga 26, pantalón corto 61, largo 74, mallas cortas 19, largas 40, piratas
+5, top 9, tirantes 14).
