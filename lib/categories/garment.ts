@@ -221,13 +221,19 @@ export function inferGarmentVariant(
     if (/\bMANGA[S]?\s+LARGA[S]?\b/.test(n) || /\bM\.?\s*LARGA[S]?\b/.test(n)) return "manga_larga";
     if (/\bTOP\b/.test(n)) return "top";
     if (/\bTIRANTES?\b/.test(n) || /\bSIN\s+MANGAS?\b/.test(n)) return "tirantes";
+    // Heurística (3.5.3): POLO sin otro token → manga corta (los polos deportivos
+    // son manga corta por convención).
+    if (/\bPOLO[S]?\b/.test(n)) return "manga_corta";
     return null;
   }
 
   if (garmentType === "pantalon") {
     if (/\bPANTALON\s+CORTO[S]?\b/.test(n) || /\bPANT\.?\s+CORTO[S]?\b/.test(n) || /\bSHORT[S]?\b/.test(n)) return "pantalon_corto";
     if (/\bPANTALON\s+LARGO[S]?\b/.test(n) || /\bPANT\.?\s+LARGO[S]?\b/.test(n)) return "pantalon_largo";
-    return null;
+    // Heurística (3.5.3): pantalon SIN token de longitud → pantalon_largo por
+    // defecto. Exclusión: si fuera corto estaría en garmentType=bermuda (P1
+    // categoría pantalon-corto) o el nombre diría "CORTO".
+    return "pantalon_largo";
   }
 
   if (garmentType === "mallas") {

@@ -38,6 +38,9 @@ describe("inferGarmentVariant — camiseta", () => {
   it("sin token de variante → null", () => {
     expect(inferGarmentVariant("CAMISETA JOMA OLIMPIADA VERDE", "camiseta")).toBeNull();
   });
+  it("POLO → manga_corta (heurística 3.5.3)", () => {
+    expect(inferGarmentVariant("POLO JOMA CREW V ROJO MARINO 103208.603", "camiseta")).toBe("manga_corta");
+  });
 });
 
 describe("inferGarmentVariant — pantalon", () => {
@@ -47,8 +50,8 @@ describe("inferGarmentVariant — pantalon", () => {
   it("LARGO → pantalon_largo", () => {
     expect(inferGarmentVariant("PANTALON LARGO JOMA STAFF", "pantalon")).toBe("pantalon_largo");
   });
-  it("sin indicador de largo → null", () => {
-    expect(inferGarmentVariant("PANTALON JOMA STAFF 100027", "pantalon")).toBeNull();
+  it("sin token de longitud → pantalon_largo por defecto (heurística 3.5.3, exclusión de bermuda)", () => {
+    expect(inferGarmentVariant("PANTALON JOMA STAFF 100027", "pantalon")).toBe("pantalon_largo");
   });
 });
 
@@ -63,6 +66,9 @@ describe("inferGarmentVariant — mallas", () => {
   it("LARGA / LEGGING → mallas_largas", () => {
     expect(inferGarmentVariant("MALLAS LARGAS DITCHIL", "mallas")).toBe("mallas_largas");
     expect(inferGarmentVariant("LEGGING DITCHIL BIX AZUL COBALTO", "mallas")).toBe("mallas_largas");
+  });
+  it("sin token (no legging/corta/larga/pirata) → null (NO se asume largas — decisión 3.5.3)", () => {
+    expect(inferGarmentVariant("MALLAS JOMA R-CITY MORADO", "mallas")).toBeNull();
   });
 });
 
