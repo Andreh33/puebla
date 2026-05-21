@@ -29,6 +29,11 @@ export const dynamicParams = true;
 // (p.ej. /hombre/calzado → categoría `hombre-calzado`). Reutiliza exactamente
 // la misma lógica de listado/facetas que /[categoria], con el filtro "Tipo de
 // calzado" encendido solo cuando familia === "calzado".
+//
+// IMPORTANTE: el primer segmento se llama `[categoria]` (NO `[seccion]`) porque
+// Next.js exige que dos segmentos dinámicos hermanos en el mismo nivel
+// compartan nombre de slug — y ya existe /[categoria]/page.tsx. Aquí ese param
+// `categoria` ES la sección (hombre|mujer|nino|nina); lo aliasamos a `seccion`.
 // ----------------------------------------------------------------------------
 
 const VALID_SECCIONES = ["hombre", "mujer", "nino", "nina"] as const;
@@ -36,7 +41,7 @@ const VALID_FAMILIAS = ["textil", "calzado"] as const;
 type Seccion = (typeof VALID_SECCIONES)[number];
 type Familia = (typeof VALID_FAMILIAS)[number];
 
-type Params = { seccion: string; familia: string };
+type Params = { categoria: string; familia: string };
 type SearchParams = Record<string, string | string[] | undefined>;
 
 function isValidSeccion(s: string): s is Seccion {
@@ -49,7 +54,7 @@ function isValidFamilia(f: string): f is Familia {
 /** Pre-renderiza los 8 combos válidos (4 secciones × 2 familias). */
 export function generateStaticParams(): Params[] {
   return VALID_SECCIONES.flatMap((seccion) =>
-    VALID_FAMILIAS.map((familia) => ({ seccion, familia })),
+    VALID_FAMILIAS.map((familia) => ({ categoria: seccion, familia })),
   );
 }
 
@@ -58,7 +63,7 @@ export async function generateMetadata({
 }: {
   params: Promise<Params>;
 }): Promise<Metadata> {
-  const { seccion, familia } = await params;
+  const { categoria: seccion, familia } = await params;
   if (!isValidSeccion(seccion) || !isValidFamilia(familia)) {
     return buildMetadata({ title: "Categoría no encontrada", noIndex: true });
   }
@@ -95,7 +100,7 @@ export default async function SeccionFamiliaPage({
   params: Promise<Params>;
   searchParams: Promise<SearchParams>;
 }) {
-  const { seccion, familia } = await params;
+  const { categoria: seccion, familia } = await params;
   const sp = await searchParams;
 
   // Guard de combos: solo hombre|mujer|nino|nina × textil|calzado. Cualquier
