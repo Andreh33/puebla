@@ -10,6 +10,7 @@ import {
   type DemoGender,
   type DemoProduct,
 } from "@/lib/demo-products";
+import { VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
 
 // ---------------------------------------------------------------------------
 // Alias de categorías "comerciales" â†’ subsets del catálogo demo
@@ -754,6 +755,7 @@ export type CategoryFilterParams = {
   talla?: string[];
   tipo?: string[]; // Bloque 3: tipo de calzado (footwearType)
   prenda?: string[]; // Bloque 6: tipo de prenda (garmentType)
+  variante?: string[]; // Bloque 6 §18: variante fina (garmentVariant)
   min?: number;
   max?: number;
   oferta?: boolean;
@@ -776,13 +778,29 @@ export function parseCategoryParams(searchParams: Record<string, string | string
   const perPageRaw = num(searchParams.perPage);
   const perPage =
     perPageRaw == null ? undefined : Math.min(48, Math.max(1, Math.floor(perPageRaw)));
+  // Bloque 6 §18: inferencia inversa. Si hay ?variante= pero ninguna ?prenda=
+  // explícita, inferimos las prendas desde VARIANT_TO_TYPE (sin duplicados) para
+  // que el filtro de variante funcione solo (?variante=manga_corta → prenda=camiseta).
+  const variante = arr(searchParams.variante);
+  const prendaRaw = arr(searchParams.prenda);
+  const prenda =
+    prendaRaw.length > 0
+      ? prendaRaw
+      : variante.length > 0
+        ? Array.from(
+            new Set(
+              variante.filter((v) => v in VARIANT_TO_TYPE).map((v) => VARIANT_TO_TYPE[v as GarmentVariant]),
+            ),
+          )
+        : [];
   return {
     marca: arr(searchParams.marca),
     genero: arr(searchParams.genero),
     color: arr(searchParams.color),
     talla: arr(searchParams.talla),
     tipo: arr(searchParams.tipo),
-    prenda: arr(searchParams.prenda),
+    prenda,
+    variante,
     min: num(searchParams.min),
     max: num(searchParams.max),
     oferta: searchParams.oferta === "1",
@@ -856,6 +874,10 @@ export function buildProductWhere(opts: {
   if (filters.prenda && filters.prenda.length > 0) {
     andClauses.push({ garmentType: { in: filters.prenda } });
   }
+  // Bloque 6 §18: filtro multi de variante fina (mismo andClauses).
+  if (filters.variante && filters.variante.length > 0) {
+    andClauses.push({ garmentVariant: { in: filters.variante } });
+  }
   if (andClauses.length > 0) {
     where.AND = andClauses;
   }
@@ -883,7 +905,7 @@ export async function getCategoryFacets(categoryId: string) {
   // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
   const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId } } };
 
-  const [brands, genders, colors, sizes, priceRange, footwearGroups, garmentGroups] = await Promise.all([
+  const [brands, genders, colors, sizes, priceRange, footwearGroups, garmentGroups, garmentVariantGroups] = await Promise.all([
     db.product.groupBy({
       by: ["brandId"],
       where: baseWhere,
@@ -927,6 +949,16 @@ export async function getCategoryFacets(categoryId: string) {
       _count: { _all: true },
       orderBy: { _count: { garmentType: "desc" } },
     }),
+    db.product.groupBy({
+      by: ["garmentVariant"],
+      where: {
+        ...baseWhere,
+        garmentVariant: { not: null },
+        garmentType: { in: ["camiseta", "pantalon", "mallas"] },
+      },
+      _count: { _all: true },
+      orderBy: { _count: { garmentVariant: "desc" } },
+    }),
   ]);
 
   const brandIds = brands.map((b) => b.brandId);
@@ -966,6 +998,10 @@ export async function getCategoryFacets(categoryId: string) {
     garmentTypes: garmentGroups
       .filter((g) => g.garmentType)
       .map((g) => ({ value: g.garmentType as string, label: g.garmentType as string, count: g._count._all })),
+    // Bloque 6 §18: facetas de variante (label legible vía GARMENT_VARIANT_LABELS en ProductFilters).
+    garmentVariants: garmentVariantGroups
+      .filter((v) => v.garmentVariant)
+      .map((v) => ({ value: v.garmentVariant as string, label: v.garmentVariant as string, count: v._count._all })),
     priceMin: priceRange._min.retailPrice ? Number(priceRange._min.retailPrice) : 0,
     priceMax: priceRange._max.retailPrice ? Number(priceRange._max.retailPrice) : 500,
   };
