@@ -40,6 +40,10 @@
   --color-zs-tennis-500: #c8da46;
   --color-zs-tennis-600: #a8bb34;
 
+  /* Amarillo de la familia CALZADO (Bloque 4). Elegido vs zs-tennis/yellow-500
+     en el preview comparativo. = Tailwind yellow-400. */
+  --color-zs-yellow-400: #facc15;
+
   --color-zs-ink: #0b1220;
   --color-zs-muted: #6b7280;
   --color-zs-surface: #f8fafc;

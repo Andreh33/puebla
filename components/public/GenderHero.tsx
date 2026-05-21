@@ -25,7 +25,7 @@ import { MagneticButton } from "@/components/public/MagneticButton";
  * mostrar "N productos disponibles" bajo los CTAs.
  */
 
-type GenderKey = "mujer" | "hombre" | "ninos";
+type GenderKey = "mujer" | "hombre" | "ninos" | "nino" | "nina";
 
 type GenderHeroConfig = {
   eyebrow: string;
@@ -70,6 +70,27 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     tintGradient:
       "from-emerald-900/45 via-zs-blue-950/40 to-zs-blue-950/75",
     primaryGlow: "var(--shadow-zs-tennis-glow-lg)",
+  },
+  // Niño y Niña reutilizan la foto de /ninos (foto kids genérica) con copy y
+  // tinte propios por género — Bloque 4. Cuando el cliente entregue fotos
+  // específicas de niño/niña, basta cambiar `photo`.
+  nino: {
+    eyebrow: "Para ellos",
+    headline: "Que no paren de jugar.",
+    tagline:
+      "Calzado y ropa deportiva resistente para niños: deporte, cole y outdoor. John Smith, +8000, Joma y más, con asesoramiento de talla en tienda.",
+    photo: "/category-photos/ninos-landing.jpg",
+    tintGradient: "from-zs-blue-950/65 via-zs-blue-900/35 to-zs-blue-950/80",
+    primaryGlow: "var(--shadow-zs-blue-glow-lg)",
+  },
+  nina: {
+    eyebrow: "Para ellas",
+    headline: "Que vivan el deporte a su ritmo.",
+    tagline:
+      "Calzado y ropa deportiva cómoda para niñas: deporte, cole y outdoor. John Smith, +8000, Joma y más, con asesoramiento de talla en tienda.",
+    photo: "/category-photos/ninos-landing.jpg",
+    tintGradient: "from-zs-red-900/55 via-zs-blue-950/35 to-zs-blue-950/70",
+    primaryGlow: "var(--shadow-zs-rojo-glow-lg)",
   },
 };
 

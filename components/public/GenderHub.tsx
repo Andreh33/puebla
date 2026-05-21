@@ -16,10 +16,10 @@ import { Shirt, Footprints, ArrowRight } from "lucide-react";
 
 type Seccion = "hombre" | "mujer" | "nino" | "nina";
 
-// Color provisional de la tarjeta CALZADO. Decisión final del amarillo pendiente
-// del preview comparativo (paso b): #c8da46 (zs-tennis-500) vs #FACC15 vs #EAB308.
-// Si cambia, basta con tocar esta línea (clase Tailwind del fondo + texto).
-const CALZADO_INNER = "bg-zs-tennis-500 text-zs-blue-950";
+// Color de la tarjeta CALZADO: #FACC15 (token --color-zs-yellow-400, = Tailwind
+// yellow-400). Elegido en el preview comparativo del paso b. Texto azul oscuro
+// para contraste AA sobre el amarillo.
+const CALZADO_INNER = "bg-zs-yellow-400 text-zs-blue-950";
 
 const CARDS: Array<{
   familia: "textil" | "calzado";

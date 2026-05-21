@@ -122,6 +122,14 @@
   .calzado.c3 { background: #eab308; } /* tailwind yellow-500 */
 
   .note { font-size: 12px; color: var(--zs-muted); margin-top: 8px; }
+
+  /* Badge de la opción elegida */
+  .chosen-badge {
+    display: inline-block; margin-left: 10px; vertical-align: middle;
+    background: #16a34a; color: #fff; font-size: 12px; font-weight: 800;
+    padding: 3px 10px; border-radius: 999px; letter-spacing: .04em;
+  }
+  section.opt.chosen { border-left: 5px solid #16a34a; padding-left: 18px; }
 </style>
 </head>
 <body>
@@ -162,10 +170,10 @@
     <p class="note">✔ Coherente con la marca (ya es el acento del logo). Riesgo: el verde-amarillo lima puede leerse menos "amarillo" y más "verde".</p>
   </section>
 
-  <!-- ============ OPCIÓN 2 ============ -->
-  <section class="opt">
-    <h2 class="opt-title">Opción 2 — Tailwind yellow-400</h2>
-    <p class="opt-hex"><code>#facc15</code> · amarillo limpio y brillante</p>
+  <!-- ============ OPCIÓN 2 — ELEGIDA ============ -->
+  <section class="opt chosen">
+    <h2 class="opt-title">Opción 2 — Tailwind yellow-400 <span class="chosen-badge">✓ ELEGIDO</span></h2>
+    <p class="opt-hex"><code>#facc15</code> · amarillo limpio y brillante · <strong>color final de la tarjeta CALZADO</strong> (token <code>--color-zs-yellow-400</code>)</p>
 
     <div class="viewport-label">Desktop · 1100px</div>
     <div class="view-desktop">
