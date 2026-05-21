@@ -385,3 +385,72 @@
     animation: none;
   }
 }
+
+/* Bloque 7.5: aurora animada de fondo (AuroraBackground). 3 blobs grandes de
+   gradiente radial muy difuso que derivan lentamente. Pastel premium: azul
+   cielo + morado lavanda + rosa polvo. Performance OK: solo translate3d +
+   scale animados, blur fijo (no por frame). Reemplaza al patrón de puntos. */
+.aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  will-change: transform;
+}
+.aurora-blob-1 {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(186, 213, 255, 0.7) 0%, transparent 70%);
+  top: -200px;
+  left: -150px;
+  animation: aurora-drift-1 22s ease-in-out infinite;
+}
+.aurora-blob-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(216, 191, 255, 0.6) 0%, transparent 70%);
+  top: 30%;
+  right: -200px;
+  animation: aurora-drift-2 28s ease-in-out infinite;
+}
+.aurora-blob-3 {
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(255, 200, 220, 0.55) 0%, transparent 70%);
+  bottom: -200px;
+  left: 30%;
+  animation: aurora-drift-3 25s ease-in-out infinite;
+}
+@keyframes aurora-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(80px, 60px, 0) scale(1.1); }
+  66% { transform: translate3d(-40px, 100px, 0) scale(0.95); }
+}
+@keyframes aurora-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(-60px, -80px, 0) scale(1.05); }
+  66% { transform: translate3d(40px, -40px, 0) scale(0.9); }
+}
+@keyframes aurora-drift-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(-100px, -50px, 0) scale(1.08); }
+  66% { transform: translate3d(70px, 30px, 0) scale(0.95); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob {
+    animation: none;
+  }
+}
+/* En móvil reducimos tamaño y opacidad para no gastar CPU innecesariamente. */
+@media (max-width: 768px) {
+  .aurora-blob {
+    filter: blur(60px);
+    opacity: 0.25;
+  }
+  .aurora-blob-1,
+  .aurora-blob-2,
+  .aurora-blob-3 {
+    width: 350px;
+    height: 350px;
+  }
+}
