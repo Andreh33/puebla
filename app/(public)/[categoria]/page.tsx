@@ -279,6 +279,7 @@ export default async function CategoryPage({
               resultsCount={total}
               autoOpenFirstVisit={!category.parent}
               showFootwearFilter={category.slug?.endsWith("-calzado") ?? false}
+              showGenderFilter={false}
             />
           </div>
 

@@ -43,6 +43,9 @@ type Props = {
   showFootwearFilter?: boolean;
   /** Bloque 6: muestra el FilterGroup "Tipo de prenda" (+ sub-variantes). Solo textil. */
   showGarmentFilter?: boolean;
+  /** Bloque 7: muestra el filtro "Género". Default true; false en páginas ya
+   * scopeadas por género (p.ej. /[seccion]/textil), donde el género es redundante. */
+  showGenderFilter?: boolean;
   /**
    * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
    * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
@@ -65,7 +68,7 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -261,7 +264,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
         </FilterGroup>
       )}
 
-      {data.genders.length > 0 && (
+      {showGenderFilter && data.genders.length > 0 && (
         <FilterGroup title="Género">
           {data.genders.map((g) => (
             <label key={g.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">

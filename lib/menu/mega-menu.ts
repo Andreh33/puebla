@@ -6,8 +6,8 @@
  * Modelo género→familia (Bloque 4):
  *  - Calzado: items → /[seccion]/calzado[?tipo=<footwearType>]. Primer item
  *    "Calzado" general (sin filtro); resto 1:1 con FOOTWEAR_TYPES del Bloque 3.
- *  - Ropa: un solo item → /[seccion]/textil (granularidad por prenda futura,
- *    ver docs/BLOCK-4-PLAN.md §10).
+ *  - Ropa: item general → /[seccion]/textil + sub-items por prenda
+ *    (?prenda=<garmentType>, Bloque 7 §7.4).
  *  - Accesorios: NO van en los paneles de género; se navegan desde /accesorios.
  */
 
@@ -21,7 +21,7 @@ export type MegaMenuGender = "MUJER" | "HOMBRE" | "NINO" | "NINA";
  */
 export type MegaMenuItem =
   | { label: string; familia: "calzado"; tipo?: string }
-  | { label: string; familia: "textil" };
+  | { label: string; familia: "textil"; prenda?: string };
 
 /** Grupo (Ropa, Calzado) dentro de una sección. */
 export type MegaMenuGroup = { title: string; items: MegaMenuItem[] };
@@ -54,10 +54,22 @@ const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "n
 // Grupos compartidos (modelo género→familia uniforme).
 // ---------------------------------------------------------------------------
 
-/** Ropa: un único enlace al textil de la sección. */
+/**
+ * Ropa: enlace general al textil + sub-categorías por prenda (Bloque 7 §7.4).
+ * Cada sub-item filtra por garmentType vía ?prenda=<tipo>; etiquetas y valores
+ * coinciden con GARMENT_TYPE_LABELS/GARMENT_TYPES del Bloque 6.
+ */
 const ROPA: MegaMenuGroup = {
   title: "Ropa",
-  items: [{ label: "Ver toda la ropa", familia: "textil" }],
+  items: [
+    { label: "Ver toda la ropa", familia: "textil" },
+    { label: "Camisetas y polos", familia: "textil", prenda: "camiseta" },
+    { label: "Sudaderas", familia: "textil", prenda: "sudadera" },
+    { label: "Chándales", familia: "textil", prenda: "chandal" },
+    { label: "Pantalones", familia: "textil", prenda: "pantalon" },
+    { label: "Mallas", familia: "textil", prenda: "mallas" },
+    { label: "Bañadores", familia: "textil", prenda: "banador" },
+  ],
 };
 
 /**
@@ -122,12 +134,12 @@ export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina"]
 /**
  * Construye la URL navegable de un item del mega-menú:
  *  - calzado → /[seccion]/calzado[?tipo=…]
- *  - textil  → /[seccion]/textil
+ *  - textil  → /[seccion]/textil[?prenda=…]
  */
 export function buildMegaMenuHref(item: MegaMenuItem, gender: MegaMenuGender): string {
   const seccion = SECCION_BY_GENDER[gender];
   if (item.familia === "calzado") {
     return item.tipo ? `/${seccion}/calzado?tipo=${item.tipo}` : `/${seccion}/calzado`;
   }
-  return `/${seccion}/textil`;
+  return item.prenda ? `/${seccion}/textil?prenda=${item.prenda}` : `/${seccion}/textil`;
 }
