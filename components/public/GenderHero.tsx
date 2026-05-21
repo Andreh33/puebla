@@ -242,7 +242,7 @@ export function GenderHero({
               data-cursor="Explorar"
               className="inline-flex h-14 items-center gap-2.5 rounded-full border border-white/30 bg-white/[0.06] px-7 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/60 hover:bg-white/[0.12]"
             >
-              Explorar por deporte
+              Ver categorías
             </Link>
           </MagneticButton>
         </div>

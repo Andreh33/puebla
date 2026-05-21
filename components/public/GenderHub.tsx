@@ -42,7 +42,7 @@ const CARDS: Array<{
     Icon: Shirt,
     innerClass: "bg-zs-blue-700 text-white",
     subClass: "text-white/85",
-    iconClass: "text-white/10",
+    iconClass: "text-white/25",
     ctaClass: "text-white",
   },
   {
@@ -52,7 +52,7 @@ const CARDS: Array<{
     Icon: Footprints,
     innerClass: CALZADO_INNER,
     subClass: "text-zs-blue-900/75",
-    iconClass: "text-zs-blue-950/10",
+    iconClass: "text-zs-blue-950/25",
     ctaClass: "text-zs-blue-950",
   },
 ];

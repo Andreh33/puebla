@@ -267,7 +267,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
               </h2>
             </div>
             <Link
-              href={`/calzado?genero=${config.gender}`}
+              href={`/${slug}/calzado`}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-zs-blue-700 hover:text-zs-red-600"
             >
               Ver todo en calzado <ArrowRight className="h-4 w-4" />
