@@ -25,11 +25,17 @@ const db = new PrismaClient();
 function guardHost(): string {
   const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || "";
   const host = (url.match(/@([^/]+)\//) || [])[1] || "(desconocido)";
-  if (!host.includes("still-voice-al8sapxi")) {
-    console.error(`STOP — host NO es la branch dev: ${host}`);
-    process.exit(1);
+  const allowProd = process.env.ALLOW_PROD_MIGRATION === "1";
+  if (host.includes("still-voice-al8sapxi")) {
+    // dev — siempre OK
+    return host;
   }
-  return host;
+  if (allowProd && host.includes("neon.tech") && !host.includes("still-voice")) {
+    console.warn(`⚠️  MODO PROD habilitado por ALLOW_PROD_MIGRATION=1 — host: ${host}`);
+    return host;
+  }
+  console.error(`STOP — host NO es la branch dev y ALLOW_PROD_MIGRATION no está activo: ${host}`);
+  process.exit(1);
 }
 
 async function main() {
