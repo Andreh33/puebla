@@ -364,6 +364,82 @@ Cada paso = commit atómico. PARO entre pasos según la cadencia del usuario.
   mapeo slug-viejo → slug-nuevo en runtime. No bloqueante; aplazado. (También
   aplica a los items de **Accesorios** del megamenú, que se mantienen con slugs
   legacy `/[slug]?genero=` porque `/accesorios` no se reestructura en Bloque 4.)
+- **[Limpieza menor] `sharedAccessories` + `SharedAccessoriesRow`.** Tras eliminar
+  la entrada combinada `ninos` del megamenú, el campo opcional `sharedAccessories`
+  (MegaMenuTab) y el componente `SharedAccessoriesRow` (MegaMenu.tsx) quedan sin
+  uso. Compilan sin problema; retirarlos es hygiene opcional (~2 archivos).
+
+---
+
+## §11. CIERRE — Bloque 4 completado (2026-05-21)
+
+### Resumen
+Se introdujo el modelo de navegación **género→familia**: una ruta anidada real
+`/[categoria]/[familia]` (p.ej. `/hombre/calzado`, `/mujer/textil`), hubs de
+género (`/hombre`, `/mujer`, `/nino`, `/nina`) con un bloque central de **2
+tarjetas TEXTIL/CALZADO de borde cónico animado** (`GenderHub`), y se migró todo
+el nav (Header, megamenú, Footer, BottomNav, home, sitemap, PWA) desde los slugs
+sueltos antiguos al nuevo modelo. 100% frontend — cero cambios de BD.
+
+### Pasos completados
+- **(a)** Ruta anidada `[categoria]/[familia]` + smoke 4 combos (125/60/189/72) verdes.
+- **(b)** `GenderHub` + CSS borde animado (`@property` + `@supports` Firefox) + preview comparativo de color.
+- **(c)** Integración `GenderHub` (sustitución quirúrgica) + páginas `/nino` y `/nina` reales.
+- **(d)** Quitados redirects `/nino` `/nina`→`/catalogo`; `/ninos`→`/nino` 301; `RESERVED_SLUGS` += nino/nina.
+- **(e)** Limpieza Header `SPORT_NAV` + migración megamenú (C1 calzado + R2 ropa) + sitemap + 5 links `/ninos`.
+- **(f)** Limpieza Footer (columna "Tienda" → 5 hubs + Marcas).
+- **(g)** Migración CTAs `/running` del home + manifest PWA + dedup sitemap + cierre.
+
+### Commits del Bloque 4
+```
+7067557 docs(bloque-4): plan hub TEXTIL/CALZADO + ruta anidada
+c0f6011 docs(bloque-4): decisiones cerradas + plan 7 pasos + TODO garmentType
+20cf14a feat(public): ruta anidada [seccion]/[familia] (paso a)
+72c4e5c feat(public): GenderHub component + CSS borde animado (paso b)
+a14496b feat(public): integrar GenderHub + páginas /nino y /nina (paso c)
+ef815c3 fix(routing): [seccion] -> [categoria]/[familia] (corrección paso a)
+df1232b chore: ignorar screenshots de validación visual
+d783c95 polish(hub): copy CTA hero, link calzado, opacity iconos (pulido c)
+2ee731f feat(routing): hubs /nino y /nina + /ninos->/nino 301 (paso d)
+bb6be00 chore: borrar NinosLanding (código muerto)
+0c4d7c8 feat(nav): limpieza SPORT_NAV + migración megamenú + sitemap (paso e)
+db7643f feat(nav): limpieza Footer (paso f)
+<paso g> feat(home/pwa): migrar CTAs /running del home + dedup sitemap (cierre)
+```
+(Preámbulo: `fc45e82 chore: ignorar CSVs de reporte de migraciones` — limpieza previa.)
+
+### Decisiones tomadas
+- **Color CALZADO:** `#FACC15` (yellow-400) — token `--color-zs-yellow-400`.
+- **Visual hubs:** gradient sólido de marca, sin imágenes (decisión §9.1).
+- **`/nino`, `/nina`** como hubs reales independientes (no combinado).
+- **R2-colapsado:** Ropa = un solo enlace `/[seccion]/textil`.
+- **C1:** Calzado migrado a `/[seccion]/calzado?tipo=…` (1:1 con FOOTWEAR_TYPES; tenis+pádel desdoblados).
+- **`/ninos`** → redirect permanente a `/nino` (308).
+- **Slug compartido:** ruta anidada usa `[categoria]` (no `[seccion]`) por la
+  restricción de Next.js de slugs hermanos (corrección del paso a).
+- **`?oferta` / `?nuevo`:** VERIFICADO que el hub los soporta (`buildProductWhere`);
+  los CTAs del home migrados los combinan (`?tipo=running&oferta=1`). De paso se
+  corrigió el bug latente `?ofertas` (plural) → `?oferta` (singular, el real).
+
+### TODOs post-Bloque-4 (no urgentes) → ver §10
+- [Bloque 6 futuro] `Product.garmentType` + filtro multi en `/[seccion]/textil`.
+- [UX no urgente] Chips dinámicos GenderLanding + items Accesorios del megamenú (aterrizan vía 301).
+- [Limpieza menor] retirar `sharedAccessories` + `SharedAccessoriesRow`.
+- **Bloque 5: aplicación a producción** (Bloques 2+3+4).
+
+### Estado de la BD dev (sin cambios desde Bloque 3 — Bloque 4 es 100% frontend)
+- Stock real: `ProductSize` 3472 filas / 3471 unidades (intacto desde el día 1).
+- FTS: intacto.
+- Bloque 2 m2m: intacto (1356 con `primaryCategoryId` + 6 en errors; 1357 links pivote).
+- Bloque 3 `footwearType`: 168 auto-clasificados + 207 calzados NULL pendientes de bulk admin.
+- Categorías género→familia: `*-textil` / `*-calzado` para hombre/mujer/nino/nina (verificadas).
+
+### Próximo paso
+**Bloque 5** — aplicación a producción del Bloque 2+3+4 (backup → baseline
+`migrate resolve` en prod → `migrate deploy` → scripts de datos → migración del
+código `categoryId`→`primaryCategory`/`categories[]` en los archivos restantes →
+reactivar la migración contractiva). Runbook base en `docs/BLOCK-2-PLAN.md`.
+Conviene **chat nuevo** dado el tamaño de esta sesión.
 
 ---
 

@@ -37,7 +37,7 @@ const CARDS: Card[] = [
     title: "Running",
     eyebrow: "01",
     caption: "Asfalto · trail · cinta",
-    href: "/running",
+    href: "/hombre/calzado?tipo=running",
     image: "/category-photos/running.jpg",
   },
   {

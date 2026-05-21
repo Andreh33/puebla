@@ -146,14 +146,14 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
       title: "Hecho para correr en Extremadura",
       copy: "Multimarca en running, trail y urban. Te asesoramos en tienda como llevamos haciéndolo años: cara a cara, sin postureo.",
       icon: Compass,
-      cta: { label: "Ver running", href: "/running" },
+      cta: { label: "Ver running", href: "/hombre/calzado?tipo=running" },
     },
     {
       eyebrow: "Más allá del asfalto",
       title: "Las rocas se abren, la montaña aparece",
       copy: "+8000 para trekking, escalada y vías ferratas. Suelas que pegan, mochilas que aguantan, cortavientos pensados para el viento de la sierra.",
       icon: Mountain,
-      cta: { label: "Ver montaña", href: "/montana" },
+      cta: { label: "Ver montaña", href: "/hombre/calzado?tipo=trail" },
     },
     {
       eyebrow: "Mismo barrio, otra liga",

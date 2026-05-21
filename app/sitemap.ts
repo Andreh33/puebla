@@ -13,6 +13,22 @@ export const revalidate = 3600; // 1h
 
 type Entry = MetadataRoute.Sitemap[number];
 
+/**
+ * Deduplica por URL conservando la PRIMERA aparición. Como `staticEntries` se
+ * añaden antes que el loop de categorías, las landings de género (/hombre,
+ * /mujer…) mantienen su entry estática (priority 0.9) y se descarta el
+ * duplicado que generaba el loop de categorías ROOT con productos.
+ */
+function dedupeByUrl(entries: Entry[]): Entry[] {
+  const seen = new Set<string>();
+  return entries.filter((e) => {
+    const url = String(e.url);
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
 function staticEntries(now: Date): Entry[] {
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
@@ -101,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // (Next aún no soporta sitemap index nativo en `app/sitemap.ts`; los
       // motores de búsqueda los descubrirán a través de robots.txt + los
       // routes específicos `/sitemap-products.xml` y `/sitemap-posts.xml`.)
-      return entries;
+      return dedupeByUrl(entries);
     }
 
     // Si no superamos límite, embebemos productos y posts en el principal.
@@ -139,5 +155,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.warn("[sitemap] no se pudo consultar DB:", (err as Error).message);
   }
 
-  return entries;
+  return dedupeByUrl(entries);
 }

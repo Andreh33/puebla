@@ -35,7 +35,7 @@ type Tile = {
 
 const TILES: Tile[] = [
   {
-    href: "/running?ofertas=1",
+    href: "/hombre/calzado?tipo=running&oferta=1",
     eyebrow: "Solo esta semana",
     title: "Hasta -30% en running",
     caption: "Asfalto, trail y zapatilla diaria. Termina el domingo.",
@@ -45,7 +45,7 @@ const TILES: Tile[] = [
     accent: "text-white/80",
   },
   {
-    href: "/running?nuevo=1",
+    href: "/hombre/calzado?tipo=running&nuevo=1",
     eyebrow: "Temporada FW25",
     title: "Recién llegado",
     caption: "Las novedades de John Smith, +8000 y técnico que aún huele a fábrica.",
