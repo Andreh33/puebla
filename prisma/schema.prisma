@@ -120,6 +120,13 @@ model Product {
   // Bloque 3: tipo de calzado (solo familia calzado). Lista controlada por
   // FOOTWEAR_TYPES en lib/categories/footwear.ts (no enum Prisma — evita churn).
   footwearType String?       // running|trail|tenis|padel|casual|baloncesto|futbol|futbol_sala|chanclas
+  // Bloque 6: tipo de prenda (solo familia textil). Lista controlada por
+  // GARMENT_TYPES en lib/categories/garment.ts (no enum Prisma — evita churn).
+  garmentType  String?       // camiseta|sudadera|chaqueta|abrigo|cortavientos|chandal|conjunto|pantalon|bermuda|mallas|banador|falda|calentador|vestido|chaleco
+  // Bloque 6 §18 Fase 3.5: variante fina de la prenda (manga corta/larga,
+  // pantalón corto/largo, mallas piratas, top, tirantes). Lista controlada
+  // por GARMENT_VARIANTS en lib/categories/garment.ts.
+  garmentVariant String?     // manga_corta|manga_larga|top|tirantes|pantalon_corto|pantalon_largo|mallas_cortas|mallas_largas|mallas_piratas
   composition  String?       // "Poliéster 100%"
 
   costPrice    Decimal?      @db.Decimal(10, 2)
@@ -152,6 +159,8 @@ model Product {
   @@index([categoryId, status])
   @@index([primaryCategoryId])
   @@index([footwearType])
+  @@index([garmentType])
+  @@index([garmentVariant])
   @@index([source])
   @@index([status, publishedAt])
   @@index([modelCode])

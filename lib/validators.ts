@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FOOTWEAR_TYPES } from "@/lib/categories/footwear";
+import { GARMENT_TYPES, GARMENT_VARIANTS } from "@/lib/categories/garment";
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -83,6 +84,10 @@ export const ProductSchema = z.object({
   // create/duplicate/importers que no envíen el campo (undefined = Prisma no lo toca);
   // nullable() → el editor envía null para "(sin asignar)".
   footwearType: z.enum(FOOTWEAR_TYPES).nullable().optional(),
+  // Bloque 6: tipo de prenda (solo familia textil). Mismo patrón que footwearType.
+  garmentType: z.enum(GARMENT_TYPES).nullable().optional(),
+  // Bloque 6 §18 Fase 3.5: variante fina (solo camiseta/pantalon/mallas).
+  garmentVariant: z.enum(GARMENT_VARIANTS).nullable().optional(),
   composition: z.string().max(500).optional().nullable(),
   costPrice: z.number().min(0).optional().nullable(),
   retailPrice: z.number().min(0),

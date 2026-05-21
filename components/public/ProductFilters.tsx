@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
+import {
+  GARMENT_TYPE_LABELS,
+  GARMENT_VARIANT_LABELS,
+  VARIANT_TO_TYPE,
+  TYPES_WITH_VARIANT,
+  type GarmentType,
+  type GarmentVariant,
+} from "@/lib/categories/garment";
 
 export type FacetItem = { value: string; label: string; count: number };
 
@@ -19,6 +27,10 @@ export type FiltersData = {
   sizes: FacetItem[];
   /** Bloque 3: tipos de calzado (solo presente/usado en páginas de calzado). */
   footwearTypes?: FacetItem[];
+  /** Bloque 6: tipos de prenda (solo páginas de textil). */
+  garmentTypes?: FacetItem[];
+  /** Bloque 6 §18: variantes finas (sub-filtros de prenda). */
+  garmentVariants?: FacetItem[];
   priceMin: number;
   priceMax: number;
 };
@@ -29,6 +41,8 @@ type Props = {
   resultsCount?: number;
   /** Bloque 3: muestra el FilterGroup "Tipo de calzado". Solo en páginas de calzado. */
   showFootwearFilter?: boolean;
+  /** Bloque 6: muestra el FilterGroup "Tipo de prenda" (+ sub-variantes). Solo textil. */
+  showGarmentFilter?: boolean;
   /**
    * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
    * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
@@ -51,7 +65,7 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -84,6 +98,8 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
   const activeColors = get("color");
   const activeSizes = get("talla");
   const activeTipo = get("tipo");
+  const activePrenda = get("prenda");
+  const activeVariante = get("variante");
   const activeOnSale = searchParams.get("oferta") === "1";
   const activeNew = searchParams.get("nuevo") === "1";
   const priceMin = searchParams.get("min");
@@ -96,11 +112,13 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       activeColors.length +
       activeSizes.length +
       activeTipo.length +
+      activePrenda.length +
+      activeVariante.length +
       (activeOnSale ? 1 : 0) +
       (activeNew ? 1 : 0) +
       (priceMin ? 1 : 0) +
       (priceMax ? 1 : 0),
-    [activeBrands, activeGenders, activeColors, activeSizes, activeTipo, activeOnSale, activeNew, priceMin, priceMax],
+    [activeBrands, activeGenders, activeColors, activeSizes, activeTipo, activePrenda, activeVariante, activeOnSale, activeNew, priceMin, priceMax],
   );
 
   const pushParams = useCallback(
@@ -125,6 +143,22 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
     });
 
   const removeMulti = (key: string, value: string) => toggleMulti(key, value);
+
+  // Bloque 6 §18: toggle del filtro de prenda con B2 — al DESMARCAR un padre,
+  // limpiamos sus variantes asociadas (vía VARIANT_TO_TYPE) en la misma navegación.
+  const togglePrenda = (prenda: string, checked: boolean) =>
+    pushParams((sp) => {
+      const cur = (sp.get("prenda") || "").split(",").filter(Boolean);
+      const next = checked ? [...cur, prenda] : cur.filter((p) => p !== prenda);
+      if (next.length) sp.set("prenda", next.join(","));
+      else sp.delete("prenda");
+      if (!checked) {
+        const curVar = (sp.get("variante") || "").split(",").filter(Boolean);
+        const nextVar = curVar.filter((v) => VARIANT_TO_TYPE[v as GarmentVariant] !== prenda);
+        if (nextVar.length) sp.set("variante", nextVar.join(","));
+        else sp.delete("variante");
+      }
+    });
 
   const toggleFlag = (key: string) =>
     pushParams((sp) => {
@@ -167,6 +201,14 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       const label = FOOTWEAR_TYPE_LABELS[v as keyof typeof FOOTWEAR_TYPE_LABELS] ?? v;
       out.push({ id: `tipo:${v}`, label, onRemove: () => removeMulti("tipo", v) });
     }
+    for (const v of activePrenda) {
+      const label = GARMENT_TYPE_LABELS[v as GarmentType] ?? v;
+      out.push({ id: `prenda:${v}`, label, onRemove: () => togglePrenda(v, false) });
+    }
+    for (const v of activeVariante) {
+      const label = GARMENT_VARIANT_LABELS[v as GarmentVariant] ?? v;
+      out.push({ id: `variante:${v}`, label, onRemove: () => removeMulti("variante", v) });
+    }
     if (priceMin)
       out.push({ id: "min", label: `≥ ${priceMin}€`, onRemove: () => setPrice("min", "") });
     if (priceMax)
@@ -181,6 +223,8 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
     activeColors,
     activeSizes,
     activeTipo,
+    activePrenda,
+    activeVariante,
     priceMin,
     priceMax,
     data,
@@ -301,6 +345,61 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
                   </span>
                   <span className="text-xs text-zs-muted">{t.count}</span>
                 </label>
+              );
+            })}
+          </div>
+        </FilterGroup>
+      )}
+
+      {/* Bloque 6 §18: tipo de prenda + sub-filtros de variante anidados. Solo textil. */}
+      {showGarmentFilter && data.garmentTypes && data.garmentTypes.length > 0 && (
+        <FilterGroup title="Tipo de prenda">
+          <div className="flex flex-col gap-1">
+            {data.garmentTypes.map((g) => {
+              const garmentValue = g.value as GarmentType;
+              const checked = activePrenda.includes(garmentValue);
+              const hasVariants = (TYPES_WITH_VARIANT as readonly string[]).includes(garmentValue);
+              const variantsOfThis = hasVariants
+                ? (data.garmentVariants ?? []).filter(
+                    (v) => VARIANT_TO_TYPE[v.value as GarmentVariant] === garmentValue,
+                  )
+                : [];
+              return (
+                <div key={garmentValue}>
+                  <label className="flex cursor-pointer items-center justify-between gap-2 text-sm">
+                    <span className="flex items-center gap-2">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(c) => togglePrenda(garmentValue, c === true)}
+                      />
+                      <span>{GARMENT_TYPE_LABELS[garmentValue] ?? garmentValue}</span>
+                    </span>
+                    <span className="text-xs text-zs-muted">{g.count}</span>
+                  </label>
+                  {/* A1: sub-variantes SOLO visibles si el padre está marcado. */}
+                  {checked && variantsOfThis.length > 0 && (
+                    <div className="ml-6 mt-1 flex flex-col gap-1 border-l border-zs-border pl-3">
+                      {variantsOfThis.map((v) => {
+                        const variantValue = v.value as GarmentVariant;
+                        return (
+                          <label
+                            key={variantValue}
+                            className="flex cursor-pointer items-center justify-between gap-2 text-sm"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Checkbox
+                                checked={activeVariante.includes(variantValue)}
+                                onCheckedChange={() => toggleMulti("variante", variantValue)}
+                              />
+                              <span className="text-xs">{GARMENT_VARIANT_LABELS[variantValue]}</span>
+                            </span>
+                            <span className="text-xs text-zs-muted">{v.count}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

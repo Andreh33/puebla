@@ -122,6 +122,8 @@ export default async function SeccionFamiliaPage({
     colors: [],
     sizes: [],
     footwearTypes: [],
+    garmentTypes: [],
+    garmentVariants: [],
     priceMin: 0,
     priceMax: 500,
   };
@@ -280,6 +282,7 @@ export default async function SeccionFamiliaPage({
               data={facets}
               resultsCount={total}
               showFootwearFilter={familia === "calzado"}
+              showGarmentFilter={familia === "textil"}
             />
           </div>
 

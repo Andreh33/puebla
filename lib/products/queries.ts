@@ -23,6 +23,10 @@ export interface ProductListFilters {
   noImage?: boolean;
   /** Bloque 3: calzado SIN footwearType asignado (para etiquetar los NULL). */
   footwearTypeNull?: boolean;
+  /** Bloque 6: textil SIN garmentType asignado (para etiquetar los NULL). */
+  garmentTypeNull?: boolean;
+  /** Bloque 6 §18: prenda con variante aplicable (camiseta/pantalon/mallas) sin variant. */
+  garmentVariantNull?: boolean;
   minPrice?: number;
   maxPrice?: number;
   isFeatured?: boolean;
@@ -48,6 +52,9 @@ export interface ProductListResult {
     gender: string;
     footwearType: string | null;
     isCalzado: boolean;
+    garmentType: string | null;
+    isTextil: boolean;
+    garmentVariant: string | null;
     source: string;
     status: string;
     retailPrice: string;
@@ -96,6 +103,12 @@ function buildWhere(f: ProductListFilters): Prisma.ProductWhereInput {
   // Bloque 3: calzado sin footwearType (mismo AND — patrón filtros combinados).
   if (f.footwearTypeNull)
     AND.push({ footwearType: null, primaryCategory: { slug: { endsWith: "-calzado" } } });
+  // Bloque 6: textil sin garmentType (mismo AND).
+  if (f.garmentTypeNull)
+    AND.push({ garmentType: null, primaryCategory: { slug: { endsWith: "-textil" } } });
+  // Bloque 6 §18: prenda con variante aplicable sin variant asignada (mismo AND).
+  if (f.garmentVariantNull)
+    AND.push({ garmentVariant: null, garmentType: { in: ["camiseta", "pantalon", "mallas"] } });
   if (f.minPrice != null) AND.push({ retailPrice: { gte: f.minPrice } });
   if (f.maxPrice != null) AND.push({ retailPrice: { lte: f.maxPrice } });
   if (f.isFeatured != null) AND.push({ isFeatured: f.isFeatured });
@@ -164,6 +177,9 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       gender: r.gender,
       footwearType: r.footwearType,
       isCalzado: r.primaryCategory?.slug?.endsWith("-calzado") ?? false,
+      garmentType: r.garmentType,
+      isTextil: r.primaryCategory?.slug?.endsWith("-textil") ?? false,
+      garmentVariant: r.garmentVariant,
       source: r.source,
       status: r.status,
       retailPrice: r.retailPrice.toString(),

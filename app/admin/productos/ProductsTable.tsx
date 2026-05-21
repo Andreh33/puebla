@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/table";
 import { formatPriceEUR } from "@/lib/utils";
 import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS, type FootwearType } from "@/lib/categories/footwear";
+import { GARMENT_TYPES, GARMENT_TYPE_LABELS, GARMENT_VARIANTS, GARMENT_VARIANT_LABELS, VARIANT_TO_TYPE, type GarmentType, type GarmentVariant } from "@/lib/categories/garment";
 import type { ProductListResult } from "@/lib/products/queries";
 import {
   archiveProductAction,
@@ -131,6 +132,8 @@ const COLUMN_RESPONSIVE: Record<string, string> = {
   category: "hidden xl:table-cell",
   gender: "hidden lg:table-cell",
   footwearType: "hidden xl:table-cell",
+  garmentType: "hidden xl:table-cell",
+  garmentVariant: "hidden xl:table-cell",
   sizes: "hidden xl:table-cell",
   source: "hidden lg:table-cell",
   status: "",
@@ -540,6 +543,10 @@ export function ProductsTable({
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
   const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
+  const [garmentOpen, setGarmentOpen] = React.useState(false);
+  const [garmentValue, setGarmentValue] = React.useState<string>("__none__");
+  const [variantOpen, setVariantOpen] = React.useState(false);
+  const [variantValue, setVariantValue] = React.useState<string>("__none__");
 
   const qInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -564,6 +571,8 @@ export function ProductsTable({
   const gender = (searchParams?.get("gender") ?? "").split(",").filter(Boolean);
   const noImage = searchParams?.get("noImage") === "1";
   const sinTipoCalzado = searchParams?.get("sinTipoCalzado") === "1";
+  const sinTipoPrenda = searchParams?.get("sinTipoPrenda") === "1";
+  const sinVarianteTipoPrenda = searchParams?.get("sinVarianteTipoPrenda") === "1";
   const pageSize = Number(searchParams?.get("pageSize") ?? 50);
   const page = Number(searchParams?.get("page") ?? 1);
   const sort = searchParams?.get("sort") ?? "createdAt_desc";
@@ -595,7 +604,7 @@ export function ProductsTable({
 
   function clearAll() {
     updateParams((sp) => {
-      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "minPrice", "maxPrice", "tag", "page"].forEach(
+      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "sinTipoPrenda", "sinVarianteTipoPrenda", "minPrice", "maxPrice", "tag", "page"].forEach(
         (k) => sp.delete(k),
       );
     });
@@ -720,6 +729,40 @@ export function ProductsTable({
             );
           }
           if (r.isCalzado) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
+          return null;
+        },
+      },
+      {
+        id: "garmentType",
+        header: "Prenda",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.garmentType) {
+            return (
+              <Badge variant="secondary" className="text-[11px]">
+                {GARMENT_TYPE_LABELS[r.garmentType as GarmentType] ?? r.garmentType}
+              </Badge>
+            );
+          }
+          if (r.isTextil) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
+          return null;
+        },
+      },
+      {
+        id: "garmentVariant",
+        header: "Variante",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.garmentVariant) {
+            return (
+              <Badge variant="secondary" className="text-[11px]">
+                {GARMENT_VARIANT_LABELS[r.garmentVariant as GarmentVariant] ?? r.garmentVariant}
+              </Badge>
+            );
+          }
+          if (r.garmentType && ["camiseta", "pantalon", "mallas"].includes(r.garmentType)) {
+            return <span className="text-xs text-zs-muted/60">Sin variante</span>;
+          }
           return null;
         },
       },
@@ -920,8 +963,32 @@ export function ProductsTable({
             />
             Sin tipo de calzado
           </label>
+          <label className="flex items-center gap-2 rounded-xl border border-zs-border bg-white px-3 py-2 text-xs font-medium text-zs-ink">
+            <Checkbox
+              checked={sinTipoPrenda}
+              onCheckedChange={(v) =>
+                updateParams((sp) => {
+                  if (v) sp.set("sinTipoPrenda", "1");
+                  else sp.delete("sinTipoPrenda");
+                }, { resetPage: true })
+              }
+            />
+            Sin tipo de prenda
+          </label>
+          <label className="flex items-center gap-2 rounded-xl border border-zs-border bg-white px-3 py-2 text-xs font-medium text-zs-ink">
+            <Checkbox
+              checked={sinVarianteTipoPrenda}
+              onCheckedChange={(v) =>
+                updateParams((sp) => {
+                  if (v) sp.set("sinVarianteTipoPrenda", "1");
+                  else sp.delete("sinVarianteTipoPrenda");
+                }, { resetPage: true })
+              }
+            />
+            Sin variante de prenda
+          </label>
 
-          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado) && (
+          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado || sinTipoPrenda || sinVarianteTipoPrenda) && (
             <Button variant="ghost" size="sm" onClick={clearAll}>
               <X className="h-4 w-4" />
               Limpiar filtros
@@ -999,6 +1066,26 @@ export function ProductsTable({
               }}
             >
               Tipo de calzado
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setGarmentValue("__none__");
+                setGarmentOpen(true);
+              }}
+            >
+              Tipo de prenda
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setVariantValue("__none__");
+                setVariantOpen(true);
+              }}
+            >
+              Variante
             </Button>
             <Button size="sm" variant="destructive" onClick={() => setBulkConfirm("delete")}>
               Eliminar
@@ -1297,6 +1384,141 @@ export function ProductsTable({
                         footwearType: footwearValue === "__none__" ? null : (footwearValue as FootwearType),
                       });
                       setFootwearOpen(false);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk: asignar tipo de prenda (doble validación — cliente bloquea si hay
+          no-textil; el server action vuelve a validar de forma autoritativa). */}
+      <Dialog open={garmentOpen} onOpenChange={setGarmentOpen}>
+        <DialogContent>
+          {(() => {
+            const selRows = initialData.rows.filter((r) => selectedIds.includes(r.id));
+            const nonTextil = selRows.filter((r) => !r.isTextil);
+            const allTextil = selRows.length > 0 && nonTextil.length === 0;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Asignar tipo de prenda a {selectedIds.length} producto(s)</DialogTitle>
+                  <DialogDescription>Solo aplica a productos de familia textil.</DialogDescription>
+                </DialogHeader>
+                {!allTextil ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    {nonTextil.length} de los seleccionados no son de textil (p.ej.{" "}
+                    {nonTextil.slice(0, 3).map((r) => `"${r.name}"`).join(", ")}
+                    {nonTextil.length > 3 ? " …" : ""}). Selecciona solo productos de textil para esta acción.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zs-ink">Tipo de prenda</label>
+                    <Select value={garmentValue} onValueChange={setGarmentValue}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {GARMENT_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {GARMENT_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGarmentOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={!allTextil}
+                    onClick={async () => {
+                      await handleBulk({
+                        kind: "garmentType",
+                        garmentType: garmentValue === "__none__" ? null : (garmentValue as GarmentType),
+                      });
+                      setGarmentOpen(false);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk: asignar variante de prenda (Bloque 6 §18). Guard de familia: todos
+          los seleccionados deben tener el MISMO garmentType compatible. */}
+      <Dialog open={variantOpen} onOpenChange={setVariantOpen}>
+        <DialogContent>
+          {(() => {
+            const selRows = initialData.rows.filter((r) => selectedIds.includes(r.id));
+            const validFamilies = ["camiseta", "pantalon", "mallas"];
+            const nonValid = selRows.filter((r) => !r.garmentType || !validFamilies.includes(r.garmentType));
+            const distinctTypes = Array.from(new Set(selRows.map((r) => r.garmentType).filter(Boolean)));
+            const singleFamily = distinctTypes.length === 1 && nonValid.length === 0;
+            const targetType = singleFamily ? (distinctTypes[0] as string) : null;
+            const availableVariants = targetType
+              ? GARMENT_VARIANTS.filter((v) => VARIANT_TO_TYPE[v] === targetType)
+              : [];
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Asignar variante a {selectedIds.length} producto(s)</DialogTitle>
+                  <DialogDescription>
+                    Solo aplica a camiseta, pantalón o mallas. Todos los seleccionados deben ser del mismo tipo.
+                  </DialogDescription>
+                </DialogHeader>
+                {nonValid.length > 0 ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    {nonValid.length} de los seleccionados no admiten variante (tipo de prenda incompatible
+                    o sin asignar). Ejemplos: {nonValid.slice(0, 3).map((r) => `"${r.name}"`).join(", ")}
+                    {nonValid.length > 3 ? " …" : ""}
+                  </div>
+                ) : !singleFamily ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    La selección incluye distintos tipos de prenda ({distinctTypes.join(", ")}). Selecciona
+                    productos del mismo tipo para asignar variante.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zs-ink">Variante de {targetType}</label>
+                    <Select value={variantValue} onValueChange={setVariantValue}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {availableVariants.map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {GARMENT_VARIANT_LABELS[v]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setVariantOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={!singleFamily}
+                    onClick={async () => {
+                      await handleBulk({
+                        kind: "garmentVariant",
+                        garmentVariant: variantValue === "__none__" ? null : (variantValue as GarmentVariant),
+                      });
+                      setVariantOpen(false);
                     }}
                   >
                     Aplicar

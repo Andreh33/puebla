@@ -49,6 +49,8 @@ export default async function EditProductPage({
     gender: product.gender,
     sportUse: product.sportUse,
     footwearType: product.footwearType,
+    garmentType: product.garmentType,
+    garmentVariant: product.garmentVariant,
     primaryCategorySlug: product.primaryCategory?.slug ?? null,
     composition: product.composition,
     costPrice: product.costPrice ? Number(product.costPrice) : null,

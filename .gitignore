@@ -100,3 +100,12 @@ scripts/migration-errors.csv.dry-run
 
 # Screenshots de validación visual de bloques (efímeros)
 previews/screenshot-*.png
+previews/smoke-*.png
+
+# Artefactos de scripts de backfill (efímeros, se regeneran al ejecutar)
+scripts/garment-errors.csv
+scripts/garment-variant-errors.csv
+scripts/footwear-errors.csv
+
+# Registro local de backup branch Neon (Fase 4, no commitear)
+.backup-*.local
