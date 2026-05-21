@@ -51,6 +51,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
+import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
 import { slugifyEs } from "@/lib/seo/slug";
 import { formatDateTimeES } from "@/lib/utils";
 import {
@@ -88,6 +89,8 @@ interface EditorProps {
     colorHex: string | null;
     gender: string;
     sportUse: string | null;
+    footwearType: string | null;
+    primaryCategorySlug: string | null;
     composition: string | null;
     costPrice: number | null;
     retailPrice: number;
@@ -186,6 +189,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     colorHex: initial?.colorHex ?? null,
     gender: (initial?.gender as FormValues["gender"]) ?? "NO_ESPECIFICADO",
     sportUse: initial?.sportUse ?? null,
+    footwearType: (initial?.footwearType as FormValues["footwearType"]) ?? null,
     composition: initial?.composition ?? null,
     costPrice: initial?.costPrice ?? null,
     retailPrice: initial?.retailPrice ?? 0,
@@ -512,6 +516,33 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   <Label htmlFor="sportUse">Uso deportivo</Label>
                   <Input id="sportUse" {...register("sportUse")} placeholder="ej: Trekking" />
                 </div>
+                {/* Tipo de calzado — solo familia calzado (Bloque 3). "__none__" = null. */}
+                {initial?.primaryCategorySlug?.endsWith("-calzado") && (
+                  <div>
+                    <Label htmlFor="footwearType">Tipo de calzado</Label>
+                    <Select
+                      value={watched.footwearType ?? "__none__"}
+                      onValueChange={(v) =>
+                        setValue(
+                          "footwearType",
+                          v === "__none__" ? null : (v as FormValues["footwearType"]),
+                        )
+                      }
+                    >
+                      <SelectTrigger id="footwearType">
+                        <SelectValue placeholder="(sin asignar)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {FOOTWEAR_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {FOOTWEAR_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <div className="grid gap-4 rounded-xl border border-zs-border bg-zs-surface/50 p-4 sm:grid-cols-3">

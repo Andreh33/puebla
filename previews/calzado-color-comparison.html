@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bloque 4 — Preview color CALZADO</title>
+<style>
+  /* ===== Tokens de marca (copiados de globals.css @theme) ===== */
+  :root {
+    --zs-blue-700: #1e3a8a;
+    --zs-blue-900: #14225b;
+    --zs-blue-950: #0b1640;
+    --zs-red-600: #dc2626;
+    --zs-ink: #0b1220;
+    --zs-muted: #6b7280;
+    --zs-surface: #f8fafc;
+    --zs-border: #e5e7eb;
+  }
+
+  /* ===== Borde cónico animado (idéntico a globals.css) ===== */
+  @property --zs-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+  }
+  @keyframes zs-spin-border {
+    to { --zs-angle: 360deg; }
+  }
+  .zs-animated-border {
+    position: relative;
+    padding: 3px;
+    border-radius: 1.5rem;
+    background: conic-gradient(
+      from var(--zs-angle, 0deg),
+      var(--zs-blue-700) 0%,
+      var(--zs-red-600) 50%,
+      var(--zs-blue-700) 100%
+    );
+    box-shadow: 0 6px 24px -12px rgba(11, 22, 64, 0.5);
+  }
+  @supports (background: paint(angle)) {
+    .zs-animated-border { animation: zs-spin-border 6s linear infinite; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .zs-animated-border { animation: none; }
+  }
+
+  /* ===== Layout base ===== */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--zs-surface);
+    color: var(--zs-ink);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ===== Cabecera con paleta de marca ===== */
+  header.brand {
+    background: #fff;
+    border: 1px solid var(--zs-border);
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 36px;
+  }
+  .wordmark { font-size: 38px; font-weight: 900; letter-spacing: -0.02em; }
+  .wordmark .zona { color: var(--zs-blue-900); }
+  .wordmark .sport { color: var(--zs-red-600); }
+  .swatches { display: flex; gap: 10px; margin: 14px 0 18px; flex-wrap: wrap; }
+  .swatch { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--zs-muted); }
+  .chip { width: 26px; height: 26px; border-radius: 7px; border: 1px solid rgba(0,0,0,.08); }
+  header.brand p { margin: 0; color: var(--zs-muted); font-size: 14px; max-width: 70ch; }
+  header.brand .lead { color: var(--zs-ink); font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+
+  /* ===== Secciones por color ===== */
+  section.opt { margin-bottom: 56px; }
+  .opt-title { font-size: 22px; font-weight: 800; color: var(--zs-blue-900); margin: 0 0 4px; }
+  .opt-hex { font-size: 14px; color: var(--zs-muted); margin: 0 0 20px; }
+  .opt-hex code {
+    background: #eef2f7; padding: 2px 8px; border-radius: 6px;
+    font-size: 13px; color: var(--zs-blue-900);
+  }
+  .viewport-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+    color: var(--zs-muted); font-weight: 700; margin: 18px 0 10px;
+  }
+
+  /* Contenedores que emulan desktop / mobile */
+  .view-desktop { max-width: 1100px; }
+  .view-mobile  { max-width: 380px; }
+  .cards { display: grid; gap: 20px; }
+  .view-desktop .cards { grid-template-columns: 1fr 1fr; }
+  .view-mobile  .cards { grid-template-columns: 1fr; }
+
+  /* ===== Tarjeta interior ===== */
+  .card-inner {
+    border-radius: calc(1.5rem - 3px);
+    aspect-ratio: 4 / 5;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 28px; overflow: hidden; position: relative;
+  }
+  .card-inner h3 {
+    margin: 0; font-size: 40px; font-weight: 900; letter-spacing: -0.02em;
+  }
+  .card-inner p { margin: 8px 0 0; font-size: 14px; max-width: 22ch; }
+  .card-inner .cta { margin-top: 18px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+  .deco {
+    position: absolute; top: -18px; right: -18px; font-size: 150px; line-height: 1;
+    opacity: .12; user-select: none;
+  }
+
+  /* TEXTIL — azul */
+  .textil { background: var(--zs-blue-700); color: #fff; }
+  .textil p { color: rgba(255,255,255,.85); }
+
+  /* CALZADO — el amarillo varía por sección (texto oscuro para contraste) */
+  .calzado { color: var(--zs-blue-950); }
+  .calzado p { color: rgba(20,34,91,.78); }
+  .calzado.c1 { background: #c8da46; } /* zs-tennis-500 */
+  .calzado.c2 { background: #facc15; } /* tailwind yellow-400 */
+  .calzado.c3 { background: #eab308; } /* tailwind yellow-500 */
+
+  .note { font-size: 12px; color: var(--zs-muted); margin-top: 8px; }
+
+  /* Badge de la opción elegida */
+  .chosen-badge {
+    display: inline-block; margin-left: 10px; vertical-align: middle;
+    background: #16a34a; color: #fff; font-size: 12px; font-weight: 800;
+    padding: 3px 10px; border-radius: 999px; letter-spacing: .04em;
+  }
+  section.opt.chosen { border-left: 5px solid #16a34a; padding-left: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="brand">
+    <div class="wordmark"><span class="zona">ZONA</span> <span class="sport">SPORT</span></div>
+    <div class="swatches">
+      <div class="swatch"><span class="chip" style="background:#1e3a8a"></span> zs-blue-700 · #1e3a8a</div>
+      <div class="swatch"><span class="chip" style="background:#14225b"></span> zs-blue-900 · #14225b</div>
+      <div class="swatch"><span class="chip" style="background:#dc2626"></span> zs-red-600 · #dc2626</div>
+      <div class="swatch"><span class="chip" style="background:#c8da46"></span> zs-tennis-500 · #c8da46</div>
+    </div>
+    <p class="lead">Bloque 4 — preview de selección de color amarillo para tarjeta CALZADO.</p>
+    <p>Compara las 3 opciones contra TEXTIL azul (<code style="background:#eef2f7;padding:1px 5px;border-radius:4px">zs-blue-700</code>) y la paleta de marca (logo). El borde cónico azul→rojo→azul gira en 6 s (Chrome/Safari). En Firefox se ve estático (sin soporte Houdini); con <em>prefers-reduced-motion: reduce</em> queda estático en todos.</p>
+  </header>
+
+  <!-- ============ OPCIÓN 1 ============ -->
+  <section class="opt">
+    <h2 class="opt-title">Opción 1 — zs-tennis-500 (token de marca)</h2>
+    <p class="opt-hex"><code>#c8da46</code> · verde-amarillo pelota de tenis · es el acento del logo</p>
+
+    <div class="viewport-label">Desktop · 1100px</div>
+    <div class="view-desktop">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c1"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+
+    <div class="viewport-label">Mobile · 380px</div>
+    <div class="view-mobile">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c1"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+    <p class="note">✔ Coherente con la marca (ya es el acento del logo). Riesgo: el verde-amarillo lima puede leerse menos "amarillo" y más "verde".</p>
+  </section>
+
+  <!-- ============ OPCIÓN 2 — ELEGIDA ============ -->
+  <section class="opt chosen">
+    <h2 class="opt-title">Opción 2 — Tailwind yellow-400 <span class="chosen-badge">✓ ELEGIDO</span></h2>
+    <p class="opt-hex"><code>#facc15</code> · amarillo limpio y brillante · <strong>color final de la tarjeta CALZADO</strong> (token <code>--color-zs-yellow-400</code>)</p>
+
+    <div class="viewport-label">Desktop · 1100px</div>
+    <div class="view-desktop">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c2"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+
+    <div class="viewport-label">Mobile · 380px</div>
+    <div class="view-mobile">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c2"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+    <p class="note">✔ Amarillo inequívoco, alto contraste con el azul. Riesgo: no es token de marca (habría que añadirlo a @theme si se elige).</p>
+  </section>
+
+  <!-- ============ OPCIÓN 3 ============ -->
+  <section class="opt">
+    <h2 class="opt-title">Opción 3 — Tailwind yellow-500 (mostaza)</h2>
+    <p class="opt-hex"><code>#eab308</code> · amarillo mostaza, más cálido/apagado</p>
+
+    <div class="viewport-label">Desktop · 1100px</div>
+    <div class="view-desktop">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c3"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+
+    <div class="viewport-label">Mobile · 380px</div>
+    <div class="view-mobile">
+      <div class="cards">
+        <div class="zs-animated-border"><div class="card-inner textil"><span class="deco">👕</span><h3>TEXTIL</h3><p>Camisetas, sudaderas, chándales, pantalones y más.</p><span class="cta">Ver textil →</span></div></div>
+        <div class="zs-animated-border"><div class="card-inner calzado c3"><span class="deco">👟</span><h3>CALZADO</h3><p>Zapatillas, botas, chanclas y calzado técnico.</p><span class="cta">Ver calzado →</span></div></div>
+      </div>
+    </div>
+    <p class="note">✔ Más sobrio/premium, menos estridente. Riesgo: con texto azul oscuro el contraste baja un poco respecto a yellow-400.</p>
+  </section>
+
+</div>
+</body>
+</html>

@@ -34,11 +34,11 @@ import type { MegaMenuKey } from "@/lib/menu/mega-menu";
  * sobre los tabs trigger. Mobile drawer mantiene animaciones suaves.
  */
 
+// Enlaces secundarios del drawer móvil. Antes incluía un sub-nav de deportes
+// (Running/Pádel/Montaña/Calzado) que ya NO existe como categorías tras el
+// Bloque 2; reducido a enlaces de utilidad. Los hubs (Mujer/Hombre/Niño/Niña)
+// viven en GENDER_TABS y Accesorios en SUBTABS_NINOS.
 const SPORT_NAV: Array<{ label: string; href: string }> = [
-  { label: "Running", href: "/running" },
-  { label: "Pádel", href: "/padel" },
-  { label: "Montaña", href: "/montana" },
-  { label: "Calzado", href: "/calzado" },
   { label: "Marcas", href: "/marcas" },
   { label: "Blog", href: "/blog" },
   { label: "Contacto", href: "/contacto" },
@@ -81,14 +81,14 @@ const GENDER_TABS: Array<{
     href: "/hombre",
     match: (p) => p === "/hombre" || p.startsWith("/hombre/"),
   },
-  // Niño y Niña: tabs con su propio mega-menú (ROPA/CALZADO/ACCESORIOS),
-  // igual que Mujer/Hombre. El href /nino|/nina redirige (next.config) a
-  // /catalogo?genero=NINO|NINA. El `match` cubre ambas variantes.
+  // Niño y Niña: tabs con su propio mega-menú (ROPA/CALZADO/ACCESORIOS), igual
+  // que Mujer/Hombre. Desde Bloque 4 son hubs reales (/nino, /nina); /ninos
+  // redirige 308 a /nino, por eso el match ya no contempla "/ninos".
   {
     key: "nino",
     label: "Niño",
     href: "/nino",
-    match: (p) => p === "/nino" || p.startsWith("/nino/") || p === "/ninos",
+    match: (p) => p === "/nino" || p.startsWith("/nino/"),
   },
   {
     key: "nina",

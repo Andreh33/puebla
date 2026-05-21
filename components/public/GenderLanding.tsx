@@ -4,6 +4,7 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { BrandsMarquee } from "@/components/public/BrandsMarquee";
 import { GenderHero } from "@/components/public/GenderHero";
+import { GenderHub } from "@/components/public/GenderHub";
 import { jsonLd, breadcrumbSchema } from "@/lib/seo/schema-org";
 import { stripHtml } from "@/lib/utils/html";
 import {
@@ -20,10 +21,10 @@ import type { DemoGender } from "@/lib/demo-products";
  * mantenemos aquí los antiguos como fallback documental y para SEO.
  */
 export const GENDER_LANDINGS: Record<
-  "mujer" | "hombre" | "ninos",
+  "mujer" | "hombre" | "ninos" | "nino" | "nina",
   {
     gender: DemoGender;
-    slug: "mujer" | "hombre" | "ninos";
+    slug: "mujer" | "hombre" | "ninos" | "nino" | "nina";
     label: string;
     headline: string;
     /** Subtítulo editorial mostrado bajo el headline. */
@@ -62,6 +63,26 @@ export const GENDER_LANDINGS: Record<
     tagline: "Material deportivo cómodo y resistente para que disfruten del deporte.",
     seoLead:
       "Selección Zona Sport para niños y niñas: calzado, ropa deportiva y outdoor que aguanta el ritmo del día a día. Asesoramos la talla en tienda sin compromiso.",
+  },
+  nino: {
+    gender: "NINO",
+    slug: "nino",
+    label: "Niño",
+    eyebrow: "Para ellos",
+    headline: "Que no paren de jugar.",
+    tagline: "Calzado y ropa deportiva resistente para el día a día, el cole y el deporte.",
+    seoLead:
+      "Selección Zona Sport para niño: calzado, ropa deportiva y outdoor resistente de John Smith, +8000, Joma y más. Asesoramos la talla en tienda sin compromiso.",
+  },
+  nina: {
+    gender: "NINA",
+    slug: "nina",
+    label: "Niña",
+    eyebrow: "Para ellas",
+    headline: "Que vivan el deporte a su ritmo.",
+    tagline: "Calzado y ropa deportiva cómoda para el día a día, el cole y el deporte.",
+    seoLead:
+      "Selección Zona Sport para niña: calzado, ropa deportiva y outdoor cómoda de John Smith, +8000, Joma y más. Asesoramos la talla en tienda sin compromiso.",
   },
 };
 
@@ -183,17 +204,15 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         </section>
       )}
 
-      {/* CATEGORÍAS POR TIPO DE PRENDA — Camisetas / Pantalones / Sudaderas /
-          Calzado. El cliente prefiere navegación por prenda en lugar de por
-          deporte (las landings de deporte ya viven en /running, /padel, etc.).
-          Sin fotos: gradiente brand + tipografía editorial — más limpio y sin
-          riesgo de logos prohibidos en imágenes. Los 4 slugs son categorías
-          ROOT en la DB (camisetas, pantalones, sudaderas, calzado). */}
+      {/* TEXTIL / CALZADO — 2 tarjetas grandes (GenderHub) que llevan a la ruta
+          anidada /${seccion}/${familia} (Bloque 4). Sustituye al antiguo bloque
+          de 4 cards por prenda; la granularidad por prenda se recupera en el
+          futuro con garmentType (ver docs/BLOCK-4-PLAN.md §10). */}
       <section id="categorias" className="mx-auto max-w-7xl px-4 py-16 sm:py-20">
         <div className="mb-10 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zs-red-600">
-              Por tipo de prenda
+              Ropa y calzado
             </p>
             <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-zs-blue-900 sm:text-4xl lg:text-5xl">
               ¿Qué buscas hoy?
@@ -207,66 +226,10 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
           </Link>
         </div>
 
-        <ul className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {[
-            {
-              slug: "camisetas",
-              name: "Camisetas",
-              copy: "Manga corta, larga y polos",
-              accent: "from-zs-blue-700 to-zs-blue-950",
-              numeral: "01",
-            },
-            {
-              slug: "pantalones",
-              name: "Pantalones",
-              copy: "Mallas, shorts y chándales",
-              accent: "from-zs-red-600 to-zs-red-800",
-              numeral: "02",
-            },
-            {
-              slug: "sudaderas",
-              name: "Sudaderas",
-              copy: "Con capucha, abrigos y forros",
-              accent: "from-emerald-700 to-emerald-950",
-              numeral: "03",
-            },
-            {
-              slug: "calzado",
-              name: "Calzado",
-              copy: "Deporte, casual y técnico",
-              accent: "from-zs-blue-800 to-zs-blue-950",
-              numeral: "04",
-            },
-          ].map((prenda) => (
-            <li key={prenda.slug}>
-              <Link
-                href={`/${prenda.slug}?genero=${config.gender}`}
-                className={`group relative flex aspect-[3/4] flex-col justify-end overflow-hidden rounded-2xl bg-gradient-to-br ${prenda.accent} p-5 text-white shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-6`}
-              >
-                <span
-                  aria-hidden
-                  className="absolute right-4 top-4 font-display text-3xl font-extrabold tracking-tight text-white/20 sm:text-4xl"
-                >
-                  {prenda.numeral}
-                </span>
-                <span
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-transparent"
-                />
-                <div className="relative">
-                  <h3 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
-                    {prenda.name}
-                  </h3>
-                  <p className="mt-1 text-sm text-white/85">{prenda.copy}</p>
-                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold">
-                    Ver {prenda.name.toLowerCase()}{" "}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* 2 tarjetas grandes TEXTIL / CALZADO → ruta anidada /${seccion}/${familia}
+            (Bloque 4). Sustituye al antiguo bloque de 4 cards por prenda. `ninos`
+            (combinado) usa NinosLanding, así que aquí slug ∈ hombre|mujer|nino|nina. */}
+        {slug !== "ninos" && <GenderHub seccion={slug} />}
 
         {/* Sub-categorías derivadas del catálogo si las hay (mochilas, sudaderas, etc.) */}
         {categories.length > 0 && (
@@ -304,7 +267,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
               </h2>
             </div>
             <Link
-              href={`/calzado?genero=${config.gender}`}
+              href={`/${slug}/calzado`}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-zs-blue-700 hover:text-zs-red-600"
             >
               Ver todo en calzado <ArrowRight className="h-4 w-4" />

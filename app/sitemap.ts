@@ -13,6 +13,22 @@ export const revalidate = 3600; // 1h
 
 type Entry = MetadataRoute.Sitemap[number];
 
+/**
+ * Deduplica por URL conservando la PRIMERA aparición. Como `staticEntries` se
+ * añaden antes que el loop de categorías, las landings de género (/hombre,
+ * /mujer…) mantienen su entry estática (priority 0.9) y se descarta el
+ * duplicado que generaba el loop de categorías ROOT con productos.
+ */
+function dedupeByUrl(entries: Entry[]): Entry[] {
+  const seen = new Set<string>();
+  return entries.filter((e) => {
+    const url = String(e.url);
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
 function staticEntries(now: Date): Entry[] {
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
@@ -20,10 +36,13 @@ function staticEntries(now: Date): Entry[] {
     { url: `${SITE_URL}/contacto`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/sobre-nosotros`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/marcas`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    // Landings de género — alta prioridad, son los principales puntos de entrada del top-nav
+    // Landings de género — alta prioridad, son los principales puntos de entrada del top-nav.
+    // Niño y niña son hubs independientes (Bloque 4); /ninos redirige 308 a /nino,
+    // por eso NO figura aquí (no se listan URLs que redirigen).
     { url: `${SITE_URL}/mujer`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/hombre`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${SITE_URL}/ninos`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/nino`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/nina`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/aviso-legal`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/politica-privacidad`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/politica-cookies`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
@@ -98,7 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // (Next aún no soporta sitemap index nativo en `app/sitemap.ts`; los
       // motores de búsqueda los descubrirán a través de robots.txt + los
       // routes específicos `/sitemap-products.xml` y `/sitemap-posts.xml`.)
-      return entries;
+      return dedupeByUrl(entries);
     }
 
     // Si no superamos límite, embebemos productos y posts en el principal.
@@ -136,5 +155,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.warn("[sitemap] no se pudo consultar DB:", (err as Error).message);
   }
 
-  return entries;
+  return dedupeByUrl(entries);
 }

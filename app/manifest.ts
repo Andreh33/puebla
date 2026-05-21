@@ -40,14 +40,14 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Running",
         short_name: "Running",
         description: "Catálogo de running y trail",
-        url: "/running?source=pwa-shortcut",
+        url: "/hombre/calzado?tipo=running&source=pwa-shortcut",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
       {
         name: "Pádel",
         short_name: "Pádel",
         description: "Material y palas de pádel",
-        url: "/padel?source=pwa-shortcut",
+        url: "/hombre/calzado?tipo=padel&source=pwa-shortcut",
         icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
       },
       {

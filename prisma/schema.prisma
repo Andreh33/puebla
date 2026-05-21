@@ -98,7 +98,14 @@ model Product {
   brand        Brand         @relation(fields: [brandId], references: [id])
 
   categoryId   String
-  category     Category      @relation(fields: [categoryId], references: [id])
+  category     Category      @relation("LegacyCategory", fields: [categoryId], references: [id])
+
+  // Bloque 2 (expand): relación m2m con categorías + categoría principal para
+  // breadcrumbs/canonical. `categoryId` se MANTIENE intacto durante la fase
+  // expand; se retira en la migración contractiva.
+  primaryCategoryId String?
+  primaryCategory   Category?     @relation("PrimaryCategory", fields: [primaryCategoryId], references: [id])
+  categories        ProductCategory[]
 
   source       ProductSource @default(LOCAL)
   externalId   String?       // "pricat:030501", ASIN, ID Miravia
@@ -110,6 +117,9 @@ model Product {
 
   gender       Gender        @default(NO_ESPECIFICADO)
   sportUse     String?       // "Montañismo/Trekking/Escalada"
+  // Bloque 3: tipo de calzado (solo familia calzado). Lista controlada por
+  // FOOTWEAR_TYPES en lib/categories/footwear.ts (no enum Prisma — evita churn).
+  footwearType String?       // running|trail|tenis|padel|casual|baloncesto|futbol|futbol_sala|chanclas
   composition  String?       // "Poliéster 100%"
 
   costPrice    Decimal?      @db.Decimal(10, 2)
@@ -140,6 +150,8 @@ model Product {
   @@unique([source, externalId])
   @@index([brandId, status])
   @@index([categoryId, status])
+  @@index([primaryCategoryId])
+  @@index([footwearType])
   @@index([source])
   @@index([status, publishedAt])
   @@index([modelCode])
@@ -224,11 +236,26 @@ model Category {
   metaDescription String?
   position        Int        @default(0)
   isFeatured      Boolean    @default(false)
-  products        Product[]
+  products        Product[]          @relation("LegacyCategory")    // se mantiene en expand
+  primaryFor      Product[]          @relation("PrimaryCategory")   // Bloque 2
+  categoryLinks   ProductCategory[]  @relation("CategoryProducts")  // Bloque 2
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
 
   @@index([parentId, position])
+}
+
+// Tabla pivote producto↔categoría (Bloque 2, m2m). Permite que un producto
+// UNISEX aparezca en /hombre/<fam> y /mujer/<fam> a la vez. `primaryCategoryId`
+// (en Product) marca la principal para breadcrumbs/canonical SEO.
+model ProductCategory {
+  productId  String
+  categoryId String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation("CategoryProducts", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, categoryId])
+  @@index([categoryId])
 }
 
 // ----------------------------------------------------------------------------

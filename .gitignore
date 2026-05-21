@@ -89,5 +89,14 @@ home-desktop.png
 .tmp-hero-v2/
 debug-video-frames/
 
-# Carpeta local con CSV exportados de WooCommerce � no se commitean
+# Carpeta local con CSV exportados de WooCommerce � no se commitean
 wp/
+
+# Reportes de migración (artefactos, no se trackean)
+scripts/footwear-errors.csv
+scripts/footwear-errors.csv.dry-run
+scripts/migration-errors.csv
+scripts/migration-errors.csv.dry-run
+
+# Screenshots de validación visual de bloques (efímeros)
+previews/screenshot-*.png

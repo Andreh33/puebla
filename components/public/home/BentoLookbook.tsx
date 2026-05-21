@@ -52,7 +52,7 @@ const CELLS: Cell[] = [
     eyebrow: "02 · Running",
     title: "Asfalto. Tartán. La N-V al amanecer.",
     caption: "Selección running urbano",
-    href: "/running",
+    href: "/hombre/calzado?tipo=running",
     image: "/sample-products/zapatilla-john-smith-rewik-azul-marino.webp",
     span: "lg:col-span-5 lg:row-span-2",
     ratio: "aspect-[4/3]",

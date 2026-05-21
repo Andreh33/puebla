@@ -9,6 +9,7 @@ import {
   bulkAddTags,
   bulkDelete,
   bulkSetCategory,
+  bulkSetFootwearType,
   bulkSetStatus,
   createProduct,
   deleteProduct,
@@ -17,6 +18,7 @@ import {
   type ProductInput,
   type ProductSizeInput,
 } from "@/lib/products/mutations";
+import type { FootwearType } from "@/lib/categories/footwear";
 
 async function requireSession() {
   const session = await auth();
@@ -83,7 +85,8 @@ export type BulkActionType =
   | { kind: "archive" }
   | { kind: "delete" }
   | { kind: "category"; categoryId: string }
-  | { kind: "addTags"; tags: string[] };
+  | { kind: "addTags"; tags: string[] }
+  | { kind: "footwearType"; footwearType: FootwearType | null };
 
 export async function bulkAction(ids: string[], action: BulkActionType) {
   const session = await requireSession();
@@ -108,6 +111,13 @@ export async function bulkAction(ids: string[], action: BulkActionType) {
       break;
     case "addTags":
       count = await bulkAddTags(ids, action.tags, session.user.id);
+      break;
+    case "footwearType":
+      try {
+        count = await bulkSetFootwearType(ids, action.footwearType, session.user.id);
+      } catch (e) {
+        return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
+      }
       break;
   }
   revalidatePath("/admin/productos");

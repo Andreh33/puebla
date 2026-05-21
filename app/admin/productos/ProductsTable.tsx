@@ -53,6 +53,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -61,6 +69,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatPriceEUR } from "@/lib/utils";
+import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS, type FootwearType } from "@/lib/categories/footwear";
 import type { ProductListResult } from "@/lib/products/queries";
 import {
   archiveProductAction,
@@ -105,6 +114,136 @@ const STATUS_OPTIONS = [
   { value: "INACTIVE", label: "Inactivo" },
   { value: "OUT_OF_STOCK", label: "Sin stock" },
 ] as const;
+
+/**
+ * Visibilidad responsive por columna (clave = `column.id`). Por debajo de
+ * `md` dejamos sólo lo esencial — producto (thumbnail + nombre), estado, PVP
+ * y acciones — y ocultamos las secundarias (SKU, marca, categoría, género,
+ * tallas, origen, stock). Por debajo de `sm` la tabla entera se sustituye por
+ * tarjetas apiladas (ver render más abajo), así que estas clases sólo afectan
+ * al rango sm–lg.
+ */
+const COLUMN_RESPONSIVE: Record<string, string> = {
+  select: "",
+  name: "",
+  sku: "hidden lg:table-cell",
+  brand: "hidden md:table-cell",
+  category: "hidden xl:table-cell",
+  gender: "hidden lg:table-cell",
+  footwearType: "hidden xl:table-cell",
+  sizes: "hidden xl:table-cell",
+  source: "hidden lg:table-cell",
+  status: "",
+  retailPrice: "",
+  stock: "hidden md:table-cell",
+  actions: "",
+};
+
+type RowConfirm = { type: "delete" | "archive" | "duplicate"; id: string; name: string };
+
+/**
+ * Acciones por producto. En `variant="row"` (tabla desktop) muestra los
+ * botones sueltos ver/editar + menú "···"; en `variant="menu"` (tarjeta
+ * móvil) colapsa todo en un único botón "···" con editar/ver/duplicar/
+ * archivar/eliminar. Una sola fuente de verdad para no duplicar la lógica
+ * de confirmación entre la tabla y las tarjetas.
+ */
+function RowActions({
+  r,
+  onConfirm,
+  variant = "row",
+}: {
+  r: Row;
+  onConfirm: (c: RowConfirm) => void;
+  variant?: "row" | "menu";
+}) {
+  if (variant === "menu") {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Acciones del producto">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-44 p-1">
+          <Link
+            href={`/admin/productos/${r.id}`}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+          >
+            <Pencil className="h-4 w-4" /> Editar
+          </Link>
+          <Link
+            href={`/producto/${r.slug}`}
+            target="_blank"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+          >
+            <ExternalLink className="h-4 w-4" /> Ver público
+          </Link>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+            onClick={() => onConfirm({ type: "duplicate", id: r.id, name: r.name })}
+          >
+            <Copy className="h-4 w-4" /> Duplicar
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+            onClick={() => onConfirm({ type: "archive", id: r.id, name: r.name })}
+          >
+            <Archive className="h-4 w-4" /> Archivar
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zs-red-700 hover:bg-zs-red-50"
+            onClick={() => onConfirm({ type: "delete", id: r.id, name: r.name })}
+          >
+            <Trash2 className="h-4 w-4" /> Eliminar
+          </button>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <Button asChild variant="ghost" size="icon" aria-label="Ver público" title="Ver público">
+        <Link href={`/producto/${r.slug}`} target="_blank">
+          <ExternalLink className="h-4 w-4" />
+        </Link>
+      </Button>
+      <Button asChild variant="ghost" size="icon" aria-label="Editar" title="Editar">
+        <Link href={`/admin/productos/${r.id}`}>
+          <Pencil className="h-4 w-4" />
+        </Link>
+      </Button>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Más acciones">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-44 p-1">
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+            onClick={() => onConfirm({ type: "duplicate", id: r.id, name: r.name })}
+          >
+            <Copy className="h-4 w-4" /> Duplicar
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
+            onClick={() => onConfirm({ type: "archive", id: r.id, name: r.name })}
+          >
+            <Archive className="h-4 w-4" /> Archivar
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zs-red-700 hover:bg-zs-red-50"
+            onClick={() => onConfirm({ type: "delete", id: r.id, name: r.name })}
+          >
+            <Trash2 className="h-4 w-4" /> Eliminar
+          </button>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 /**
  * Celda SKU editable inline. Click para editar, blur o Enter para guardar.
@@ -397,12 +536,10 @@ export function ProductsTable({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = React.useTransition();
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
-  const [confirm, setConfirm] = React.useState<{
-    type: "delete" | "archive" | "duplicate";
-    id: string;
-    name: string;
-  } | null>(null);
+  const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete">(null);
+  const [footwearOpen, setFootwearOpen] = React.useState(false);
+  const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
 
   const qInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -426,6 +563,7 @@ export function ProductsTable({
   const categorySel = (searchParams?.get("category") ?? "").split(",").filter(Boolean);
   const gender = (searchParams?.get("gender") ?? "").split(",").filter(Boolean);
   const noImage = searchParams?.get("noImage") === "1";
+  const sinTipoCalzado = searchParams?.get("sinTipoCalzado") === "1";
   const pageSize = Number(searchParams?.get("pageSize") ?? 50);
   const page = Number(searchParams?.get("page") ?? 1);
   const sort = searchParams?.get("sort") ?? "createdAt_desc";
@@ -457,7 +595,7 @@ export function ProductsTable({
 
   function clearAll() {
     updateParams((sp) => {
-      ["q", "source", "status", "brand", "category", "gender", "noImage", "minPrice", "maxPrice", "tag", "page"].forEach(
+      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "minPrice", "maxPrice", "tag", "page"].forEach(
         (k) => sp.delete(k),
       );
     });
@@ -547,6 +685,7 @@ export function ProductsTable({
         },
       },
       {
+        id: "brand",
         accessorKey: "brand.name",
         header: "Marca",
         cell: ({ row }) => (
@@ -554,6 +693,7 @@ export function ProductsTable({
         ),
       },
       {
+        id: "category",
         accessorKey: "category.name",
         header: "Categoría",
         cell: ({ row }) => (
@@ -566,6 +706,22 @@ export function ProductsTable({
         cell: ({ row }) => (
           <span className="text-xs text-zs-muted">{GENDER_LABEL[row.original.gender] ?? "â€”"}</span>
         ),
+      },
+      {
+        id: "footwearType",
+        header: "Tipo",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.footwearType) {
+            return (
+              <Badge variant="secondary" className="text-[11px]">
+                {FOOTWEAR_TYPE_LABELS[r.footwearType as FootwearType] ?? r.footwearType}
+              </Badge>
+            );
+          }
+          if (r.isCalzado) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
+          return null;
+        },
       },
       {
         id: "sizes",
@@ -618,62 +774,7 @@ export function ProductsTable({
       {
         id: "actions",
         header: "",
-        cell: ({ row }) => {
-          const r = row.original;
-          return (
-            <div className="flex items-center justify-end gap-1">
-              <Button
-                asChild
-                variant="ghost"
-                size="icon"
-                aria-label="Ver público"
-                title="Ver público"
-              >
-                <Link href={`/producto/${r.slug}`} target="_blank">
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="ghost" size="icon" aria-label="Editar" title="Editar">
-                <Link href={`/admin/productos/${r.id}`}>
-                  <Pencil className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Más acciones">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-44 p-1">
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
-                    onClick={() =>
-                      setConfirm({ type: "duplicate", id: r.id, name: r.name })
-                    }
-                  >
-                    <Copy className="h-4 w-4" /> Duplicar
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zs-surface"
-                    onClick={() =>
-                      setConfirm({ type: "archive", id: r.id, name: r.name })
-                    }
-                  >
-                    <Archive className="h-4 w-4" /> Archivar
-                  </button>
-                  <button
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zs-red-700 hover:bg-zs-red-50"
-                    onClick={() =>
-                      setConfirm({ type: "delete", id: r.id, name: r.name })
-                    }
-                  >
-                    <Trash2 className="h-4 w-4" /> Eliminar
-                  </button>
-                </PopoverContent>
-              </Popover>
-            </div>
-          );
-        },
+        cell: ({ row }) => <RowActions r={row.original} onConfirm={setConfirm} />,
       },
     ],
     [],
@@ -807,8 +908,20 @@ export function ProductsTable({
             />
             Sin imagen
           </label>
+          <label className="flex items-center gap-2 rounded-xl border border-zs-border bg-white px-3 py-2 text-xs font-medium text-zs-ink">
+            <Checkbox
+              checked={sinTipoCalzado}
+              onCheckedChange={(v) =>
+                updateParams((sp) => {
+                  if (v) sp.set("sinTipoCalzado", "1");
+                  else sp.delete("sinTipoCalzado");
+                }, { resetPage: true })
+              }
+            />
+            Sin tipo de calzado
+          </label>
 
-          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage) && (
+          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado) && (
             <Button variant="ghost" size="sm" onClick={clearAll}>
               <X className="h-4 w-4" />
               Limpiar filtros
@@ -877,6 +990,16 @@ export function ProductsTable({
             <Button size="sm" variant="outline" onClick={() => handleBulk({ kind: "archive" })}>
               Archivar
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setFootwearValue("__none__");
+                setFootwearOpen(true);
+              }}
+            >
+              Tipo de calzado
+            </Button>
             <Button size="sm" variant="destructive" onClick={() => setBulkConfirm("delete")}>
               Eliminar
             </Button>
@@ -887,50 +1010,136 @@ export function ProductsTable({
         </div>
       )}
 
-      {/* Tabla */}
-      <div className="overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm">
-        {isPending ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
+      {/* Tabla (≥ sm) / tarjetas apiladas (< sm) */}
+      {isPending ? (
+        <div className="space-y-2 rounded-2xl border border-zs-border bg-white p-4 shadow-sm">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full sm:h-12" />
+          ))}
+        </div>
+      ) : initialData.rows.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-zs-border bg-white p-12 text-center shadow-sm">
+          <p className="text-sm text-zs-muted">
+            No hay productos que coincidan con los filtros.
+          </p>
+          <Button variant="outline" size="sm" onClick={clearAll}>
+            Limpiar filtros
+          </Button>
+        </div>
+      ) : (
+        <>
+          {/* Vista tarjeta — sólo móvil (< sm). Cada fila se apila: thumbnail
+              + nombre, badges marca/origen, estado + PVP editables y un único
+              menú "···" con todas las acciones. */}
+          <ul className="space-y-3 sm:hidden">
+            {table.getRowModel().rows.map((row) => {
+              const r = row.original;
+              const src = SOURCE_VARIANT[r.source] ?? SOURCE_VARIANT.LOCAL!;
+              return (
+                <li
+                  key={row.id}
+                  data-state={row.getIsSelected() ? "selected" : undefined}
+                  className="rounded-2xl border border-zs-border bg-white p-3 shadow-sm data-[state=selected]:border-zs-blue-300 data-[state=selected]:bg-zs-blue-50/40"
+                >
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      aria-label="Seleccionar fila"
+                      checked={row.getIsSelected()}
+                      onCheckedChange={(v) => row.toggleSelected(!!v)}
+                      className="mt-1"
+                    />
+                    <Link
+                      href={`/admin/productos/${r.id}`}
+                      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-zs-border bg-zs-surface"
+                      aria-label={`Editar ${r.name}`}
+                    >
+                      {r.mainImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={r.mainImageUrl}
+                          alt={r.name}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-zs-muted">
+                          <ImageOff className="h-5 w-5" />
+                        </span>
+                      )}
+                    </Link>
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/admin/productos/${r.id}`}>
+                        <p className="line-clamp-2 text-sm font-semibold text-zs-ink">
+                          {r.name}
+                        </p>
+                      </Link>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-zs-muted">
+                        {r.colorHex && (
+                          <span
+                            aria-hidden
+                            className="inline-block h-3 w-3 rounded-full border border-zs-border"
+                            style={{ backgroundColor: r.colorHex }}
+                          />
+                        )}
+                        {r.colorName && <span>{r.colorName}</span>}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center rounded-full border border-zs-border bg-white px-2 py-0.5 text-xs font-medium text-zs-ink">
+                          {r.brand.name}
+                        </span>
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${src.cls}`}
+                        >
+                          {src.label}
+                        </span>
+                      </div>
+                    </div>
+                    <RowActions r={r} onConfirm={setConfirm} variant="menu" />
+                  </div>
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-zs-border pt-3">
+                    <EditableStatusCell id={r.id} initialStatus={r.status} />
+                    <EditablePriceCell
+                      id={r.id}
+                      initialRetailPrice={r.retailPrice}
+                      initialSalePrice={r.salePrice}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          {/* Vista tabla — sm en adelante. `overflow-x-auto` permite scroll
+              horizontal cuando reaparecen columnas; las clases por columna
+              (COLUMN_RESPONSIVE) van ocultando las secundarias al estrechar. */}
+          <div className="hidden overflow-x-auto rounded-2xl border border-zs-border bg-white shadow-sm sm:block">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((hg) => (
+                  <TableRow key={hg.id}>
+                    {hg.headers.map((h) => (
+                      <TableHead key={h.id} className={COLUMN_RESPONSIVE[h.column.id] ?? ""}>
+                        {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className={COLUMN_RESPONSIVE[cell.column.id] ?? ""}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        ) : initialData.rows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
-            <p className="text-sm text-zs-muted">
-              No hay productos que coincidan con los filtros.
-            </p>
-            <Button variant="outline" size="sm" onClick={clearAll}>
-              Limpiar filtros
-            </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((hg) => (
-                <TableRow key={hg.id}>
-                  {hg.headers.map((h) => (
-                    <TableHead key={h.id}>
-                      {h.isPlaceholder ? null : flexRender(h.column.columnDef.header, h.getContext())}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() ? "selected" : undefined}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+        </>
+      )}
 
       {/* Paginación */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-zs-muted">
@@ -1037,6 +1246,67 @@ export function ProductsTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk: asignar tipo de calzado (doble validación — cliente bloquea si hay
+          no-calzado; el server action vuelve a validar de forma autoritativa). */}
+      <Dialog open={footwearOpen} onOpenChange={setFootwearOpen}>
+        <DialogContent>
+          {(() => {
+            const selRows = initialData.rows.filter((r) => selectedIds.includes(r.id));
+            const nonCalzado = selRows.filter((r) => !r.isCalzado);
+            const allCalzado = selRows.length > 0 && nonCalzado.length === 0;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Asignar tipo de calzado a {selectedIds.length} producto(s)</DialogTitle>
+                  <DialogDescription>Solo aplica a productos de familia calzado.</DialogDescription>
+                </DialogHeader>
+                {!allCalzado ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    {nonCalzado.length} de los seleccionados no son de calzado (p.ej.{" "}
+                    {nonCalzado.slice(0, 3).map((r) => `"${r.name}"`).join(", ")}
+                    {nonCalzado.length > 3 ? " …" : ""}). Selecciona solo productos de calzado para esta acción.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zs-ink">Tipo de calzado</label>
+                    <Select value={footwearValue} onValueChange={setFootwearValue}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {FOOTWEAR_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {FOOTWEAR_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setFootwearOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={!allCalzado}
+                    onClick={async () => {
+                      await handleBulk({
+                        kind: "footwearType",
+                        footwearType: footwearValue === "__none__" ? null : (footwearValue as FootwearType),
+                      });
+                      setFootwearOpen(false);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

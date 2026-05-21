@@ -1,13 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
 
 export type FacetItem = { value: string; label: string; count: number };
 
@@ -16,6 +17,8 @@ export type FiltersData = {
   genders: FacetItem[];
   colors: FacetItem[];
   sizes: FacetItem[];
+  /** Bloque 3: tipos de calzado (solo presente/usado en páginas de calzado). */
+  footwearTypes?: FacetItem[];
   priceMin: number;
   priceMax: number;
 };
@@ -24,6 +27,16 @@ type Props = {
   data: FiltersData;
   /** Resultados estimados para mostrar en el botón "Aplicar (X)". */
   resultsCount?: number;
+  /** Bloque 3: muestra el FilterGroup "Tipo de calzado". Solo en páginas de calzado. */
+  showFootwearFilter?: boolean;
+  /**
+   * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
+   * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
+   * Guarda un flag `zs_filters_shown` en sessionStorage para no repetirlo en
+   * navegaciones posteriores. En desktop el sidebar ya está siempre visible.
+   * Se activa sólo en las categorías raíz que son listados (ver páginas).
+   */
+  autoOpenFirstVisit?: boolean;
 };
 
 const GENDER_LABELS: Record<string, string> = {
@@ -38,12 +51,28 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+
+  // Auto-apertura del panel de filtros en móvil/tablet (< lg) la primera vez
+  // de la sesión. En desktop el sidebar ya está siempre visible y abierto, así
+  // que aquí sólo nos interesa el rango donde los filtros están escondidos
+  // tras el botón "Filtrar". El flag de sesión evita ser pesado en cada visita.
+  useEffect(() => {
+    if (!autoOpenFirstVisit || typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 1023.98px)").matches) return;
+    try {
+      if (sessionStorage.getItem("zs_filters_shown") === "1") return;
+      sessionStorage.setItem("zs_filters_shown", "1");
+    } catch {
+      // sessionStorage no disponible: abrimos igualmente esta vez.
+    }
+    setOpen(true);
+  }, [autoOpenFirstVisit]);
 
   const get = (k: string): string[] => {
     const v = searchParams.get(k);
@@ -54,6 +83,7 @@ export function ProductFilters({ data, resultsCount }: Props) {
   const activeGenders = get("genero");
   const activeColors = get("color");
   const activeSizes = get("talla");
+  const activeTipo = get("tipo");
   const activeOnSale = searchParams.get("oferta") === "1";
   const activeNew = searchParams.get("nuevo") === "1";
   const priceMin = searchParams.get("min");
@@ -65,11 +95,12 @@ export function ProductFilters({ data, resultsCount }: Props) {
       activeGenders.length +
       activeColors.length +
       activeSizes.length +
+      activeTipo.length +
       (activeOnSale ? 1 : 0) +
       (activeNew ? 1 : 0) +
       (priceMin ? 1 : 0) +
       (priceMax ? 1 : 0),
-    [activeBrands, activeGenders, activeColors, activeSizes, activeOnSale, activeNew, priceMin, priceMax],
+    [activeBrands, activeGenders, activeColors, activeSizes, activeTipo, activeOnSale, activeNew, priceMin, priceMax],
   );
 
   const pushParams = useCallback(
@@ -132,6 +163,10 @@ export function ProductFilters({ data, resultsCount }: Props) {
       const label = data.sizes.find((s) => s.value === v)?.label ?? v;
       out.push({ id: `talla:${v}`, label: `Talla ${label}`, onRemove: () => removeMulti("talla", v) });
     }
+    for (const v of activeTipo) {
+      const label = FOOTWEAR_TYPE_LABELS[v as keyof typeof FOOTWEAR_TYPE_LABELS] ?? v;
+      out.push({ id: `tipo:${v}`, label, onRemove: () => removeMulti("tipo", v) });
+    }
     if (priceMin)
       out.push({ id: "min", label: `≥ ${priceMin}€`, onRemove: () => setPrice("min", "") });
     if (priceMax)
@@ -145,6 +180,7 @@ export function ProductFilters({ data, resultsCount }: Props) {
     activeGenders,
     activeColors,
     activeSizes,
+    activeTipo,
     priceMin,
     priceMax,
     data,
@@ -244,6 +280,27 @@ export function ProductFilters({ data, resultsCount }: Props) {
                 >
                   {s.label}
                 </button>
+              );
+            })}
+          </div>
+        </FilterGroup>
+      )}
+
+      {/* Bloque 3: tipo de calzado. Solo en páginas de calzado (showFootwearFilter). */}
+      {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
+        <FilterGroup title="Tipo de calzado">
+          <div className="flex flex-col gap-1.5">
+            {data.footwearTypes.map((t) => {
+              const on = activeTipo.includes(t.value);
+              const label = FOOTWEAR_TYPE_LABELS[t.value as keyof typeof FOOTWEAR_TYPE_LABELS] ?? t.label;
+              return (
+                <label key={t.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <Checkbox checked={on} onCheckedChange={() => toggleMulti("tipo", t.value)} />
+                    <span>{label}</span>
+                  </span>
+                  <span className="text-xs text-zs-muted">{t.count}</span>
+                </label>
               );
             })}
           </div>

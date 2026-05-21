@@ -19,7 +19,26 @@ export type ProductCardProduct = {
   source?: "LOCAL" | "MIRAVIA" | "AMAZON" | null;
   brand?: { name: string; slug?: string | null } | null;
   blurDataUrl?: string | null;
+  /**
+   * Suma de stock de todas las tallas (Bloque 1). Si es `undefined`/`null` no
+   * conocemos el stock y no pintamos badge; `0` → "Agotado"; `1..3` → "Pocas
+   * unidades". El stock es el real exportado del WP antiguo.
+   */
+  totalStock?: number | null;
 };
+
+/**
+ * Badge de stock para los listados (Bloque 1). `undefined`/`null` = stock
+ * desconocido → no se pinta nada. `0` → "Agotado". `1..3` → "Pocas unidades".
+ */
+export function stockBadge(
+  totalStock: number | null | undefined,
+): { label: string; cls: string } | null {
+  if (typeof totalStock !== "number") return null;
+  if (totalStock <= 0) return { label: "Agotado", cls: "border-transparent bg-zs-ink/80 text-white" };
+  if (totalStock <= 3) return { label: "Pocas unidades", cls: "border-transparent bg-amber-500 text-white" };
+  return null;
+}
 
 type Props = {
   product: ProductCardProduct;
@@ -80,6 +99,12 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
             <span />
           )}
           <div className="flex flex-col items-end gap-1">
+            {(() => {
+              const sb = stockBadge(product.totalStock);
+              return sb ? (
+                <Badge className={cn("shadow-sm", sb.cls)}>{sb.label}</Badge>
+              ) : null;
+            })()}
             {onSale && (
               <Badge variant="sale" className="shadow-sm">
                 -{discountPct}%

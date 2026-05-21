@@ -232,7 +232,7 @@ export function HomeHero() {
             >
               Running, montaña, pádel, fitness y calzado. Más de 40 marcas
               técnicas y urbanas, atención cara a cara en tienda y envío 24/48 h
-              en toda Extremadura.
+              a toda España.
             </p>
           </div>
 

@@ -22,27 +22,67 @@ export function ProductActions({
   externalUrl,
   product,
 }: Props) {
-  const [selected, setSelected] = useState<string | null>(null);
+  // Bloque 1: trabajamos sólo con tallas que tienen stock real (> 0). Las
+  // tallas agotadas no se muestran ni cuentan para la CTA — el stock es la
+  // fuente de verdad exportada del WP antiguo.
+  const inStock = sizes.filter((s) => s.stock > 0);
+  const hasSizes = sizes.length > 0;
+  const allOutOfStock = hasSizes && inStock.length === 0;
 
-  // Detectar "única" sola
+  // "Talla única" con stock → no exige selección.
   const onlyUnica =
-    sizes.length === 1 &&
-    (sizes[0]!.size.toUpperCase() === "ÃšNICA" || sizes[0]!.size.toUpperCase() === "UNICA");
-  const requiresSize = sizes.length > 0 && !onlyUnica;
-  const effectiveSize: string | null = onlyUnica ? "ÃšNICA" : selected;
+    inStock.length === 1 &&
+    (inStock[0]!.size.toUpperCase() === "ÚNICA" ||
+      inStock[0]!.size.toUpperCase() === "UNICA");
+
+  // Pre-selección: si sólo queda una talla con stock (y no es "única"), la
+  // dejamos elegida de entrada para acelerar la compra/reserva.
+  const presetSize = !onlyUnica && inStock.length === 1 ? inStock[0]!.size : null;
+  const [selected, setSelected] = useState<string | null>(presetSize);
+
+  const requiresSize = inStock.length > 0 && !onlyUnica;
+  const effectiveSize: string | null = onlyUnica ? "ÚNICA" : selected;
   const canCta = !requiresSize || !!selected;
 
   const reservationHref = whatsappUrl(
     WhatsAppMessages.reservation(productName, effectiveSize ?? undefined),
   );
 
+  // Caso sin stock: el producto tiene tallas pero ninguna disponible. Ocultamos
+  // el selector y ofrecemos consulta directa por WhatsApp con el nombre ya
+  // pre-rellenado. (No aplica a Amazon, que se compra en el marketplace.)
+  if (allOutOfStock && source !== "AMAZON") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-900">Temporalmente sin stock</p>
+          <p className="mt-1 text-sm text-amber-800">
+            Consulta disponibilidad por WhatsApp y te avisamos en cuanto vuelva.
+          </p>
+        </div>
+        <a
+          href={whatsappUrl(WhatsAppMessages.product(productName))}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-6 text-base font-semibold text-[#107a3e] shadow-sm transition hover:bg-[#e8fbf0]"
+        >
+          <MessageCircle className="h-5 w-5 text-emerald-600" /> Consultar disponibilidad
+        </a>
+      </div>
+    );
+  }
+
   if (source === "AMAZON" && externalUrl) {
     return (
       <div className="space-y-5">
-        {sizes.length > 0 && (
+        {inStock.length > 0 && (
           <div>
             <p className="mb-2 text-sm font-semibold text-zs-ink">Tallas disponibles</p>
-            <SizeSelector sizes={sizes} onChange={setSelected} />
+            <SizeSelector
+              sizes={inStock}
+              defaultSize={presetSize ?? undefined}
+              onChange={setSelected}
+            />
           </div>
         )}
         <a
@@ -67,10 +107,14 @@ export function ProductActions({
 
   return (
     <div className="space-y-5">
-      {sizes.length > 0 && (
+      {inStock.length > 0 && (
         <div>
           <p className="mb-2 text-sm font-semibold text-zs-ink">Tallas disponibles</p>
-          <SizeSelector sizes={sizes} onChange={setSelected} />
+          <SizeSelector
+            sizes={inStock}
+            defaultSize={presetSize ?? undefined}
+            onChange={setSelected}
+          />
         </div>
       )}
 

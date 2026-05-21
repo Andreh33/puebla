@@ -138,7 +138,7 @@ export function GenderSplit() {
           principales: ocupa 64svh con mínimo 540px y tipografía hasta 8rem,
           imagen bleed completa a la derecha y CTA grande tipo botón. */}
       <Link
-        href="/ninos"
+        href="/nino"
         data-cursor="Niños"
         className="group relative isolate flex h-[64svh] min-h-[540px] w-full overflow-hidden bg-zs-tennis-500 text-zs-blue-950 lg:h-[70svh]"
       >

@@ -61,7 +61,7 @@ export function StaticHeroFallback() {
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <Link
-              href="/running"
+              href="/catalogo"
               className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-zs-blue-900 shadow-lg shadow-black/30 transition hover:bg-zs-surface"
             >
               Ver catálogo <ArrowRight className="h-4 w-4" />
@@ -78,8 +78,8 @@ export function StaticHeroFallback() {
 
           {/* Tiles narrativos */}
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <Tile icon={Compass} title="Running" copy="Trail y urban" href="/running" />
-            <Tile icon={Mountain} title="Montaña" copy="+8000 trekking" href="/montana" />
+            <Tile icon={Compass} title="Running" copy="Trail y urban" href="/hombre/calzado?tipo=running" />
+            <Tile icon={Mountain} title="Montaña" copy="+8000 trekking" href="/hombre/calzado?tipo=trail" />
             <Tile icon={MapPin} title="Tienda" copy="C. Silos, 3" href="/contacto" />
           </div>
         </div>
