@@ -396,3 +396,17 @@ bloque posterior. El diseño ya contempla NULL → bulk (no requiere nada especi
 - **Cada paso requiere OK explícito** antes del siguiente.
 - **Cualquier escritura a prod**: `--dry-run` previo + output literal + OK.
 - La rama `features/garment-type-filter` **NO se crea hasta Fase 1**.
+
+---
+
+## 17. Observaciones post-backfill (no urgentes)
+
+Detectadas durante el `--dry-run` del paso 1.8 (validadas contra dev). No bloquean
+el backfill; son afinamientos opcionales vía bulk admin tras aplicar.
+
+- **CHUBASQUEROS etiquetados `abrigo` en vez de `cortavientos`.** Algunos productos
+  `CHUBASQUERO …` viven en la categoría antigua `abrigos`, y como **P1 (categoría)
+  gana a P2 (token)** por diseño, se etiquetan `abrigo` en lugar de `cortavientos`
+  (su token P2 natural). Volumen bajo. Decisión aprobada: **dejarlo como está**;
+  reetiquetar a `cortavientos` vía bulk admin tras el backfill si se desea. (Si en
+  el futuro el volumen creciera, valorar mover `CHUBASQUERO` a override P0.)
