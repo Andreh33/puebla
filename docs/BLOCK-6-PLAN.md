@@ -443,3 +443,41 @@ ROOT y los productos viven en las categorías anchas → la granularidad se recu
 Cobertura estimada: **~270 productos** enriquecibles según el export Woo (manga corta
 108, manga larga 26, pantalón corto 61, largo 74, mallas cortas 19, largas 40, piratas
 5, top 9, tirantes 14).
+
+---
+
+## 19. Fase 4 — Deploy a producción (log)
+
+- **Inicio:** 2026-05-21T21:31Z · **Cierre:** 2026-05-22
+- **Backup Neon branch:** `pre-bloque6-backup-20260521-2331` (id `br-steep-block-al4yo9s1`)
+  - Parent: `main` (id `br-wispy-meadow-alma6cwo`, host `ep-green-dream-alegw12m`)
+  - Restore (si hace falta): `neonctl branches restore main br-steep-block-al4yo9s1 --project-id noisy-leaf-34430283`
+
+- **Merge atómico:** `f17697e` (master) ← `04a51fe` (tip `features/garment-type-filter`), `--no-ff`,
+  21 commits publicados a `origin/master`, 25 archivos / +1964/−6.
+
+- **Migraciones aplicadas en prod** (automáticas vía `vercel.json` → `buildCommand`):
+  - `20260521184841_product_garment_type_additive`
+  - `20260521215637_product_garment_variant_additive`
+  - Verificación: 6 migraciones totales aplicadas, schema up-to-date.
+
+- **Backfills manuales (`--confirm-prod`):**
+  - `scripts/migrate-garmenttype.ts`: **761 UPDATEs** (P0=5, P1=479, P2=277, P3=0, NULL=2)
+  - `scripts/migrate-garmentvariant.ts`: **219 UPDATEs** (clasif 219 / NULL 116)
+
+- **Estado post-Fase-4 (prod):**
+  - garmentType poblados: **761**/1362 (todo el textil clasificable).
+  - garmentVariant poblados: **219**/335 candidatos (camiseta/pantalon/mallas con variante detectable).
+  - Stock **3472 filas / 3471 unidades INTACTO** ✅.
+  - Gating variant: **0** productos con variante en `garmentType` incorrecto ✅.
+  - NULL legítimos: 2 NOPUBLIK (garmentType) + 116 (variant, sin token en el nombre) → bulk admin sin urgencia.
+
+- **Smoke prod** (Playwright, `zonasport.vercel.app/hombre/textil`):
+  - sin filtros **314** · `?prenda=camiseta` **94** · `+variante=manga_corta` **32**.
+  - `?variante=manga_corta` (inferencia inversa) **32** (== explícita) ✅.
+  - `?prenda=camiseta,pantalon` (multi) **155** (> una sola).
+
+- **Conclusión:** Bloque 6 cerrado. El cliente final ve el filtro "Tipo de prenda" en `/[seccion]/textil`
+  con 15 tipos + sub-filtros de variante anidados bajo camiseta/pantalon/mallas. Admin completo (selector
+  condicional + bulk con guard de familia). Backfills idempotentes, re-ejecutables sin riesgo (recogerán
+  los NULL pendientes y los 3 abrigos JOLUVI del Bloque 2 cuando se reclasifiquen).
