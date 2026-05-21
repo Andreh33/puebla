@@ -97,3 +97,6 @@ scripts/footwear-errors.csv
 scripts/footwear-errors.csv.dry-run
 scripts/migration-errors.csv
 scripts/migration-errors.csv.dry-run
+
+# Screenshots de validación visual de bloques (efímeros)
+previews/screenshot-*.png
