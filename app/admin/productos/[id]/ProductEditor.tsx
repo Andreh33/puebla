@@ -52,6 +52,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
 import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
+import { GARMENT_TYPES, GARMENT_TYPE_LABELS } from "@/lib/categories/garment";
 import { slugifyEs } from "@/lib/seo/slug";
 import { formatDateTimeES } from "@/lib/utils";
 import {
@@ -90,6 +91,7 @@ interface EditorProps {
     gender: string;
     sportUse: string | null;
     footwearType: string | null;
+    garmentType: string | null;
     primaryCategorySlug: string | null;
     composition: string | null;
     costPrice: number | null;
@@ -190,6 +192,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     gender: (initial?.gender as FormValues["gender"]) ?? "NO_ESPECIFICADO",
     sportUse: initial?.sportUse ?? null,
     footwearType: (initial?.footwearType as FormValues["footwearType"]) ?? null,
+    garmentType: (initial?.garmentType as FormValues["garmentType"]) ?? null,
     composition: initial?.composition ?? null,
     costPrice: initial?.costPrice ?? null,
     retailPrice: initial?.retailPrice ?? 0,
@@ -537,6 +540,33 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         {FOOTWEAR_TYPES.map((t) => (
                           <SelectItem key={t} value={t}>
                             {FOOTWEAR_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {/* Tipo de prenda — solo familia textil (Bloque 6). "__none__" = null. */}
+                {initial?.primaryCategorySlug?.endsWith("-textil") && (
+                  <div>
+                    <Label htmlFor="garmentType">Tipo de prenda</Label>
+                    <Select
+                      value={watched.garmentType ?? "__none__"}
+                      onValueChange={(v) =>
+                        setValue(
+                          "garmentType",
+                          v === "__none__" ? null : (v as FormValues["garmentType"]),
+                        )
+                      }
+                    >
+                      <SelectTrigger id="garmentType">
+                        <SelectValue placeholder="(sin asignar)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {GARMENT_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {GARMENT_TYPE_LABELS[t]}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -70,6 +70,7 @@ import {
 } from "@/components/ui/table";
 import { formatPriceEUR } from "@/lib/utils";
 import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS, type FootwearType } from "@/lib/categories/footwear";
+import { GARMENT_TYPES, GARMENT_TYPE_LABELS, type GarmentType } from "@/lib/categories/garment";
 import type { ProductListResult } from "@/lib/products/queries";
 import {
   archiveProductAction,
@@ -131,6 +132,7 @@ const COLUMN_RESPONSIVE: Record<string, string> = {
   category: "hidden xl:table-cell",
   gender: "hidden lg:table-cell",
   footwearType: "hidden xl:table-cell",
+  garmentType: "hidden xl:table-cell",
   sizes: "hidden xl:table-cell",
   source: "hidden lg:table-cell",
   status: "",
@@ -540,6 +542,8 @@ export function ProductsTable({
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
   const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
+  const [garmentOpen, setGarmentOpen] = React.useState(false);
+  const [garmentValue, setGarmentValue] = React.useState<string>("__none__");
 
   const qInputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -564,6 +568,7 @@ export function ProductsTable({
   const gender = (searchParams?.get("gender") ?? "").split(",").filter(Boolean);
   const noImage = searchParams?.get("noImage") === "1";
   const sinTipoCalzado = searchParams?.get("sinTipoCalzado") === "1";
+  const sinTipoPrenda = searchParams?.get("sinTipoPrenda") === "1";
   const pageSize = Number(searchParams?.get("pageSize") ?? 50);
   const page = Number(searchParams?.get("page") ?? 1);
   const sort = searchParams?.get("sort") ?? "createdAt_desc";
@@ -595,7 +600,7 @@ export function ProductsTable({
 
   function clearAll() {
     updateParams((sp) => {
-      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "minPrice", "maxPrice", "tag", "page"].forEach(
+      ["q", "source", "status", "brand", "category", "gender", "noImage", "sinTipoCalzado", "sinTipoPrenda", "minPrice", "maxPrice", "tag", "page"].forEach(
         (k) => sp.delete(k),
       );
     });
@@ -720,6 +725,22 @@ export function ProductsTable({
             );
           }
           if (r.isCalzado) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
+          return null;
+        },
+      },
+      {
+        id: "garmentType",
+        header: "Prenda",
+        cell: ({ row }) => {
+          const r = row.original;
+          if (r.garmentType) {
+            return (
+              <Badge variant="secondary" className="text-[11px]">
+                {GARMENT_TYPE_LABELS[r.garmentType as GarmentType] ?? r.garmentType}
+              </Badge>
+            );
+          }
+          if (r.isTextil) return <span className="text-xs text-zs-muted/60">Sin tipo</span>;
           return null;
         },
       },
@@ -920,8 +941,20 @@ export function ProductsTable({
             />
             Sin tipo de calzado
           </label>
+          <label className="flex items-center gap-2 rounded-xl border border-zs-border bg-white px-3 py-2 text-xs font-medium text-zs-ink">
+            <Checkbox
+              checked={sinTipoPrenda}
+              onCheckedChange={(v) =>
+                updateParams((sp) => {
+                  if (v) sp.set("sinTipoPrenda", "1");
+                  else sp.delete("sinTipoPrenda");
+                }, { resetPage: true })
+              }
+            />
+            Sin tipo de prenda
+          </label>
 
-          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado) && (
+          {(q || source.length || status.length || brandSel.length || categorySel.length || gender.length || noImage || sinTipoCalzado || sinTipoPrenda) && (
             <Button variant="ghost" size="sm" onClick={clearAll}>
               <X className="h-4 w-4" />
               Limpiar filtros
@@ -999,6 +1032,16 @@ export function ProductsTable({
               }}
             >
               Tipo de calzado
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setGarmentValue("__none__");
+                setGarmentOpen(true);
+              }}
+            >
+              Tipo de prenda
             </Button>
             <Button size="sm" variant="destructive" onClick={() => setBulkConfirm("delete")}>
               Eliminar
@@ -1297,6 +1340,67 @@ export function ProductsTable({
                         footwearType: footwearValue === "__none__" ? null : (footwearValue as FootwearType),
                       });
                       setFootwearOpen(false);
+                    }}
+                  >
+                    Aplicar
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk: asignar tipo de prenda (doble validación — cliente bloquea si hay
+          no-textil; el server action vuelve a validar de forma autoritativa). */}
+      <Dialog open={garmentOpen} onOpenChange={setGarmentOpen}>
+        <DialogContent>
+          {(() => {
+            const selRows = initialData.rows.filter((r) => selectedIds.includes(r.id));
+            const nonTextil = selRows.filter((r) => !r.isTextil);
+            const allTextil = selRows.length > 0 && nonTextil.length === 0;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Asignar tipo de prenda a {selectedIds.length} producto(s)</DialogTitle>
+                  <DialogDescription>Solo aplica a productos de familia textil.</DialogDescription>
+                </DialogHeader>
+                {!allTextil ? (
+                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                    {nonTextil.length} de los seleccionados no son de textil (p.ej.{" "}
+                    {nonTextil.slice(0, 3).map((r) => `"${r.name}"`).join(", ")}
+                    {nonTextil.length > 3 ? " …" : ""}). Selecciona solo productos de textil para esta acción.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zs-ink">Tipo de prenda</label>
+                    <Select value={garmentValue} onValueChange={setGarmentValue}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">(sin asignar)</SelectItem>
+                        {GARMENT_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {GARMENT_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setGarmentOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    disabled={!allTextil}
+                    onClick={async () => {
+                      await handleBulk({
+                        kind: "garmentType",
+                        garmentType: garmentValue === "__none__" ? null : (garmentValue as GarmentType),
+                      });
+                      setGarmentOpen(false);
                     }}
                   >
                     Aplicar
