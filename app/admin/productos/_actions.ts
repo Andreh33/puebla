@@ -11,6 +11,7 @@ import {
   bulkSetCategory,
   bulkSetFootwearType,
   bulkSetGarmentType,
+  bulkSetGarmentVariant,
   bulkSetStatus,
   createProduct,
   deleteProduct,
@@ -20,7 +21,7 @@ import {
   type ProductSizeInput,
 } from "@/lib/products/mutations";
 import type { FootwearType } from "@/lib/categories/footwear";
-import type { GarmentType } from "@/lib/categories/garment";
+import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
 
 async function requireSession() {
   const session = await auth();
@@ -89,7 +90,8 @@ export type BulkActionType =
   | { kind: "category"; categoryId: string }
   | { kind: "addTags"; tags: string[] }
   | { kind: "footwearType"; footwearType: FootwearType | null }
-  | { kind: "garmentType"; garmentType: GarmentType | null };
+  | { kind: "garmentType"; garmentType: GarmentType | null }
+  | { kind: "garmentVariant"; garmentVariant: GarmentVariant | null };
 
 export async function bulkAction(ids: string[], action: BulkActionType) {
   const session = await requireSession();
@@ -125,6 +127,13 @@ export async function bulkAction(ids: string[], action: BulkActionType) {
     case "garmentType":
       try {
         count = await bulkSetGarmentType(ids, action.garmentType, session.user.id);
+      } catch (e) {
+        return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
+      }
+      break;
+    case "garmentVariant":
+      try {
+        count = await bulkSetGarmentVariant(ids, action.garmentVariant, session.user.id);
       } catch (e) {
         return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
       }

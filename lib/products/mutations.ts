@@ -4,7 +4,8 @@ import { db, type Prisma } from "@/lib/db";
 import { slugifyEs, uniqueSlug } from "@/lib/seo/slug";
 import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
 import type { FootwearType } from "@/lib/categories/footwear";
-import type { GarmentType } from "@/lib/categories/garment";
+import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
+import { VARIANT_TO_TYPE } from "@/lib/categories/garment";
 import type { z } from "zod";
 
 export type ProductInput = z.infer<typeof ProductSchema>;
@@ -454,6 +455,55 @@ export async function bulkSetGarmentType(
       userId,
       action: "bulk_garmenttype",
       changes: { garmentType: { to: garmentType } } as Prisma.InputJsonValue,
+    })),
+  });
+  return res.count;
+}
+
+/**
+ * Bloque 6 §18 Fase 3.5: asigna garmentVariant en lote. Guard de FAMILIA vía
+ * VARIANT_TO_TYPE: la variante solo aplica si el garmentType del producto coincide
+ * con la familia esperada (p.ej. manga_corta solo sobre camiseta). Limpiar (null)
+ * no aplica guard. Doble validación con el cliente.
+ */
+export async function bulkSetGarmentVariant(
+  ids: string[],
+  garmentVariant: GarmentVariant | null,
+  userId?: string,
+) {
+  if (!ids.length) return 0;
+
+  // Si el variant es null (limpiar), no hay guard de familia.
+  if (garmentVariant !== null) {
+    const expectedType = VARIANT_TO_TYPE[garmentVariant];
+    const wrongFamilyWhere: Prisma.ProductWhereInput = {
+      id: { in: ids },
+      OR: [{ garmentType: null }, { garmentType: { not: expectedType } }],
+    };
+    const sample = await db.product.findMany({
+      where: wrongFamilyWhere,
+      select: { id: true, name: true },
+      take: 3,
+    });
+    if (sample.length > 0) {
+      const total = await db.product.count({ where: wrongFamilyWhere });
+      const names = sample.map((p) => p.name).join('", "');
+      throw new Error(
+        `${total} producto(s) seleccionado(s) no son de ${expectedType}. Ejemplos: "${names}"${total > 3 ? " …" : ""}`,
+      );
+    }
+  }
+
+  const res = await db.product.updateMany({
+    where: { id: { in: ids } },
+    data: { garmentVariant },
+  });
+  await db.productAudit.createMany({
+    data: ids.map((productId) => ({
+      productId,
+      userId,
+      action: "bulk_garmentvariant",
+      changes: { garmentVariant: { to: garmentVariant } } as Prisma.InputJsonValue,
     })),
   });
   return res.count;
