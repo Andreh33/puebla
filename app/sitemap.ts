@@ -20,10 +20,13 @@ function staticEntries(now: Date): Entry[] {
     { url: `${SITE_URL}/contacto`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/sobre-nosotros`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/marcas`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    // Landings de género — alta prioridad, son los principales puntos de entrada del top-nav
+    // Landings de género — alta prioridad, son los principales puntos de entrada del top-nav.
+    // Niño y niña son hubs independientes (Bloque 4); /ninos redirige 308 a /nino,
+    // por eso NO figura aquí (no se listan URLs que redirigen).
     { url: `${SITE_URL}/mujer`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/hombre`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${SITE_URL}/ninos`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/nino`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/nina`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/aviso-legal`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/politica-privacidad`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
     { url: `${SITE_URL}/politica-cookies`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },

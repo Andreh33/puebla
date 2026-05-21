@@ -357,6 +357,13 @@ Cada paso = commit atómico. PARO entre pasos según la cadencia del usuario.
   misma política expand/contract y `migrate deploy`.
 - **`/ninos` → `/nino` (301):** el plural combinado se retira del modelo
   género→familia separado; queda solo como redirect permanente.
+- **[Mejora UX no urgente] Chips dinámicos "También en…" de GenderLanding.**
+  Los chips usan `getCategoriesByGender` → slugs viejos del catálogo con
+  query `?genero=`. Aterrizan correctamente vía RedirectRule 301 del Bloque 2,
+  pero con un hop. Para apuntar directo a `/[seccion]/[familia]` haría falta
+  mapeo slug-viejo → slug-nuevo en runtime. No bloqueante; aplazado. (También
+  aplica a los items de **Accesorios** del megamenú, que se mantienen con slugs
+  legacy `/[slug]?genero=` porque `/accesorios` no se reestructura en Bloque 4.)
 
 ---
 

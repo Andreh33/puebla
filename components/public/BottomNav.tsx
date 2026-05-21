@@ -11,12 +11,18 @@ import { useCart } from "@/lib/cart/use-cart";
 
 /**
  * Quick-switch de género mostrado por encima de la BottomNav. Permite saltar
- * a /mujer /hombre /ninos sin abrir el drawer del header.
+ * a /mujer /hombre y la zona de niños sin abrir el drawer del header.
+ * "Niños" es un paraguas → lleva a /nino (hub por defecto) y se resalta también
+ * en /nina (ambos son hubs reales desde el Bloque 4; /ninos redirige a /nino).
  */
 const GENDER_QUICK: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: "Mujer", href: "/mujer", match: (p) => p === "/mujer" || p.startsWith("/mujer/") },
   { label: "Hombre", href: "/hombre", match: (p) => p === "/hombre" || p.startsWith("/hombre/") },
-  { label: "Niños", href: "/ninos", match: (p) => p === "/ninos" || p.startsWith("/ninos/") },
+  {
+    label: "Niños",
+    href: "/nino",
+    match: (p) => p === "/nino" || p.startsWith("/nino/") || p === "/nina" || p.startsWith("/nina/"),
+  },
 ];
 
 type Item = {

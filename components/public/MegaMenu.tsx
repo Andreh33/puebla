@@ -207,10 +207,10 @@ function GroupColumn({
       </h4>
       <ul className="flex flex-col gap-1.5">
         {group.items.map((item) => (
-          <li key={`${gender}-${item.slug}`}>
+          <li key={`${gender}-${item.label}`}>
             <Link
               role="menuitem"
-              href={buildMegaMenuHref(item.slug, gender)}
+              href={buildMegaMenuHref(item, gender)}
               onClick={onItemClick}
               className="group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none"
             >
@@ -257,10 +257,10 @@ function SharedAccessoriesRow({
       </h4>
       <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5">
         {group.items.map((item) => (
-          <li key={`accesorios-${item.slug}`}>
+          <li key={`accesorios-${item.label}`}>
             <Link
               role="menuitem"
-              href={buildMegaMenuHref(item.slug, defaultGender)}
+              href={buildMegaMenuHref(item, defaultGender)}
               onClick={onItemClick}
               className="group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none"
             >
@@ -340,9 +340,9 @@ export function MegaMenuMobile({
                       </p>
                       <ul className="flex flex-col">
                         {group.items.map((item) => (
-                          <li key={`${section.gender}-${item.slug}`}>
+                          <li key={`${section.gender}-${item.label}`}>
                             <Link
-                              href={buildMegaMenuHref(item.slug, section.gender)}
+                              href={buildMegaMenuHref(item, section.gender)}
                               onClick={onLinkClick}
                               className="block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
                             >
@@ -364,10 +364,10 @@ export function MegaMenuMobile({
                 </p>
                 <ul className="grid grid-cols-2 gap-x-3">
                   {tab.sharedAccessories.items.map((item) => (
-                    <li key={`accesorios-${item.slug}`}>
+                    <li key={`accesorios-${item.label}`}>
                       <Link
                         href={buildMegaMenuHref(
-                          item.slug,
+                          item,
                           tab.sections[0]?.gender ?? "NINO",
                         )}
                         onClick={onLinkClick}

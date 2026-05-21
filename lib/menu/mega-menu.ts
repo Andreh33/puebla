@@ -1,87 +1,107 @@
 /**
  * lib/menu/mega-menu.ts — Estructura tipada del mega-menú del Header.
  *
- * Es la fuente de verdad del catálogo navegable (Mujer / Hombre / Niños).
- * Cada `slug` se reusa para la ruta `/${slug}?genero=${gender}` y se mapea con
- * un alias en `lib/public-queries.ts` para que la página `/${slug}` devuelva
- * 200 aunque la categoría aún no exista en BD.
+ * Es la fuente de verdad del catálogo navegable (Mujer / Hombre / Niño / Niña).
  *
- * Importante:
- *  - Los nombres y orden coinciden literalmente con la taxonomía entregada por
- *    el cliente. NO cambiar sin pedir confirmación.
- *  - Los slugs son kebab-case sin acentos para alinearse con el resolver
- *    público (`getCategoryBySlug` → fallback demo).
+ * Bloque 4 paso e — migrado al modelo género→familia:
+ *  - Calzado (C1): items → `/[seccion]/calzado?tipo=<footwearType>`. El primer
+ *    item es "Calzado" general (sin filtro). El resto mapea 1:1 con
+ *    FOOTWEAR_TYPES del Bloque 3 (running, trail, tenis, padel, futbol,
+ *    futbol_sala, casual, baloncesto, chanclas). El antiguo "tenis-padel"
+ *    combinado se desdobló en Tenis + Pádel.
+ *  - Ropa (R2-colapsado): un solo item → `/[seccion]/textil`. La granularidad
+ *    por prenda se recuperará con `garmentType` (ver docs/BLOCK-4-PLAN.md §10).
+ *  - Accesorios: se MANTIENEN los slugs legacy (`/[slug]?genero=`), que
+ *    aterrizan vía RedirectRule del Bloque 2. `/accesorios` no se reestructura
+ *    en Bloque 4 (decisión §3e).
+ *
+ * La sección combinada `ninos` se eliminó: niño y niña son hubs independientes.
  */
 
-/** Géneros soportados por el mega-menú (subconjunto del enum `DemoGender`). */
+/** Géneros soportados por el mega-menú. */
 export type MegaMenuGender = "MUJER" | "HOMBRE" | "NINO" | "NINA";
 
-/** Hoja del menú: una sub-categoría con su slug y label visible. */
-export type MegaMenuItem = { label: string; slug: string };
+/**
+ * Hoja del menú — tres formas:
+ *  - `{ familia: "calzado", tipo? }` → `/[seccion]/calzado[?tipo=…]`
+ *  - `{ familia: "textil" }`         → `/[seccion]/textil`
+ *  - `{ slug }`                      → legacy `/[slug]?genero=…` (accesorios)
+ */
+export type MegaMenuItem =
+  | { label: string; familia: "calzado"; tipo?: string }
+  | { label: string; familia: "textil" }
+  | { label: string; slug: string };
 
 /** Grupo (Ropa, Calzado, Accesorios) dentro de una sección. */
 export type MegaMenuGroup = { title: string; items: MegaMenuItem[] };
 
-/** Sección con su género propio (en Niños hay dos: NINO y NINA). */
+/** Sección con su género propio. */
 export type MegaMenuSection = {
   gender: MegaMenuGender;
-  /** Label visible cuando hay varias secciones (ej. "Niño", "Niña"). */
+  /** Label visible cuando hay varias secciones. */
   label: string;
   groups: MegaMenuGroup[];
 };
 
 /** Tab raíz del mega-menú (Mujer / Hombre / Niño / Niña). */
 export type MegaMenuTab = {
-  /** Slug del landing (`/mujer`, `/hombre`, `/nino`, `/nina`, `/ninos`). */
-  href: "/mujer" | "/hombre" | "/ninos" | "/nino" | "/nina";
+  /** Slug del landing (`/mujer`, `/hombre`, `/nino`, `/nina`). */
+  href: "/mujer" | "/hombre" | "/nino" | "/nina";
   label: string;
   /** Imagen lifestyle sticky en el panel desktop. */
   heroImage: string;
-  /** Géneros incluidos en este tab (Niños incluye NINO y NINA). */
+  /** Géneros incluidos en este tab. */
   sections: MegaMenuSection[];
   /**
-   * Accesorios compartidos en el caso de "Niños". Para Mujer/Hombre los
-   * accesorios viven dentro de la única sección del tab. Cuando hay más de
-   * una sección (Niños), los accesorios se renderizan en una fila adicional
-   * común para no duplicar UI.
+   * Accesorios compartidos (reservado para tabs multi-sección). Hoy ningún tab
+   * lo usa — niño y niña son tabs independientes. Se conserva el campo opcional
+   * por compatibilidad con el render de MegaMenu.tsx.
    */
   sharedAccessories?: MegaMenuGroup;
 };
 
-// ---------------------------------------------------------------------------
-// Grupos reutilizables (Mujer y Hombre comparten estructura idéntica).
-// ---------------------------------------------------------------------------
-
-const ROPA_ADULTO: MegaMenuGroup = {
-  title: "Ropa",
-  items: [
-    { label: "Chándal", slug: "chandal" },
-    { label: "Abrigos", slug: "abrigos" },
-    { label: "Cortavientos", slug: "cortavientos" },
-    { label: "Polos", slug: "polos" },
-    { label: "Pantalones", slug: "pantalones" },
-    { label: "Camisetas", slug: "camisetas" },
-    { label: "Sudaderas", slug: "sudaderas" },
-    { label: "Mallas", slug: "mallas" },
-    { label: "Conjuntos", slug: "conjuntos" },
-    { label: "Bañadores", slug: "banadores" },
-  ],
+/** gender (enum) → seccion (slug del hub /[seccion]). */
+const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "nina"> = {
+  MUJER: "mujer",
+  HOMBRE: "hombre",
+  NINO: "nino",
+  NINA: "nina",
 };
 
-const CALZADO_ADULTO: MegaMenuGroup = {
+// ---------------------------------------------------------------------------
+// Grupos compartidos (modelo género→familia uniforme).
+// ---------------------------------------------------------------------------
+
+/** Ropa (R2-colapsado): un único enlace al textil de la sección. */
+const ROPA: MegaMenuGroup = {
+  title: "Ropa",
+  items: [{ label: "Ver toda la ropa", familia: "textil" }],
+};
+
+/**
+ * Calzado (C1): "Calzado" general primero + un item por footwearType.
+ * Orden y `tipo` coinciden con FOOTWEAR_TYPES del Bloque 3.
+ */
+const CALZADO: MegaMenuGroup = {
   title: "Calzado",
   items: [
-    { label: "Tenis / Pádel", slug: "tenis-padel" },
-    { label: "Running", slug: "running" },
-    { label: "Trail", slug: "trail" },
-    { label: "Casual", slug: "casual" },
-    { label: "Baloncesto", slug: "baloncesto" },
-    { label: "Fútbol", slug: "futbol" },
-    { label: "Fútbol Sala", slug: "futbol-sala" },
-    { label: "Chanclas", slug: "chanclas" },
+    { label: "Calzado", familia: "calzado" },
+    { label: "Running", familia: "calzado", tipo: "running" },
+    { label: "Trail", familia: "calzado", tipo: "trail" },
+    { label: "Tenis", familia: "calzado", tipo: "tenis" },
+    { label: "Pádel", familia: "calzado", tipo: "padel" },
+    { label: "Fútbol", familia: "calzado", tipo: "futbol" },
+    { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },
+    { label: "Casual", familia: "calzado", tipo: "casual" },
+    { label: "Baloncesto", familia: "calzado", tipo: "baloncesto" },
+    { label: "Chanclas", familia: "calzado", tipo: "chanclas" },
   ],
 };
 
+/**
+ * Accesorios (legacy, sin reestructurar): slugs antiguos que redirigen vía
+ * RedirectRule del Bloque 2. Se mantienen idénticos al menú original.
+ */
 const ACCESORIOS_ADULTO: MegaMenuGroup = {
   title: "Accesorios",
   items: [
@@ -98,60 +118,7 @@ const ACCESORIOS_ADULTO: MegaMenuGroup = {
   ],
 };
 
-const ROPA_NINO: MegaMenuGroup = {
-  title: "Ropa Niño",
-  items: [
-    { label: "Chándal", slug: "chandal" },
-    { label: "Abrigos", slug: "abrigos" },
-    { label: "Pantalones", slug: "pantalones" },
-    { label: "Camisetas", slug: "camisetas" },
-    { label: "Sudaderas", slug: "sudaderas" },
-    { label: "Mallas", slug: "mallas" },
-    { label: "Conjuntos", slug: "conjuntos" },
-    { label: "Bañadores", slug: "banadores" },
-  ],
-};
-
-const CALZADO_NINO: MegaMenuGroup = {
-  title: "Calzado Niño",
-  items: [
-    { label: "Tenis / Pádel", slug: "tenis-padel" },
-    { label: "Running", slug: "running" },
-    { label: "Trail", slug: "trail" },
-    { label: "Casual", slug: "casual" },
-    { label: "Baloncesto", slug: "baloncesto" },
-    { label: "Fútbol", slug: "futbol" },
-    { label: "Fútbol Sala", slug: "futbol-sala" },
-    { label: "Chanclas", slug: "chanclas" },
-  ],
-};
-
-const ROPA_NINA: MegaMenuGroup = {
-  title: "Ropa Niña",
-  items: [
-    { label: "Chándal", slug: "chandal" },
-    { label: "Abrigos", slug: "abrigos" },
-    { label: "Camisetas", slug: "camisetas" },
-    { label: "Sudaderas", slug: "sudaderas" },
-    { label: "Mallas", slug: "mallas" },
-    { label: "Conjuntos", slug: "conjuntos" },
-    { label: "Bebé", slug: "bebe" },
-  ],
-};
-
-const CALZADO_NINA: MegaMenuGroup = {
-  title: "Calzado Niña",
-  items: [
-    { label: "Tenis / Pádel", slug: "tenis-padel" },
-    { label: "Running", slug: "running" },
-    { label: "Trail", slug: "trail" },
-    { label: "Casual", slug: "casual" },
-    { label: "Fútbol", slug: "futbol" },
-    { label: "Fútbol Sala", slug: "futbol-sala" },
-    { label: "Chanclas", slug: "chanclas" },
-  ],
-};
-
+/** Accesorios de niños — mismo set que adulto (taxonomía del cliente). */
 const ACCESORIOS_NINOS: MegaMenuGroup = {
   title: "Accesorios",
   items: [
@@ -175,7 +142,6 @@ const ACCESORIOS_NINOS: MegaMenuGroup = {
 export const MEGA_MENU: {
   mujer: MegaMenuTab;
   hombre: MegaMenuTab;
-  ninos: MegaMenuTab;
   nino: MegaMenuTab;
   nina: MegaMenuTab;
 } = {
@@ -187,7 +153,7 @@ export const MEGA_MENU: {
       {
         gender: "MUJER",
         label: "Mujer",
-        groups: [ROPA_ADULTO, CALZADO_ADULTO, ACCESORIOS_ADULTO],
+        groups: [ROPA, CALZADO, ACCESORIOS_ADULTO],
       },
     ],
   },
@@ -199,34 +165,10 @@ export const MEGA_MENU: {
       {
         gender: "HOMBRE",
         label: "Hombre",
-        groups: [ROPA_ADULTO, CALZADO_ADULTO, ACCESORIOS_ADULTO],
+        groups: [ROPA, CALZADO, ACCESORIOS_ADULTO],
       },
     ],
   },
-  ninos: {
-    href: "/ninos",
-    label: "Niños",
-    heroImage: "/category-photos/ninos-hero.webp",
-    sections: [
-      {
-        gender: "NINO",
-        label: "Niño",
-        groups: [ROPA_NINO, CALZADO_NINO],
-      },
-      {
-        gender: "NINA",
-        label: "Niña",
-        groups: [ROPA_NINA, CALZADO_NINA],
-      },
-    ],
-    // Accesorios comunes para ambos sub-géneros. Se renderizan en una fila
-    // independiente debajo de las dos columnas de ropa/calzado.
-    sharedAccessories: ACCESORIOS_NINOS,
-  },
-  // Niño y Niña como tabs independientes con su propio mega-menú (a
-  // petición del cliente: misma experiencia desplegable que Mujer/Hombre,
-  // no links planos). Cada uno con una sección única (ROPA + CALZADO +
-  // ACCESORIOS) en lugar de la versión combinada "ninos".
   nino: {
     href: "/nino",
     label: "Niño",
@@ -235,7 +177,7 @@ export const MEGA_MENU: {
       {
         gender: "NINO",
         label: "Niño",
-        groups: [ROPA_NINO, CALZADO_NINO, ACCESORIOS_NINOS],
+        groups: [ROPA, CALZADO, ACCESORIOS_NINOS],
       },
     ],
   },
@@ -247,42 +189,46 @@ export const MEGA_MENU: {
       {
         gender: "NINA",
         label: "Niña",
-        groups: [ROPA_NINA, CALZADO_NINA, ACCESORIOS_NINOS],
+        groups: [ROPA, CALZADO, ACCESORIOS_NINOS],
       },
     ],
   },
 };
 
 export type MegaMenuKey = keyof typeof MEGA_MENU;
-// El header usa mujer/hombre/nino/nina (el combinado "ninos" queda
-// definido por compat con /ninos pero no se dispara desde el header).
 export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina"];
 
 /**
- * Construye la URL navegable para un item del mega-menú.
- *
- * Convención: `/${slug}?genero=${gender}` — el filtro `GenderChips` de la
- * página de categoría ya entiende el `genero` query param.
+ * Construye la URL navegable de un item del mega-menú según su forma:
+ *  - calzado → `/[seccion]/calzado[?tipo=…]` (modelo género→familia, Bloque 4).
+ *  - textil  → `/[seccion]/textil`.
+ *  - legacy slug → `/[slug]?genero=…` (accesorios; redirige vía RedirectRule).
  */
-export function buildMegaMenuHref(slug: string, gender: MegaMenuGender): string {
-  return `/${slug}?genero=${gender}`;
+export function buildMegaMenuHref(item: MegaMenuItem, gender: MegaMenuGender): string {
+  const seccion = SECCION_BY_GENDER[gender];
+  if ("familia" in item) {
+    if (item.familia === "calzado") {
+      return item.tipo ? `/${seccion}/calzado?tipo=${item.tipo}` : `/${seccion}/calzado`;
+    }
+    return `/${seccion}/textil`;
+  }
+  return `/${item.slug}?genero=${gender}`;
 }
 
 /**
- * Devuelve todos los slugs únicos referenciados por el mega-menú. Útil para
- * generar aliases en `lib/public-queries.ts` y mantener la coherencia.
+ * Slugs legacy únicos referenciados por el mega-menú (solo accesorios; el
+ * calzado/textil ya no usan slug). Útil para mantener aliases en
+ * `lib/public-queries.ts`. Hoy sin consumidores directos.
  */
 export function getAllMegaMenuSlugs(): string[] {
   const out = new Set<string>();
   for (const key of MEGA_MENU_KEYS) {
-    const tab = MEGA_MENU[key];
-    for (const section of tab.sections) {
+    for (const section of MEGA_MENU[key].sections) {
       for (const group of section.groups) {
-        for (const item of group.items) out.add(item.slug);
+        for (const item of group.items) {
+          if ("slug" in item) out.add(item.slug);
+        }
       }
-    }
-    if (tab.sharedAccessories) {
-      for (const item of tab.sharedAccessories.items) out.add(item.slug);
     }
   }
   return Array.from(out).sort();
