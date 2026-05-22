@@ -1,31 +1,39 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Shirt, Footprints, ArrowRight } from "lucide-react";
 import { useRef, type CSSProperties, type MouseEvent } from "react";
 
 /**
  * GenderHub — 2 tarjetas grandes (TEXTIL / CALZADO) de los hubs de género
- * (/hombre, /mujer, /nino, /nina). Cada tarjeta es un <Link> entero que lleva a
+ * (/hombre, /mujer, /nino, /nina). Cada tarjeta es un <Link> entero a
  * `/${seccion}/${familia}`.
  *
- * Bloque 7.6 (feedback "muy cutres"): tilt 3D que sigue al cursor (perspective
- * + rotateX/Y vía variables CSS que fija onMouseMove), brillo especular que
- * sigue al ratón, glow de color en hover, sheen diagonal fijo y flotación
- * idle. Mantiene el borde cónico animado (`.zs-animated-border`). Es client
- * por la interacción del ratón (los hubs son 4 páginas, coste de JS mínimo).
+ * Bloque 7.6: tilt 3D que sigue al cursor + brillo especular + glow de color +
+ * sheen + flotación idle + borde cónico animado.
+ * Bloque 7.7 (feedback): foto de fondo — TEXTIL usa la foto del género
+ * (`{seccion}-landing.jpg`, ropa deportiva en acción), CALZADO usa
+ * `calzado.jpg`. Se mantienen los iconos (camiseta / zapatos) en blanco encima,
+ * con velo azul para legibilidad del texto.
  */
 
 type Seccion = "hombre" | "mujer" | "nino" | "nina";
+
+/** Foto de ropa por género (no hay una genérica; el componente es compartido). */
+const LANDING_BY_SECCION: Record<Seccion, string> = {
+  hombre: "hombre-landing",
+  mujer: "mujer-landing",
+  nino: "ninos-landing",
+  nina: "ninos-landing",
+};
 
 const CARDS: Array<{
   familia: "textil" | "calzado";
   title: string;
   subtitle: string;
   Icon: typeof Shirt;
-  innerClass: string;
-  subClass: string;
-  iconClass: string;
+  /** Color de la fila "Ver …" (acento de marca). */
   ctaClass: string;
   /** Color del glow (box-shadow) en hover. */
   glow: string;
@@ -35,9 +43,6 @@ const CARDS: Array<{
     title: "TEXTIL",
     subtitle: "Camisetas, sudaderas, chándales, pantalones y más.",
     Icon: Shirt,
-    innerClass: "bg-zs-blue-700 text-white",
-    subClass: "text-white/85",
-    iconClass: "text-white/25",
     ctaClass: "text-white",
     glow: "rgba(37, 99, 235, 0.5)",
   },
@@ -46,13 +51,16 @@ const CARDS: Array<{
     title: "CALZADO",
     subtitle: "Zapatillas, botas, chanclas y calzado técnico.",
     Icon: Footprints,
-    innerClass: "bg-zs-yellow-400 text-zs-blue-950",
-    subClass: "text-zs-blue-900/75",
-    iconClass: "text-zs-blue-950/25",
-    ctaClass: "text-zs-blue-950",
+    ctaClass: "text-zs-yellow-400",
     glow: "rgba(250, 204, 21, 0.6)",
   },
 ];
+
+function photoFor(familia: "textil" | "calzado", seccion: Seccion): string {
+  return familia === "calzado"
+    ? "/category-photos/calzado.jpg"
+    : `/category-photos/${LANDING_BY_SECCION[seccion]}.jpg`;
+}
 
 function HubCard({
   card,
@@ -96,25 +104,36 @@ function HubCard({
         style={{ "--glow": card.glow } as CSSProperties}
         className="zs-animated-border zs-hub-card group block shadow-sm"
       >
-        <div
-          className={`zs-animated-border__inner zs-hub-card__inner relative flex aspect-[4/5] flex-col justify-end overflow-hidden p-6 sm:p-8 ${card.innerClass}`}
-        >
-          {/* Icono decorativo grande, esquina superior derecha */}
+        <div className="zs-animated-border__inner zs-hub-card__inner relative flex aspect-[4/5] flex-col justify-end overflow-hidden bg-zs-blue-900 p-6 sm:p-8">
+          {/* Foto de fondo (ropa del género / calzado) */}
+          <Image
+            src={photoFor(card.familia, seccion)}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, 50vw"
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+          />
+          {/* Velo azul para legibilidad del texto e identidad de marca */}
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-gradient-to-t from-zs-blue-950/92 via-zs-blue-950/45 to-zs-blue-950/10"
+          />
+          {/* Icono decorativo grande (se mantiene), ahora en blanco sobre la foto */}
           <Icon
             aria-hidden
-            className={`absolute -right-4 -top-4 h-40 w-40 transition-transform duration-700 ease-out group-hover:-rotate-6 group-hover:scale-110 ${card.iconClass}`}
+            className="absolute -right-4 -top-4 h-40 w-40 text-white/30 drop-shadow-lg transition-transform duration-700 ease-out group-hover:-rotate-6 group-hover:scale-110"
             strokeWidth={1.25}
           />
-          {/* Sheen diagonal fijo (gloss premium) */}
+          {/* Sheen diagonal fijo */}
           <span aria-hidden className="zs-hub-card__sheen" />
           {/* Brillo especular que sigue al cursor */}
           <span aria-hidden className="zs-hub-card__glare" />
 
           <div className="relative">
-            <h3 className="font-display text-4xl font-black tracking-tight sm:text-5xl">
+            <h3 className="font-display text-4xl font-black tracking-tight text-white drop-shadow sm:text-5xl">
               {card.title}
             </h3>
-            <p className={`mt-2 max-w-[22ch] text-sm sm:text-base ${card.subClass}`}>
+            <p className="mt-2 max-w-[22ch] text-sm text-white/85 sm:text-base">
               {card.subtitle}
             </p>
             <span

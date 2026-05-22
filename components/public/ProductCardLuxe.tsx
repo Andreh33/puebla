@@ -75,6 +75,26 @@ export function ProductCardLuxe({
     window.setTimeout(() => setRipples((r) => r.filter((x) => x.id !== id)), 650);
   }
 
+  // Tilt 3D que sigue al cursor + posición del brillo especular (Bloque 7.7).
+  function handleMove(e: MouseEvent<HTMLAnchorElement>) {
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width;
+    const py = (e.clientY - r.top) / r.height;
+    el.style.setProperty("--rx", `${(0.5 - py) * 9}deg`);
+    el.style.setProperty("--ry", `${(px - 0.5) * 11}deg`);
+    el.style.setProperty("--mx", `${px * 100}%`);
+    el.style.setProperty("--my", `${py * 100}%`);
+  }
+
+  function handleLeave() {
+    const el = ref.current;
+    if (!el) return;
+    el.style.setProperty("--rx", "0deg");
+    el.style.setProperty("--ry", "0deg");
+  }
+
   const images = [product.mainImageUrl, secondary].filter(Boolean) as string[];
   const mobileImg = images[mobileIndex] ?? product.mainImageUrl ?? null;
 
@@ -90,10 +110,12 @@ export function ProductCardLuxe({
     <Link
       ref={ref}
       onClick={handleClick}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
       href={`/producto/${product.slug}`}
       className={cn(
         "zs-tilt-luxe group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out",
-        "hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow-lg)]",
+        "hover:shadow-[var(--shadow-zs-blue-glow-lg)]",
         animatedBorder && "product-card--animated",
         className,
       )}
@@ -226,6 +248,9 @@ export function ProductCardLuxe({
             ))}
           </div>
         )}
+
+        {/* Brillo especular que sigue al cursor */}
+        <span aria-hidden className="zs-card-glare" />
       </div>
 
       <div className="space-y-1 p-3 sm:p-4">
@@ -250,8 +275,10 @@ export function ProductCardLuxe({
       <style>{`
         @keyframes zs-ripple { from { width: 0; height: 0; opacity: 0.6; } to { width: 220%; height: 220%; opacity: 0; } }
         @media (hover: hover) and (pointer: fine) {
-          .zs-tilt-luxe { transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 600ms ease, translate 600ms ease; }
-          .zs-tilt-luxe:hover { transform: perspective(900px) rotateX(2.5deg) rotateY(-1.5deg) translateY(-4px); }
+          .zs-tilt-luxe { transform-style: preserve-3d; transition: transform 200ms ease-out, box-shadow 500ms ease; }
+          .zs-tilt-luxe:hover { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+          .zs-card-glare { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.35), transparent 60%); transition: opacity 250ms ease; }
+          .zs-tilt-luxe:hover .zs-card-glare { opacity: 1; }
         }
       `}</style>
     </Link>

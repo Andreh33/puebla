@@ -13,20 +13,13 @@ import { useEffect } from "react";
  * (vía la clase `aurora-active`): es el lienzo, siempre visible tras el
  * contenido transparente y sin teñir las fotos (las cards van opacas encima).
  *
- * Gate por pathname: solo en listados/ficha/marca. NO en home, hubs de género
- * ni páginas informativas. El componente no pinta nada — solo conmuta la clase.
+ * Gate por pathname: aparece en (casi) todas las páginas públicas. Solo se
+ * EXCLUYE la home `/`, que tiene su propio vídeo hero a pantalla completa
+ * (la aurora quedaría tapada). El componente no pinta nada — solo conmuta la
+ * clase en <body>.
  */
-const DENY_EXACT = new Set([
-  "/",
-  "/hombre",
-  "/mujer",
-  "/nino",
-  "/nina",
-  "/contacto",
-  "/marcas",
-  "/sobre-nosotros",
-]);
-const DENY_PREFIX = ["/blog", "/tienda-en", "/politica"];
+const DENY_EXACT = new Set(["/"]);
+const DENY_PREFIX: string[] = [];
 
 export function AuroraBackground() {
   const pathname = usePathname() ?? "/";
