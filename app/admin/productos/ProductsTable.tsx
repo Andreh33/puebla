@@ -665,13 +665,15 @@ export function ProductsTable({
                   </div>
                 )}
               </div>
-              <div className="w-44 shrink-0">
-                {/* Nombre en caja estrecha: envuelve y, si es muy largo, aparece
-                    una barra lateral (scroll vertical fino) para leerlo entero
-                    sin ensanchar la columna. title = tooltip nativo de apoyo. */}
+              <div className="w-36 shrink-0 sm:w-40 xl:w-48 2xl:w-56">
+                {/* Nombre en columna estrecha y RESPONSIVE: el nombre envuelve en
+                    varias líneas (sin recortes, sin scroll, sin flechas) para
+                    verse entero y adaptarse a cualquier ancho de pantalla — en
+                    pantallas anchas la columna crece y ocupa menos líneas.
+                    title = tooltip nativo de apoyo. */}
                 <p
                   title={r.name}
-                  className="max-h-11 overflow-y-auto whitespace-normal break-words pr-1 text-sm font-semibold leading-snug text-zs-ink [scrollbar-width:thin] group-hover:text-zs-blue-700"
+                  className="whitespace-normal break-words text-sm font-semibold leading-snug text-zs-ink group-hover:text-zs-blue-700"
                 >
                   {r.name}
                 </p>
