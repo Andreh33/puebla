@@ -6,9 +6,14 @@
 export const PWA_DISMISSED_KEY = "zs_pwa_dismissed_at";
 export const PWA_INSTALLED_KEY = "zs_pwa_installed_at";
 export const PWA_PAGEVIEWS_KEY = "zs_pwa_pageviews";
+export const PWA_SHOWN_KEY = "zs_pwa_shown_at";
 
-/** Días que silencia el banner tras un "Más tarde". */
-export const PWA_DISMISS_DAYS = 7;
+/**
+ * Días que silencia el banner tras mostrarse o tras un "Más tarde": 2 semanas.
+ * El banner aparece como mucho 1 vez cada 2 semanas (se registra `shownAt` al
+ * mostrarse) y, si se rechaza, no reaparece durante ese mismo periodo.
+ */
+export const PWA_DISMISS_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Storage mínimo — permite inyectar mock en tests. */
@@ -39,12 +44,29 @@ export function markInstalled(now: number = Date.now(), storage?: StorageLike): 
   s.setItem(PWA_INSTALLED_KEY, String(now));
 }
 
+/** Registra la última vez que el banner se MOSTRÓ (para la cadencia 1×/2 semanas). */
+export function markShown(now: number = Date.now(), storage?: StorageLike): void {
+  const s = storage ?? safeStorage();
+  if (!s) return;
+  s.setItem(PWA_SHOWN_KEY, String(now));
+}
+
+export function getShownAt(storage?: StorageLike): number | null {
+  const s = storage ?? safeStorage();
+  if (!s) return null;
+  const raw = s.getItem(PWA_SHOWN_KEY);
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function clearPwaState(storage?: StorageLike): void {
   const s = storage ?? safeStorage();
   if (!s) return;
   s.removeItem(PWA_DISMISSED_KEY);
   s.removeItem(PWA_INSTALLED_KEY);
   s.removeItem(PWA_PAGEVIEWS_KEY);
+  s.removeItem(PWA_SHOWN_KEY);
 }
 
 export function getDismissedAt(storage?: StorageLike): number | null {
@@ -79,20 +101,21 @@ export interface ShouldShowInput {
 }
 
 /**
- * Decide si el banner debe mostrarse — política "always-on":
+ * Decide si el banner debe mostrarse — cadencia "1 vez cada 2 semanas":
  *  - nunca si ya está instalada (standalone, navigator.standalone, appinstalled)
- *  - nunca si se descartó en los últimos PWA_DISMISS_DAYS días
- *  - en cualquier otro caso → SÍ (todas las plataformas, mobile y desktop).
+ *  - nunca si se mostró o se descartó en los últimos PWA_DISMISS_DAYS días
+ *    (lo más reciente de `shownAt` / `dismissedAt` manda)
+ *  - en cualquier otro caso → SÍ.
+ * La restricción a la home la aplica el componente (no esta función pura).
  */
 export function shouldShowPrompt(input: ShouldShowInput): boolean {
   if (input.isStandalone) return false;
   if (getInstalledAt(input.storage) !== null) return false;
 
-  const dismissedAt = getDismissedAt(input.storage);
-  if (dismissedAt !== null) {
-    const elapsed = input.now - dismissedAt;
-    if (elapsed < PWA_DISMISS_DAYS * DAY_MS) return false;
-  }
+  const dismissedAt = getDismissedAt(input.storage) ?? 0;
+  const shownAt = getShownAt(input.storage) ?? 0;
+  const last = Math.max(dismissedAt, shownAt);
+  if (last > 0 && input.now - last < PWA_DISMISS_DAYS * DAY_MS) return false;
 
   return true;
 }

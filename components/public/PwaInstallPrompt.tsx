@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { X, Share, Plus, Smartphone, Check } from "lucide-react";
 import {
@@ -8,6 +9,7 @@ import {
   shouldShowPrompt,
   markDismissed,
   markInstalled,
+  markShown,
   type Platform,
 } from "@/lib/pwa/install-state";
 
@@ -23,17 +25,20 @@ interface SafariNavigator extends Navigator {
 }
 
 export function PwaInstallPrompt() {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [platform, setPlatform] = useState<Platform>("other");
   const [visible, setVisible] = useState(false);
   const [hasNativePrompt, setHasNativePrompt] = useState(false);
   const [iosModalOpen, setIosModalOpen] = useState(false);
   const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
+  const isStandaloneRef = useRef(false);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const firstFocusRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusRef = useRef<HTMLButtonElement | null>(null);
 
-  // Mount + detección + evaluación inmediata (sin delay).
+  // Mount + detección + listeners (la decisión de mostrar va en el efecto de
+  // ruta de abajo, para gatear a la home).
   useEffect(() => {
     setMounted(true);
     if (typeof window === "undefined") return;
@@ -41,18 +46,11 @@ export function PwaInstallPrompt() {
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       Boolean((window.navigator as SafariNavigator).standalone);
+    isStandaloneRef.current = isStandalone;
 
     const isMobileWidth = window.matchMedia("(max-width: 768px)").matches;
     const detected = detectPlatform(window.navigator.userAgent, isMobileWidth);
     setPlatform(detected);
-
-    // Política always-on: evaluamos inmediatamente, sin esperar pageviews ni delays.
-    const show = shouldShowPrompt({
-      now: Date.now(),
-      platform: detected,
-      isStandalone,
-    });
-    if (show) setVisible(true);
 
     // Captura beforeinstallprompt (Android Chrome, Edge desktop, etc.).
     // Si llega DESPUÉS del primer render, marcamos hasNativePrompt para cambiar
@@ -89,6 +87,27 @@ export function PwaInstallPrompt() {
       window.removeEventListener("zs:show-pwa-install", onForceShow);
     };
   }, []);
+
+  // Auto-mostrar SOLO en la home ("/") y como mucho 1 vez cada 2 semanas
+  // (markShown registra la fecha; shouldShowPrompt silencia 14 días). Fuera de
+  // la home se oculta el banner automático. El botón "App" del header lo fuerza
+  // en cualquier página vía el evento zs:show-pwa-install (no pasa por aquí).
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return;
+    if (pathname !== "/") {
+      setVisible(false);
+      return;
+    }
+    const show = shouldShowPrompt({
+      now: Date.now(),
+      platform,
+      isStandalone: isStandaloneRef.current,
+    });
+    if (show) {
+      markShown();
+      setVisible(true);
+    }
+  }, [mounted, pathname, platform]);
 
   const dismiss = useCallback(() => {
     markDismissed();

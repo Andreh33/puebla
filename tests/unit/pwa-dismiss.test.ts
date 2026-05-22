@@ -2,9 +2,11 @@ import { describe, expect, it, beforeEach } from "vitest";
 import {
   markDismissed,
   markInstalled,
+  markShown,
   clearPwaState,
   getDismissedAt,
   getInstalledAt,
+  getShownAt,
   shouldShowPrompt,
   detectPlatform,
   PWA_DISMISS_DAYS,
@@ -44,12 +46,20 @@ describe("PWA install state helpers", () => {
     expect(getInstalledAt(storage)).toBe(1700000000000);
   });
 
-  it("clearPwaState borra ambas marcas", () => {
+  it("persiste shownAt y lo recupera", () => {
+    expect(getShownAt(storage)).toBeNull();
+    markShown(1700000000000, storage);
+    expect(getShownAt(storage)).toBe(1700000000000);
+  });
+
+  it("clearPwaState borra todas las marcas", () => {
     markDismissed(1, storage);
     markInstalled(2, storage);
+    markShown(3, storage);
     clearPwaState(storage);
     expect(getDismissedAt(storage)).toBeNull();
     expect(getInstalledAt(storage)).toBeNull();
+    expect(getShownAt(storage)).toBeNull();
   });
 
   it("ignora valores no numéricos", () => {
@@ -58,7 +68,7 @@ describe("PWA install state helpers", () => {
   });
 });
 
-describe("shouldShowPrompt (política always-on)", () => {
+describe("shouldShowPrompt (cadencia 1×/2 semanas)", () => {
   let storage: StorageLike;
   const now = 1_700_000_000_000;
 
@@ -110,7 +120,7 @@ describe("shouldShowPrompt (política always-on)", () => {
     ).toBe(true);
   });
 
-  it("no muestra si fue descartado dentro del periodo de gracia (7 días)", () => {
+  it("no muestra si fue descartado dentro del periodo de gracia (2 semanas)", () => {
     markDismissed(now - 3 * DAY_MS, storage);
     expect(
       shouldShowPrompt({
@@ -134,8 +144,32 @@ describe("shouldShowPrompt (política always-on)", () => {
     ).toBe(true);
   });
 
-  it("PWA_DISMISS_DAYS está fijado a 7", () => {
-    expect(PWA_DISMISS_DAYS).toBe(7);
+  it("no muestra si se MOSTRÓ hace menos de 2 semanas (cadencia 1×/2sem)", () => {
+    markShown(now - 5 * DAY_MS, storage);
+    expect(
+      shouldShowPrompt({
+        now,
+        platform: "android",
+        isStandalone: false,
+        storage,
+      }),
+    ).toBe(false);
+  });
+
+  it("vuelve a mostrar pasados PWA_DISMISS_DAYS desde que se mostró", () => {
+    markShown(now - (PWA_DISMISS_DAYS + 1) * DAY_MS, storage);
+    expect(
+      shouldShowPrompt({
+        now,
+        platform: "android",
+        isStandalone: false,
+        storage,
+      }),
+    ).toBe(true);
+  });
+
+  it("PWA_DISMISS_DAYS está fijado a 14 (2 semanas)", () => {
+    expect(PWA_DISMISS_DAYS).toBe(14);
   });
 
   it("nunca muestra si ya se instaló", () => {
