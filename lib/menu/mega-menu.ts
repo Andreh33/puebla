@@ -120,7 +120,8 @@ export const MEGA_MENU: {
   hombre: {
     href: "/hombre",
     label: "Hombre",
-    heroImage: "/category-photos/hombre-hero.webp",
+    // Bloque 9: foto real de pádel (antes hombre-hero.webp = hombre en bici).
+    heroImage: "/category-photos/padel-hombre.jpg",
     sections: [{ gender: "HOMBRE", label: "Hombre", groups: [ROPA, CALZADO] }],
   },
   nino: {
