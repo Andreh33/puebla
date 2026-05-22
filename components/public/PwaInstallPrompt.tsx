@@ -53,14 +53,14 @@ export function PwaInstallPrompt() {
     setPlatform(detected);
 
     // Captura beforeinstallprompt (Android Chrome, Edge desktop, etc.).
-    // Si llega DESPUÉS del primer render, marcamos hasNativePrompt para cambiar
-    // el botón a "Instalar app" nativo.
+    // Solo guardamos el prompt diferido y marcamos hasNativePrompt (para que el
+    // botón diga "Instalar app"). NO forzamos visible aquí: la visibilidad la
+    // decide el efecto de ruta (home + cadencia 1×/2 semanas); de lo contrario
+    // Chrome dispararía el banner en cualquier página al considerar instalable.
     const onBeforeInstall = (e: Event) => {
       e.preventDefault();
       deferredPromptRef.current = e as BeforeInstallPromptEvent;
       setHasNativePrompt(true);
-      // Por si el banner se ocultó previamente sin razón (no debería), revalúa.
-      if (!isStandalone) setVisible((v) => v || true);
     };
     const onAppInstalled = () => {
       markInstalled();
