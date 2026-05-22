@@ -320,6 +320,65 @@
 }
 
 /* ----------------------------------------------------------------------------
+ * GenderHub (Bloque 7.6): tilt 3D que sigue al cursor + brillo + flotación de
+ * las tarjetas TEXTIL/CALZADO. Perspectiva en el <li>; rotateX/Y en la tarjeta
+ * vía variables que fija onMouseMove (GenderHub.tsx).
+ * ---------------------------------------------------------------------------- */
+li.zs-hub-float {
+  perspective: 1100px;
+  animation: zs-hub-float 6.5s ease-in-out infinite;
+}
+li.zs-hub-float:hover {
+  animation-play-state: paused;
+}
+@keyframes zs-hub-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.zs-hub-card {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms ease;
+  will-change: transform;
+}
+.zs-hub-card:hover {
+  box-shadow: 0 28px 60px -18px var(--glow, rgba(0, 0, 0, 0.35));
+  transition: transform 90ms ease-out, box-shadow 300ms ease;
+}
+/* Sheen diagonal fijo (gloss premium). */
+.zs-hub-card__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 38%);
+  opacity: 0.75;
+}
+/* Brillo especular que sigue al cursor (se enciende en hover). */
+.zs-hub-card__glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.45),
+    transparent 65%
+  );
+  transition: opacity 250ms ease;
+}
+.zs-hub-card:hover .zs-hub-card__glare {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  li.zs-hub-float {
+    animation: none;
+  }
+  .zs-hub-card {
+    transition: box-shadow 300ms ease;
+  }
+}
+
+/* ----------------------------------------------------------------------------
  * Markdown (blog público)
  * ---------------------------------------------------------------------------- */
 
@@ -398,19 +457,23 @@
 body.aurora-active {
   background-color: var(--color-background);
   background-image:
-    radial-gradient(circle, rgba(96, 165, 250, 0.26) 0%, transparent 55%),
-    radial-gradient(circle, rgba(167, 139, 250, 0.24) 0%, transparent 55%),
-    radial-gradient(circle, rgba(244, 114, 182, 0.22) 0%, transparent 55%);
+    radial-gradient(circle, rgba(96, 165, 250, 0.34) 0%, transparent 60%),
+    radial-gradient(circle, rgba(167, 139, 250, 0.32) 0%, transparent 60%),
+    radial-gradient(circle, rgba(129, 140, 248, 0.26) 0%, transparent 55%),
+    radial-gradient(circle, rgba(244, 114, 182, 0.28) 0%, transparent 58%),
+    radial-gradient(circle, rgba(167, 139, 250, 0.18) 0%, transparent 55%);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: 80% 80%, 75% 75%, 80% 80%;
-  background-position: 0% 0%, 100% 20%, 50% 100%;
+  /* Gradientes anclados a los laterales (izq/der) + arriba/abajo → bordes con
+     color, centro más claro para legibilidad. Antes quedaban los lados blancos. */
+  background-size: 60% 80%, 60% 80%, 55% 60%, 60% 65%, 70% 45%;
+  background-position: -12% 25%, 112% 35%, -8% 90%, 108% 85%, 50% -12%;
   animation: aurora-drift 30s ease-in-out infinite;
 }
 @keyframes aurora-drift {
-  0%, 100% { background-position: 0% 0%, 100% 20%, 50% 100%; }
-  33% { background-position: 15% 25%, 85% 5%, 40% 85%; }
-  66% { background-position: 5% 10%, 70% 30%, 60% 95%; }
+  0%, 100% { background-position: -12% 25%, 112% 35%, -8% 90%, 108% 85%, 50% -12%; }
+  33% { background-position: -6% 18%, 106% 42%, -4% 82%, 102% 90%, 55% -8%; }
+  66% { background-position: -14% 30%, 116% 30%, -10% 95%, 112% 80%, 45% -14%; }
 }
 @media (prefers-reduced-motion: reduce) {
   body.aurora-active {
