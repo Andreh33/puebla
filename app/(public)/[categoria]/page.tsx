@@ -117,6 +117,19 @@ export default async function CategoryPage({
   let products: Awaited<ReturnType<typeof getCategoryProducts>>["products"] = [];
   let total = 0;
 
+  // Bloque 8.9: sub-categorías hijas navegables como chips (p.ej. accesorios →
+  // Mochilas, Balones, Calcetines, Pádel, Otros). ?sub=<slug-hija> filtra a esa hija.
+  let subCats: Array<{ id: string; slug: string; name: string }> = [];
+  const subParam = typeof sp.sub === "string" ? sp.sub : undefined;
+  if (!category.isDemo) {
+    subCats = await db.category.findMany({
+      where: { parentId: category.id },
+      select: { id: true, slug: true, name: true },
+      orderBy: [{ position: "asc" }, { name: "asc" }],
+    });
+  }
+  const activeSub = subCats.find((c) => c.slug === subParam) ?? null;
+
   if (category.isDemo) {
     // Sin BD operativa: enseñamos los productos del catálogo demo asociados a
     // este slug de categoría. No tenemos facets reales, pero el listado sigue
@@ -129,8 +142,11 @@ export default async function CategoryPage({
     products = res.products;
     total = res.total;
   } else {
-    // Bug B: incluir descendientes (categorías con hijas, p.ej. accesorios → 5 hijas).
-    const categoryIds = await resolveCategoryIdsWithDescendants(category.id);
+    // Bug B + 8.9: si hay sub-categoría activa (?sub=) filtramos solo a esa hija;
+    // si no, incluimos todos los descendientes.
+    const categoryIds = activeSub
+      ? [activeSub.id]
+      : await resolveCategoryIdsWithDescendants(category.id);
     const where = buildProductWhere({ categoryId: categoryIds, filters });
     try {
       const [count, list] = await Promise.all([
@@ -295,8 +311,39 @@ export default async function CategoryPage({
           </div>
 
           <div className="space-y-6">
-            {/* Chips de género — más prominentes que el filtro en sidebar */}
-            <GenderChips />
+            {/* Bloque 8.9: chips de sub-categoría (hijas). Solo si la categoría
+                tiene hijas (p.ej. accesorios). "Todos" + cada hija; ?sub= filtra. */}
+            {subCats.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`/${category.slug}`}
+                  className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                    !activeSub
+                      ? "bg-zs-blue-900 text-white"
+                      : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                  }`}
+                >
+                  Todos
+                </a>
+                {subCats.map((c) => (
+                  <a
+                    key={c.id}
+                    href={`/${category.slug}?sub=${encodeURIComponent(c.slug)}`}
+                    className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                      activeSub?.id === c.id
+                        ? "bg-zs-blue-900 text-white"
+                        : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                    }`}
+                  >
+                    {c.name}
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Chips de género — más prominentes que el filtro en sidebar.
+                Bloque 8.10: ocultos en /accesorios (son universales, no segmentados). */}
+            {category.slug !== "accesorios" && <GenderChips />}
 
             {products.length === 0 ? (
               <EmptyState

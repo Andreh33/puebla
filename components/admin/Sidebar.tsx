@@ -17,6 +17,8 @@ import {
   ShieldCheck,
   ShoppingCart,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,10 +70,13 @@ function NavList({
   items,
   pathname,
   onNavigate,
+  collapsed = false,
 }: {
   items: NavItem[];
   pathname: string;
   onNavigate?: () => void;
+  /** Bloque 8.11: modo iconos-only (sidebar contraído en desktop). */
+  collapsed?: boolean;
 }) {
   return (
     <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -82,9 +87,11 @@ function NavList({
             key={it.href}
             href={it.href}
             onClick={onNavigate}
+            title={collapsed ? it.label : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-700",
+              "flex items-center rounded-lg py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-700",
+              collapsed ? "justify-center px-2" : "gap-3 px-3",
               active
                 ? "bg-zs-blue-50 text-zs-blue-900"
                 : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700",
@@ -97,7 +104,7 @@ function NavList({
               )}
               aria-hidden="true"
             />
-            <span>{it.label}</span>
+            {!collapsed && <span>{it.label}</span>}
           </Link>
         );
       })}
@@ -134,16 +141,59 @@ export function Sidebar({
     [isOwner],
   );
 
+  // Bloque 8.11: sidebar desktop contraíble (iconos-only). Persistido en
+  // localStorage. Estado inicial = expandido (coincide con SSR; se ajusta al montar).
+  const [collapsed, setCollapsed] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("zs:admin-sidebar-state") === "collapsed");
+    } catch {
+      /* localStorage no disponible */
+    }
+  }, []);
+  const toggle = React.useCallback(() => {
+    setCollapsed((c) => {
+      const next = !c;
+      try {
+        localStorage.setItem("zs:admin-sidebar-state", next ? "collapsed" : "expanded");
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  }, []);
+
   return (
     <aside
-      className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-zs-border bg-white lg:flex"
+      className={cn(
+        "sticky top-0 hidden h-screen shrink-0 flex-col border-r border-zs-border bg-white transition-[width] duration-200 lg:flex",
+        collapsed ? "w-16" : "w-64",
+      )}
       aria-label="Barra lateral"
     >
-      <div className="flex h-16 items-center border-b border-zs-border px-4">
-        <Brand />
+      <div
+        className={cn(
+          "flex h-16 items-center border-b border-zs-border",
+          collapsed ? "justify-center px-2" : "justify-between px-4",
+        )}
+      >
+        {!collapsed && <Brand />}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+          aria-expanded={!collapsed}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-700"
+        >
+          {collapsed ? (
+            <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <PanelLeftClose className="h-5 w-5" aria-hidden="true" />
+          )}
+        </button>
       </div>
-      <NavList items={items} pathname={pathname} />
-      {footer && <div className="border-t border-zs-border p-3">{footer}</div>}
+      <NavList items={items} pathname={pathname} collapsed={collapsed} />
+      {footer && !collapsed && <div className="border-t border-zs-border p-3">{footer}</div>}
     </aside>
   );
 }

@@ -82,7 +82,7 @@ const CALZADO: MegaMenuGroup = {
     { label: "Calzado", familia: "calzado" },
     { label: "Running", familia: "calzado", tipo: "running" },
     { label: "Trail", familia: "calzado", tipo: "trail" },
-    { label: "Tenis", familia: "calzado", tipo: "tenis" },
+    // Bloque 8.8: 'Tenis' fusionado en 'Pádel' (footwearType tenis→padel).
     { label: "Pádel", familia: "calzado", tipo: "padel" },
     { label: "Fútbol", familia: "calzado", tipo: "futbol" },
     { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },
@@ -90,6 +90,15 @@ const CALZADO: MegaMenuGroup = {
     { label: "Baloncesto", familia: "calzado", tipo: "baloncesto" },
     { label: "Chanclas", familia: "calzado", tipo: "chanclas" },
   ],
+};
+
+// Bloque 8.7: en MUJER ocultamos "Fútbol sala" y "Baloncesto" (sin demanda local).
+// Reactivar = usar CALZADO directamente en la sección mujer (quitar este filtro).
+const CALZADO_MUJER: MegaMenuGroup = {
+  title: "Calzado",
+  items: CALZADO.items.filter(
+    (i) => i.familia !== "calzado" || (i.tipo !== "futbol_sala" && i.tipo !== "baloncesto"),
+  ),
 };
 
 // ---------------------------------------------------------------------------
@@ -106,7 +115,7 @@ export const MEGA_MENU: {
     href: "/mujer",
     label: "Mujer",
     heroImage: "/category-photos/mujer-hero.webp",
-    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA, CALZADO_MUJER] }],
   },
   hombre: {
     href: "/hombre",

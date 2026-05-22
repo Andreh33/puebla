@@ -540,7 +540,7 @@ export function ProductsTable({
   const [isPending, startTransition] = React.useTransition();
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
-  const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete">(null);
+  const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete" | "draftZeroStock">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
   const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
   const [garmentOpen, setGarmentOpen] = React.useState(false);
@@ -1087,6 +1087,13 @@ export function ProductsTable({
             >
               Variante
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setBulkConfirm("draftZeroStock")}
+            >
+              Pasar a borrador (sin stock)
+            </Button>
             <Button size="sm" variant="destructive" onClick={() => setBulkConfirm("delete")}>
               Eliminar
             </Button>
@@ -1317,19 +1324,31 @@ export function ProductsTable({
       <AlertDialog open={!!bulkConfirm} onOpenChange={(o) => !o && setBulkConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar {selectedIds.length} productos?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {bulkConfirm === "delete"
+                ? `¿Eliminar ${selectedIds.length} productos?`
+                : "¿Pasar a borrador los productos sin stock?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminarán permanentemente junto con sus imágenes y tallas. Acción irreversible.
+              {bulkConfirm === "delete"
+                ? "Se eliminarán permanentemente junto con sus imágenes y tallas. Acción irreversible."
+                : `De los ${selectedIds.length} seleccionados, los que tengan stock total = 0 pasarán a estado BORRADOR (DRAFT) y dejarán de mostrarse en la tienda hasta reponer y reactivar manualmente. Los que tengan stock no se tocan.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-zs-red-600 text-white hover:bg-zs-red-700"
-              onClick={() => handleBulk({ kind: "delete" })}
-            >
-              Eliminar todo
-            </AlertDialogAction>
+            {bulkConfirm === "delete" ? (
+              <AlertDialogAction
+                className="bg-zs-red-600 text-white hover:bg-zs-red-700"
+                onClick={() => handleBulk({ kind: "delete" })}
+              >
+                Eliminar todo
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction onClick={() => handleBulk({ kind: "draftZeroStock" })}>
+                Pasar a borrador
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
