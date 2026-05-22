@@ -45,7 +45,11 @@ describe("buildProductWhere — filtros combinados + Bloque 3", () => {
   it("(d) filtro por categoría usa pivote m2m (categories.some), no categoryId top-level", () => {
     const where = buildProductWhere({ categoryId: "cat_123", filters: {} });
     expect((where as Record<string, unknown>).categoryId).toBeUndefined();
-    expect(where.categories).toEqual({ some: { categoryId: "cat_123" } });
+    // Bug B: se normaliza a `{ in: [...] }` para soportar padre + descendientes.
+    expect(where.categories).toEqual({ some: { categoryId: { in: ["cat_123"] } } });
+    // Acepta array (categoría con hijas): preserva todos los ids.
+    const multi = buildProductWhere({ categoryId: ["cat_a", "cat_b"], filters: {} });
+    expect(multi.categories).toEqual({ some: { categoryId: { in: ["cat_a", "cat_b"] } } });
   });
 
   it("(e) sin filtros: where mínimo (status ACTIVE, sin AND)", () => {

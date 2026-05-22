@@ -821,8 +821,30 @@ export function parseCategoryParams(searchParams: Record<string, string | string
   };
 }
 
+/**
+ * Devuelve el id de una categoría + todos sus descendientes (hijas y nietas).
+ * Los productos se enlazan al pivote m2m de la categoría HOJA, no del padre:
+ * p.ej. "accesorios" tiene 5 hijas y 217 productos cuelgan de ellas, no del
+ * padre (Bug B). El árbol actual tiene 2 niveles; cubrimos hasta nietas.
+ */
+export async function resolveCategoryIdsWithDescendants(rootId: string): Promise<string[]> {
+  const children = await db.category.findMany({
+    where: { parentId: rootId },
+    select: { id: true },
+  });
+  const ids = [rootId, ...children.map((c) => c.id)];
+  if (children.length > 0) {
+    const grandchildren = await db.category.findMany({
+      where: { parentId: { in: children.map((c) => c.id) } },
+      select: { id: true },
+    });
+    ids.push(...grandchildren.map((c) => c.id));
+  }
+  return ids;
+}
+
 export function buildProductWhere(opts: {
-  categoryId?: string;
+  categoryId?: string | string[];
   brandId?: string;
   filters: CategoryFilterParams;
 }): Prisma.ProductWhereInput {
@@ -832,7 +854,11 @@ export function buildProductWhere(opts: {
   // públicas, incluye dup UNISEX/BEBE). El categoryId antiguo NO se reasignó al
   // árbol nuevo (smoke en dev: 0 productos). Se mantiene mientras conviven ambos
   // modelos (expand); el resto del código migra en Bloque 5 PR2 antes de la contractiva.
-  if (categoryId) where.categories = { some: { categoryId } };
+  if (categoryId) {
+    // Bug B: incluir descendientes — los productos cuelgan de las hojas, no del padre.
+    const ids = Array.isArray(categoryId) ? categoryId : [categoryId];
+    where.categories = { some: { categoryId: { in: ids } } };
+  }
   if (brandId) where.brandId = brandId;
 
   if (filters.marca && filters.marca.length) {
@@ -909,12 +935,14 @@ export function buildProductWhere(opts: {
   return where;
 }
 
-export async function getCategoryFacets(categoryId: string) {
+export async function getCategoryFacets(categoryId: string | string[]) {
   // Calculamos counts independientes para cada faceta sobre los productos activos
   // de la categoría (sin filtros aplicados â€” los counts ayudan al usuario a elegir).
   // Bloque 3 §12: filtrado por pivote m2m (igual que buildProductWhere). Facetas
   // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
-  const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId } } };
+  // Bug B: acepta array (padre + descendientes) para categorías con hijas.
+  const catIds = Array.isArray(categoryId) ? categoryId : [categoryId];
+  const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId: { in: catIds } } } };
 
   const [brands, genders, colors, sizes, priceRange, footwearGroups, garmentGroups, garmentVariantGroups] = await Promise.all([
     db.product.groupBy({

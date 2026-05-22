@@ -17,6 +17,7 @@ import {
   getCategoryProducts,
   isReservedSlug,
   parseCategoryParams,
+  resolveCategoryIdsWithDescendants,
 } from "@/lib/public-queries";
 
 // Forzamos SSR dinámico mientras no haya DATABASE_URL real en producción:
@@ -128,7 +129,9 @@ export default async function CategoryPage({
     products = res.products;
     total = res.total;
   } else {
-    const where = buildProductWhere({ categoryId: category.id, filters });
+    // Bug B: incluir descendientes (categorías con hijas, p.ej. accesorios → 5 hijas).
+    const categoryIds = await resolveCategoryIdsWithDescendants(category.id);
+    const where = buildProductWhere({ categoryId: categoryIds, filters });
     try {
       const [count, list] = await Promise.all([
         db.product.count({ where }),
@@ -181,7 +184,7 @@ export default async function CategoryPage({
     // Facets en su PROPIO try: si los groupBy fallan, dejamos las facets
     // vacías (sidebar sin counts) pero NO tiramos el listado real a demo.
     try {
-      facets = await getCategoryFacets(category.id);
+      facets = await getCategoryFacets(categoryIds);
     } catch (err) {
       console.warn("[categoria] facets fallaron, sidebar sin counts:", (err as Error).message);
     }

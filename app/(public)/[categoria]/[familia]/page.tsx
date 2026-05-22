@@ -15,6 +15,7 @@ import {
   getCategoryFacets,
   getCategoryProducts,
   parseCategoryParams,
+  resolveCategoryIdsWithDescendants,
 } from "@/lib/public-queries";
 
 // SSR dinámico igual que /[categoria]: el listado depende de query params
@@ -135,7 +136,9 @@ export default async function SeccionFamiliaPage({
   // el resolver devuelve isDemo (BD caída), renderizamos vacío con gracia en
   // lugar de un listado falso — no hay datos demo para slugs compuestos.
   if (!category.isDemo) {
-    const where = buildProductWhere({ categoryId: category.id, filters });
+    // Bug B: incluir descendientes por si la categoría compuesta tuviera hijas.
+    const categoryIds = await resolveCategoryIdsWithDescendants(category.id);
+    const where = buildProductWhere({ categoryId: categoryIds, filters });
     try {
       const [count, list] = await Promise.all([
         db.product.count({ where }),
@@ -182,7 +185,7 @@ export default async function SeccionFamiliaPage({
 
     // Facets en su propio try: si fallan, sidebar sin counts pero listado vivo.
     try {
-      facets = await getCategoryFacets(category.id);
+      facets = await getCategoryFacets(categoryIds);
     } catch (err) {
       console.warn(
         `[seccion/familia] facets fallaron para ${slug}, sidebar sin counts:`,
