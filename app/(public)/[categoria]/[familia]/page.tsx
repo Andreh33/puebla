@@ -339,7 +339,7 @@ export default async function SeccionFamiliaPage({
                   }, [])
                   .map((n, i) =>
                     n === -1 ? (
-                      <span key={`gap-${i}`} className="px-2 text-zs-muted">
+                      <span key={`gap-${i}`} className="px-2 text-white/80">
                         …
                       </span>
                     ) : (
@@ -349,7 +349,7 @@ export default async function SeccionFamiliaPage({
                         aria-current={n === currentPage ? "page" : undefined}
                         className={
                           n === currentPage
-                            ? "inline-flex h-10 min-w-10 items-center justify-center rounded-xl bg-zs-blue-900 px-3 text-sm font-bold text-white"
+                            ? "inline-flex h-10 min-w-10 items-center justify-center rounded-xl bg-zs-red-600 px-3 text-sm font-bold text-white"
                             : "inline-flex h-10 min-w-10 items-center justify-center rounded-xl border border-zs-border bg-white px-3 text-sm font-semibold hover:bg-zs-surface"
                         }
                       >
