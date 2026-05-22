@@ -34,7 +34,8 @@ const CALZADO_BY_SECCION: Record<Seccion, string> = {
   mujer: "/sample-products/zapatilla-john-smith-ruder-e-azul-marino.webp",
   hombre: "/sample-products/zapatilla-8000-terux-24i-negronaranja.webp",
   nino: "/sample-products/zapatilla-john-smith-rewik-azul-marino.webp",
-  nina: "/sample-products/zapatilla-john-smith-ruder-negroblanco.webp",
+  // Bloque 9: zapato de niña ROSA (petición cliente); foto sin logo de marca.
+  nina: "/category-photos/zapato-nina-rosa.jpg",
 };
 
 const CARDS: Array<{

@@ -133,7 +133,8 @@ export const MEGA_MENU: {
   nina: {
     href: "/nina",
     label: "Niña",
-    heroImage: "/category-photos/ninos-hero.webp",
+    // Bloque 9: foto propia de niña (antes compartía ninos-hero.webp = niños).
+    heroImage: "/category-photos/nina-hero.jpg",
     sections: [{ gender: "NINA", label: "Niña", groups: [ROPA, CALZADO] }],
   },
 };
