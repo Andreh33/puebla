@@ -296,7 +296,7 @@ export function Header() {
                 width={270}
                 height={186}
                 priority
-                className="h-12 w-auto sm:h-14"
+                className="h-14 w-auto sm:h-16"
               />
             </Link>
 
@@ -322,7 +322,7 @@ export function Header() {
                     onFocus={() => openMega(tab.key)}
                     onClick={() => setMegaKey(null)}
                     className={cn(
-                      "inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold tracking-tight transition-all",
+                      "inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold uppercase tracking-tight transition-all",
                       active || expanded
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
@@ -345,7 +345,7 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium uppercase transition-colors",
                       active
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
