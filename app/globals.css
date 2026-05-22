@@ -371,14 +371,16 @@
    slug, ver lib/products/visual.ts). La animación de border-color prevalece
    sobre `border-zs-border` (propiedad animada). Mismo grosor 1px → sin layout shift. */
 @keyframes zs-pastel-border {
-  0% { border-color: #f9c6d3; }
-  25% { border-color: #c6dcf9; }
-  50% { border-color: #c6f9d6; }
-  75% { border-color: #f9eec6; }
-  100% { border-color: #f9c6d3; }
+  0% { border-color: #93c5fd; }
+  33% { border-color: #c4b5fd; }
+  66% { border-color: #f9a8d4; }
+  100% { border-color: #93c5fd; }
 }
 .product-card--animated {
-  animation: zs-pastel-border 8s ease-in-out infinite;
+  /* 2px (con box-border no hay layout shift) + pasteles más saturados azul/
+     morado/rosa: el 1px casi-gris anterior era invisible (feedback "no se ve"). */
+  border-width: 2px;
+  animation: zs-pastel-border 6s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .product-card--animated {
@@ -386,71 +388,39 @@
   }
 }
 
-/* Bloque 7.5: aurora animada de fondo (AuroraBackground). 3 blobs grandes de
-   gradiente radial muy difuso que derivan lentamente. Pastel premium: azul
-   cielo + morado lavanda + rosa polvo. Performance OK: solo translate3d +
-   scale animados, blur fijo (no por frame). Reemplaza al patrón de puntos. */
-.aurora-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  will-change: transform;
+/* Bloque 7.5 (revisado tras feedback "no se ve"): aurora pintada como FONDO del
+   <body> vía la clase `aurora-active` (la conmuta AuroraBackground.tsx según la
+   ruta). Motivo: una capa `fixed` con z-index 0/negativo cae DETRÁS del lienzo
+   blanco del body (propagación de fondo del root) → invisible (verificado con
+   Playwright). Como fondo del propio body sí es visible, tras el contenido
+   transparente y sin teñir las fotos (las cards van opacas encima).
+   Pastel premium azul/morado/rosa, fija al viewport, con deriva lenta. */
+body.aurora-active {
+  background-color: var(--color-background);
+  background-image:
+    radial-gradient(circle, rgba(96, 165, 250, 0.26) 0%, transparent 55%),
+    radial-gradient(circle, rgba(167, 139, 250, 0.24) 0%, transparent 55%),
+    radial-gradient(circle, rgba(244, 114, 182, 0.22) 0%, transparent 55%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 80% 80%, 75% 75%, 80% 80%;
+  background-position: 0% 0%, 100% 20%, 50% 100%;
+  animation: aurora-drift 30s ease-in-out infinite;
 }
-.aurora-blob-1 {
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(186, 213, 255, 0.7) 0%, transparent 70%);
-  top: -200px;
-  left: -150px;
-  animation: aurora-drift-1 22s ease-in-out infinite;
-}
-.aurora-blob-2 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(216, 191, 255, 0.6) 0%, transparent 70%);
-  top: 30%;
-  right: -200px;
-  animation: aurora-drift-2 28s ease-in-out infinite;
-}
-.aurora-blob-3 {
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(255, 200, 220, 0.55) 0%, transparent 70%);
-  bottom: -200px;
-  left: 30%;
-  animation: aurora-drift-3 25s ease-in-out infinite;
-}
-@keyframes aurora-drift-1 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  33% { transform: translate3d(80px, 60px, 0) scale(1.1); }
-  66% { transform: translate3d(-40px, 100px, 0) scale(0.95); }
-}
-@keyframes aurora-drift-2 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  33% { transform: translate3d(-60px, -80px, 0) scale(1.05); }
-  66% { transform: translate3d(40px, -40px, 0) scale(0.9); }
-}
-@keyframes aurora-drift-3 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  33% { transform: translate3d(-100px, -50px, 0) scale(1.08); }
-  66% { transform: translate3d(70px, 30px, 0) scale(0.95); }
+@keyframes aurora-drift {
+  0%, 100% { background-position: 0% 0%, 100% 20%, 50% 100%; }
+  33% { background-position: 15% 25%, 85% 5%, 40% 85%; }
+  66% { background-position: 5% 10%, 70% 30%, 60% 95%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .aurora-blob {
+  body.aurora-active {
     animation: none;
   }
 }
-/* En móvil reducimos tamaño y opacidad para no gastar CPU innecesariamente. */
+/* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
+   frame es costoso); el tinte estático se mantiene visible. */
 @media (max-width: 768px) {
-  .aurora-blob {
-    filter: blur(60px);
-    opacity: 0.25;
-  }
-  .aurora-blob-1,
-  .aurora-blob-2,
-  .aurora-blob-3 {
-    width: 350px;
-    height: 350px;
+  body.aurora-active {
+    animation: none;
   }
 }

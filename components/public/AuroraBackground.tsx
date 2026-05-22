@@ -1,15 +1,20 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 /**
- * Aurora animada de fondo (Bloque 7.5). 3 blobs de gradiente radial muy difuso
- * (azul cielo + morado lavanda + rosa polvo) que derivan lentamente. Premium y
- * no invasivo, estilo landing de Apple. Solo anima translate3d + scale (blur
- * fijo, no por frame) → barato. Respeta prefers-reduced-motion.
+ * Aurora de fondo (Bloque 7.5, revisada tras feedback "no se ve").
  *
- * Misma gate de path que el antiguo DotsBackground: no en home, ni hubs de
- * género, ni páginas informativas. Reemplaza a DotsBackground en el layout.
+ * Por qué NO una capa con z-index negativo: el navegador propaga el fondo
+ * blanco del <body> al lienzo del viewport, y un elemento `fixed` con z-index
+ * 0/negativo se pinta DETRÁS de ese lienzo → invisible (verificado con
+ * Playwright). En su lugar pintamos la aurora como FONDO del propio <body>
+ * (vía la clase `aurora-active`): es el lienzo, siempre visible tras el
+ * contenido transparente y sin teñir las fotos (las cards van opacas encima).
+ *
+ * Gate por pathname: solo en listados/ficha/marca. NO en home, hubs de género
+ * ni páginas informativas. El componente no pinta nada — solo conmuta la clase.
  */
 const DENY_EXACT = new Set([
   "/",
@@ -26,13 +31,11 @@ const DENY_PREFIX = ["/blog", "/tienda-en", "/politica"];
 export function AuroraBackground() {
   const pathname = usePathname() ?? "/";
   const denied = DENY_EXACT.has(pathname) || DENY_PREFIX.some((p) => pathname.startsWith(p));
-  if (denied) return null;
 
-  return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="aurora-blob aurora-blob-1" />
-      <div className="aurora-blob aurora-blob-2" />
-      <div className="aurora-blob aurora-blob-3" />
-    </div>
-  );
+  useEffect(() => {
+    document.body.classList.toggle("aurora-active", !denied);
+    return () => document.body.classList.remove("aurora-active");
+  }, [denied]);
+
+  return null;
 }
