@@ -9,6 +9,7 @@ import {
   bulkAddTags,
   bulkDelete,
   bulkDraftZeroStock,
+  draftAllZeroStock,
   bulkSetCategory,
   bulkSetFootwearType,
   bulkSetGarmentType,
@@ -276,6 +277,23 @@ export async function updateProductStatusAction(
 export async function forceSaveProductsList(): Promise<void> {
   await requireSession();
   revalidatePath("/admin/productos");
+}
+
+/**
+ * Pasa a BORRADOR (DRAFT) TODOS los productos ACTIVE sin stock (stock total = 0).
+ * Global: no requiere selección. Reversible a mano. Devuelve cuántos cambió.
+ */
+export async function draftAllZeroStockAction(): Promise<
+  { ok: true; count: number } | { ok: false; error: string }
+> {
+  const session = await requireSession();
+  try {
+    const count = await draftAllZeroStock(session.user.id);
+    revalidatePath("/admin/productos");
+    return { ok: true, count };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error" };
+  }
 }
 
 // ---------------------------------------------------------------------------

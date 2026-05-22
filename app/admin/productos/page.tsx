@@ -7,6 +7,7 @@ import { listProducts, type ProductListFilters } from "@/lib/products/queries";
 import { ProductsTable } from "./ProductsTable";
 import { forceSaveProductsList } from "./_actions";
 import { BulkGenerateDescriptionsButton } from "./BulkGenerateDescriptionsButton";
+import { DraftZeroStockButton } from "./DraftZeroStockButton";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Productos" };
@@ -68,6 +69,7 @@ export default async function ProductosPage({
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Productos" }]}
         actions={
           <>
+            <DraftZeroStockButton />
             <BulkGenerateDescriptionsButton />
             <Button asChild variant="outline" size="sm">
               <Link href={`/admin/productos/exportCsv?${new URLSearchParams(
