@@ -60,6 +60,12 @@ type Props = {
    * (Tipo de prenda → Marca → Talla → Precio → Color) vía CSS order.
    */
   compact?: boolean;
+  /**
+   * Bloque 9: arranca con TODOS los FilterGroup cerrados (el usuario los abre a
+   * su gusto), pero SIN el resto del modo compacto — mantiene "Destacar" y el
+   * orden normal. Usado en /accesorios.
+   */
+  startCollapsed?: boolean;
 };
 
 const GENDER_LABELS: Record<string, string> = {
@@ -74,7 +80,10 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true, compact = false }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true, compact = false, startCollapsed = false }: Props) {
+  // Estado por defecto (abierto/cerrado) de los FilterGroup colapsables: cerrados
+  // en modo compacto (textil/calzado) o cuando se pide startCollapsed (accesorios).
+  const groupOpen = !compact && !startCollapsed;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -243,7 +252,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
     <div className="flex flex-col gap-3">
       {/* Flags — ocultos en modo compacto (textil, Bloque 8.4) */}
       {!compact && (
-        <FilterGroup title="Destacar" defaultOpen>
+        <FilterGroup title="Destacar" defaultOpen={!startCollapsed}>
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <Checkbox checked={activeOnSale} onCheckedChange={() => toggleFlag("oferta")} />
           <span>En oferta</span>
@@ -256,7 +265,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       )}
 
       {data.brands.length > 0 && (
-        <FilterGroup title="Marca" defaultOpen={!compact} className={compact ? "order-2" : undefined}>
+        <FilterGroup title="Marca" defaultOpen={groupOpen} className={compact ? "order-2" : undefined}>
           {data.brands.map((b) => (
             <label key={b.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2">
@@ -273,7 +282,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       )}
 
       {showGenderFilter && data.genders.length > 0 && (
-        <FilterGroup title="Género" defaultOpen={!compact}>
+        <FilterGroup title="Género" defaultOpen={groupOpen}>
           {data.genders.map((g) => (
             <label key={g.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2">
@@ -290,7 +299,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       )}
 
       {data.colors.length > 0 && (
-        <FilterGroup title="Color" defaultOpen={!compact} className={compact ? "order-5" : undefined}>
+        <FilterGroup title="Color" defaultOpen={groupOpen} className={compact ? "order-5" : undefined}>
           <div className="flex flex-wrap gap-1.5">
             {data.colors.map((c) => {
               const on = activeColors.includes(c.value);
@@ -316,7 +325,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       )}
 
       {data.sizes.length > 0 && (
-        <FilterGroup title="Talla" defaultOpen={!compact} className={compact ? "order-3" : undefined}>
+        <FilterGroup title="Talla" defaultOpen={groupOpen} className={compact ? "order-3" : undefined}>
           <div className="flex flex-wrap gap-1.5">
             {data.sizes.map((s) => {
               const on = activeSizes.includes(s.value);
@@ -343,7 +352,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
 
       {/* Bloque 3: tipo de calzado. Solo en páginas de calzado (showFootwearFilter). */}
       {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
-        <FilterGroup title="Tipo de calzado" defaultOpen={!compact} className={compact ? "order-1" : undefined}>
+        <FilterGroup title="Tipo de calzado" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1.5">
             {data.footwearTypes.map((t) => {
               const on = activeTipo.includes(t.value);
@@ -364,7 +373,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
 
       {/* Bloque 6 §18: tipo de prenda + sub-filtros de variante anidados. Solo textil. */}
       {showGarmentFilter && data.garmentTypes && data.garmentTypes.length > 0 && (
-        <FilterGroup title="Tipo de prenda" defaultOpen={!compact} className={compact ? "order-1" : undefined}>
+        <FilterGroup title="Tipo de prenda" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1">
             {data.garmentTypes.map((g) => {
               const garmentValue = g.value as GarmentType;
@@ -417,7 +426,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
         </FilterGroup>
       )}
 
-      <FilterGroup title="Precio (€)" defaultOpen={!compact} className={compact ? "order-4" : undefined}>
+      <FilterGroup title="Precio (€)" defaultOpen={groupOpen} className={compact ? "order-4" : undefined}>
         <div className="flex items-center gap-2">
           <Input
             type="number"

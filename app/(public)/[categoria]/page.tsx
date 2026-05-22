@@ -307,6 +307,7 @@ export default async function CategoryPage({
               autoOpenFirstVisit={!category.parent}
               showFootwearFilter={category.slug?.endsWith("-calzado") ?? false}
               showGenderFilter={category.slug !== "accesorios"}
+              startCollapsed={category.slug === "accesorios"}
             />
           </div>
 
