@@ -65,7 +65,7 @@ const ROPA: MegaMenuGroup = {
     { label: "Ver toda la ropa", familia: "textil" },
     { label: "Camisetas y polos", familia: "textil", prenda: "camiseta" },
     { label: "Sudaderas", familia: "textil", prenda: "sudadera" },
-    { label: "Chándales", familia: "textil", prenda: "chandal" },
+    { label: "Chándal", familia: "textil", prenda: "chandal" },
     { label: "Pantalones", familia: "textil", prenda: "pantalon" },
     { label: "Mallas", familia: "textil", prenda: "mallas" },
     { label: "Bañadores", familia: "textil", prenda: "banador" },

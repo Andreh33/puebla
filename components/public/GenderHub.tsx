@@ -25,7 +25,16 @@ const LANDING_BY_SECCION: Record<Seccion, string> = {
   hombre: "hombre-landing",
   mujer: "mujer-landing",
   nino: "ninos-landing",
-  nina: "ninos-landing",
+  nina: "nina-landing", // Bloque 8.2: foto propia de niña (antes compartía con niño)
+};
+
+// Bloque 8.2: zapatilla REAL del catálogo por género (sin Nike — la tienda es
+// multimarca John Smith/+8000/Joma). Distinta para cada sección.
+const CALZADO_BY_SECCION: Record<Seccion, string> = {
+  mujer: "/sample-products/zapatilla-john-smith-ruder-e-azul-marino.webp",
+  hombre: "/sample-products/zapatilla-8000-terux-24i-negronaranja.webp",
+  nino: "/sample-products/zapatilla-john-smith-rewik-azul-marino.webp",
+  nina: "/sample-products/zapatilla-john-smith-ruder-negroblanco.webp",
 };
 
 const CARDS: Array<{
@@ -58,7 +67,7 @@ const CARDS: Array<{
 
 function photoFor(familia: "textil" | "calzado", seccion: Seccion): string {
   return familia === "calzado"
-    ? "/category-photos/calzado.jpg"
+    ? CALZADO_BY_SECCION[seccion]
     : `/category-photos/${LANDING_BY_SECCION[seccion]}.jpg`;
 }
 

@@ -266,6 +266,15 @@ export function ProductCardLuxe({
             </span>
           )}
         </div>
+        {/* Tallas disponibles (stock > 0) — Bloque 8.3 */}
+        {product.availableSizes && product.availableSizes.length > 0 && (
+          <p className="pt-0.5 text-[11px] font-medium tracking-wide text-zs-muted">
+            {product.availableSizes.slice(0, 4).join(" · ")}
+            {product.availableSizes.length > 4 && (
+              <span className="text-zs-muted/70"> +{product.availableSizes.length - 4}</span>
+            )}
+          </p>
+        )}
       </div>
 
       <style>{`
