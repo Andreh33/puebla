@@ -298,15 +298,15 @@ export default async function CategoryPage({
             {/* Filtros abiertos por defecto (1ª visita, móvil/tablet) sólo en
                 categorías raíz que son listados — p.ej. /accesorios. En
                 subcategorías mantenemos el comportamiento actual. */}
-            {/* showGenderFilter por defecto (true): estas categorías raíz
-                (p.ej. /accesorios) son cross-género — el filtro Género SÍ
-                aplica. Las rutas scopeadas a género viven en /[seccion]/[familia],
-                que sí lo ocultan (hotfix Bloque 7.1). */}
+            {/* Bloque 9.2: en /accesorios ocultamos también el FilterGroup
+                "Género" del sidebar (accesorios universales; ya quitamos el chip
+                "Para" en 8.10). Resto de categorías raíz lo mantienen. */}
             <ProductFilters
               data={facets}
               resultsCount={total}
               autoOpenFirstVisit={!category.parent}
               showFootwearFilter={category.slug?.endsWith("-calzado") ?? false}
+              showGenderFilter={category.slug !== "accesorios"}
             />
           </div>
 
