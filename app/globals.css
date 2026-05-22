@@ -424,23 +424,26 @@ li.zs-hub-float:hover {
    la ruta) — NO una capa fixed -z-10 (en este sitio de fondo blanco una capa con
    z-index negativo cae detrás del lienzo y queda invisible, verificado con
    Playwright; el body es la única vía visible sin tocar otros archivos).
-   Capas (de delante a atrás): grid de líneas finas (mask radial no posible por
-   capa, así que se deja uniforme y muy tenue) · glow blanco superior que pulsa ·
-   2 glows en esquinas inferiores (azul claro / blanco) que derivan · gradiente
-   cielo base (claro arriba → azul medio abajo). Solo translate≈position +
-   scale≈size + el pulso del glow superior; cards opacas resaltan encima. */
+   Capas (de delante a atrás): velo GRIS al 65% que neutraliza el cielo (petición
+   del cliente) · grid de líneas finas (mask radial no posible por capa, así que
+   se deja uniforme y muy tenue) · glow blanco superior que pulsa · 2 glows en
+   esquinas inferiores (azul claro / blanco) que derivan · gradiente cielo base
+   (claro arriba → azul medio abajo). Solo translate≈position + scale≈size + el
+   pulso del glow superior; cards opacas resaltan encima. */
 body.aurora-active {
   background-color: #7eb6ed; /* azul cielo medio (fondo más profundo) */
   background-image:
+    linear-gradient(rgba(128, 128, 128, 0.65), rgba(128, 128, 128, 0.65)),
     linear-gradient(90deg, rgba(30, 64, 175, 0.07) 1px, transparent 1px),
     linear-gradient(rgba(30, 64, 175, 0.07) 1px, transparent 1px),
     radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 70%),
     radial-gradient(circle, rgba(147, 197, 253, 0.7), transparent 70%),
     radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 70%),
     radial-gradient(ellipse at top, #dbeafe 0%, #bfdbfe 40%, #a5cbf5 80%, #7eb6ed 100%);
-  background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-repeat: no-repeat, repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
   background-size:
+    100% 100%,
     36px 36px,
     36px 36px,
     60% 280px,
@@ -448,6 +451,7 @@ body.aurora-active {
     48% 48%,
     100% 100%;
   background-position:
+    0 0,
     0 0,
     0 0,
     50% -60px,
@@ -458,12 +462,12 @@ body.aurora-active {
 }
 @keyframes sky-drift {
   0%, 100% {
-    background-position: 0 0, 0 0, 50% -60px, 0% 100%, 100% 100%, 50% 0%;
-    background-size: 36px 36px, 36px 36px, 60% 280px, 45% 45%, 48% 48%, 100% 100%;
+    background-position: 0 0, 0 0, 0 0, 50% -60px, 0% 100%, 100% 100%, 50% 0%;
+    background-size: 100% 100%, 36px 36px, 36px 36px, 60% 280px, 45% 45%, 48% 48%, 100% 100%;
   }
   50% {
-    background-position: 0 0, 0 0, 50% -60px, 8% 90%, 92% 90%, 50% 0%;
-    background-size: 36px 36px, 36px 36px, 72% 320px, 52% 52%, 42% 42%, 100% 100%;
+    background-position: 0 0, 0 0, 0 0, 50% -60px, 8% 90%, 92% 90%, 50% 0%;
+    background-size: 100% 100%, 36px 36px, 36px 36px, 72% 320px, 52% 52%, 42% 42%, 100% 100%;
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
