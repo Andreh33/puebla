@@ -295,8 +295,9 @@ export default async function CategoryPage({
           </div>
 
           <div className="space-y-6">
-            {/* Chips de género — más prominentes que el filtro en sidebar */}
-            <GenderChips />
+            {/* Chips de género — más prominentes que el filtro en sidebar.
+                Bloque 8.10: ocultos en /accesorios (son universales, no segmentados). */}
+            {category.slug !== "accesorios" && <GenderChips />}
 
             {products.length === 0 ? (
               <EmptyState
