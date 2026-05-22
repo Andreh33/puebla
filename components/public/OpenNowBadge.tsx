@@ -188,8 +188,7 @@ export function OpenNowBadge({ className, tone = "light" }: Props) {
       <style>{`
         @keyframes zs-open-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.78); } }
         .zs-open-pulse { animation: zs-open-pulse 1.6s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .zs-open-pulse { animation: none; } }
-      `}</style>
+              `}</style>
     </span>
   );
 }

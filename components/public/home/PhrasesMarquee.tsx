@@ -75,10 +75,7 @@ export function PhrasesMarquee({
         section:hover .zs-phrases-track {
           animation-play-state: paused;
         }
-        @media (prefers-reduced-motion: reduce) {
-          .zs-phrases-track { animation: none; }
-        }
-      `}</style>
+              `}</style>
     </section>
   );
 }

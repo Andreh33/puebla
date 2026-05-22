@@ -42,7 +42,7 @@ export function HeroLuxe({ primaryHref }: Props) {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = false;
     if (reduce) {
       setTyped(TYPED_PHRASES[0]!);
       return;
@@ -72,7 +72,7 @@ export function HeroLuxe({ primaryHref }: Props) {
 
   // GSAP split words + ball bounce + parallax
   useEffect(() => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = false;
     if (reduce) return;
     let killed = false;
     let cleanup: (() => void) | null = null;

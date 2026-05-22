@@ -16,7 +16,7 @@ export default function PublicTemplate({ children }: { children: React.ReactNode
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setReduced(false);
   }, []);
 
   useEffect(() => {

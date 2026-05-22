@@ -256,11 +256,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-\[zsBump_280ms_ease-out\] {
-    animation: none !important;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * Borde cónico animado (Bloque 4 — tarjetas hub TEXTIL/CALZADO)
@@ -313,11 +308,6 @@
   border-radius: calc(1.5rem - 3px);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .zs-animated-border {
-    animation: none;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * GenderHub (Bloque 7.6): tilt 3D que sigue al cursor + brillo + flotación de
@@ -369,14 +359,6 @@ li.zs-hub-float:hover {
 .zs-hub-card:hover .zs-hub-card__glare {
   opacity: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  li.zs-hub-float {
-    animation: none;
-  }
-  .zs-hub-card {
-    transition: box-shadow 300ms ease;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * Markdown (blog público)
@@ -419,12 +401,6 @@ li.zs-hub-float:hover {
   50% { opacity: 0.85; }
   75% { opacity: 0.78; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .dots-pattern {
-    animation: none;
-    opacity: 0.8;
-  }
-}
 
 /* Bloque 7 (7.5): borde pastel animado en ~20% de las cards (determinista por
    slug, ver lib/products/visual.ts). La animación de border-color prevalece
@@ -440,11 +416,6 @@ li.zs-hub-float:hover {
      morado/rosa: el 1px casi-gris anterior era invisible (feedback "no se ve"). */
   border-width: 2px;
   animation: zs-pastel-border 6s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .product-card--animated {
-    animation: none;
-  }
 }
 
 /* Bloque 7.5 (revisado tras feedback "no se ve"): aurora pintada como FONDO del
@@ -483,11 +454,6 @@ body.aurora-active {
   66% {
     background-position: 40% 28%, 2% 6%, 96% 40%, 10% 96%, 96% 76%;
     background-size: 65% 70%, 60% 68%, 80% 82%, 55% 60%, 82% 86%;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  body.aurora-active {
-    animation: none;
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por

@@ -639,10 +639,7 @@ export function Header() {
           .zs-header-ticker {
             animation: zs-header-ticker-scroll 38s linear infinite;
           }
-          @media (prefers-reduced-motion: reduce) {
-            .zs-header-ticker { animation: none !important; }
-          }
-        `}</style>
+                  `}</style>
       </header>
       {/* El spacer ya no vive aquí — lo gestiona `<main>` con `pt-[136px]
           sm:pt-[148px]` para no tapar contenido. El home anula ese padding

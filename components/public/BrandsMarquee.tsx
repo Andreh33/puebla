@@ -46,10 +46,7 @@ export function BrandsMarquee({ brands }: { brands: Brand[] }) {
         @keyframes zs-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .zs-marquee-track { animation: zs-marquee 32s linear infinite; }
         .zs-marquee:hover .zs-marquee-track { animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce) {
-          .zs-marquee-track { animation: none; }
-        }
-      `}</style>
+              `}</style>
     </div>
   );
 }

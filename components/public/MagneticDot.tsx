@@ -42,7 +42,7 @@ export function MagneticDot({
     if (!el || typeof window === "undefined") return;
     const supportsHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (!supportsHover) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = false;
     if (reduced) return;
 
     let raf = 0;
