@@ -113,7 +113,7 @@ export function ProductCardLuxe({
       onMouseLeave={handleLeave}
       href={`/producto/${product.slug}`}
       className={cn(
-        "zs-tilt-luxe group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out",
+        "zs-tilt-luxe group relative block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-xl transition-all duration-500 ease-out",
         "hover:shadow-[var(--shadow-zs-blue-glow-lg)]",
         animatedBorder && "product-card--animated",
         className,
