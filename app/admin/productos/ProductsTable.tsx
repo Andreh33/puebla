@@ -665,8 +665,14 @@ export function ProductsTable({
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-zs-ink group-hover:text-zs-blue-700">
+              <div className="w-44 shrink-0">
+                {/* Nombre en caja estrecha: envuelve y, si es muy largo, aparece
+                    una barra lateral (scroll vertical fino) para leerlo entero
+                    sin ensanchar la columna. title = tooltip nativo de apoyo. */}
+                <p
+                  title={r.name}
+                  className="max-h-11 overflow-y-auto whitespace-normal break-words pr-1 text-sm font-semibold leading-snug text-zs-ink [scrollbar-width:thin] group-hover:text-zs-blue-700"
+                >
                   {r.name}
                 </p>
                 <div className="mt-0.5 flex items-center gap-2 text-xs text-zs-muted">
