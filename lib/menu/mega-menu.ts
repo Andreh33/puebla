@@ -82,7 +82,7 @@ const CALZADO: MegaMenuGroup = {
     { label: "Calzado", familia: "calzado" },
     { label: "Running", familia: "calzado", tipo: "running" },
     { label: "Trail", familia: "calzado", tipo: "trail" },
-    { label: "Tenis", familia: "calzado", tipo: "tenis" },
+    // Bloque 8.8: 'Tenis' fusionado en 'Pádel' (footwearType tenis→padel).
     { label: "Pádel", familia: "calzado", tipo: "padel" },
     { label: "Fútbol", familia: "calzado", tipo: "futbol" },
     { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },

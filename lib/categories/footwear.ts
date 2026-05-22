@@ -13,8 +13,10 @@
  * Solo aplica a productos de FAMILIA CALZADO (Category.slug LIKE '%-calzado').
  */
 
+// Bloque 8.8: "tenis" fusionado en "padel" — el clasificador mapea términos de
+// tenis → padel y la migración pone footwearType tenis→padel en BD. 8 tipos (era 9).
 export const FOOTWEAR_TYPES = [
-  "running", "trail", "tenis", "padel", "casual",
+  "running", "trail", "padel", "casual",
   "baloncesto", "futbol", "futbol_sala", "chanclas",
 ] as const;
 
@@ -23,7 +25,6 @@ export type FootwearType = (typeof FOOTWEAR_TYPES)[number];
 export const FOOTWEAR_TYPE_LABELS: Record<FootwearType, string> = {
   running: "Running",
   trail: "Trail / Montaña",
-  tenis: "Tenis",
   padel: "Pádel",
   casual: "Casual / Lifestyle",
   baloncesto: "Baloncesto",
@@ -50,7 +51,7 @@ export function matchBySportUse(sportUse: string | null): FootwearType | null {
   if (!s) return null;
   if (/RUNNING|JOGGIN|JOGGING/.test(s)) return "running";
   if (/TRAIL|MONTANISMO|TREKKING|MONTANA|SENDERISMO/.test(s)) return "trail";
-  if (/TENIS/.test(s)) return "tenis";
+  if (/TENIS/.test(s)) return "padel"; // Bloque 8.8: tenis→padel
   if (/PADEL/.test(s)) return "padel";
   if (/URBAN|CASUAL|LIFESTYLE|MODA/.test(s)) return "casual";
   if (/BALONCESTO|BASKET/.test(s)) return "baloncesto";
@@ -70,7 +71,7 @@ export function matchByName(name: string): FootwearType | null {
   if (/\b(SALA|INDOOR|FUTSAL|FS)\b/.test(n)) return "futbol_sala";
   if (/\b(RUNNING|RUN|JOGGING|JOGGIN)\b/.test(n)) return "running";
   if (/\b(TRAIL|TREKKING|TREK|MONTANA|SENDER|GTX|GORETEX)\b/.test(n)) return "trail";
-  if (/\bTENIS\b/.test(n)) return "tenis";
+  if (/\bTENIS\b/.test(n)) return "padel"; // Bloque 8.8: tenis→padel
   if (/\bPADEL\b/.test(n)) return "padel";
   if (/\b(URBAN|CASUAL|LIFESTYLE|MODA|SNEAKER|WALKING|MUSTANG)\b/.test(n)) return "casual";
   if (/\b(BOTA|BOTAS|FG|AG)\b/.test(n)) return "futbol";
@@ -89,7 +90,7 @@ export function matchByBrandModel(name: string, brand: string | null): FootwearT
   if (b.includes("MIZUNO") && /\b(WAVE|NEO)\b/.test(n)) return "running";
   if (b.includes("PUMA") && /\b(FUTURE|ULTRA)\b/.test(n)) return "futbol";
   if (b.includes("ASICS") && /\bPATRIOT\b/.test(n)) return "running";
-  if (b.includes("BABOLAT") && /\bJET\b/.test(n)) return "tenis";
+  if (b.includes("BABOLAT") && /\bJET\b/.test(n)) return "padel"; // Bloque 8.8: tenis→padel
   return null;
 }
 
