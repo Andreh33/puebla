@@ -1,7 +1,6 @@
 import { db, type Prisma } from "@/lib/db";
 import {
   DEMO_PRODUCTS,
-  DEMO_FEATURED,
   getDemoBrands,
   getDemoCategories,
   getDemoProductsByBrand,
@@ -181,30 +180,42 @@ const productCardSelect = {
  */
 export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardData[]> {
   try {
-    const real = await db.product.findMany({
+    // 1) Destacados manuales (isFeatured). 2) Si faltan para llegar a `limit`,
+    // completar con productos ACTIVE recientes (sin duplicar). NUNCA caer a demo
+    // en runtime: los slugs demo no existen en BD y daban 404 en la ficha (Bug A).
+    const featured = await db.product.findMany({
       where: { status: "ACTIVE", isFeatured: true },
       orderBy: [{ updatedAt: "desc" }],
       take: limit,
       select: productCardSelect,
     });
-    if (real.length > 0) {
-      return real.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        shortName: p.shortName,
-        colorName: p.colorName,
-        mainImageUrl: p.mainImageUrl,
-        retailPrice: Number(p.retailPrice),
-        salePrice: p.salePrice != null ? Number(p.salePrice) : null,
-        source: p.source,
-        brand: p.brand,
-      }));
+    let list = featured;
+    if (featured.length < limit) {
+      const excludeIds = featured.map((p) => p.id);
+      const recent = await db.product.findMany({
+        where: { status: "ACTIVE", id: { notIn: excludeIds } },
+        orderBy: [{ updatedAt: "desc" }],
+        take: limit - featured.length,
+        select: productCardSelect,
+      });
+      list = [...featured, ...recent];
     }
+    return list.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      shortName: p.shortName,
+      colorName: p.colorName,
+      mainImageUrl: p.mainImageUrl,
+      retailPrice: Number(p.retailPrice),
+      salePrice: p.salePrice != null ? Number(p.salePrice) : null,
+      source: p.source,
+      brand: p.brand,
+    }));
   } catch (err) {
-    console.warn("[demo] getFeaturedProducts â†’ fallback demo:", (err as Error).message);
+    console.warn("getFeaturedProducts error:", (err as Error).message);
+    return []; // home muestra estado vacío con gracia; nunca slugs demo (404)
   }
-  return DEMO_FEATURED.slice(0, limit).map(demoToCard);
 }
 
 /**
