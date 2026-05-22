@@ -453,29 +453,35 @@ li.zs-hub-float:hover {
    blanco del body (propagación de fondo del root) → invisible (verificado con
    Playwright). Como fondo del propio body sí es visible, tras el contenido
    transparente y sin teñir las fotos (las cards van opacas encima).
-   Pastel premium azul/morado/rosa, fija al viewport, con deriva lenta. */
+   Efecto "liquid" en escala de grises (blanco/gris + ~10% negro) que fluye,
+   fijo al viewport. Reemplaza la aurora de colores (feedback "no me gusta"). */
 body.aurora-active {
   background-color: var(--color-background);
   background-image:
-    radial-gradient(circle, rgba(96, 165, 250, 0.34) 0%, transparent 60%),
-    radial-gradient(circle, rgba(167, 139, 250, 0.32) 0%, transparent 60%),
-    radial-gradient(circle, rgba(129, 140, 248, 0.26) 0%, transparent 55%),
-    radial-gradient(circle, rgba(244, 114, 182, 0.28) 0%, transparent 58%),
-    radial-gradient(circle, rgba(167, 139, 250, 0.18) 0%, transparent 55%),
-    radial-gradient(circle, rgba(52, 211, 153, 0.24) 0%, transparent 58%),
-    radial-gradient(circle, rgba(248, 113, 113, 0.24) 0%, transparent 58%);
+    radial-gradient(circle, rgba(0, 0, 0, 0.1) 0%, transparent 55%),
+    radial-gradient(circle, rgba(90, 95, 110, 0.2) 0%, transparent 58%),
+    radial-gradient(circle, rgba(150, 156, 172, 0.26) 0%, transparent 60%),
+    radial-gradient(circle, rgba(200, 205, 216, 0.3) 0%, transparent 62%);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  /* 7 gradientes (azul/morado/índigo/rosa/morado + verde + rojo) anclados a los
-     laterales + arriba/abajo → bordes con color, centro más claro y legible. */
-  background-size: 60% 80%, 60% 80%, 55% 60%, 60% 65%, 70% 45%, 48% 55%, 48% 55%;
-  background-position: -12% 25%, 112% 35%, -8% 90%, 108% 85%, 50% -12%, 12% 55%, 90% 62%;
-  animation: aurora-drift 30s ease-in-out infinite;
+  background-size: 70% 80%, 85% 95%, 75% 85%, 65% 75%;
+  background-position: 8% 18%, 92% 32%, 28% 92%, 72% 68%;
+  /* Anima posición + tamaño → los blobs grises derivan y "respiran" (líquido). */
+  animation: liquid-flow 22s ease-in-out infinite;
 }
-@keyframes aurora-drift {
-  0%, 100% { background-position: -12% 25%, 112% 35%, -8% 90%, 108% 85%, 50% -12%, 12% 55%, 90% 62%; }
-  33% { background-position: -6% 18%, 106% 42%, -4% 82%, 102% 90%, 55% -8%, 18% 48%, 84% 68%; }
-  66% { background-position: -14% 30%, 116% 30%, -10% 95%, 112% 80%, 45% -14%, 8% 60%, 94% 55%; }
+@keyframes liquid-flow {
+  0%, 100% {
+    background-position: 8% 18%, 92% 32%, 28% 92%, 72% 68%;
+    background-size: 70% 80%, 85% 95%, 75% 85%, 65% 75%;
+  }
+  33% {
+    background-position: 22% 30%, 78% 16%, 42% 78%, 58% 82%;
+    background-size: 85% 95%, 70% 80%, 90% 100%, 75% 88%;
+  }
+  66% {
+    background-position: 4% 10%, 96% 44%, 18% 96%, 82% 58%;
+    background-size: 75% 85%, 92% 100%, 70% 78%, 60% 70%;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   body.aurora-active {
@@ -483,7 +489,7 @@ body.aurora-active {
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
-   frame es costoso); el tinte estático se mantiene visible. */
+   frame es costoso); el degradado gris estático se mantiene. */
 @media (max-width: 768px) {
   body.aurora-active {
     animation: none;

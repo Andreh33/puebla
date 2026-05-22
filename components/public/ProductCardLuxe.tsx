@@ -75,7 +75,8 @@ export function ProductCardLuxe({
     window.setTimeout(() => setRipples((r) => r.filter((x) => x.id !== id)), 650);
   }
 
-  // Tilt 3D que sigue al cursor + posición del brillo especular (Bloque 7.7).
+  // Tilt 3D que sigue al cursor (Bloque 7.7; el brillo se quitó por feedback —
+  // se mantiene solo en las tarjetas del hub "¿Qué buscas hoy?").
   function handleMove(e: MouseEvent<HTMLAnchorElement>) {
     const el = ref.current;
     if (!el) return;
@@ -84,8 +85,6 @@ export function ProductCardLuxe({
     const py = (e.clientY - r.top) / r.height;
     el.style.setProperty("--rx", `${(0.5 - py) * 9}deg`);
     el.style.setProperty("--ry", `${(px - 0.5) * 11}deg`);
-    el.style.setProperty("--mx", `${px * 100}%`);
-    el.style.setProperty("--my", `${py * 100}%`);
   }
 
   function handleLeave() {
@@ -248,9 +247,6 @@ export function ProductCardLuxe({
             ))}
           </div>
         )}
-
-        {/* Brillo especular que sigue al cursor */}
-        <span aria-hidden className="zs-card-glare" />
       </div>
 
       <div className="space-y-1 p-3 sm:p-4">
@@ -277,8 +273,6 @@ export function ProductCardLuxe({
         @media (hover: hover) and (pointer: fine) {
           .zs-tilt-luxe { transform-style: preserve-3d; transition: transform 200ms ease-out, box-shadow 500ms ease; }
           .zs-tilt-luxe:hover { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
-          .zs-card-glare { position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: 0; background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.35), transparent 60%); transition: opacity 250ms ease; }
-          .zs-tilt-luxe:hover .zs-card-glare { opacity: 1; }
         }
       `}</style>
     </Link>
