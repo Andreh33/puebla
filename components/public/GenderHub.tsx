@@ -22,7 +22,7 @@ type Seccion = "hombre" | "mujer" | "nino" | "nina";
 
 /** Foto de ropa por género (no hay una genérica; el componente es compartido). */
 const LANDING_BY_SECCION: Record<Seccion, string> = {
-  hombre: "hombre-landing",
+  hombre: "padel-hombre", // Bloque 9: pádel real (antes "hombre-landing" = ciclistas)
   mujer: "mujer-landing",
   nino: "ninos-landing",
   nina: "nina-landing", // Bloque 8.2: foto propia de niña (antes compartía con niño)
