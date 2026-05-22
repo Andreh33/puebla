@@ -343,7 +343,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
 
       {/* Bloque 3: tipo de calzado. Solo en páginas de calzado (showFootwearFilter). */}
       {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
-        <FilterGroup title="Tipo de calzado" defaultOpen={!compact}>
+        <FilterGroup title="Tipo de calzado" defaultOpen={!compact} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1.5">
             {data.footwearTypes.map((t) => {
               const on = activeTipo.includes(t.value);
