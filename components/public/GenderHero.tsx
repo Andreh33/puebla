@@ -56,7 +56,7 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     headline: "Equipación para entrenar, competir y disfrutar.",
     tagline:
       "Running, pádel, montaña, fitness y casual con marcas como John Smith, Joma, Bullpadel, Nox, Head, Wilson, Asics, Mizuno y Salomon.",
-    photo: "/category-photos/hombre-landing.jpg",
+    photo: "/category-photos/padel.jpg",
     tintGradient:
       "from-zs-blue-950/65 via-zs-blue-900/35 to-zs-blue-950/80",
     primaryGlow: "var(--shadow-zs-blue-glow-lg)",
@@ -88,7 +88,7 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     headline: "Que vivan el deporte a su ritmo.",
     tagline:
       "Calzado y ropa deportiva cómoda para niñas: deporte, cole y outdoor. John Smith, +8000, Joma y más, con asesoramiento de talla en tienda.",
-    photo: "/category-photos/ninos-landing.jpg",
+    photo: "/category-photos/nina-landing.jpg",
     tintGradient: "from-zs-red-900/55 via-zs-blue-950/35 to-zs-blue-950/70",
     primaryGlow: "var(--shadow-zs-rojo-glow-lg)",
   },
