@@ -385,7 +385,7 @@ export default async function CategoryPage({
                   }, [])
                   .map((n, i) =>
                     n === -1 ? (
-                      <span key={`gap-${i}`} className="px-2 text-white/80">
+                      <span key={`gap-${i}`} className="px-2 text-zs-muted">
                         …
                       </span>
                     ) : (

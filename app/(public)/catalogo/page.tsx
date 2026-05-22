@@ -260,7 +260,7 @@ export default async function CatalogoPage({
                         ← Anterior
                       </Link>
                     )}
-                    <span className="px-3 py-1.5 text-sm text-white/80">
+                    <span className="px-3 py-1.5 text-sm text-zs-muted">
                       Página {currentPage} de {totalPages}
                     </span>
                     {currentPage < totalPages && (

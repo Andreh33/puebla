@@ -423,27 +423,30 @@ li.zs-hub-float:hover {
    ruta). Va como fondo del body — NO una capa fixed -z-10 (en este sitio de fondo
    blanco una capa con z-index negativo cae detrás del lienzo y queda invisible,
    verificado en Bloque 7). Base zs-blue oscuro + 2 "shimmers" azul/violeta + un
-   velo oscuro central, que derivan lentamente. Las cards blancas resaltan encima. */
+   velo oscuro central, que derivan lentamente. ENCIMA de todo, un velo BLANCO al
+   70% (primera capa de background-image) que aclara el azul a un tono pálido suave
+   (petición del cliente). Las cards resaltan con su sombra. */
 body.aurora-active {
   background-color: rgb(16, 26, 64); /* azul oscuro de marca (entre zs-blue-900 y 950) */
   background-image:
+    linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
     radial-gradient(circle, rgba(95, 138, 255, 0.42) 0%, transparent 60%),
     radial-gradient(circle, rgba(124, 92, 224, 0.34) 0%, transparent 60%),
     radial-gradient(circle, rgba(11, 18, 40, 0.7) 0%, transparent 65%);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: 85% 85%, 80% 80%, 95% 95%;
-  background-position: 5% 0%, 95% 100%, 50% 50%;
+  background-size: 100% 100%, 85% 85%, 80% 80%, 95% 95%;
+  background-position: 0 0, 5% 0%, 95% 100%, 50% 50%;
   animation: blue-drift 30s ease-in-out infinite;
 }
 @keyframes blue-drift {
   0%, 100% {
-    background-position: 5% 0%, 95% 100%, 50% 50%;
-    background-size: 85% 85%, 80% 80%, 95% 95%;
+    background-position: 0 0, 5% 0%, 95% 100%, 50% 50%;
+    background-size: 100% 100%, 85% 85%, 80% 80%, 95% 95%;
   }
   50% {
-    background-position: 22% 18%, 78% 82%, 50% 50%;
-    background-size: 100% 100%, 68% 68%, 95% 95%;
+    background-position: 0 0, 22% 18%, 78% 82%, 50% 50%;
+    background-size: 100% 100%, 100% 100%, 68% 68%, 95% 95%;
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
