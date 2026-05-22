@@ -83,7 +83,7 @@ export default async function CatalogoPage({
         salePrice: true,
         source: true,
         brand: { select: { name: true, slug: true } },
-        sizes: { select: { stock: true } },
+        sizes: { select: { size: true, stock: true } },
       },
     }),
     db.product.groupBy({
@@ -158,6 +158,7 @@ export default async function CatalogoPage({
     source: p.source,
     brand: p.brand,
     totalStock: p.sizes.reduce((acc, s) => acc + s.stock, 0),
+    availableSizes: p.sizes.filter((s) => s.stock > 0).map((s) => s.size),
   }));
 
   // Borde pastel animado en ~20% del listado actual (no del catálogo total).

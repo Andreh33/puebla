@@ -25,6 +25,11 @@ export type ProductCardProduct = {
    * unidades". El stock es el real exportado del WP antiguo.
    */
   totalStock?: number | null;
+  /**
+   * Tallas con stock > 0 (Bloque 8.3). Si está presente, las cards luxe las
+   * muestran bajo el precio (primeras 4 + "+N"). Orden = el de la BD.
+   */
+  availableSizes?: string[] | null;
 };
 
 /**
