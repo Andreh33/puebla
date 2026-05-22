@@ -7,8 +7,8 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
  * StoreEditorial — bloque "La tienda".
  *
  * Cambios respecto a versión previa:
- *  - Sustituye la foto-placeholder de zapatilla por `/category-photos/tienda-fachada.jpg`
- *    (Unsplash, fachada de tienda deportiva genérica, sin marcas Nike/Adidas).
+ *  - Usa la foto REAL de la fachada de la tienda `/category-photos/tienda-real.jpg`
+ *    (rótulo "ZONA SPORT", escaparates) en lugar del genérico de Unsplash.
  *  - Si la imagen no carga, el fondo gradient debajo sigue funcionando como
  *    fallback visual.
  *  - Añade un testimonial visual con estrellas y texto natural.
@@ -32,8 +32,8 @@ export function StoreEditorial() {
         <Reveal className="lg:col-span-7" variant="fade-up">
           <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-gradient-to-br from-zs-blue-950 via-zs-blue-900 to-[#08102d]">
             <Image
-              src="/category-photos/tienda-fachada.jpg"
-              alt="Tienda Zona Sport — Puebla de la Calzada"
+              src="/category-photos/tienda-real.jpg"
+              alt="Fachada de la tienda Zona Sport en Puebla de la Calzada — rótulo y escaparates"
               fill
               sizes="(max-width: 1024px) 100vw, 60vw"
               className="object-cover object-center"
