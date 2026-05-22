@@ -255,17 +255,7 @@ export function PwaInstallPrompt() {
             transform: translateY(0);
           }
         }
-        @media (prefers-reduced-motion: reduce) {
-          @keyframes zs-pwa-slide-up {
-            from {
-              opacity: 0;
-            }
-            to {
-              opacity: 1;
-            }
-          }
-        }
-      `}</style>
+              `}</style>
     </>
   );
 }

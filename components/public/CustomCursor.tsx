@@ -18,7 +18,7 @@ export function CustomCursor() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = false;
     const hover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     if (!reduce && hover) setEnabled(true);
   }, []);

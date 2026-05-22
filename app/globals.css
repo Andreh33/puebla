@@ -256,11 +256,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .animate-\[zsBump_280ms_ease-out\] {
-    animation: none !important;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * Borde cónico animado (Bloque 4 — tarjetas hub TEXTIL/CALZADO)
@@ -313,11 +308,6 @@
   border-radius: calc(1.5rem - 3px);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .zs-animated-border {
-    animation: none;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * GenderHub (Bloque 7.6): tilt 3D que sigue al cursor + brillo + flotación de
@@ -369,14 +359,6 @@ li.zs-hub-float:hover {
 .zs-hub-card:hover .zs-hub-card__glare {
   opacity: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  li.zs-hub-float {
-    animation: none;
-  }
-  .zs-hub-card {
-    transition: box-shadow 300ms ease;
-  }
-}
 
 /* ----------------------------------------------------------------------------
  * Markdown (blog público)
@@ -419,12 +401,6 @@ li.zs-hub-float:hover {
   50% { opacity: 0.85; }
   75% { opacity: 0.78; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .dots-pattern {
-    animation: none;
-    opacity: 0.8;
-  }
-}
 
 /* Bloque 7 (7.5): borde pastel animado en ~20% de las cards (determinista por
    slug, ver lib/products/visual.ts). La animación de border-color prevalece
@@ -441,57 +417,37 @@ li.zs-hub-float:hover {
   border-width: 2px;
   animation: zs-pastel-border 6s ease-in-out infinite;
 }
-@media (prefers-reduced-motion: reduce) {
-  .product-card--animated {
-    animation: none;
-  }
-}
 
-/* Bloque 7.5 (revisado tras feedback "no se ve"): aurora pintada como FONDO del
+/* Bloque 9.4: fondo AZUL corporativo en páginas internas, pintado como FONDO del
    <body> vía la clase `aurora-active` (la conmuta AuroraBackground.tsx según la
-   ruta). Motivo: una capa `fixed` con z-index 0/negativo cae DETRÁS del lienzo
-   blanco del body (propagación de fondo del root) → invisible (verificado con
-   Playwright). Como fondo del propio body sí es visible, tras el contenido
-   transparente y sin teñir las fotos (las cards van opacas encima).
-   Efecto "liquid" en escala de grises (blanco/gris + ~10% negro) que fluye,
-   fijo al viewport. Reemplaza la aurora de colores (feedback "no me gusta"). */
+   ruta). Va como fondo del body — NO una capa fixed -z-10 (en este sitio de fondo
+   blanco una capa con z-index negativo cae detrás del lienzo y queda invisible,
+   verificado en Bloque 7). Base zs-blue oscuro + 2 "shimmers" azul/violeta + un
+   velo oscuro central, que derivan lentamente. Las cards blancas resaltan encima. */
 body.aurora-active {
-  background-color: var(--color-background);
-  /* Masas de gris (blanco ~50% / gris ~40% / negro ~10%) que cubren todo el
-     viewport y derivan + "respiran" → fondo líquido gris visible. */
+  background-color: rgb(16, 26, 64); /* azul oscuro de marca (entre zs-blue-900 y 950) */
   background-image:
-    radial-gradient(circle, rgba(20, 22, 30, 0.12) 0%, transparent 50%),
-    radial-gradient(circle, rgba(110, 116, 132, 0.36) 0%, transparent 55%),
-    radial-gradient(circle, rgba(148, 154, 170, 0.36) 0%, transparent 55%),
-    radial-gradient(circle, rgba(80, 86, 102, 0.28) 0%, transparent 52%),
-    radial-gradient(circle, rgba(190, 196, 210, 0.42) 0%, transparent 58%);
+    radial-gradient(circle, rgba(95, 138, 255, 0.42) 0%, transparent 60%),
+    radial-gradient(circle, rgba(124, 92, 224, 0.34) 0%, transparent 60%),
+    radial-gradient(circle, rgba(11, 18, 40, 0.7) 0%, transparent 65%);
   background-repeat: no-repeat;
   background-attachment: fixed;
-  background-size: 70% 75%, 65% 70%, 70% 72%, 60% 65%, 75% 80%;
-  background-position: 50% 40%, 8% 15%, 92% 25%, 20% 92%, 88% 88%;
-  animation: liquid-flow 20s ease-in-out infinite;
+  background-size: 85% 85%, 80% 80%, 95% 95%;
+  background-position: 5% 0%, 95% 100%, 50% 50%;
+  animation: blue-drift 30s ease-in-out infinite;
 }
-@keyframes liquid-flow {
+@keyframes blue-drift {
   0%, 100% {
-    background-position: 50% 40%, 8% 15%, 92% 25%, 20% 92%, 88% 88%;
-    background-size: 70% 75%, 65% 70%, 70% 72%, 60% 65%, 75% 80%;
+    background-position: 5% 0%, 95% 100%, 50% 50%;
+    background-size: 85% 85%, 80% 80%, 95% 95%;
   }
-  33% {
-    background-position: 60% 55%, 22% 30%, 78% 12%, 35% 80%, 72% 95%;
-    background-size: 80% 85%, 75% 80%, 60% 65%, 70% 75%, 65% 70%;
-  }
-  66% {
-    background-position: 40% 28%, 2% 6%, 96% 40%, 10% 96%, 96% 76%;
-    background-size: 65% 70%, 60% 68%, 80% 82%, 55% 60%, 82% 86%;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  body.aurora-active {
-    animation: none;
+  50% {
+    background-position: 22% 18%, 78% 82%, 50% 50%;
+    background-size: 100% 100%, 68% 68%, 95% 95%;
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
-   frame es costoso); el degradado gris estático se mantiene. */
+   frame es costoso); el degradado azul estático se mantiene. */
 @media (max-width: 768px) {
   body.aurora-active {
     animation: none;

@@ -96,7 +96,7 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
   // pero en modo `low` (sin rocas / partículas / cámara cinemática).
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = false;
     const narrow = window.matchMedia("(max-width: 640px)").matches;
     const lowCpu =
       (navigator as Navigator & { deviceMemory?: number }).deviceMemory !== undefined &&

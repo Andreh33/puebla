@@ -14,7 +14,7 @@ export function SmoothScroll() {
     if (typeof window === "undefined") return;
 
     // Honorar accesibilidad
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduce = false;
     if (reduce) return;
 
     // Evitar reinstanciar (HMR / template re-render)

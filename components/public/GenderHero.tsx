@@ -107,7 +107,7 @@ export function GenderHero({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setReduced(false);
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);

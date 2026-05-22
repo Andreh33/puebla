@@ -47,7 +47,7 @@ export function HomeHero() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    setReduced(false);
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
   }, []);
@@ -412,11 +412,7 @@ export function HomeHero() {
           0% { left: -75%; }
           55%, 100% { left: 130%; }
         }
-        @media (prefers-reduced-motion: reduce) {
-          .zs-brand-track { animation: none !important; }
-          .zs-shine-bar { animation: none !important; opacity: 0; }
-        }
-      `}</style>
+              `}</style>
     </section>
   );
 }
