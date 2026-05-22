@@ -83,8 +83,8 @@ export function ProductCardLuxe({
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width;
     const py = (e.clientY - r.top) / r.height;
-    el.style.setProperty("--rx", `${(0.5 - py) * 9}deg`);
-    el.style.setProperty("--ry", `${(px - 0.5) * 11}deg`);
+    el.style.setProperty("--rx", `${(0.5 - py) * 13}deg`);
+    el.style.setProperty("--ry", `${(px - 0.5) * 15}deg`);
   }
 
   function handleLeave() {
@@ -281,7 +281,7 @@ export function ProductCardLuxe({
         @keyframes zs-ripple { from { width: 0; height: 0; opacity: 0.6; } to { width: 220%; height: 220%; opacity: 0; } }
         @media (hover: hover) and (pointer: fine) {
           .zs-tilt-luxe { transform-style: preserve-3d; transition: transform 200ms ease-out, box-shadow 500ms ease; }
-          .zs-tilt-luxe:hover { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+          .zs-tilt-luxe:hover { transform: perspective(820px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
         }
       `}</style>
     </Link>
