@@ -418,39 +418,56 @@ li.zs-hub-float:hover {
   animation: zs-pastel-border 6s ease-in-out infinite;
 }
 
-/* Bloque 9.4: fondo AZUL corporativo en páginas internas, pintado como FONDO del
-   <body> vía la clase `aurora-active` (la conmuta AuroraBackground.tsx según la
-   ruta). Va como fondo del body — NO una capa fixed -z-10 (en este sitio de fondo
-   blanco una capa con z-index negativo cae detrás del lienzo y queda invisible,
-   verificado en Bloque 7). Base zs-blue oscuro + 2 "shimmers" azul/violeta + un
-   velo oscuro central, que derivan lentamente. ENCIMA de todo, un velo BLANCO al
-   70% (primera capa de background-image) que aclara el azul a un tono pálido suave
-   (petición del cliente). Las cards resaltan con su sombra. */
+/* Bloque 9.1: fondo AZUL CIELO claro con grid sutil + glows animados en páginas
+   internas. Estructura tipo Linear/Vercel pero en paleta clara. Se pinta como
+   FONDO del <body> (clase `aurora-active`, la conmuta AuroraBackground.tsx según
+   la ruta) — NO una capa fixed -z-10 (en este sitio de fondo blanco una capa con
+   z-index negativo cae detrás del lienzo y queda invisible, verificado con
+   Playwright; el body es la única vía visible sin tocar otros archivos).
+   Capas (de delante a atrás): grid de líneas finas (mask radial no posible por
+   capa, así que se deja uniforme y muy tenue) · glow blanco superior que pulsa ·
+   2 glows en esquinas inferiores (azul claro / blanco) que derivan · gradiente
+   cielo base (claro arriba → azul medio abajo). Solo translate≈position +
+   scale≈size + el pulso del glow superior; cards opacas resaltan encima. */
 body.aurora-active {
-  background-color: rgb(16, 26, 64); /* azul oscuro de marca (entre zs-blue-900 y 950) */
+  background-color: #7eb6ed; /* azul cielo medio (fondo más profundo) */
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
-    radial-gradient(circle, rgba(95, 138, 255, 0.42) 0%, transparent 60%),
-    radial-gradient(circle, rgba(124, 92, 224, 0.34) 0%, transparent 60%),
-    radial-gradient(circle, rgba(11, 18, 40, 0.7) 0%, transparent 65%);
-  background-repeat: no-repeat;
+    linear-gradient(90deg, rgba(30, 64, 175, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(30, 64, 175, 0.07) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 70%),
+    radial-gradient(circle, rgba(147, 197, 253, 0.7), transparent 70%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(ellipse at top, #dbeafe 0%, #bfdbfe 40%, #a5cbf5 80%, #7eb6ed 100%);
+  background-repeat: repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat;
   background-attachment: fixed;
-  background-size: 100% 100%, 85% 85%, 80% 80%, 95% 95%;
-  background-position: 0 0, 5% 0%, 95% 100%, 50% 50%;
-  animation: blue-drift 30s ease-in-out infinite;
+  background-size:
+    36px 36px,
+    36px 36px,
+    60% 280px,
+    45% 45%,
+    48% 48%,
+    100% 100%;
+  background-position:
+    0 0,
+    0 0,
+    50% -60px,
+    0% 100%,
+    100% 100%,
+    50% 0%;
+  animation: sky-drift 13s ease-in-out infinite;
 }
-@keyframes blue-drift {
+@keyframes sky-drift {
   0%, 100% {
-    background-position: 0 0, 5% 0%, 95% 100%, 50% 50%;
-    background-size: 100% 100%, 85% 85%, 80% 80%, 95% 95%;
+    background-position: 0 0, 0 0, 50% -60px, 0% 100%, 100% 100%, 50% 0%;
+    background-size: 36px 36px, 36px 36px, 60% 280px, 45% 45%, 48% 48%, 100% 100%;
   }
   50% {
-    background-position: 0 0, 22% 18%, 78% 82%, 50% 50%;
-    background-size: 100% 100%, 100% 100%, 68% 68%, 95% 95%;
+    background-position: 0 0, 0 0, 50% -60px, 8% 90%, 92% 90%, 50% 0%;
+    background-size: 36px 36px, 36px 36px, 72% 320px, 52% 52%, 42% 42%, 100% 100%;
   }
 }
 /* En móvil desactivamos la animación (repintar el fondo a pantalla completa por
-   frame es costoso); el degradado azul estático se mantiene. */
+   frame es costoso); el cielo + grid + glows estáticos se mantienen. */
 @media (max-width: 768px) {
   body.aurora-active {
     animation: none;
