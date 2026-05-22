@@ -8,6 +8,7 @@ import {
   archiveProduct,
   bulkAddTags,
   bulkDelete,
+  bulkDraftZeroStock,
   bulkSetCategory,
   bulkSetFootwearType,
   bulkSetGarmentType,
@@ -91,7 +92,8 @@ export type BulkActionType =
   | { kind: "addTags"; tags: string[] }
   | { kind: "footwearType"; footwearType: FootwearType | null }
   | { kind: "garmentType"; garmentType: GarmentType | null }
-  | { kind: "garmentVariant"; garmentVariant: GarmentVariant | null };
+  | { kind: "garmentVariant"; garmentVariant: GarmentVariant | null }
+  | { kind: "draftZeroStock" };
 
 export async function bulkAction(ids: string[], action: BulkActionType) {
   const session = await requireSession();
@@ -137,6 +139,9 @@ export async function bulkAction(ids: string[], action: BulkActionType) {
       } catch (e) {
         return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
       }
+      break;
+    case "draftZeroStock":
+      count = await bulkDraftZeroStock(ids, session.user.id);
       break;
   }
   revalidatePath("/admin/productos");

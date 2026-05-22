@@ -351,6 +351,37 @@ export async function bulkSetStatus(ids: string[], status: "ACTIVE" | "INACTIVE"
   return res.count;
 }
 
+/**
+ * Bloque 8.12: pasa a DRAFT los productos SELECCIONADOS cuyo stock total = 0
+ * (suma de ProductSize.stock; sin filas de talla = 0). NO toca el stock, solo el
+ * status. Reversible a mano (editor o bulk "Cambiar estado" → ACTIVE). Devuelve
+ * cuántos pasó a borrador. Manual y bajo demanda (no trigger/cron).
+ */
+export async function bulkDraftZeroStock(ids: string[], userId?: string) {
+  if (!ids.length) return 0;
+  const grouped = await db.productSize.groupBy({
+    by: ["productId"],
+    where: { productId: { in: ids } },
+    _sum: { stock: true },
+  });
+  const stockByProduct = new Map(grouped.map((g) => [g.productId, g._sum.stock ?? 0]));
+  // Sin stock = suma 0 O sin ninguna fila ProductSize (no aparece en grouped).
+  const zeroStockIds = ids.filter((id) => (stockByProduct.get(id) ?? 0) <= 0);
+  if (!zeroStockIds.length) return 0;
+  const res = await db.product.updateMany({
+    where: { id: { in: zeroStockIds } },
+    data: { status: "DRAFT" },
+  });
+  await db.productAudit.createMany({
+    data: zeroStockIds.map((productId) => ({
+      productId,
+      userId,
+      action: "bulk_draft_zero_stock",
+    })),
+  });
+  return res.count;
+}
+
 export async function bulkSetCategory(ids: string[], categoryId: string, userId?: string) {
   if (!ids.length) return 0;
   const res = await db.product.updateMany({
