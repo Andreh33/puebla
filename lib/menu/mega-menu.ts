@@ -92,6 +92,15 @@ const CALZADO: MegaMenuGroup = {
   ],
 };
 
+// Bloque 8.7: en MUJER ocultamos "Fútbol sala" y "Baloncesto" (sin demanda local).
+// Reactivar = usar CALZADO directamente en la sección mujer (quitar este filtro).
+const CALZADO_MUJER: MegaMenuGroup = {
+  title: "Calzado",
+  items: CALZADO.items.filter(
+    (i) => i.familia !== "calzado" || (i.tipo !== "futbol_sala" && i.tipo !== "baloncesto"),
+  ),
+};
+
 // ---------------------------------------------------------------------------
 // Mega-menú raíz
 // ---------------------------------------------------------------------------
@@ -106,7 +115,7 @@ export const MEGA_MENU: {
     href: "/mujer",
     label: "Mujer",
     heroImage: "/category-photos/mujer-hero.webp",
-    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA, CALZADO_MUJER] }],
   },
   hombre: {
     href: "/hombre",
