@@ -51,6 +51,10 @@ export function planSale(
   const byId = new Map(products.map((p) => [p.id, p]));
   const items: PlannedItem[] = [];
   const stockDeltas: StockDelta[] = [];
+  // Demanda ACUMULADA por (productId, talla|‹sin talla›). Si el mismo artículo
+  // aparece en varias líneas del carrito, validamos contra la SUMA, no contra
+  // cada línea por separado — evita el oversell (stock negativo).
+  const consumed = new Map<string, number>();
 
   for (const line of lines) {
     const p = byId.get(line.productId);
@@ -60,15 +64,18 @@ export function planSale(
     }
     if (line.unitPrice < 0) throw new Error(`Precio inválido para "${p.name}".`);
 
+    const key = `${p.id}::${line.size ?? ""}`;
+    const wanted = (consumed.get(key) ?? 0) + line.quantity;
     if (line.size) {
       const ps = p.sizes.find((s) => s.size === line.size);
       if (!ps) throw new Error(`La talla ${line.size} no existe en "${p.name}".`);
-      if (ps.stock < line.quantity) {
+      if (ps.stock < wanted) {
         throw new Error(`Sin stock suficiente de "${p.name}" talla ${line.size} (hay ${ps.stock}).`);
       }
-    } else if (p.productStock < line.quantity) {
+    } else if (p.productStock < wanted) {
       throw new Error(`Sin stock suficiente de "${p.name}" (hay ${p.productStock}).`);
     }
+    consumed.set(key, wanted);
 
     const family = productFamily(p.primaryCategorySlug);
     const baseSku = skuOrFallback(p);
@@ -104,7 +111,12 @@ export type CreatedSale = {
   totals: { subtotal: number; tax: number; total: number };
 };
 
-/** Nº de ticket legible (no fiscal): ZS-AAAAMMDD-#### (count del día + 1). */
+/**
+ * Nº de ticket legible (no fiscal): ZS-AAAAMMDD-#### (count del día + 1).
+ * Nota: no es una secuencia fiscal certificada y no hay constraint único; bajo
+ * concurrencia alta dos ventas del mismo día podrían repetir número. Aceptable
+ * para una caja física (baja concurrencia); revisar si se exige numeración fiscal.
+ */
 async function nextTicketNumber(tx: Prisma.TransactionClient): Promise<string> {
   const now = new Date();
   const y = now.getFullYear();

@@ -37,4 +37,29 @@ describe("planSale", () => {
     expect(() => planSale([{ productId: "x", size: null, quantity: 1, unitPrice: 1, lineDiscount: 0 }], [SHOE])).toThrow();
     expect(() => planSale([{ productId: "p2", size: null, quantity: 0, unitPrice: 1, lineDiscount: 0 }], [BALL])).toThrow();
   });
+
+  it("acumula demanda entre líneas del mismo producto/talla (no permite oversell)", () => {
+    // 2 líneas de talla 40 (stock 3): 2 + 2 = 4 > 3 → debe lanzar.
+    const dup: PosLineInput[] = [
+      { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
+      { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
+    ];
+    expect(() => planSale(dup, [SHOE])).toThrow(/stock/i);
+
+    // 2 + 1 = 3 ≤ 3 → válido (dos líneas).
+    const ok: PosLineInput[] = [
+      { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
+      { productId: "p1", size: "40", quantity: 1, unitPrice: 30, lineDiscount: 0 },
+    ];
+    expect(planSale(ok, [SHOE]).items).toHaveLength(2);
+  });
+
+  it("acumula demanda sin talla contra Product.stock", () => {
+    // 2 líneas del balón (stock 5): 3 + 3 = 6 > 5 → debe lanzar.
+    const dup: PosLineInput[] = [
+      { productId: "p2", size: null, quantity: 3, unitPrice: 12, lineDiscount: 0 },
+      { productId: "p2", size: null, quantity: 3, unitPrice: 12, lineDiscount: 0 },
+    ];
+    expect(() => planSale(dup, [BALL])).toThrow(/stock/i);
+  });
 });

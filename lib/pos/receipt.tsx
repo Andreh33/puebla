@@ -26,7 +26,7 @@ export async function renderReceiptPdf(r: ReceiptData): Promise<Buffer> {
         <Text style={s.muted}>
           {STORE_NAP.streetAddress}, {STORE_NAP.postalCode} {STORE_NAP.addressLocality}
         </Text>
-        <Text style={s.muted}>Tel. +34 689 11 06 91</Text>
+        <Text style={s.muted}>Tel. {STORE_NAP.telephone}</Text>
         <View style={s.hr} />
         <View style={s.row}>
           <Text>Comprobante {r.ticketNumber}</Text>
