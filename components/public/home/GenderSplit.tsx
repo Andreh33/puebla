@@ -39,7 +39,8 @@ const SIDES: [Side, Side] = [
     word: "PARA ÉL",
     caption: "Trail · asfalto · calle · selección 2026",
     href: "/hombre",
-    image: "/category-photos/hombre-hero.jpg",
+    // Misma foto que usa "Textil de hombre" (/hombre/textil) — petición cliente.
+    image: "/category-photos/textil-hombre.jpg",
     accent: "from-zs-blue-700/40 via-transparent",
   },
 ];
@@ -137,11 +138,7 @@ export function GenderSplit() {
       {/* Tercera card "Para los pequeños" — mismo peso visual que las dos
           principales: ocupa 64svh con mínimo 540px y tipografía hasta 8rem,
           imagen bleed completa a la derecha y CTA grande tipo botón. */}
-      <Link
-        href="/nino"
-        data-cursor="Niños"
-        className="group relative isolate flex h-[64svh] min-h-[540px] w-full overflow-hidden bg-zs-tennis-500 text-zs-blue-950 lg:h-[70svh]"
-      >
+      <div className="group relative isolate flex h-[64svh] min-h-[540px] w-full overflow-hidden bg-zs-tennis-500 text-zs-blue-950 lg:h-[70svh]">
         <Image
           src="/category-photos/ninos-hero.jpg"
           alt=""
@@ -178,13 +175,22 @@ export function GenderSplit() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-2">
-              <span className="inline-flex h-12 items-center gap-2 rounded-xl bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-zs-tennis-300 shadow-lg transition group-hover:bg-zs-red-600 group-hover:text-white">
-                Entrar a Niños
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
-              </span>
-              <span className="hidden text-[12px] font-semibold uppercase tracking-[0.2em] text-zs-blue-950/70 sm:inline">
-                Niño · Niña · Bebé
-              </span>
+              <Link
+                href="/nino"
+                data-cursor="Niño"
+                className="group/cta inline-flex h-12 items-center gap-2 rounded-xl bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-zs-tennis-300 shadow-lg transition hover:bg-zs-red-600 hover:text-white"
+              >
+                Entrar a Niño
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:rotate-45" />
+              </Link>
+              <Link
+                href="/nina"
+                data-cursor="Niña"
+                className="group/cta inline-flex h-12 items-center gap-2 rounded-xl bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-zs-tennis-300 shadow-lg transition hover:bg-zs-red-600 hover:text-white"
+              >
+                Entrar a Niña
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:rotate-45" />
+              </Link>
             </div>
           </div>
 
@@ -206,7 +212,7 @@ export function GenderSplit() {
             </li>
           ))}
         </ul>
-      </Link>
+      </div>
     </section>
   );
 }
