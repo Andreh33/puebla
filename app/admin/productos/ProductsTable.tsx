@@ -544,6 +544,7 @@ export function ProductsTable({
   const [isPending, startTransition] = React.useTransition();
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
+  const [keepStockOnDuplicate, setKeepStockOnDuplicate] = React.useState(false);
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete" | "draftZeroStock">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
   const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
@@ -873,7 +874,7 @@ export function ProductsTable({
         const res = await archiveProductAction(c.id);
         if (res.ok) toast.success("Producto archivado");
       } else if (c.type === "duplicate") {
-        const res = await duplicateProductAction(c.id);
+        const res = await duplicateProductAction(c.id, keepStockOnDuplicate);
         if (res.ok) {
           toast.success("Producto duplicado");
           router.push(`/admin/productos/${res.id}`);
@@ -883,6 +884,7 @@ export function ProductsTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setConfirm(null);
+      setKeepStockOnDuplicate(false);
     }
   }
 
@@ -1316,7 +1318,15 @@ export function ProductsTable({
       </div>
 
       {/* Confirmaciones */}
-      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+      <AlertDialog
+        open={!!confirm}
+        onOpenChange={(o) => {
+          if (!o) {
+            setConfirm(null);
+            setKeepStockOnDuplicate(false);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -1330,9 +1340,18 @@ export function ProductsTable({
               {confirm?.type === "archive" &&
                 `"${confirm?.name}" pasará a estado Inactivo y dejará de mostrarse en la web.`}
               {confirm?.type === "duplicate" &&
-                `Se creará una copia de "${confirm.name}" como borrador. Tendrás que ajustar EAN y datos únicos.`}
+                `Se creará una copia de "${confirm.name}" como borrador (hereda categoría y tipo del original). Tendrás que ajustar EAN y datos únicos.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {confirm?.type === "duplicate" && (
+            <label className="flex items-center gap-2 rounded-lg border border-zs-border bg-zs-surface/50 p-3 text-sm">
+              <Checkbox
+                checked={keepStockOnDuplicate}
+                onCheckedChange={(v) => setKeepStockOnDuplicate(v === true)}
+              />
+              <span>Mantener el stock actual en la copia (si no, se crea con stock 0).</span>
+            </label>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction

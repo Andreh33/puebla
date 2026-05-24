@@ -225,10 +225,15 @@ export async function updateProduct(
   return updated;
 }
 
-export async function duplicateProduct(id: string, userId?: string) {
+export async function duplicateProduct(
+  id: string,
+  userId?: string,
+  opts: { keepStock?: boolean } = {},
+) {
+  const { keepStock = false } = opts;
   const src = await db.product.findUnique({
     where: { id },
-    include: { sizes: true, images: true },
+    include: { sizes: true, images: true, categories: true },
   });
   if (!src) throw new Error("Producto origen no existe");
 
@@ -244,6 +249,9 @@ export async function duplicateProduct(id: string, userId?: string) {
         description: src.description,
         brandId: src.brandId,
         categoryId: src.categoryId,
+        // Bloque 2: la categoría principal (breadcrumbs/canonical) se copia para
+        // que el duplicado herede la colocación del origen.
+        primaryCategoryId: src.primaryCategoryId,
         source: "LOCAL",
         externalId: null,
         externalUrl: src.externalUrl,
@@ -253,6 +261,11 @@ export async function duplicateProduct(id: string, userId?: string) {
         colorHex: src.colorHex,
         gender: src.gender,
         sportUse: src.sportUse,
+        // Clasificación de familia (Bloque 3/6): necesaria para los filtros de
+        // tipo de calzado / prenda. Sin esto el duplicado quedaba sin clasificar.
+        footwearType: src.footwearType,
+        garmentType: src.garmentType,
+        garmentVariant: src.garmentVariant,
         composition: src.composition,
         costPrice: src.costPrice,
         retailPrice: src.retailPrice,
@@ -261,7 +274,7 @@ export async function duplicateProduct(id: string, userId?: string) {
         mainImageUrl: src.mainImageUrl,
         tags: src.tags,
         status: "DRAFT",
-        stock: 0,
+        stock: keepStock ? src.stock : 0,
         weight: src.weight,
         isFeatured: false,
         isCustomized: true,
@@ -275,7 +288,7 @@ export async function duplicateProduct(id: string, userId?: string) {
           productId: product.id,
           size: s.size,
           ean: null, // EAN único — no clonar
-          stock: 0,
+          stock: keepStock ? s.stock : 0,
           costPrice: s.costPrice,
           retailPrice: s.retailPrice,
           position: i,
