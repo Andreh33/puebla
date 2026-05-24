@@ -22,20 +22,19 @@ type Seccion = "hombre" | "mujer" | "nino" | "nina";
 
 /** Foto de ropa por género (no hay una genérica; el componente es compartido). */
 const LANDING_BY_SECCION: Record<Seccion, string> = {
-  hombre: "padel-hombre", // Bloque 9: pádel real (antes "hombre-landing" = ciclistas)
+  hombre: "textil-hombre", // Foto textil propia (cliente, carpetaimagenes)
   mujer: "mujer-landing",
   nino: "ninos-landing",
-  nina: "nina-landing", // Bloque 8.2: foto propia de niña (antes compartía con niño)
+  nina: "textil-nina", // Foto textil propia de niña (cliente, carpetaimagenes)
 };
 
-// Bloque 8.2: zapatilla REAL del catálogo por género (sin Nike — la tienda es
-// multimarca John Smith/+8000/Joma). Distinta para cada sección.
+// Foto de calzado propia por género (cliente, carpetaimagenes). Sustituye a las
+// zapatillas sueltas del catálogo por fotos editoriales de calzado.
 const CALZADO_BY_SECCION: Record<Seccion, string> = {
-  mujer: "/sample-products/zapatilla-john-smith-ruder-e-azul-marino.webp",
-  hombre: "/sample-products/zapatilla-8000-terux-24i-negronaranja.webp",
-  nino: "/sample-products/zapatilla-john-smith-rewik-azul-marino.webp",
-  // Bloque 9: zapato de niña ROSA (petición cliente); foto sin logo de marca.
-  nina: "/category-photos/zapato-nina-rosa.jpg",
+  mujer: "/category-photos/calzado-mujer.jpg",
+  hombre: "/category-photos/calzado-hombre.jpg",
+  nino: "/category-photos/calzado-nino.jpg",
+  nina: "/category-photos/calzado-nina.jpg",
 };
 
 const CARDS: Array<{
