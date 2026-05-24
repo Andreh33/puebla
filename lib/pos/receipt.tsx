@@ -6,12 +6,18 @@ import type { ReceiptData } from "@/lib/pos/receipt-text";
 const eur = (n: number) => `${n.toFixed(2).replace(".", ",")} EUR`;
 
 const s = StyleSheet.create({
-  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica", color: "#0b1220" },
+  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica", color: "#0b1220", lineHeight: 1.4 },
   h1: { fontSize: 16, fontFamily: "Helvetica-Bold" },
   muted: { color: "#6b7280" },
-  row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 3 },
+  // Filas de dos columnas: la izquierda crece y ENVUELVE (flex:1, con padding a
+  // la derecha); la derecha (importe) tiene ancho fijo y alineación derecha.
+  // Así el nombre largo del producto nunca se solapa con el precio.
+  itemRow: { flexDirection: "row", marginBottom: 5 },
+  grow: { flex: 1, paddingRight: 10 },
+  amount: { width: 90, textAlign: "right" },
   hr: { borderBottomWidth: 1, borderColor: "#e5e7eb", marginVertical: 8 },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", fontFamily: "Helvetica-Bold", fontSize: 12 },
+  totalLabel: { flex: 1, fontFamily: "Helvetica-Bold", fontSize: 12 },
+  totalAmount: { width: 90, textAlign: "right", fontFamily: "Helvetica-Bold", fontSize: 12 },
   foot: { marginTop: 18, fontSize: 8, color: "#6b7280" },
 });
 
@@ -28,32 +34,33 @@ export async function renderReceiptPdf(r: ReceiptData): Promise<Buffer> {
         </Text>
         <Text style={s.muted}>Tel. {STORE_NAP.telephone}</Text>
         <View style={s.hr} />
-        <View style={s.row}>
-          <Text>Comprobante {r.ticketNumber}</Text>
-          <Text style={s.muted}>{date}</Text>
+        <View style={s.itemRow}>
+          <Text style={s.grow}>Comprobante {r.ticketNumber}</Text>
+          <Text style={[s.muted, { textAlign: "right" }]}>{date}</Text>
         </View>
         <View style={s.hr} />
         {r.items.map((it, i) => (
-          <View key={i} style={s.row}>
-            <Text>
+          <View key={i} style={s.itemRow}>
+            <Text style={s.grow}>
               {it.quantity}x {it.productName}
-              {it.variantSize ? ` (talla ${it.variantSize})` : ""} — {it.productSku}
+              {it.variantSize ? ` (talla ${it.variantSize})` : ""}
+              {it.productSku ? ` · ${it.productSku}` : ""}
             </Text>
-            <Text>{eur(it.subtotal)}</Text>
+            <Text style={s.amount}>{eur(it.subtotal)}</Text>
           </View>
         ))}
         <View style={s.hr} />
-        <View style={s.row}>
-          <Text style={s.muted}>Base</Text>
-          <Text>{eur(r.subtotal)}</Text>
+        <View style={s.itemRow}>
+          <Text style={[s.muted, s.grow]}>Base</Text>
+          <Text style={s.amount}>{eur(r.subtotal)}</Text>
         </View>
-        <View style={s.row}>
-          <Text style={s.muted}>IVA (21%)</Text>
-          <Text>{eur(r.tax)}</Text>
+        <View style={s.itemRow}>
+          <Text style={[s.muted, s.grow]}>IVA (21%)</Text>
+          <Text style={s.amount}>{eur(r.tax)}</Text>
         </View>
-        <View style={s.totalRow}>
-          <Text>TOTAL</Text>
-          <Text>{eur(r.total)}</Text>
+        <View style={s.itemRow}>
+          <Text style={s.totalLabel}>TOTAL</Text>
+          <Text style={s.totalAmount}>{eur(r.total)}</Text>
         </View>
         <Text style={s.foot}>
           Comprobante de venta — no es factura. Solicítala en tienda con tus datos fiscales.

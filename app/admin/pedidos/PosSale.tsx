@@ -147,38 +147,56 @@ export function PosSale() {
       {cart.length > 0 && (
         <div className="mt-4 space-y-2">
           {cart.map((l) => (
-            <div key={l.key} className="grid grid-cols-12 items-center gap-2 rounded-xl border border-zs-border p-2 text-sm">
-              <span className="col-span-12 truncate font-medium sm:col-span-4">{l.name}</span>
-              {l.sizes.length > 0 ? (
-                <div className="col-span-4 sm:col-span-2">
+            <div key={l.key} className="grid grid-cols-12 items-end gap-2 rounded-xl border border-zs-border p-2 text-sm">
+              <div className="col-span-12 sm:col-span-3">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Producto</span>
+                <p className="truncate font-medium" title={l.name}>{l.name}</p>
+              </div>
+              <div className="col-span-6 sm:col-span-2">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Talla</span>
+                {l.sizes.length > 0 ? (
                   <Select value={l.size ?? ""} onValueChange={(v) => patch(l.key, { size: v })}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Talla" /></SelectTrigger>
                     <SelectContent>
                       {l.sizes.map((s) => (
                         <SelectItem key={s.size} value={s.size} disabled={s.stock <= 0}>
-                          {s.size} ({s.stock})
+                          {s.size} ({s.stock} en stock)
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                ) : (
+                  <p className="flex h-9 items-center text-xs text-zs-muted">Sin tallas · {l.productStock} ud.</p>
+                )}
+              </div>
+              <div className="col-span-6 sm:col-span-2">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Unidades</span>
+                <Input type="number" min={1} value={l.quantity} aria-label="Unidades"
+                  onChange={(e) => patch(l.key, { quantity: Math.max(1, Number(e.target.value) || 1) })}
+                  className="h-9" />
+              </div>
+              <div className="col-span-6 sm:col-span-2">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Precio (€/ud.)</span>
+                <Input type="number" min={0} step="0.01" value={l.unitPrice} aria-label="Precio por unidad"
+                  onChange={(e) => patch(l.key, { unitPrice: Math.max(0, Number(e.target.value) || 0) })}
+                  className="h-9" />
+              </div>
+              <div className="col-span-6 sm:col-span-1">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Dto. (€)</span>
+                <Input type="number" min={0} step="0.01" value={l.lineDiscount} aria-label="Descuento de la línea"
+                  onChange={(e) => patch(l.key, { lineDiscount: Math.max(0, Number(e.target.value) || 0) })}
+                  className="h-9" />
+              </div>
+              <div className="col-span-12 flex items-center justify-between sm:col-span-2 sm:justify-end sm:gap-2">
+                <div className="text-right">
+                  <span className="block text-[10px] font-semibold uppercase tracking-wide text-zs-muted">Subtotal</span>
+                  <span className="font-semibold tabular-nums">{formatPriceEUR(lineSubtotal(l))}</span>
                 </div>
-              ) : (
-                <span className="col-span-4 text-xs text-zs-muted sm:col-span-2">Stock: {l.productStock}</span>
-              )}
-              <Input type="number" min={1} value={l.quantity} aria-label="Cantidad"
-                onChange={(e) => patch(l.key, { quantity: Math.max(1, Number(e.target.value) || 1) })}
-                className="col-span-3 h-9 sm:col-span-1" />
-              <Input type="number" min={0} step="0.01" value={l.unitPrice} aria-label="Precio"
-                onChange={(e) => patch(l.key, { unitPrice: Math.max(0, Number(e.target.value) || 0) })}
-                className="col-span-3 h-9 sm:col-span-2" />
-              <Input type="number" min={0} step="0.01" value={l.lineDiscount} aria-label="Descuento línea"
-                onChange={(e) => patch(l.key, { lineDiscount: Math.max(0, Number(e.target.value) || 0) })}
-                className="col-span-3 h-9 sm:col-span-1" placeholder="Dto." />
-              <span className="col-span-2 text-right font-semibold tabular-nums sm:col-span-1">{formatPriceEUR(lineSubtotal(l))}</span>
-              <button type="button" onClick={() => removeLine(l.key)} aria-label="Quitar"
-                className="col-span-1 inline-flex justify-center text-zs-muted hover:text-zs-red-600">
-                <Trash2 className="h-4 w-4" />
-              </button>
+                <button type="button" onClick={() => removeLine(l.key)} aria-label="Quitar línea"
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-zs-muted hover:bg-zs-surface hover:text-zs-red-600">
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
