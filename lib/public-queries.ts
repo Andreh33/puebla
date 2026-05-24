@@ -644,17 +644,51 @@ export async function getFeaturedCategories(): Promise<PublicCategorySummary[]> 
 /**
  * Listado de marcas destacadas para la home. Real â†’ fallback demo.
  */
-export async function getFeaturedBrands(take = 6): Promise<
+/**
+ * Marcas que la tienda trabaja de verdad (petición cliente 2026-05-24). La
+ * marquesina ("Marcas que trabajan para ti") las prioriza por NOMBRE en este
+ * orden, en lugar de depender del flag isFeatured (que está a false en toda la
+ * BD). El resto del catálogo no se toca. Match flexible: tolera mayúsculas,
+ * acentos y variantes como "+8000" / "MAS 8000".
+ */
+const MARQUEE_BRAND_NAMES = [
+  "John Smith",
+  "+8000",
+  "Joma",
+  "Puma",
+  "Babolat",
+  "Joluvi",
+  "Ditchil",
+  "Shayber",
+] as const;
+
+function normalizeBrandName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+export async function getFeaturedBrands(take = 8): Promise<
   Array<{ id: string; name: string; slug: string; logoUrl: string | null }>
 > {
   try {
-    const real = await db.brand.findMany({
-      where: { isFeatured: true },
-      orderBy: [{ position: "asc" }, { name: "asc" }],
-      take,
+    const all = await db.brand.findMany({
       select: { id: true, name: true, slug: true, logoUrl: true },
     });
-    if (real.length > 0) return real;
+    // Empareja cada marca preferida con su registro real en BD (por nombre
+    // normalizado). Conserva el orden de MARQUEE_BRAND_NAMES y evita duplicados.
+    const curated: Array<{ id: string; name: string; slug: string; logoUrl: string | null }> = [];
+    for (const pref of MARQUEE_BRAND_NAMES) {
+      const p = normalizeBrandName(pref);
+      const match = all.find((b) => {
+        const n = normalizeBrandName(b.name);
+        return n === p || (n.length >= 3 && p.length >= 3 && (n.includes(p) || p.includes(n)));
+      });
+      if (match && !curated.some((c) => c.id === match.id)) curated.push(match);
+    }
+    if (curated.length > 0) return curated.slice(0, take);
   } catch (err) {
     console.warn("[demo] getFeaturedBrands â†’ fallback demo:", (err as Error).message);
   }

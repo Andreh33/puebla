@@ -59,6 +59,8 @@ export interface ProductListResult {
     status: string;
     retailPrice: string;
     salePrice: string | null;
+    /** Coste (lo que le cuesta a la tienda). Puede ser null si no se registró. */
+    costPrice: string | null;
     stock: number;
     sizesCount: number;
     tags: string[];
@@ -184,6 +186,7 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       status: r.status,
       retailPrice: r.retailPrice.toString(),
       salePrice: r.salePrice ? r.salePrice.toString() : null,
+      costPrice: r.costPrice ? r.costPrice.toString() : null,
       stock: r.stock,
       sizesCount: r._count.sizes,
       tags: r.tags,

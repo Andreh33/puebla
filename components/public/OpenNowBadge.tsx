@@ -8,23 +8,23 @@ type Range = { open: number; close: number }; // minutos desde 00:00
 const SCHEDULE: Record<number, Range[]> = {
   1: [
     { open: 10 * 60, close: 14 * 60 },
-    { open: 17 * 60, close: 20 * 60 },
+    { open: 17 * 60 + 30, close: 20 * 60 + 30 },
   ],
   2: [
     { open: 10 * 60, close: 14 * 60 },
-    { open: 17 * 60, close: 20 * 60 },
+    { open: 17 * 60 + 30, close: 20 * 60 + 30 },
   ],
   3: [
     { open: 10 * 60, close: 14 * 60 },
-    { open: 17 * 60, close: 20 * 60 },
+    { open: 17 * 60 + 30, close: 20 * 60 + 30 },
   ],
   4: [
     { open: 10 * 60, close: 14 * 60 },
-    { open: 17 * 60, close: 20 * 60 },
+    { open: 17 * 60 + 30, close: 20 * 60 + 30 },
   ],
   5: [
     { open: 10 * 60, close: 14 * 60 },
-    { open: 17 * 60, close: 20 * 60 },
+    { open: 17 * 60 + 30, close: 20 * 60 + 30 },
   ],
   6: [{ open: 10 * 60, close: 14 * 60 }],
   0: [],

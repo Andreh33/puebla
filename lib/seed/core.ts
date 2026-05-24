@@ -166,7 +166,7 @@ export async function runSeed(db: PrismaClient, opts: SeedOptions = {}): Promise
       value: {
         weekdays: [
           { open: "10:00", close: "14:00" },
-          { open: "17:00", close: "20:00" },
+          { open: "17:30", close: "20:30" },
         ],
         saturday: [{ open: "10:00", close: "14:00" }],
         sunday: [],
@@ -310,7 +310,7 @@ Estamos terminando de habilitar la pasarela de pago. Mientras tanto, todas las c
 
 ## Visítanos
 
-Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lunes a viernes de 10 a 14 y de 17 a 20, y los sábados por la mañana.
+Estamos en **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Abrimos de lunes a viernes de 10 a 14 y de 17:30 a 20:30, y los sábados por la mañana.
 
 ¡Nos vemos en la tienda!
 `,

@@ -56,7 +56,7 @@ export function PaymentsComingSoonDialog({ productName, size, trigger }: Props) 
             <div>
               <p className="font-semibold text-zs-ink">Visítanos en tienda</p>
               <p className="text-zs-muted">
-                C. Silos, 3, Puebla de la Calzada. L–V 10–14 y 17–20, sábado 10–14.
+                C. Silos, 3, Puebla de la Calzada. L–V 10–14 y 17:30–20:30, sábado 10–14.
               </p>
             </div>
           </li>

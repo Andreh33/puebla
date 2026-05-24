@@ -132,7 +132,7 @@ export default function ContactoPage() {
                   <div>
                     <p className="font-medium text-zs-ink">Horario</p>
                     <p className="text-zs-muted">
-                      Lunes a viernes: 10:00–14:00 · 17:00–20:00
+                      Lunes a viernes: 10:00–14:00 · 17:30–20:30
                       <br />
                       Sábado: 10:00–14:00
                       <br />

@@ -73,7 +73,7 @@ export function Footer() {
               <p className="flex items-center gap-2 font-semibold text-zs-ink">
                 <Clock className="h-4 w-4 text-zs-blue-700" /> Horario
               </p>
-              <p className="text-zs-muted">L–V: 10:00–14:00 · 17:00–20:00</p>
+              <p className="text-zs-muted">L–V: 10:00–14:00 · 17:30–20:30</p>
               <p className="text-zs-muted">Sábado: 10:00–14:00</p>
               <p className="text-zs-muted">Domingo: cerrado</p>
               <div className="pt-2">

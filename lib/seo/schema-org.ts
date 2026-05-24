@@ -37,8 +37,8 @@ export const STORE_HOURS = [
   {
     "@type": "OpeningHoursSpecification",
     dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    opens: "17:00",
-    closes: "20:00",
+    opens: "17:30",
+    closes: "20:30",
   },
   {
     "@type": "OpeningHoursSpecification",

@@ -85,7 +85,7 @@ export function StoreMap() {
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zs-red-600" />
                 <div>
                   <p className="font-semibold">Horario</p>
-                  <p className="text-zs-muted">Lunes a viernes: 10:00 – 14:00 y 17:00 – 20:00</p>
+                  <p className="text-zs-muted">Lunes a viernes: 10:00 – 14:00 y 17:30 – 20:30</p>
                   <p className="text-zs-muted">Sábado: 10:00 – 14:00</p>
                   <p className="text-zs-muted">Domingo: cerrado</p>
                 </div>

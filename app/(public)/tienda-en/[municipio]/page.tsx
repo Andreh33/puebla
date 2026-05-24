@@ -236,7 +236,7 @@ export default async function LandingPage({ params }: PageProps) {
                 </li>
                 <li className="flex items-start gap-2">
                   <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zs-blue-700" />
-                  L–V 10:00–14:00 · 17:00–20:00 · Sábado 10:00–14:00
+                  L–V 10:00–14:00 · 17:30–20:30 · Sábado 10:00–14:00
                 </li>
               </ul>
             </div>
@@ -409,7 +409,7 @@ export default async function LandingPage({ params }: PageProps) {
               </li>
               <li className="flex items-start gap-2">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zs-blue-700" />
-                <span>L–V 10–14h · 17–20h. Sábado 10–14h. Domingo cerrado.</span>
+                <span>L–V 10–14h · 17:30–20:30h. Sábado 10–14h. Domingo cerrado.</span>
               </li>
             </ul>
           </div>

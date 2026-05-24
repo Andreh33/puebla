@@ -66,6 +66,11 @@ type Props = {
    * orden normal. Usado en /accesorios.
    */
   startCollapsed?: boolean;
+  /**
+   * Bloque 9.3 (petición cliente): oculta por completo el FilterGroup
+   * "Destacar" (En oferta / Novedades). Usado en /accesorios.
+   */
+  hideDestacar?: boolean;
 };
 
 const GENDER_LABELS: Record<string, string> = {
@@ -80,7 +85,7 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true, compact = false, startCollapsed = false }: Props) {
+export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true, compact = false, startCollapsed = false, hideDestacar = false }: Props) {
   // Estado por defecto (abierto/cerrado) de los FilterGroup colapsables: cerrados
   // en modo compacto (textil/calzado) o cuando se pide startCollapsed (accesorios).
   const groupOpen = !compact && !startCollapsed;
@@ -250,8 +255,9 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
 
   const body = (
     <div className="flex flex-col gap-3">
-      {/* Flags — ocultos en modo compacto (textil, Bloque 8.4) */}
-      {!compact && (
+      {/* Flags — ocultos en modo compacto (textil, Bloque 8.4) y en /accesorios
+          (hideDestacar, Bloque 9.3 a petición del cliente). */}
+      {!compact && !hideDestacar && (
         <FilterGroup title="Destacar" defaultOpen={!startCollapsed}>
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <Checkbox checked={activeOnSale} onCheckedChange={() => toggleFlag("oferta")} />

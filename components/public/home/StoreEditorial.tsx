@@ -142,7 +142,7 @@ export function StoreEditorial() {
 
           <Reveal variant="fade-up" delay={360}>
             <p className="text-xs uppercase tracking-[0.22em] text-zs-muted/80">
-              L–V 10:00 – 14:00 · 17:00 – 20:30 — S 10:00 – 14:00
+              L–V 10:00 – 14:00 · 17:30 – 20:30 — S 10:00 – 14:00
             </p>
           </Reveal>
         </div>

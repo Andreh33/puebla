@@ -86,11 +86,15 @@ import {
 
 type Row = ProductListResult["rows"][number];
 
+// SOURCE_VARIANT: estilos del badge "Origen". Ocultado a petición del cliente
+// (2026-05-24) en tabla y tarjeta móvil; se conserva comentado para recuperar.
+/*
 const SOURCE_VARIANT: Record<string, { label: string; cls: string }> = {
   LOCAL: { label: "Local", cls: "border-zs-blue-200 bg-zs-blue-50 text-zs-blue-900" },
   MIRAVIA: { label: "Miravia", cls: "border-emerald-300 bg-emerald-50 text-emerald-900" },
   AMAZON: { label: "Amazon", cls: "border-amber-300 bg-amber-50 text-amber-900" },
 };
+*/
 
 const STATUS_VARIANT: Record<string, { label: string; cls: string }> = {
   DRAFT: { label: "Borrador", cls: "border-zs-border bg-white text-zs-muted" },
@@ -134,8 +138,8 @@ const COLUMN_RESPONSIVE: Record<string, string> = {
   footwearType: "hidden xl:table-cell",
   garmentType: "hidden xl:table-cell",
   garmentVariant: "hidden xl:table-cell",
-  sizes: "hidden xl:table-cell",
-  source: "hidden lg:table-cell",
+  // "sizes" y "source" ocultadas a petición del cliente (2026-05-24).
+  costPrice: "hidden lg:table-cell",
   status: "",
   retailPrice: "",
   stock: "hidden md:table-cell",
@@ -774,6 +778,9 @@ export function ProductsTable({
           return null;
         },
       },
+      // Columnas "Tallas" y "Origen" ocultadas a petición del cliente
+      // (2026-05-24). NO borradas — descomentar este bloque para recuperarlas.
+      /*
       {
         id: "sizes",
         header: "Tallas",
@@ -796,6 +803,18 @@ export function ProductsTable({
             </span>
           );
         },
+      },
+      */
+      // Coste (lo que le cuesta a la tienda) — solo lectura. Editar el coste
+      // sigue disponible en la ficha del producto. Petición cliente 2026-05-24.
+      {
+        id: "costPrice",
+        header: () => <div className="text-right">Coste</div>,
+        cell: ({ row }) => (
+          <div className="px-1 py-1 text-right font-mono text-sm text-zs-muted">
+            {row.original.costPrice ? formatPriceEUR(row.original.costPrice) : "—"}
+          </div>
+        ),
       },
       {
         accessorKey: "status",
@@ -1136,7 +1155,8 @@ export function ProductsTable({
           <ul className="space-y-3 sm:hidden">
             {table.getRowModel().rows.map((row) => {
               const r = row.original;
-              const src = SOURCE_VARIANT[r.source] ?? SOURCE_VARIANT.LOCAL!;
+              // Origen oculto a petición del cliente (2026-05-24).
+              // const src = SOURCE_VARIANT[r.source] ?? SOURCE_VARIANT.LOCAL!;
               return (
                 <li
                   key={row.id}
@@ -1189,11 +1209,13 @@ export function ProductsTable({
                         <span className="inline-flex items-center rounded-full border border-zs-border bg-white px-2 py-0.5 text-xs font-medium text-zs-ink">
                           {r.brand.name}
                         </span>
+                        {/* Origen oculto a petición del cliente (2026-05-24):
                         <span
                           className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${src.cls}`}
                         >
                           {src.label}
                         </span>
+                        */}
                       </div>
                     </div>
                     <RowActions r={r} onConfirm={setConfirm} variant="menu" />

@@ -82,6 +82,7 @@ export default async function CatalogoPage({
         retailPrice: true,
         salePrice: true,
         source: true,
+        stock: true,
         brand: { select: { name: true, slug: true } },
         sizes: { select: { size: true, stock: true } },
       },
@@ -157,7 +158,7 @@ export default async function CatalogoPage({
     salePrice: p.salePrice != null ? Number(p.salePrice) : null,
     source: p.source,
     brand: p.brand,
-    totalStock: p.sizes.reduce((acc, s) => acc + s.stock, 0),
+    totalStock: p.sizes.length > 0 ? p.sizes.reduce((acc, s) => acc + s.stock, 0) : p.stock,
     availableSizes: p.sizes.filter((s) => s.stock > 0).map((s) => s.size),
   }));
 

@@ -83,7 +83,7 @@ const CALZADO: MegaMenuGroup = {
     { label: "Running", familia: "calzado", tipo: "running" },
     { label: "Trail", familia: "calzado", tipo: "trail" },
     // Bloque 8.8: 'Tenis' fusionado en 'Pádel' (footwearType tenis→padel).
-    { label: "Pádel", familia: "calzado", tipo: "padel" },
+    { label: "Tenis/Pádel", familia: "calzado", tipo: "padel" },
     { label: "Fútbol", familia: "calzado", tipo: "futbol" },
     { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },
     { label: "Casual", familia: "calzado", tipo: "casual" },
@@ -92,12 +92,14 @@ const CALZADO: MegaMenuGroup = {
   ],
 };
 
-// Bloque 8.7: en MUJER ocultamos "Fútbol sala" y "Baloncesto" (sin demanda local).
-// Reactivar = usar CALZADO directamente en la sección mujer (quitar este filtro).
+// Bloque 8.7 + petición cliente: en MUJER ocultamos "Fútbol", "Fútbol sala" y
+// "Baloncesto" (sin demanda local). Reactivar = quitar el tipo de este filtro.
 const CALZADO_MUJER: MegaMenuGroup = {
   title: "Calzado",
   items: CALZADO.items.filter(
-    (i) => i.familia !== "calzado" || (i.tipo !== "futbol_sala" && i.tipo !== "baloncesto"),
+    (i) =>
+      i.familia !== "calzado" ||
+      (i.tipo !== "futbol" && i.tipo !== "futbol_sala" && i.tipo !== "baloncesto"),
   ),
 };
 
