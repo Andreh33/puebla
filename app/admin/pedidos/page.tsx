@@ -8,6 +8,7 @@ import { STRIPE_ENV_VARS } from "@/lib/stripe/types";
 import { toOrderSummary } from "@/lib/stripe/orders";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
+import { PosSale } from "./PosSale";
 
 export const metadata: Metadata = { title: "Pedidos" };
 export const dynamic = "force-dynamic";
@@ -30,23 +31,6 @@ export default async function PedidosPage({
   const missing = missingStripeEnv();
   const session = await auth().catch(() => null);
   const role = (session?.user?.role ?? "EDITOR") as "OWNER" | "EDITOR";
-
-  if (!configured) {
-    return (
-      <div>
-        <AdminPageHeader
-          title="Pedidos"
-          description="Gestión de pedidos del TPV online (Stripe)."
-          breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Pedidos" }]}
-        />
-        <StripeNotConfigured
-          missing={missing}
-          envKeys={STRIPE_ENV_VARS}
-          siteUrl={process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.es"}
-        />
-      </div>
-    );
-  }
 
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "ALL";
@@ -95,9 +79,23 @@ export default async function PedidosPage({
     <div>
       <AdminPageHeader
         title="Pedidos"
-        description="Pedidos del TPV online (Stripe Checkout)."
+        description="Venta en tienda (TPV físico) y pedidos del TPV online."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Pedidos" }]}
       />
+
+      {/* TPV físico — disponible siempre, no depende de Stripe */}
+      <PosSale />
+
+      {!configured && (
+        <div className="mb-6">
+          <StripeNotConfigured
+            missing={missing}
+            envKeys={STRIPE_ENV_VARS}
+            siteUrl={process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.es"}
+          />
+        </div>
+      )}
+
       <PedidosTable
         orders={orders}
         total={total}

@@ -72,6 +72,8 @@ const nextConfig: NextConfig = {
     // Stripe SDK es Node-only y pesado; lo dejamos external para no inflar
     // los bundles de las funciones que no lo usan.
     "stripe",
+    // @react-pdf/renderer es Node-only (fontkit/yoga); fuera del bundler de prod.
+    "@react-pdf/renderer",
   ],
 };
 
