@@ -26,17 +26,18 @@ import { OpenNowBadge } from "@/components/public/OpenNowBadge";
  */
 
 const HEADLINE = ["La", "temporada", "que", "estabas", "esperando."] as const;
+// Marcas que la tienda trabaja de verdad (petición cliente 2026-05-24). Misma
+// lista que la marquesina superior del Header y que MARQUEE_BRAND_NAMES en
+// public-queries.ts — fuente única de marcas en todo el sitio.
 const BRANDS_TICKER = [
   "JOHN SMITH",
   "+8000",
-  "BULLPADEL",
-  "HEAD",
-  "NOX",
-  "WILSON",
-  "ASICS",
-  "SALOMON",
   "JOMA",
-  "MIZUNO",
+  "PUMA",
+  "BABOLAT",
+  "JOLUVI",
+  "DITCHIL",
+  "SHAYBER",
 ] as const;
 
 export function HomeHero() {

@@ -20,7 +20,7 @@ type Props = {
 const DEFAULT_PHRASES = [
   "Desde Puebla de la Calzada hasta cualquier parte del mundo",
   "Años de calidad y trato cercano",
-  "John Smith · +8000 · Joma · Bullpadel · Nox · Salomon · Head · Wilson",
+  "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Shayber",
   "Atendemos por WhatsApp · Recogida en tienda",
   "Pádel, running, montaña, fitness — todo en una sola tienda",
   "Asesoramiento real, no postureo",

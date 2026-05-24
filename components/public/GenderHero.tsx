@@ -45,7 +45,7 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     eyebrow: "Para ella",
     headline: "Su deporte, sin postureo.",
     tagline:
-      "Calzado, mallas técnicas, camisetas y equipación de John Smith, +8000, Joma, Asics, Salomon y más. Asesoramos la talla en tienda sin compromiso.",
+      "Calzado, mallas técnicas, camisetas y equipación de John Smith, +8000, Joma, Puma y más. Asesoramos la talla en tienda sin compromiso.",
     photo: "/category-photos/mujer-landing.jpg",
     tintGradient:
       "from-zs-red-900/55 via-zs-blue-950/35 to-zs-blue-950/70",
@@ -55,7 +55,7 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     eyebrow: "Para él",
     headline: "Equipación para entrenar, competir y disfrutar.",
     tagline:
-      "Running, pádel, montaña, fitness y casual con marcas como John Smith, Joma, Bullpadel, Nox, Head, Wilson, Asics, Mizuno y Salomon.",
+      "Running, pádel, montaña, fitness y casual con marcas como John Smith, +8000, Joma, Puma, Babolat, Joluvi, Ditchil y Shayber.",
     photo: "/category-photos/padel.jpg",
     tintGradient:
       "from-zs-blue-950/65 via-zs-blue-900/35 to-zs-blue-950/80",

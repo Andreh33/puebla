@@ -139,8 +139,8 @@ export default function SobreNosotrosPage() {
             equipos del CD Puebla de la Calzada y del CD Lobón, familias buscando el equipo
             del colegio, senderistas de la Sierra de San Serván, padres de los chavales que
             empiezan a jugar al fútbol. Sabemos que el deporte se vive con pasión y que el
-            material importa — por eso seleccionamos marcas técnicas (Asics, Brooks, Hoka,
-            John Smith, +8000, Joma, Bullpadel, Nox, Salomon, Head) y no apostamos por lo barato
+            material importa — por eso seleccionamos marcas técnicas (John Smith, +8000,
+            Joma, Puma, Babolat, Joluvi, Ditchil, Shayber) y no apostamos por lo barato
             sin más.
           </p>
           <p>
