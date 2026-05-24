@@ -250,7 +250,7 @@ export function ProductCardLuxe({
       </div>
 
       <div className="space-y-1 p-3 sm:p-4">
-        <p className="line-clamp-2 text-sm font-semibold text-zs-ink transition-colors group-hover:text-zs-blue-700">
+        <p className="text-sm font-semibold text-zs-ink transition-colors group-hover:text-zs-blue-700">
           {title}
         </p>
         {product.colorName && product.colorName !== "Único" && (
@@ -266,13 +266,12 @@ export function ProductCardLuxe({
             </span>
           )}
         </div>
-        {/* Tallas disponibles (stock > 0) — Bloque 8.3 */}
+        {/* Tallas disponibles (stock > 0) — Bloque 8.3. Mostramos TODAS las
+            tallas (p. ej. 40 · 41 · 42 · 43 · 44 · 45 · 46), sin recortar con
+            "+N", a petición del cliente. Si no caben en una línea, envuelven. */}
         {product.availableSizes && product.availableSizes.length > 0 && (
           <p className="pt-0.5 text-[11px] font-medium tracking-wide text-zs-muted">
-            {product.availableSizes.slice(0, 4).join(" · ")}
-            {product.availableSizes.length > 4 && (
-              <span className="text-zs-muted/70"> +{product.availableSizes.length - 4}</span>
-            )}
+            {product.availableSizes.join(" · ")}
           </p>
         )}
       </div>

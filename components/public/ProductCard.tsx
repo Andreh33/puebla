@@ -27,7 +27,7 @@ export type ProductCardProduct = {
   totalStock?: number | null;
   /**
    * Tallas con stock > 0 (Bloque 8.3). Si está presente, las cards luxe las
-   * muestran bajo el precio (primeras 4 + "+N"). Orden = el de la BD.
+   * muestran TODAS bajo el precio (p. ej. 40 · 41 · 42 · …). Orden = el de la BD.
    */
   availableSizes?: string[] | null;
 };
@@ -125,7 +125,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
       </div>
 
       <div className="space-y-1 p-3 sm:p-4">
-        <p className="line-clamp-2 text-sm font-semibold text-zs-ink group-hover:text-zs-blue-700">
+        <p className="text-sm font-semibold text-zs-ink group-hover:text-zs-blue-700">
           {title}
         </p>
         {product.colorName && product.colorName !== "Ãšnico" && (
