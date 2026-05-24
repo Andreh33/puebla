@@ -545,6 +545,7 @@ export function ProductsTable({
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
   const [keepStockOnDuplicate, setKeepStockOnDuplicate] = React.useState(false);
+  const [newColorOnDuplicate, setNewColorOnDuplicate] = React.useState("");
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete" | "draftZeroStock">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
   const [footwearValue, setFootwearValue] = React.useState<string>("__none__");
@@ -874,7 +875,11 @@ export function ProductsTable({
         const res = await archiveProductAction(c.id);
         if (res.ok) toast.success("Producto archivado");
       } else if (c.type === "duplicate") {
-        const res = await duplicateProductAction(c.id, keepStockOnDuplicate);
+        const res = await duplicateProductAction(
+          c.id,
+          keepStockOnDuplicate,
+          newColorOnDuplicate.trim() || undefined,
+        );
         if (res.ok) {
           toast.success("Producto duplicado");
           router.push(`/admin/productos/${res.id}`);
@@ -885,6 +890,7 @@ export function ProductsTable({
     } finally {
       setConfirm(null);
       setKeepStockOnDuplicate(false);
+      setNewColorOnDuplicate("");
     }
   }
 
@@ -1324,6 +1330,7 @@ export function ProductsTable({
           if (!o) {
             setConfirm(null);
             setKeepStockOnDuplicate(false);
+            setNewColorOnDuplicate("");
           }
         }}
       >
@@ -1344,13 +1351,27 @@ export function ProductsTable({
             </AlertDialogDescription>
           </AlertDialogHeader>
           {confirm?.type === "duplicate" && (
-            <label className="flex items-center gap-2 rounded-lg border border-zs-border bg-zs-surface/50 p-3 text-sm">
-              <Checkbox
-                checked={keepStockOnDuplicate}
-                onCheckedChange={(v) => setKeepStockOnDuplicate(v === true)}
-              />
-              <span>Mantener el stock actual en la copia (si no, se crea con stock 0).</span>
-            </label>
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 rounded-lg border border-zs-border bg-zs-surface/50 p-3 text-sm">
+                <Checkbox
+                  checked={keepStockOnDuplicate}
+                  onCheckedChange={(v) => setKeepStockOnDuplicate(v === true)}
+                />
+                <span>Mantener el stock actual en la copia (si no, se crea con stock 0).</span>
+              </label>
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-zs-ink">Color de la copia (opcional)</label>
+                <Input
+                  value={newColorOnDuplicate}
+                  onChange={(e) => setNewColorOnDuplicate(e.target.value)}
+                  placeholder="Vacío = mismo color. Escribe uno para crear otro color."
+                  className="h-9"
+                />
+                <p className="text-xs text-zs-muted">
+                  Si lo rellenas, la copia se crea con ese color (1 color = 1 producto) y se ajusta el nombre.
+                </p>
+              </div>
+            </div>
           )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

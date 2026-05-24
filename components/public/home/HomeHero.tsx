@@ -329,10 +329,10 @@ export function HomeHero() {
       <div className="relative mx-auto max-w-[1600px] px-4 pb-12 sm:px-8 sm:pb-16">
         <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
           {[
-            { k: "27", v: "años en el barrio" },
+            { k: "2003", v: "en el barrio desde" },
             { k: "+40", v: "marcas seleccionadas" },
             { k: "24/48h", v: "envío Península" },
-            { k: "0€", v: "envío Extremadura" },
+            { k: "60€", v: "envío gratis desde" },
           ].map((it, i) => (
             <div
               key={it.v}

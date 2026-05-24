@@ -139,12 +139,12 @@ export function ProductShowcase({
             {
               Icon: Truck,
               title: "Envío 24/48 h",
-              caption: "Península · gratis en Extremadura",
+              caption: "Gratis a partir de 60 € · Península",
             },
             {
               Icon: RotateCcw,
-              title: "Devolución gratis",
-              caption: "30 días para cambiarlo o devolverlo",
+              title: "Cambios en 14 días",
+              caption: "Devoluciones según la ley de consumidores",
             },
             {
               Icon: ShieldCheck,

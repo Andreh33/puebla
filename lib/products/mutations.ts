@@ -225,26 +225,47 @@ export async function updateProduct(
   return updated;
 }
 
+/** Sustituye el color viejo por el nuevo dentro del nombre (case-insensitive);
+ * si el color viejo no aparece, añade el nuevo al final. */
+function replaceColorInName(name: string, oldColor: string, newColor: string): string {
+  if (oldColor && name.toLowerCase().includes(oldColor.toLowerCase())) {
+    const re = new RegExp(oldColor.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    return name.replace(re, newColor);
+  }
+  return `${name} ${newColor}`;
+}
+
 export async function duplicateProduct(
   id: string,
   userId?: string,
-  opts: { keepStock?: boolean } = {},
+  opts: { keepStock?: boolean; newColorName?: string; newColorHex?: string } = {},
 ) {
-  const { keepStock = false } = opts;
+  const { keepStock = false, newColorName, newColorHex } = opts;
   const src = await db.product.findUnique({
     where: { id },
     include: { sizes: true, images: true, categories: true },
   });
   if (!src) throw new Error("Producto origen no existe");
 
-  const baseSlug = `${src.slug}-copia`;
-  const slug = await ensureUniqueSlug(baseSlug);
+  // Cambio de color en el propio duplicado (caso "1 color = 1 producto"): si se
+  // indica color nuevo, lo sustituye en el nombre (o lo añade), resetea el hex
+  // (a rellenar en la ficha) y genera slug propio. Si no, copia con sufijo "(copia)".
+  const trimmedColor = newColorName?.trim();
+  const useNewColor = !!trimmedColor;
+  const finalColorName = useNewColor ? trimmedColor! : src.colorName;
+  const finalColorHex = useNewColor ? (newColorHex?.trim() || null) : src.colorHex;
+  const finalName = useNewColor
+    ? replaceColorInName(src.name, src.colorName, finalColorName)
+    : `${src.name} (copia)`;
+  const slug = await ensureUniqueSlug(
+    useNewColor ? slugifyEs(`${finalName}-${finalColorName}`) : `${src.slug}-copia`,
+  );
 
   const cloned = await db.$transaction(async (tx) => {
     const product = await tx.product.create({
       data: {
         slug,
-        name: `${src.name} (copia)`,
+        name: finalName,
         shortName: src.shortName,
         description: src.description,
         brandId: src.brandId,
@@ -257,8 +278,8 @@ export async function duplicateProduct(
         externalUrl: src.externalUrl,
         modelCode: src.modelCode,
         sku: null, // sku es @unique → no se copia en duplicados; el admin asignará uno nuevo.
-        colorName: src.colorName,
-        colorHex: src.colorHex,
+        colorName: finalColorName,
+        colorHex: finalColorHex,
         gender: src.gender,
         sportUse: src.sportUse,
         // Clasificación de familia (Bloque 3/6): necesaria para los filtros de

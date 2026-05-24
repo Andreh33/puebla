@@ -63,9 +63,13 @@ export async function updateProductAction(id: string, payload: ProductFormPayloa
   return { ok: true as const, slug: product.slug };
 }
 
-export async function duplicateProductAction(id: string, keepStock = false) {
+export async function duplicateProductAction(
+  id: string,
+  keepStock = false,
+  newColorName?: string,
+) {
   const session = await requireSession();
-  const created = await duplicateProduct(id, session.user.id, { keepStock });
+  const created = await duplicateProduct(id, session.user.id, { keepStock, newColorName });
   revalidatePath("/admin/productos");
   return { ok: true as const, id: created.id };
 }

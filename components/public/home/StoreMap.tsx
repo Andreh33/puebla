@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Phone, Mail, Clock, MessageCircle, ArrowUpRight } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, MessageCircle, ArrowUpRight, Star } from "lucide-react";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 import { STORE_NAP } from "@/lib/seo/schema-org";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
@@ -140,6 +140,16 @@ export function StoreMap() {
               >
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
                 WhatsApp
+              </a>
+              <a
+                href="https://maps.app.goo.gl/ZNHviai5Zxd3rmJB8"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cursor="Reseñas"
+                className="inline-flex h-12 items-center gap-2 rounded-full border border-zs-blue-950/15 bg-white px-6 text-sm font-semibold text-zs-blue-950 transition-colors hover:border-zs-blue-950"
+              >
+                <Star className="h-4 w-4 fill-zs-yellow-400 text-zs-yellow-400" />
+                Reseñas en Google
               </a>
             </div>
 

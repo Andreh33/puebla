@@ -156,7 +156,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis envíos a Lobón si no puedo desplazarme?",
-        a: "Sí. Para clientes de Lobón confirmamos pedido por WhatsApp y entregamos en tu domicilio gratis a partir de 50 € de compra. Para importes menores, consulta gastos de envío al confirmar la reserva.",
+        a: "Sí. Para clientes de Lobón confirmamos pedido por WhatsApp y entregamos en tu domicilio gratis a partir de 60 € de compra. Para importes menores, consulta gastos de envío al confirmar la reserva.",
       },
       {
         q: "¿Tenéis material para senderismo y BTT por la Sierra de San Serván?",
