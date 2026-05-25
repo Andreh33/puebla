@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Search, Plus, Trash2, Receipt, MessageCircle, CreditCard } from "lucide-react";
+import { Search, Plus, Trash2, Receipt, MessageCircle, CreditCard, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,15 +56,13 @@ export function PosSale() {
     return () => clearTimeout(t);
   }, [q]);
 
-  function addToCart(p: PosSearchResult) {
-    const hasSizes = p.sizes.length > 0;
-    const defaultSize = hasSizes ? (p.sizes.find((s) => s.stock > 0)?.size ?? p.sizes[0]!.size) : null;
+  function addToCart(p: PosSearchResult, size: string | null) {
     setCart((c) => [
       ...c,
       {
-        key: `${p.id}-${defaultSize ?? "u"}-${Date.now()}`,
+        key: `${p.id}-${size ?? "u"}-${Date.now()}`,
         productId: p.id, name: p.name, family: p.family,
-        size: defaultSize, sizes: p.sizes, productStock: p.productStock,
+        size, sizes: p.sizes, productStock: p.productStock,
         quantity: 1, unitPrice: p.unitPrice, lineDiscount: 0,
       },
     ]);
@@ -115,6 +113,15 @@ export function PosSale() {
     toast.success("Ticket generado");
   }
 
+  // Cada talla es su propia fila en el buscador ("Talla 42 — Nombre" + foto).
+  // Los accesorios sin tallas quedan en una sola fila con la talla a null.
+  type SearchRow = { product: PosSearchResult; size: string | null; stock: number };
+  const searchRows: SearchRow[] = results.flatMap<SearchRow>((p) =>
+    p.sizes.length > 0
+      ? p.sizes.map((s) => ({ product: p, size: s.size, stock: s.stock }))
+      : [{ product: p, size: null, stock: p.productStock }],
+  );
+
   return (
     <section className="mb-10 rounded-2xl border border-zs-border bg-white p-4 shadow-sm sm:p-6">
       <h2 className="mb-1 font-display text-lg font-bold text-zs-blue-900">Venta en tienda (TPV físico)</h2>
@@ -125,20 +132,48 @@ export function PosSale() {
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zs-muted" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, SKU, modelo o EAN…" className="pl-9" />
-        {results.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-zs-border bg-white shadow-lg">
-            {results.map((p) => (
-              <li key={p.id}>
-                <button type="button" onClick={() => addToCart(p)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-zs-surface">
-                  <span className="truncate">{p.name} <span className="text-zs-muted">· {p.baseSku}</span></span>
-                  <span className="flex items-center gap-2 text-zs-muted">
-                    {formatPriceEUR(p.unitPrice)}
-                    <Plus className="h-4 w-4" />
-                  </span>
-                </button>
-              </li>
-            ))}
+        {searchRows.length > 0 && (
+          <ul className="absolute z-20 mt-1 max-h-[26rem] w-full overflow-auto rounded-xl border border-zs-border bg-white shadow-lg">
+            {searchRows.map(({ product: p, size, stock }) => {
+              const outOfStock = stock <= 0;
+              return (
+                <li key={`${p.id}-${size ?? "u"}`}>
+                  <button
+                    type="button"
+                    disabled={outOfStock}
+                    onClick={() => addToCart(p, size)}
+                    className="flex w-full items-center gap-3 px-3 py-2.5 text-left hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-zs-border bg-zs-surface">
+                      {p.mainImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.mainImageUrl} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-zs-muted">
+                          <ImageOff className="h-5 w-5" />
+                        </span>
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-zs-blue-900">
+                        {size ? (
+                          <span className="text-zs-red-600">Talla {size}</span>
+                        ) : (
+                          <span className="text-zs-muted">Sin tallas</span>
+                        )}
+                        {" — "}
+                        {p.name}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-zs-muted">
+                        {p.baseSku} · {formatPriceEUR(p.unitPrice)} ·{" "}
+                        {outOfStock ? "sin stock" : `${stock} en stock`}
+                      </span>
+                    </span>
+                    <Plus className="h-4 w-4 shrink-0 text-zs-muted" />
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
         {searching && <p className="mt-1 text-xs text-zs-muted">Buscando…</p>}
