@@ -21,8 +21,8 @@ export type ProductCardProduct = {
   blurDataUrl?: string | null;
   /**
    * Suma de stock de todas las tallas (Bloque 1). Si es `undefined`/`null` no
-   * conocemos el stock y no pintamos badge; `0` → "Agotado"; `1..3` → "Pocas
-   * unidades". El stock es el real exportado del WP antiguo.
+   * conocemos el stock y no pintamos badge; `0` → "Agotado". El stock es el
+   * real exportado del WP antiguo.
    */
   totalStock?: number | null;
   /**
@@ -34,14 +34,13 @@ export type ProductCardProduct = {
 
 /**
  * Badge de stock para los listados (Bloque 1). `undefined`/`null` = stock
- * desconocido → no se pinta nada. `0` → "Agotado". `1..3` → "Pocas unidades".
+ * desconocido → no se pinta nada. `0` → "Agotado". Con stock > 0 no se pinta badge.
  */
 export function stockBadge(
   totalStock: number | null | undefined,
 ): { label: string; cls: string } | null {
   if (typeof totalStock !== "number") return null;
   if (totalStock <= 0) return { label: "Agotado", cls: "border-transparent bg-zs-ink/80 text-white" };
-  if (totalStock <= 3) return { label: "Pocas unidades", cls: "border-transparent bg-amber-500 text-white" };
   return null;
 }
 

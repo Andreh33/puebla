@@ -231,8 +231,8 @@ export function HomeHero() {
                   "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms",
               }}
             >
-              Running, montaña, pádel, fitness y calzado. Más de 40 marcas
-              técnicas y urbanas, atención cara a cara en tienda y envío 24/48 h
+              Running, montaña, pádel, fitness y calzado. Más de 20 años de
+              experiencia, atención cara a cara en tienda y envío 24/48 h
               a toda España.
             </p>
           </div>
@@ -312,7 +312,7 @@ export function HomeHero() {
                 className="mt-1 font-display font-black leading-[0.95] tracking-[-0.03em]"
                 style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
               >
-                Hasta <span className="text-zs-tennis-300">-30%</span> en una selección
+                Ofertas en una <span className="text-zs-tennis-300">selección</span>
               </p>
               <p className="mt-1 text-sm text-white/80">
                 Running, montaña y calzado urbano · termina el domingo
@@ -331,7 +331,7 @@ export function HomeHero() {
         <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
           {[
             { k: "2003", v: "en el barrio desde" },
-            { k: "+40", v: "marcas seleccionadas" },
+            { k: "+20", v: "años de experiencia" },
             { k: "24/48h", v: "envío Península" },
             { k: "60€", v: "envío gratis desde" },
           ].map((it, i) => (

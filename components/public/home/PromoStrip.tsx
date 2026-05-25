@@ -37,7 +37,7 @@ const TILES: Tile[] = [
   {
     href: "/hombre/calzado?tipo=running&oferta=1",
     eyebrow: "Solo esta semana",
-    title: "Hasta -30% en running",
+    title: "Ofertas de la semana",
     caption: "Asfalto, trail y zapatilla diaria. Termina el domingo.",
     cta: "Ver ofertas",
     Icon: Flame,
