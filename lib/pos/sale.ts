@@ -103,6 +103,10 @@ export type CreateSaleInput = {
   paymentMethod: PaymentMethod;
   totalDiscount?: number;
   customer?: { name?: string; phone?: string };
+  /** Nota libre del pedido (se guarda en metadata, sale en el ticket). */
+  note?: string;
+  /** Pares clave/valor (meta del pedido): vendedor, origen, referencia… */
+  meta?: Array<{ key: string; value: string }>;
 };
 
 export type CreatedSale = {
@@ -183,7 +187,15 @@ export async function createInStoreSale(
         status: "PAID",
         paymentStatus: input.paymentMethod,
         deliveryMethod: "in_store",
-        metadata: { channel: "pos", paymentMethod: input.paymentMethod, ticketNumber } as Prisma.InputJsonValue,
+        metadata: {
+          channel: "pos",
+          paymentMethod: input.paymentMethod,
+          ticketNumber,
+          ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+          ...(input.meta && input.meta.length
+            ? { meta: input.meta.filter((m) => m.key.trim() || m.value.trim()) }
+            : {}),
+        } as Prisma.InputJsonValue,
         items: {
           create: planned.items.map((it) => ({
             productId: it.productId,

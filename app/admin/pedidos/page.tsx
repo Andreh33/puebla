@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ScanLine, ArrowRight } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -8,7 +10,6 @@ import { STRIPE_ENV_VARS } from "@/lib/stripe/types";
 import { toOrderSummary } from "@/lib/stripe/orders";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
-import { PosSale } from "./PosSale";
 
 export const metadata: Metadata = { title: "Pedidos" };
 export const dynamic = "force-dynamic";
@@ -83,8 +84,27 @@ export default async function PedidosPage({
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Pedidos" }]}
       />
 
-      {/* TPV físico — disponible siempre, no depende de Stripe */}
-      <PosSale />
+      {/* TPV físico — pantalla completa en su propia ruta /admin/tpv */}
+      <Link
+        href="/admin/tpv"
+        className="group mb-8 flex items-center justify-between gap-4 rounded-2xl border border-zs-border bg-gradient-to-r from-zs-blue-950 to-zs-blue-800 p-5 text-white shadow-sm transition-shadow hover:shadow-zs-blue-glow"
+      >
+        <div className="flex items-center gap-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10">
+            <ScanLine className="h-6 w-6 text-zs-yellow-400" />
+          </span>
+          <div>
+            <h2 className="font-display text-lg font-bold">Venta en tienda (TPV físico)</h2>
+            <p className="text-sm text-white/70">
+              Abre la caja a pantalla completa: busca por SKU, pulsa la talla y cobra al instante.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-zs-blue-900 transition-transform group-hover:translate-x-0.5">
+          Abrir TPV
+          <ArrowRight className="h-4 w-4" />
+        </span>
+      </Link>
 
       {!configured && (
         <div className="mb-6">
