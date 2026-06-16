@@ -12,7 +12,7 @@
  */
 
 /** Géneros soportados por el mega-menú. */
-export type MegaMenuGender = "MUJER" | "HOMBRE" | "NINO" | "NINA";
+export type MegaMenuGender = "MUJER" | "HOMBRE" | "NINO" | "NINA" | "BEBE";
 
 /**
  * Hoja del menú — dos formas:
@@ -33,9 +33,9 @@ export type MegaMenuSection = {
   groups: MegaMenuGroup[];
 };
 
-/** Tab raíz del mega-menú (Mujer / Hombre / Niño / Niña). */
+/** Tab raíz del mega-menú (Mujer / Hombre / Niño / Niña / Bebé). */
 export type MegaMenuTab = {
-  href: "/mujer" | "/hombre" | "/nino" | "/nina";
+  href: "/mujer" | "/hombre" | "/nino" | "/nina" | "/bebe";
   label: string;
   /** Imagen lifestyle sticky en el panel desktop. */
   heroImage: string;
@@ -43,11 +43,12 @@ export type MegaMenuTab = {
 };
 
 /** gender (enum) → seccion (slug del hub /[seccion]). */
-const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "nina"> = {
+const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "nina" | "bebe"> = {
   MUJER: "mujer",
   HOMBRE: "hombre",
   NINO: "nino",
   NINA: "nina",
+  BEBE: "bebe",
 };
 
 // ---------------------------------------------------------------------------
@@ -63,11 +64,18 @@ const ROPA: MegaMenuGroup = {
   title: "Ropa",
   items: [
     { label: "Ver toda la ropa", familia: "textil" },
-    { label: "Camisetas y polos", familia: "textil", prenda: "camiseta" },
+    { label: "Camisetas", familia: "textil", prenda: "camiseta" },
+    { label: "Polos", familia: "textil", prenda: "polo" },
     { label: "Sudaderas", familia: "textil", prenda: "sudadera" },
+    { label: "Polares", familia: "textil", prenda: "polar" },
     { label: "Chándal", familia: "textil", prenda: "chandal" },
+    { label: "Chaquetas", familia: "textil", prenda: "chaqueta" },
+    { label: "Abrigos", familia: "textil", prenda: "abrigo" },
+    { label: "Cortavientos", familia: "textil", prenda: "cortavientos" },
+    { label: "Conjuntos", familia: "textil", prenda: "conjunto" },
     { label: "Pantalones", familia: "textil", prenda: "pantalon" },
-    { label: "Mallas", familia: "textil", prenda: "mallas" },
+    { label: "Mallas y leggins", familia: "textil", prenda: "mallas" },
+    { label: "Calentadores", familia: "textil", prenda: "calentador" },
     { label: "Bañadores", familia: "textil", prenda: "banador" },
   ],
 };
@@ -79,7 +87,7 @@ const ROPA: MegaMenuGroup = {
 const CALZADO: MegaMenuGroup = {
   title: "Calzado",
   items: [
-    { label: "Calzado", familia: "calzado" },
+    { label: "Ver todo el calzado", familia: "calzado" },
     { label: "Running", familia: "calzado", tipo: "running" },
     { label: "Trail", familia: "calzado", tipo: "trail" },
     // Bloque 8.8: 'Tenis' fusionado en 'Pádel' (footwearType tenis→padel).
@@ -112,6 +120,7 @@ export const MEGA_MENU: {
   hombre: MegaMenuTab;
   nino: MegaMenuTab;
   nina: MegaMenuTab;
+  bebe: MegaMenuTab;
 } = {
   mujer: {
     href: "/mujer",
@@ -139,10 +148,16 @@ export const MEGA_MENU: {
     heroImage: "/category-photos/nina-hero.jpg",
     sections: [{ gender: "NINA", label: "Niña", groups: [ROPA, CALZADO] }],
   },
+  bebe: {
+    href: "/bebe",
+    label: "Bebé",
+    heroImage: "/category-photos/ninos-hero.jpg",
+    sections: [{ gender: "BEBE", label: "Bebé", groups: [ROPA, CALZADO] }],
+  },
 };
 
 export type MegaMenuKey = keyof typeof MEGA_MENU;
-export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina"];
+export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina", "bebe"];
 
 /**
  * Construye la URL navegable de un item del mega-menú:

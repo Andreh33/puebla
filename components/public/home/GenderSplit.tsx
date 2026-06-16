@@ -191,6 +191,14 @@ export function GenderSplit() {
                 Entrar a Niña
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:rotate-45" />
               </Link>
+              <Link
+                href="/bebe"
+                data-cursor="Bebé"
+                className="group/cta inline-flex h-12 items-center gap-2 rounded-xl bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-zs-tennis-300 shadow-lg transition hover:bg-zs-red-600 hover:text-white"
+              >
+                Entrar a Bebé
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover/cta:rotate-45" />
+              </Link>
             </div>
           </div>
 

@@ -60,7 +60,7 @@ const PAGE_NAV: Array<{ label: string; href: string }> = [
  * tiene desplegable propio — lleva a la categoría root.
  */
 const SUBTABS_NINOS: Array<{ label: string; href: string }> = [
-  { label: "Accesorios", href: "/accesorios" },
+  { label: "Complementos", href: "/accesorios" },
 ];
 
 const GENDER_TABS: Array<{
@@ -95,6 +95,12 @@ const GENDER_TABS: Array<{
     label: "Niña",
     href: "/nina",
     match: (p) => p === "/nina" || p.startsWith("/nina/"),
+  },
+  {
+    key: "bebe",
+    label: "Bebé",
+    href: "/bebe",
+    match: (p) => p === "/bebe" || p.startsWith("/bebe/"),
   },
 ];
 

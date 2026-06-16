@@ -15,7 +15,7 @@ const COLS = [
       { label: "Mujer", href: "/mujer" },
       { label: "Niño", href: "/nino" },
       { label: "Niña", href: "/nina" },
-      { label: "Accesorios", href: "/accesorios" },
+      { label: "Complementos", href: "/accesorios" },
       { label: "Marcas", href: "/marcas" },
     ],
   },
