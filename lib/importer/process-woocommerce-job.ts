@@ -27,6 +27,7 @@ import { db } from "@/lib/db";
 import { slugifyEs, uniqueSlug } from "@/lib/seo/slug";
 import { parseWooCommerceFile } from "./woocommerce";
 import type { WooNormalizedParent, WooNormalizedVariation, WooProductGroup } from "./woocommerce";
+import { classifyToTree } from "./classify-to-tree";
 
 const BLOCK_SIZE = 30; // grupos procesados en una transacción
 const MAX_STORED_ERRORS = 500;
@@ -52,6 +53,7 @@ interface ImportError {
 class TaxonomyCache {
   private brands = new Map<string, string>();
   private categories = new Map<string, string>();
+  private treeBySlug = new Map<string, string>();
 
   async getBrandId(tx: Prisma.TransactionClient, name: string): Promise<string> {
     const key = name.trim() || "Sin Marca";
@@ -103,6 +105,18 @@ class TaxonomyCache {
     });
     this.categories.set(key, created.id);
     return created.id;
+  }
+
+  async resolveTreeSlugs(tx: Prisma.TransactionClient, slugs: string[]): Promise<Map<string, string>> {
+    // devuelve slug→id solo de las que existan; cachea
+    const out = new Map<string, string>();
+    const missing = slugs.filter((s) => !this.treeBySlug.has(s));
+    if (missing.length) {
+      const found = await tx.category.findMany({ where: { slug: { in: missing } }, select: { id: true, slug: true } });
+      for (const c of found) this.treeBySlug.set(c.slug, c.id);
+    }
+    for (const s of slugs) { const id = this.treeBySlug.get(s); if (id) out.set(s, id); }
+    return out;
   }
 }
 
@@ -192,7 +206,14 @@ async function processGroup(
   }
 
   const brandId = await taxonomy.getBrandId(tx, p.brand);
-  const categoryId = await taxonomy.getCategoryId(tx, p.category);
+
+  // Clasificación en la taxonomía canónica nueva
+  const tree = classifyToTree(p.name, p.gender, p.brand);
+  const treeIds = tree.categorySlugs.length ? await taxonomy.resolveTreeSlugs(tx, tree.categorySlugs) : new Map<string, string>();
+  const primaryId = tree.primarySlug ? treeIds.get(tree.primarySlug) ?? null : null;
+  // categoryId legacy: la principal del árbol si existe; si no, fallback al método viejo (getCategoryId por nombre)
+  // para no romper el FK requerido.
+  const categoryId = primaryId ?? (await taxonomy.getCategoryId(tx, p.category));
 
   // Si el padre estaba publicado en Woo pero el operador pide DRAFT, respetamos.
   // Si el padre estaba en DRAFT/INACTIVE en Woo, sobrescribe a INACTIVE/DRAFT.
@@ -219,6 +240,9 @@ async function processGroup(
   const commonData = {
     brandId,
     categoryId,
+    primaryCategoryId: primaryId,
+    footwearType: tree.footwearType,
+    garmentType: tree.garmentType,
     source: "LOCAL" as const,
     externalId: p.externalId,
     modelCode: p.modelCode,
@@ -273,6 +297,9 @@ async function processGroup(
     const updateData: Prisma.ProductUpdateInput = {
       brand: { connect: { id: brandId } },
       category: { connect: { id: categoryId } },
+      primaryCategory: primaryId ? { connect: { id: primaryId } } : { disconnect: true },
+      footwearType: commonData.footwearType,
+      garmentType: commonData.garmentType,
       modelCode: commonData.modelCode,
       sku: commonData.sku,
       colorName: commonData.colorName,
@@ -320,6 +347,18 @@ async function processGroup(
           },
         ) as unknown as Prisma.InputJsonValue,
       },
+    });
+  }
+
+  // M2M ProductCategory: enlaza el producto con las categorías del árbol canónico.
+  // REPLACE idempotente: borra el m2m previo y recrea. Si el producto es UNCLASSIFIED
+  // (treeIds vacío), no toca m2m — queda en DRAFT para revisión manual del admin.
+  const idsToLink = Array.from(treeIds.values());
+  if (idsToLink.length) {
+    await tx.productCategory.deleteMany({ where: { productId } });
+    await tx.productCategory.createMany({
+      data: idsToLink.map((categoryId) => ({ productId, categoryId })),
+      skipDuplicates: true,
     });
   }
 
