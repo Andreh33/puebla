@@ -201,6 +201,14 @@ async function main() {
     console.log(
       `  Lote ${batchIndex}/${totalChunks} · +${res.created} creados · ~${res.updated} actualizados · ${res.errorCount} errores`,
     );
+
+    if (res.errorCount && res.errors?.length) {
+      for (const e of res.errors) {
+        console.log(
+          `      ↳ ERROR: ${typeof e === "string" ? e : JSON.stringify(e)}`,
+        );
+      }
+    }
   }
 
   console.log(`\n=== RESULTADO FINAL ===`);

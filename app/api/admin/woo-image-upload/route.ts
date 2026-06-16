@@ -7,7 +7,9 @@
  *   1. Script local descarga la imagen (pasa CF como IP residencial).
  *   2. POST multipart {sku, file} a este endpoint.
  *   3. Endpoint sube al Blob de Vercel + crea ProductImage + actualiza
- *      Product.mainImageUrl + cambia status DRAFT → ACTIVE.
+ *      Product.mainImageUrl. MANTIENE el status (NO publica): el catálogo
+ *      importado se queda en DRAFT para que el cliente lo revise y publique
+ *      en bloque desde /admin cuando esté listo.
  *
  * Auth: Bearer ${SETUP_TOKEN}.
  *
@@ -101,8 +103,8 @@ export async function POST(req: NextRequest) {
       where: { id: product.id },
       data: {
         mainImageUrl: result.url,
-        status: product.status === "DRAFT" ? "ACTIVE" : product.status,
-        publishedAt: product.status === "DRAFT" ? new Date() : undefined,
+        // NO se toca el status: el catálogo importado permanece en DRAFT
+        // hasta que el cliente lo revise y publique en bloque desde /admin.
         images: {
           create: {
             url: result.url,
