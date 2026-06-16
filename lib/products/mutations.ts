@@ -6,10 +6,28 @@ import { ProductSchema, ProductSizeSchema } from "@/lib/validators";
 import type { FootwearType } from "@/lib/categories/footwear";
 import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
 import { VARIANT_TO_TYPE } from "@/lib/categories/garment";
+import { deriveGenderFromCategorySlugs } from "@/lib/products/derive-gender";
 import type { z } from "zod";
 
 export type ProductInput = z.infer<typeof ProductSchema>;
 export type ProductSizeInput = z.infer<typeof ProductSizeSchema>;
+
+export interface ProductImageInput {
+  url: string;
+  urlThumb?: string | null;
+  urlMedium?: string | null;
+  blurDataUrl?: string | null;
+  width?: number | null;
+  height?: number | null;
+  alt: string;
+}
+
+export interface ProductRelationsInput {
+  categoryIds?: string[];
+  primaryCategoryId?: string | null;
+  images?: ProductImageInput[];
+  mainImageUrl?: string | null;
+}
 
 function diff<T extends Record<string, unknown>>(prev: T, next: T): Record<string, { from: unknown; to: unknown }> {
   const out: Record<string, { from: unknown; to: unknown }> = {};
@@ -42,6 +60,7 @@ export async function createProduct(
   input: ProductInput,
   sizes: ProductSizeInput[] = [],
   userId?: string,
+  extra: ProductRelationsInput = {},
 ) {
   const parsed = ProductSchema.parse(input);
   const slug = await ensureUniqueSlug(parsed.slug || slugifyEs(`${parsed.name}-${parsed.colorName}`));
@@ -81,23 +100,47 @@ export async function createProduct(
     }
   }
 
-  const created = await db.$transaction(async (tx) => {
-    const product = await tx.product.create({
-      data: {
-        ...parsed,
-        slug,
-        description: autoDescription ?? parsed.description,
-        metaDescription: autoMeta ?? parsed.metaDescription,
-        retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
-        costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
-        salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,
-        taxRate: parsed.taxRate as unknown as Prisma.Decimal,
-        weight: parsed.weight != null ? (parsed.weight as unknown as Prisma.Decimal) : null,
-        externalUrl: parsed.externalUrl || null,
-        colorHex: parsed.colorHex || null,
-        publishedAt: parsed.status === "ACTIVE" ? new Date() : null,
-      },
+  // Derive gender and resolve primary category from extra.categoryIds (if provided).
+  let derivedGender = parsed.gender;
+  let resolvedPrimaryId: string | undefined = undefined;
+  let categoryRows: { id: string; slug: string }[] = [];
+
+  if (extra.categoryIds?.length) {
+    categoryRows = await db.category.findMany({
+      where: { id: { in: extra.categoryIds } },
+      select: { id: true, slug: true },
     });
+    const validIds = categoryRows.map((c) => c.id);
+    const primary = extra.primaryCategoryId ?? validIds[0] ?? undefined;
+    resolvedPrimaryId = primary;
+    derivedGender = deriveGenderFromCategorySlugs(categoryRows.map((c) => c.slug));
+  }
+
+  const created = await db.$transaction(async (tx) => {
+    const createData: Prisma.ProductCreateInput = {
+      ...(parsed as Omit<typeof parsed, "brandId" | "categoryId">),
+      slug,
+      description: autoDescription ?? parsed.description,
+      metaDescription: autoMeta ?? parsed.metaDescription,
+      gender: derivedGender,
+      retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
+      costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
+      salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,
+      taxRate: parsed.taxRate as unknown as Prisma.Decimal,
+      weight: parsed.weight != null ? (parsed.weight as unknown as Prisma.Decimal) : null,
+      externalUrl: parsed.externalUrl || null,
+      colorHex: parsed.colorHex || null,
+      publishedAt: parsed.status === "ACTIVE" ? new Date() : null,
+      brand: { connect: { id: parsed.brandId } },
+      category: { connect: { id: extra.categoryIds?.length && resolvedPrimaryId ? resolvedPrimaryId : parsed.categoryId } },
+    };
+
+    if (resolvedPrimaryId) {
+      createData.primaryCategory = { connect: { id: resolvedPrimaryId } };
+    }
+
+    const product = await tx.product.create({ data: createData });
+
     if (sizes.length) {
       await tx.productSize.createMany({
         data: sizes.map((s, i) => ({
@@ -111,6 +154,37 @@ export async function createProduct(
         })),
       });
     }
+
+    if (extra.categoryIds?.length && categoryRows.length) {
+      const dedupedIds = [...new Set(categoryRows.map((c) => c.id))];
+      await tx.productCategory.createMany({
+        data: dedupedIds.map((categoryId) => ({ productId: product.id, categoryId })),
+        skipDuplicates: true,
+      });
+    }
+
+    if (extra.images?.length) {
+      await tx.productImage.createMany({
+        data: extra.images.map((img, i) => ({
+          productId: product.id,
+          url: img.url,
+          urlThumb: img.urlThumb ?? null,
+          urlMedium: img.urlMedium ?? null,
+          blurDataUrl: img.blurDataUrl ?? null,
+          width: img.width ?? null,
+          height: img.height ?? null,
+          alt: img.alt,
+          position: i,
+          source: "upload",
+        })),
+      });
+    }
+
+    const mainImageUrl = extra.mainImageUrl ?? extra.images?.[0]?.url ?? null;
+    if (mainImageUrl) {
+      await tx.product.update({ where: { id: product.id }, data: { mainImageUrl } });
+    }
+
     await tx.productAudit.create({
       data: {
         productId: product.id,
@@ -130,6 +204,7 @@ export async function updateProduct(
   input: ProductInput,
   sizes: ProductSizeInput[] | undefined,
   userId?: string,
+  extra: ProductRelationsInput = {},
 ) {
   const parsed = ProductSchema.parse(input);
   const existing = await db.product.findUnique({
@@ -146,22 +221,52 @@ export async function updateProduct(
   const wasActive = existing.status === "ACTIVE";
   const willBeActive = parsed.status === "ACTIVE";
 
-  const updated = await db.$transaction(async (tx) => {
-    const product = await tx.product.update({
-      where: { id },
-      data: {
-        ...parsed,
-        slug,
-        retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
-        costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
-        salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,
-        taxRate: parsed.taxRate as unknown as Prisma.Decimal,
-        weight: parsed.weight != null ? (parsed.weight as unknown as Prisma.Decimal) : null,
-        externalUrl: parsed.externalUrl || null,
-        colorHex: parsed.colorHex || null,
-        publishedAt: willBeActive && !wasActive ? new Date() : existing.publishedAt,
-      },
+  // Resolve categories / gender from extra (if provided).
+  let derivedGender = parsed.gender;
+  let resolvedPrimaryId: string | undefined = undefined;
+  let categoryRows: { id: string; slug: string }[] = [];
+
+  if (extra.categoryIds !== undefined && extra.categoryIds.length > 0) {
+    categoryRows = await db.category.findMany({
+      where: { id: { in: extra.categoryIds } },
+      select: { id: true, slug: true },
     });
+    const validIds = categoryRows.map((c) => c.id);
+    const primary = extra.primaryCategoryId ?? validIds[0] ?? undefined;
+    resolvedPrimaryId = primary;
+    derivedGender = deriveGenderFromCategorySlugs(categoryRows.map((c) => c.slug));
+  } else if (extra.categoryIds !== undefined && extra.categoryIds.length === 0) {
+    // Explicit empty array: clear all m2m categories but leave scalar fields alone.
+    // Gender stays as parsed.gender; primary stays undefined.
+  }
+
+  const updated = await db.$transaction(async (tx) => {
+    const updateData: Parameters<typeof tx.product.update>[0]["data"] = {
+      ...parsed,
+      slug,
+      gender: derivedGender,
+      retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
+      costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
+      salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,
+      taxRate: parsed.taxRate as unknown as Prisma.Decimal,
+      weight: parsed.weight != null ? (parsed.weight as unknown as Prisma.Decimal) : null,
+      externalUrl: parsed.externalUrl || null,
+      colorHex: parsed.colorHex || null,
+      publishedAt: willBeActive && !wasActive ? new Date() : existing.publishedAt,
+    };
+
+    if (resolvedPrimaryId !== undefined) {
+      updateData.categoryId = resolvedPrimaryId;
+      updateData.primaryCategoryId = resolvedPrimaryId;
+    }
+
+    if (extra.mainImageUrl !== undefined) {
+      updateData.mainImageUrl = extra.mainImageUrl;
+    } else if (extra.images !== undefined && extra.images.length > 0) {
+      updateData.mainImageUrl = extra.images[0]!.url;
+    }
+
+    const product = await tx.product.update({ where: { id }, data: updateData });
 
     if (sizes) {
       // Replace strategy: borrar y volver a crear
@@ -177,6 +282,39 @@ export async function updateProduct(
             retailPrice:
               s.retailPrice != null ? (s.retailPrice as unknown as Prisma.Decimal) : null,
             position: i,
+          })),
+        });
+      }
+    }
+
+    if (extra.categoryIds !== undefined) {
+      // Replace strategy for m2m categories
+      await tx.productCategory.deleteMany({ where: { productId: id } });
+      if (categoryRows.length > 0) {
+        const dedupedIds = [...new Set(categoryRows.map((c) => c.id))];
+        await tx.productCategory.createMany({
+          data: dedupedIds.map((categoryId) => ({ productId: id, categoryId })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    if (extra.images !== undefined) {
+      // Replace strategy for images
+      await tx.productImage.deleteMany({ where: { productId: id } });
+      if (extra.images.length > 0) {
+        await tx.productImage.createMany({
+          data: extra.images.map((img, i) => ({
+            productId: id,
+            url: img.url,
+            urlThumb: img.urlThumb ?? null,
+            urlMedium: img.urlMedium ?? null,
+            blurDataUrl: img.blurDataUrl ?? null,
+            width: img.width ?? null,
+            height: img.height ?? null,
+            alt: img.alt,
+            position: i,
+            source: "upload",
           })),
         });
       }

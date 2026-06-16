@@ -21,6 +21,7 @@ import {
   updateProduct,
   type ProductInput,
   type ProductSizeInput,
+  type ProductImageInput,
 } from "@/lib/products/mutations";
 import type { FootwearType } from "@/lib/categories/footwear";
 import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
@@ -31,10 +32,18 @@ async function requireSession() {
   return session;
 }
 
+export type { ProductImageInput };
+
 export interface ProductFormPayload {
   product: ProductInput;
   sizes?: ProductSizeInput[];
-  // Imágenes: gestionadas en endpoints aparte (uploads). Aquí solo si vienen ya creadas.
+  /** Todas las categorías marcadas (m2m). Si viene, reemplaza las del producto. */
+  categoryIds?: string[];
+  /** La categoría "principal" (breadcrumb/canonical + categoryId legacy). */
+  primaryCategoryId?: string | null;
+  /** Imágenes en orden de visualización. Si viene, reemplaza las del producto. */
+  images?: ProductImageInput[];
+  /** URL de la imagen principal (debe estar entre images). */
   mainImageUrl?: string | null;
 }
 
@@ -42,7 +51,12 @@ export async function createProductAction(payload: ProductFormPayload) {
   const session = await requireSession();
   const parsed = ProductSchema.parse(payload.product);
   const sizes = payload.sizes ? payload.sizes.map((s) => ProductSizeSchema.parse(s)) : [];
-  const product = await createProduct(parsed, sizes, session.user.id);
+  const product = await createProduct(parsed, sizes, session.user.id, {
+    categoryIds: payload.categoryIds,
+    primaryCategoryId: payload.primaryCategoryId,
+    images: payload.images,
+    mainImageUrl: payload.mainImageUrl,
+  });
   revalidatePath("/admin/productos");
   return { ok: true as const, id: product.id, slug: product.slug };
 }
@@ -56,7 +70,12 @@ export async function updateProductAction(id: string, payload: ProductFormPayloa
   const session = await requireSession();
   const parsed = ProductSchema.parse(payload.product);
   const sizes = payload.sizes ? payload.sizes.map((s) => ProductSizeSchema.parse(s)) : undefined;
-  const product = await updateProduct(id, parsed, sizes, session.user.id);
+  const product = await updateProduct(id, parsed, sizes, session.user.id, {
+    categoryIds: payload.categoryIds,
+    primaryCategoryId: payload.primaryCategoryId,
+    images: payload.images,
+    mainImageUrl: payload.mainImageUrl,
+  });
   revalidatePath("/admin/productos");
   revalidatePath(`/admin/productos/${id}`);
   revalidatePath(`/producto/${product.slug}`);
