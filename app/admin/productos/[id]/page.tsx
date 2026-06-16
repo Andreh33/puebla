@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { getProductById } from "@/lib/products/queries";
 import { ProductEditor } from "./ProductEditor";
 
 export const dynamic = "force-dynamic";
@@ -17,10 +16,21 @@ export default async function EditProductPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  const product = await getProductById(id);
-  if (!product) notFound();
 
-  const [brands, categories] = await Promise.all([
+  const [product, brands, categories] = await Promise.all([
+    db.product.findUnique({
+      where: { id },
+      include: {
+        brand: true,
+        category: true,
+        primaryCategory: { select: { slug: true } },
+        images: { orderBy: { position: "asc" } },
+        sizes: { orderBy: { position: "asc" } },
+        audits: { orderBy: { createdAt: "desc" }, take: 50 },
+        // m2m categories (Bloque 2)
+        categories: { select: { categoryId: true } },
+      },
+    }),
     db.brand.findMany({
       orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
       select: { id: true, name: true, slug: true },
@@ -30,6 +40,8 @@ export default async function EditProductPage({
       select: { id: true, name: true, slug: true, parentId: true },
     }),
   ]);
+
+  if (!product) notFound();
 
   const serialized = {
     id: product.id,
@@ -69,7 +81,11 @@ export default async function EditProductPage({
     images: product.images.map((img) => ({
       id: img.id,
       url: img.url,
-      urlThumb: img.urlThumb,
+      urlThumb: img.urlThumb ?? null,
+      urlMedium: img.urlMedium ?? null,
+      blurDataUrl: img.blurDataUrl ?? null,
+      width: img.width ?? null,
+      height: img.height ?? null,
       alt: img.alt,
       position: img.position,
     })),
@@ -88,6 +104,9 @@ export default async function EditProductPage({
       userId: a.userId,
       createdAt: a.createdAt.toISOString(),
     })),
+    // m2m categories
+    categoryIds: product.categories.map((pc) => pc.categoryId),
+    primaryCategoryId: product.primaryCategoryId ?? null,
   };
 
   return (

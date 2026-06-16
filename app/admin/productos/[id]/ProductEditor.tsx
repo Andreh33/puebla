@@ -59,6 +59,9 @@ import {
   createProductAction,
   updateProductAction,
 } from "../_actions";
+import { UploadDropzone, type UploadedImage } from "@/components/admin/UploadDropzone";
+import { CategoryTreePicker, type CategoryNode } from "./CategoryTreePicker";
+import { createCategoryAction } from "@/app/admin/categorias/_actions";
 
 // Form schema: include sizes (array) and accept null/empty strings
 const FormSchema = ProductSchema.extend({
@@ -69,7 +72,19 @@ const FormSchema = ProductSchema.extend({
 type FormValues = z.infer<typeof FormSchema>;
 
 type BrandOption = { id: string; name: string; slug: string };
-type CategoryOption = { id: string; name: string; slug: string; parentId: string | null };
+
+// Extended image type for state (includes all DB fields)
+type ImageState = {
+  id: string;
+  url: string;
+  urlThumb: string | null;
+  urlMedium: string | null;
+  blurDataUrl: string | null;
+  width: number | null;
+  height: number | null;
+  alt: string;
+  position: number;
+};
 
 interface EditorProps {
   mode: "create" | "edit";
@@ -112,6 +127,10 @@ interface EditorProps {
       id: string;
       url: string;
       urlThumb: string | null;
+      urlMedium?: string | null;
+      blurDataUrl?: string | null;
+      width?: number | null;
+      height?: number | null;
       alt: string;
       position: number;
     }>;
@@ -130,51 +149,87 @@ interface EditorProps {
       userId: string | null;
       createdAt: string;
     }>;
+    // m2m categories
+    categoryIds?: string[];
+    primaryCategoryId?: string | null;
   };
   brands: BrandOption[];
-  categories: CategoryOption[];
+  categories: CategoryNode[];
   userRole: "OWNER" | "EDITOR";
 }
 
-const GENDER_OPTS = [
-  { value: "HOMBRE", label: "Hombre" },
-  { value: "MUJER", label: "Mujer" },
-  { value: "UNISEX", label: "Unisex" },
-  { value: "NINO", label: "Niño" },
-  { value: "NINA", label: "Niña" },
-  { value: "BEBE", label: "Bebé" },
-  { value: "NO_ESPECIFICADO", label: "Sin especificar" },
-];
+// Derive gender label from selected category slugs
+const GENDER_ROOTS: Record<string, string> = {
+  hombre: "Hombre",
+  mujer: "Mujer",
+  nino: "Niño",
+  nina: "Niña",
+  bebe: "Bebé",
+};
 
-function flattenCategoryOptions(cats: CategoryOption[]) {
-  // Build tree depth
-  const byParent = new Map<string | null, CategoryOption[]>();
-  for (const c of cats) {
-    const list = byParent.get(c.parentId) ?? [];
-    list.push(c);
-    byParent.set(c.parentId, list);
-  }
-  const out: Array<{ value: string; label: string; depth: number }> = [];
-  function walk(parentId: string | null, depth: number) {
-    const list = byParent.get(parentId) ?? [];
-    for (const c of list) {
-      out.push({ value: c.id, label: c.name, depth });
-      walk(c.id, depth + 1);
+function deriveGenderLabel(selectedIds: string[], allCats: CategoryNode[]): string {
+  // Walk up the tree from each selected category to find root
+  const catById = new Map(allCats.map((c) => [c.id, c]));
+
+  function rootSlug(id: string): string {
+    let cur = catById.get(id);
+    while (cur && cur.parentId) {
+      cur = catById.get(cur.parentId);
     }
+    return cur?.slug ?? "";
   }
-  walk(null, 0);
-  return out;
+
+  const rootSlugs = new Set(selectedIds.map(rootSlug).filter(Boolean));
+  const matched = Object.keys(GENDER_ROOTS).filter((k) => rootSlugs.has(k));
+
+  if (matched.length === 0) return "Sin especificar";
+  if (matched.length === 1) return GENDER_ROOTS[matched[0] as keyof typeof GENDER_ROOTS] ?? "Sin especificar";
+  return "Unisex";
 }
 
-export function ProductEditor({ mode, initial, brands: initialBrands, categories, userRole }: EditorProps) {
+// Derive gender enum value (for product.gender field in payload)
+function deriveGenderValue(selectedIds: string[], allCats: CategoryNode[]): FormValues["gender"] {
+  const label = deriveGenderLabel(selectedIds, allCats);
+  switch (label) {
+    case "Hombre": return "HOMBRE";
+    case "Mujer": return "MUJER";
+    case "Niño": return "NINO";
+    case "Niña": return "NINA";
+    case "Bebé": return "BEBE";
+    case "Unisex": return "UNISEX";
+    default: return "NO_ESPECIFICADO";
+  }
+}
+
+export function ProductEditor({ mode, initial, brands: initialBrands, categories: initialCategories, userRole }: EditorProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = React.useState(false);
   const [tab, setTab] = React.useState("general");
   const [brands, setBrands] = React.useState(initialBrands);
-  const [images, setImages] = React.useState(initial?.images ?? []);
+  const [cats, setCats] = React.useState<CategoryNode[]>(initialCategories);
+  const [images, setImages] = React.useState<ImageState[]>(
+    (initial?.images ?? []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      urlThumb: img.urlThumb ?? null,
+      urlMedium: img.urlMedium ?? null,
+      blurDataUrl: img.blurDataUrl ?? null,
+      width: img.width ?? null,
+      height: img.height ?? null,
+      alt: img.alt,
+      position: img.position,
+    }))
+  );
   const [mainImageUrl, setMainImageUrl] = React.useState<string | null>(initial?.mainImageUrl ?? null);
-  const [externalUrlInput, setExternalUrlInput] = React.useState("");
   const [slugStatus, setSlugStatus] = React.useState<"idle" | "checking" | "ok" | "taken" | "invalid">("idle");
+
+  // Category multi-selection state
+  const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>(
+    initial?.categoryIds ?? []
+  );
+  const [primaryCategoryId, setPrimaryCategoryId] = React.useState<string | null>(
+    initial?.primaryCategoryId ?? null
+  );
 
   const defaults: FormValues = {
     name: initial?.name ?? "",
@@ -335,6 +390,59 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     }
   }
 
+  // Category tree handlers
+  function handleCategoryToggle(id: string) {
+    setSelectedCategoryIds((prev) => {
+      if (prev.includes(id)) {
+        // deselecting
+        const next = prev.filter((x) => x !== id);
+        // if deselecting the primary, reset primary
+        if (primaryCategoryId === id) {
+          setPrimaryCategoryId(next[0] ?? null);
+        }
+        return next;
+      } else {
+        // selecting: if no primary yet, make this the primary
+        if (!primaryCategoryId) setPrimaryCategoryId(id);
+        return [...prev, id];
+      }
+    });
+  }
+
+  function handleSetPrimary(id: string) {
+    // ensure it's selected
+    if (!selectedCategoryIds.includes(id)) {
+      setSelectedCategoryIds((prev) => [...prev, id]);
+    }
+    setPrimaryCategoryId(id);
+  }
+
+  async function handleCreateCategory(name: string, parentId: string | null) {
+    const slug = slugifyEs(name);
+    const res = await createCategoryAction({ name, slug, parentId: parentId ?? null });
+    if (res.ok) {
+      const newCat: CategoryNode = { id: res.id, name, slug, parentId: parentId ?? null };
+      setCats((prev) => [...prev, newCat]);
+      // auto-select the new category
+      handleCategoryToggle(res.id);
+      toast.success(`Categoría "${name}" creada`);
+    } else {
+      throw new Error("No se pudo crear la categoría");
+    }
+  }
+
+  // Derived gender label
+  const derivedGenderLabel = React.useMemo(
+    () => deriveGenderLabel(selectedCategoryIds, cats),
+    [selectedCategoryIds, cats],
+  );
+
+  // Primary category slug — for showing footwear/garment selects
+  const primaryCatSlug = React.useMemo(() => {
+    if (!primaryCategoryId) return null;
+    return cats.find((c) => c.id === primaryCategoryId)?.slug ?? null;
+  }, [primaryCategoryId, cats]);
+
   // Submit
   const onSubmit = (publish: boolean): SubmitHandler<FormValues> => async (values) => {
     if (slugStatus === "taken") {
@@ -342,6 +450,14 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
       setTab("general");
       return;
     }
+
+    // Category validation
+    if (selectedCategoryIds.length === 0) {
+      toast.error("Selecciona al menos una categoría");
+      setTab("general");
+      return;
+    }
+
     if (publish && !mainImageUrl) {
       toast.error("Para publicar es necesaria una imagen principal con alt.");
       setTab("imagenes");
@@ -351,16 +467,39 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     const finalStatus: FormValues["status"] = publish ? "ACTIVE" : values.status;
     const sizes = values.hasSizes ? values.sizes : [];
 
+    // Fix categoryId (legacy field) — must be set to primary or first selected
+    const effectivePrimaryId = primaryCategoryId ?? selectedCategoryIds[0];
+
+    // Auto-derive gender from categories
+    const derivedGender = deriveGenderValue(selectedCategoryIds, cats);
+
     const payload = {
       product: {
         ...values,
         status: finalStatus,
         externalUrl: values.externalUrl || null,
         colorHex: values.colorHex || null,
+        gender: derivedGender,
+        categoryId: effectivePrimaryId,
         sizes: undefined,
         hasSizes: undefined,
       } as unknown as FormValues,
       sizes,
+      categoryIds: selectedCategoryIds,
+      primaryCategoryId: effectivePrimaryId,
+      images: images
+        .slice()
+        .sort((a, b) => a.position - b.position)
+        .map((img) => ({
+          url: img.url,
+          urlThumb: img.urlThumb ?? null,
+          urlMedium: img.urlMedium ?? null,
+          blurDataUrl: img.blurDataUrl ?? null,
+          width: img.width ?? null,
+          height: img.height ?? null,
+          alt: img.alt,
+        })),
+      mainImageUrl,
     };
 
     // remove fields not in ProductSchema
@@ -385,8 +524,6 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
       setSubmitting(false);
     }
   };
-
-  const flatCats = React.useMemo(() => flattenCategoryOptions(categories), [categories]);
 
   return (
     <form
@@ -491,48 +628,12 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   {errors.brandId && <FieldError msg="Selecciona una marca" />}
                 </div>
                 <div>
-                  <Label htmlFor="categoryId">Categoría *</Label>
-                  <Select
-                    value={watched.categoryId}
-                    onValueChange={(v) => setValue("categoryId", v, { shouldValidate: true })}
-                  >
-                    <SelectTrigger id="categoryId">
-                      <SelectValue placeholder="Selecciona categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {flatCats.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {"— ".repeat(c.depth) + c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.categoryId && <FieldError msg="Selecciona una categoría" />}
-                </div>
-                <div>
-                  <Label htmlFor="gender">Género</Label>
-                  <Select
-                    value={watched.gender}
-                    onValueChange={(v) => setValue("gender", v as FormValues["gender"])}
-                  >
-                    <SelectTrigger id="gender">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GENDER_OPTS.map((g) => (
-                        <SelectItem key={g.value} value={g.value}>
-                          {g.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <Label htmlFor="sportUse">Uso deportivo</Label>
                   <Input id="sportUse" {...register("sportUse")} placeholder="ej: Trekking" />
                 </div>
-                {/* Tipo de calzado — solo familia calzado (Bloque 3). "__none__" = null. */}
-                {initial?.primaryCategorySlug?.endsWith("-calzado") && (
+
+                {/* Tipo de calzado — aparece cuando la categoría principal termina en -calzado */}
+                {primaryCatSlug?.endsWith("-calzado") && (
                   <div>
                     <Label htmlFor="footwearType">Tipo de calzado</Label>
                     <Select
@@ -558,8 +659,9 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                     </Select>
                   </div>
                 )}
-                {/* Tipo de prenda — solo familia textil (Bloque 6). "__none__" = null. */}
-                {initial?.primaryCategorySlug?.endsWith("-textil") && (
+
+                {/* Tipo de prenda — aparece cuando la categoría principal termina en -textil */}
+                {primaryCatSlug?.endsWith("-textil") && (
                   <div>
                     <Label htmlFor="garmentType">Tipo de prenda</Label>
                     <Select
@@ -585,8 +687,8 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                     </Select>
                   </div>
                 )}
-                {/* Variante de prenda — solo si garmentType ∈ camiseta/pantalon/mallas
-                    (Bloque 6 §18). Reactivo a watched.garmentType. "__none__" = null. */}
+
+                {/* Variante de prenda — solo si garmentType ∈ camiseta/pantalon/mallas */}
                 {watched.garmentType && ["camiseta", "pantalon", "mallas"].includes(watched.garmentType) && (
                   <div>
                     <Label htmlFor="garmentVariant">Variante de {watched.garmentType}</Label>
@@ -610,6 +712,38 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                     </Select>
                   </div>
                 )}
+              </div>
+
+              {/* Categories — full width, tree multi-select */}
+              <div className="sm:col-span-2">
+                <div className="mb-1.5 flex items-center justify-between gap-2">
+                  <Label>
+                    Categorías *
+                    {selectedCategoryIds.length > 0 && (
+                      <span className="ml-2 text-xs text-zs-muted">
+                        {selectedCategoryIds.length} seleccionada{selectedCategoryIds.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </Label>
+                </div>
+                <CategoryTreePicker
+                  categories={cats}
+                  selected={selectedCategoryIds}
+                  primaryId={primaryCategoryId}
+                  onToggle={handleCategoryToggle}
+                  onSetPrimary={handleSetPrimary}
+                  onCreate={handleCreateCategory}
+                />
+                {selectedCategoryIds.length === 0 && (
+                  <p className="mt-1 text-xs text-zs-red-600" role="alert">
+                    Selecciona al menos una categoría
+                  </p>
+                )}
+                {/* Derived gender info */}
+                <p className="mt-2 text-xs text-zs-muted">
+                  Género (automático):{" "}
+                  <strong className="text-zs-ink">{derivedGenderLabel}</strong>
+                </p>
               </div>
 
               <div className="grid gap-4 rounded-xl border border-zs-border bg-zs-surface/50 p-4 sm:grid-cols-3">
@@ -729,37 +863,28 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 </DndContext>
               )}
 
-              <div className="grid gap-3 rounded-xl border border-dashed border-zs-border bg-zs-surface/50 p-4 sm:grid-cols-2">
-                <div>
-                  <Label>Subir imágenes</Label>
-                  <p className="mt-1 text-xs text-zs-muted">
-                    Pendiente integración con <code>/api/upload</code> (Agente 7 — Imágenes).
-                  </p>
-                  <Button type="button" variant="outline" size="sm" disabled className="mt-2">
-                    Pulsa o arrastra (próximamente)
-                  </Button>
-                </div>
-                <div>
-                  <Label htmlFor="extUrl">Pegar URL externa</Label>
-                  <div className="mt-1 flex gap-2">
-                    <Input
-                      id="extUrl"
-                      value={externalUrlInput}
-                      onChange={(e) => setExternalUrlInput(e.target.value)}
-                      placeholder="https://…"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled
-                      title="Pendiente Agente 7"
-                    >
-                      Añadir
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <UploadDropzone
+                type="product"
+                defaultAlt={watched.name || "Imagen de producto"}
+                onUploaded={(uploaded: UploadedImage[]) => {
+                  setImages((prev) => [
+                    ...prev,
+                    ...uploaded.map((u, i) => ({
+                      id: u.url, // stable local id (not persisted; backend regenerates)
+                      url: u.url,
+                      urlThumb: u.urlThumb ?? null,
+                      urlMedium: u.urlMedium ?? null,
+                      blurDataUrl: u.blurDataUrl ?? null,
+                      width: u.width ?? null,
+                      height: u.height ?? null,
+                      alt: watched.name || "Imagen de producto",
+                      position: prev.length + i,
+                    })),
+                  ]);
+                  // If no main image yet, set the first uploaded as main
+                  setMainImageUrl((cur) => cur ?? uploaded[0]?.url ?? null);
+                }}
+              />
             </CardContent>
           </Card>
         </TabsContent>
