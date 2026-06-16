@@ -18,7 +18,7 @@
  */
 
 export const GARMENT_TYPES = [
-  "camiseta", "sudadera", "chaqueta", "abrigo", "cortavientos",
+  "camiseta", "polo", "sudadera", "polar", "chaqueta", "abrigo", "cortavientos",
   "chandal", "conjunto", "pantalon", "bermuda", "mallas",
   "banador", "falda", "calentador", "vestido", "chaleco",
 ] as const;
@@ -26,8 +26,10 @@ export const GARMENT_TYPES = [
 export type GarmentType = (typeof GARMENT_TYPES)[number];
 
 export const GARMENT_TYPE_LABELS: Record<GarmentType, string> = {
-  camiseta: "Camisetas y polos",
-  sudadera: "Sudaderas y polares",
+  camiseta: "Camisetas",
+  polo: "Polos",
+  sudadera: "Sudaderas",
+  polar: "Polares",
   chaqueta: "Chaquetas",
   abrigo: "Abrigos",
   cortavientos: "Cortavientos",
@@ -84,14 +86,16 @@ const TOKEN_ENTRIES: [string[], GarmentType][] = [
   [["BERMUDA", "BERMUDAS"], "bermuda"],
   [["CALENTADOR", "CALENTADORES"], "calentador"],
   [["CHAQUETA", "CHAQUETAS"], "chaqueta"],
-  [["CAMISETA", "CAMISETAS", "POLO"], "camiseta"],
+  [["CAMISETA", "CAMISETAS"], "camiseta"],
+  [["POLO", "POLOS"], "polo"],
   [["LEGGING", "LEGGINGS", "MALLA", "MALLAS"], "mallas"],
   [["CHANDAL"], "chandal"],
   [["ABRIGO", "ABRIGOS", "PARKA", "PLUMIFERO"], "abrigo"],
   [["BANADOR", "BANADORES"], "banador"],
   [["CHUBASQUERO", "CORTAVIENTOS", "KWAY"], "cortavientos"],
   [["FALDA", "FALDAS"], "falda"],
-  [["SUDADERA", "SUDADERAS", "FORRO", "POLAR"], "sudadera"],
+  [["SUDADERA", "SUDADERAS"], "sudadera"],
+  [["FORRO", "POLAR", "POLARES"], "polar"],
   [["PANTALON", "PANTALONES"], "pantalon"],
   [["SHORT", "SHORTS"], "bermuda"],
   [["CONJUNTO", "CONJUNTOS", "SET"], "conjunto"],
@@ -221,9 +225,6 @@ export function inferGarmentVariant(
     if (/\bMANGA[S]?\s+LARGA[S]?\b/.test(n) || /\bM\.?\s*LARGA[S]?\b/.test(n)) return "manga_larga";
     if (/\bTOP\b/.test(n)) return "top";
     if (/\bTIRANTES?\b/.test(n) || /\bSIN\s+MANGAS?\b/.test(n)) return "tirantes";
-    // Heurística (3.5.3): POLO sin otro token → manga corta (los polos deportivos
-    // son manga corta por convención).
-    if (/\bPOLO[S]?\b/.test(n)) return "manga_corta";
     return null;
   }
 

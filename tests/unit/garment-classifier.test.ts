@@ -12,10 +12,12 @@ import {
 // Diccionarios y cobertura validados con datos crudos de prod (docs/BLOCK-6-PLAN.md §6-§7).
 
 describe("garment — vocabulario", () => {
-  it("15 tipos, incluye vestido y chaleco (A1)", () => {
-    expect(GARMENT_TYPES).toHaveLength(15);
+  it("17 tipos, incluye vestido, chaleco, polo y polar (A1)", () => {
+    expect(GARMENT_TYPES).toHaveLength(17);
     expect(GARMENT_TYPES).toContain("vestido");
     expect(GARMENT_TYPES).toContain("chaleco");
+    expect(GARMENT_TYPES).toContain("polo");
+    expect(GARMENT_TYPES).toContain("polar");
   });
   it("todos los tipos tienen label en ES", () => {
     for (const t of GARMENT_TYPES) expect(GARMENT_TYPE_LABELS[t]).toBeTruthy();
@@ -49,7 +51,7 @@ describe("Pasada 1 — categoría antigua (D4)", () => {
 describe("Pasada 2 — token (primer término), tolera acentos y símbolos", () => {
   it("mapea tokens base + A3 (ANORAK/TOP/SOFT)", () => {
     expect(matchByToken("CAMISETA +8000 ASDIS")).toBe("camiseta");
-    expect(matchByToken("POLO JOMA")).toBe("camiseta");
+    expect(matchByToken("POLO JOMA")).toBe("polo");
     expect(matchByToken("LEGGING JOHN SMITH")).toBe("mallas");
     expect(matchByToken("CHÁNDAL ADIDAS JR")).toBe("chandal"); // acento
     expect(matchByToken("BAÑADOR JOHN SMITH")).toBe("banador"); // ñ
@@ -84,5 +86,34 @@ describe("inferGarmentType — composición de pasadas", () => {
   it("NULL legítimo: ropa interior NOPUBLIK (sin token en ningún lado)", () => {
     expect(inferGarmentType({ categorySlug: "mujer", name: "SHORTY NOPUBLIK SEATTLE 2/43/31" })).toBeNull();
     expect(inferGarmentType({ categorySlug: "mujer", name: "SUJETADOR NOPUBLIK SEATTLE CROSS" })).toBeNull();
+  });
+});
+
+describe("split polo/polar (petición cliente 2026-06)", () => {
+  it("POLO se clasifica como 'polo', no 'camiseta'", () => {
+    expect(matchByToken("POLO JOHN SMITH AZUL")).toBe("polo");
+  });
+  it("POLOS (plural) se clasifica como 'polo'", () => {
+    expect(matchByToken("POLOS PACK 2 JOMA")).toBe("polo");
+  });
+  it("CAMISETA sigue siendo 'camiseta'", () => {
+    expect(matchByToken("CAMISETA MANGA CORTA PUMA")).toBe("camiseta");
+  });
+  it("POLAR se clasifica como 'polar', no 'sudadera'", () => {
+    expect(matchByToken("POLAR +8000 GRIS")).toBe("polar");
+  });
+  it("FORRO se clasifica como 'polar'", () => {
+    expect(matchByToken("FORRO POLAR MONTAÑA")).toBe("polar");
+  });
+  it("SUDADERA sigue siendo 'sudadera'", () => {
+    expect(matchByToken("SUDADERA CAPUCHA JOHN SMITH")).toBe("sudadera");
+  });
+  it("polo y polar son tipos válidos con label propio", () => {
+    expect(GARMENT_TYPES).toContain("polo");
+    expect(GARMENT_TYPES).toContain("polar");
+    expect(GARMENT_TYPE_LABELS.polo).toBe("Polos");
+    expect(GARMENT_TYPE_LABELS.polar).toBe("Polares");
+    expect(GARMENT_TYPE_LABELS.camiseta).toBe("Camisetas");
+    expect(GARMENT_TYPE_LABELS.sudadera).toBe("Sudaderas");
   });
 });

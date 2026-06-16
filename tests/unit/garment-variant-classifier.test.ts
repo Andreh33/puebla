@@ -38,8 +38,8 @@ describe("inferGarmentVariant — camiseta", () => {
   it("sin token de variante → null", () => {
     expect(inferGarmentVariant("CAMISETA JOMA OLIMPIADA VERDE", "camiseta")).toBeNull();
   });
-  it("POLO → manga_corta (heurística 3.5.3)", () => {
-    expect(inferGarmentVariant("POLO JOMA CREW V ROJO MARINO 103208.603", "camiseta")).toBe("manga_corta");
+  it("POLO con garmentType='polo' → null (polo es tipo propio, sin variante fina)", () => {
+    expect(inferGarmentVariant("POLO JOMA CREW V ROJO MARINO 103208.603", "polo")).toBeNull();
   });
 });
 
