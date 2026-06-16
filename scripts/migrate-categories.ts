@@ -12,34 +12,16 @@
  */
 import { PrismaClient } from "@prisma/client";
 import { classify } from "../lib/categories/classify";
+import { TAXONOMY_TREE, type TaxonomyNode } from "../lib/categories/taxonomy-tree";
 import * as fs from "fs";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const BATCH_SIZE = 100;
 const db = new PrismaClient();
 
-// --- Árbol de 18 categorías (== §2 del plan) -------------------------------
-type Node = { slug: string; name: string; parentSlug: string | null; position: number; metaTitle: string; metaDescription: string };
-const TREE: Node[] = [
-  { slug: "hombre", name: "Hombre", parentSlug: null, position: 1, metaTitle: "Hombre — Ropa y calzado deportivo | Zona Sport", metaDescription: "Equipación deportiva de hombre: textil y calzado. Envío a toda España." },
-  { slug: "mujer", name: "Mujer", parentSlug: null, position: 2, metaTitle: "Mujer — Ropa y calzado deportivo | Zona Sport", metaDescription: "Ropa y zapatillas deportivas de mujer. Envío a toda España." },
-  { slug: "nino", name: "Niño", parentSlug: null, position: 3, metaTitle: "Niño — Ropa y calzado deportivo | Zona Sport", metaDescription: "Material deportivo para niño: textil y calzado." },
-  { slug: "nina", name: "Niña", parentSlug: null, position: 4, metaTitle: "Niña — Ropa y calzado deportivo | Zona Sport", metaDescription: "Ropa y calzado deportivo para niña." },
-  { slug: "accesorios", name: "Accesorios", parentSlug: null, position: 5, metaTitle: "Accesorios deportivos | Zona Sport", metaDescription: "Mochilas, balones, calcetines, pádel y complementos." },
-  { slug: "hombre-textil", name: "Textil hombre", parentSlug: "hombre", position: 1, metaTitle: "Ropa de hombre | Zona Sport", metaDescription: "Camisetas, sudaderas, chándales, pantalones y abrigos de hombre." },
-  { slug: "hombre-calzado", name: "Calzado hombre", parentSlug: "hombre", position: 2, metaTitle: "Zapatillas y calzado de hombre | Zona Sport", metaDescription: "Zapatillas de running, pádel, fútbol y casual para hombre." },
-  { slug: "mujer-textil", name: "Textil mujer", parentSlug: "mujer", position: 1, metaTitle: "Ropa de mujer | Zona Sport", metaDescription: "Mallas, tops, camisetas, sudaderas y abrigos de mujer." },
-  { slug: "mujer-calzado", name: "Calzado mujer", parentSlug: "mujer", position: 2, metaTitle: "Zapatillas y calzado de mujer | Zona Sport", metaDescription: "Zapatillas de running, pádel y casual para mujer." },
-  { slug: "nino-textil", name: "Textil niño", parentSlug: "nino", position: 1, metaTitle: "Ropa de niño | Zona Sport", metaDescription: "Camisetas, sudaderas, chándales y conjuntos para niño." },
-  { slug: "nino-calzado", name: "Calzado niño", parentSlug: "nino", position: 2, metaTitle: "Zapatillas y botas de niño | Zona Sport", metaDescription: "Zapatillas y botas deportivas para niño." },
-  { slug: "nina-textil", name: "Textil niña", parentSlug: "nina", position: 1, metaTitle: "Ropa de niña | Zona Sport", metaDescription: "Camisetas, sudaderas y conjuntos para niña." },
-  { slug: "nina-calzado", name: "Calzado niña", parentSlug: "nina", position: 2, metaTitle: "Zapatillas y botas de niña | Zona Sport", metaDescription: "Zapatillas y botas deportivas para niña." },
-  { slug: "accesorios-mochilas", name: "Mochilas", parentSlug: "accesorios", position: 1, metaTitle: "Mochilas deportivas | Zona Sport", metaDescription: "Mochilas deportivas multimarca." },
-  { slug: "accesorios-balones", name: "Balones", parentSlug: "accesorios", position: 2, metaTitle: "Balones — Fútbol, baloncesto y más | Zona Sport", metaDescription: "Balones de fútbol, baloncesto y deporte." },
-  { slug: "accesorios-calcetines", name: "Calcetines", parentSlug: "accesorios", position: 3, metaTitle: "Calcetines deportivos | Zona Sport", metaDescription: "Calcetines técnicos y packs deportivos." },
-  { slug: "accesorios-padel", name: "Pádel", parentSlug: "accesorios", position: 4, metaTitle: "Pádel — Palas, paleteros y accesorios | Zona Sport", metaDescription: "Palas, paleteros y complementos de pádel." },
-  { slug: "accesorios-otros", name: "Otros", parentSlug: "accesorios", position: 5, metaTitle: "Complementos deportivos | Zona Sport", metaDescription: "Gorras, guantes, gafas, espinilleras y más." },
-];
+// --- Árbol canónico (fuente única en lib/categories/taxonomy-tree.ts) -------
+type Node = TaxonomyNode;
+const TREE: Node[] = TAXONOMY_TREE;
 const TREE_SLUGS = new Set(TREE.map((t) => t.slug));
 
 // --- Redirecciones 301 (== §9 del plan) ------------------------------------
@@ -49,7 +31,6 @@ const REDIRECTS: Record<string, string> = {
   "/conjuntos": "/nino/textil",
   "/chandal": "/hombre/textil",
   "/infantil": "/nino/textil",
-  "/bebe": "/nino/calzado", // D1 ajustada: coherencia con primary fijo de BEBE
   "/abrigos": "/hombre/textil",
   "/mallas": "/mujer/textil",
   "/banador": "/hombre/textil",
@@ -94,7 +75,7 @@ function assignCategories(name: string, gender: string): Assign {
     case "NINO": return { ok: true, primary: `nino-${f}`, all: [`nino-${f}`] };
     case "NINA": return { ok: true, primary: `nina-${f}`, all: [`nina-${f}`] };
     case "UNISEX": return { ok: true, primary: `hombre-${f}`, all: [`hombre-${f}`, `mujer-${f}`] };
-    case "BEBE": return { ok: true, primary: `nino-${f}`, all: [`nino-${f}`, `nina-${f}`] };
+    case "BEBE": return { ok: true, primary: `bebe-${f}`, all: [`bebe-${f}`] };
     default: return { ok: false, reason: "NO_ESPECIFICADO_NON_ACCESSORY" };
   }
 }
@@ -137,8 +118,7 @@ async function main() {
   for (const n of TREE) {
     if (n.parentSlug && !TREE_SLUGS.has(n.parentSlug)) treeErrors.push(`${n.slug}: parent ${n.parentSlug} no existe en TREE`);
   }
-  if (TREE.length !== 18) treeErrors.push(`TREE tiene ${TREE.length} nodos, esperado 18`);
-  console.log(treeErrors.length ? "  ⚠️ Árbol: " + treeErrors.join("; ") : "  Árbol válido (18 nodos, parentId coherente).");
+  console.log(treeErrors.length ? "  ⚠️ Árbol: " + treeErrors.join("; ") : `  Árbol válido (${TREE.length} nodos, parentId coherente).`);
 
   // --- STEP 2+3 — Productos (clasificación) --------------------------------
   const products = await db.product.findMany({ select: { id: true, name: true, gender: true, primaryCategoryId: true } });
