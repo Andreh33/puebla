@@ -201,13 +201,13 @@ export default async function SeccionFamiliaPage({
       );
     }
 
-    // Petición cliente: en MUJER no ofrecemos "Bermudas y shorts" como filtro.
-    if (seccion === "mujer") {
-      facets = {
-        ...facets,
-        garmentTypes: facets.garmentTypes.filter((g) => g.value !== "bermuda"),
-      };
-    }
+    // Petición cliente: ocultar "Calentadores" (calentador) en TODAS las
+    // secciones; y "Bermudas y shorts" (bermuda) solo en Mujer.
+    const hiddenGarment = seccion === "mujer" ? ["bermuda", "calentador"] : ["calentador"];
+    facets = {
+      ...facets,
+      garmentTypes: facets.garmentTypes.filter((g) => !hiddenGarment.includes(g.value)),
+    };
   }
 
   // Filtros de TIPO siempre visibles: si no hay facetas dinámicas (catálogo
@@ -231,7 +231,7 @@ export default async function SeccionFamiliaPage({
       ...facets,
       garmentTypes: [
         "camiseta", "polo", "sudadera", "polar", "chandal", "chaqueta", "abrigo",
-        "cortavientos", "conjunto", "pantalon", "mallas", "calentador", "banador",
+        "cortavientos", "conjunto", "pantalon", "mallas", "banador",
       ].map((value) => ({ value, label: value, count: 0 })),
     };
   }

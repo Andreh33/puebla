@@ -75,7 +75,6 @@ const ROPA: MegaMenuGroup = {
     { label: "Conjuntos", familia: "textil", prenda: "conjunto" },
     { label: "Pantalones", familia: "textil", prenda: "pantalon" },
     { label: "Mallas y leggins", familia: "textil", prenda: "mallas" },
-    { label: "Calentadores", familia: "textil", prenda: "calentador" },
     { label: "Bañadores", familia: "textil", prenda: "banador" },
   ],
 };
