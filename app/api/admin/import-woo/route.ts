@@ -166,6 +166,24 @@ export async function GET(req: NextRequest) {
 
   const total = await db.product.count();
   const withImg = await db.product.count({ where: { mainImageUrl: { not: null } } });
+
+  // Desglose por status (para PROBAR que el catálogo importado sigue en DRAFT)
+  const statusGroups = await db.product.groupBy({
+    by: ["status"],
+    _count: { _all: true },
+  });
+  const byStatus = Object.fromEntries(
+    statusGroups.map((s) => [s.status, s._count._all]),
+  );
+  const wooFilter = { externalId: { startsWith: "woocommerce:" } } as const;
+  const wooImported = await db.product.count({ where: wooFilter });
+  const wooActive = await db.product.count({
+    where: { ...wooFilter, status: "ACTIVE" },
+  });
+  const wooWithImg = await db.product.count({
+    where: { ...wooFilter, mainImageUrl: { not: null } },
+  });
+
   const sample = await db.product.findMany({
     orderBy: { createdAt: "desc" },
     take: 6,
@@ -185,6 +203,10 @@ export async function GET(req: NextRequest) {
     ok: true,
     totalProducts: total,
     withMainImage: withImg,
+    byStatus,
+    wooImported,
+    wooActive,
+    wooWithImg,
     sample: sample.map((p) => ({
       name: p.name,
       sku: p.sku,
