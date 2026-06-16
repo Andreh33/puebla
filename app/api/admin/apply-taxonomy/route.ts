@@ -11,6 +11,7 @@
  * Respuesta: { ok: true, upserted: <número de nodos procesados> }
  */
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import { TAXONOMY_TREE } from "@/lib/categories/taxonomy-tree";
 
@@ -86,7 +87,15 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Borrar redirect /bebe si existía (la categoría ya es real, no redirige)
-  await db.redirectRule.deleteMany({ where: { from: "/bebe" } });
+  const removed = await db.redirectRule.deleteMany({ where: { from: "/bebe" } });
+  // Invalidar la caché de redirects (unstable_cache + fetch del middleware,
+  // ambos con tag "redirects") para que /bebe deje de redirigir sin esperar
+  // al TTL. El cache in-memory por instancia (60s) caduca solo.
+  revalidateTag("redirects");
 
-  return NextResponse.json({ ok: true, upserted: Object.keys(slugToId).length });
+  return NextResponse.json({
+    ok: true,
+    upserted: Object.keys(slugToId).length,
+    redirectsRemoved: removed.count,
+  });
 }
