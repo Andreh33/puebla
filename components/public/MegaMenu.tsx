@@ -210,24 +210,32 @@ function GroupColumn({
         {group.title}
       </h4>
       <ul className="flex flex-col gap-1.5">
-        {group.items.map((item) => (
-          <li key={`${gender}-${item.label}`}>
-            <Link
-              role="menuitem"
-              href={buildMegaMenuHref(item, gender)}
-              onClick={onItemClick}
-              className="group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none"
-            >
-              <span className="relative">
-                {item.label}
-                <span
-                  aria-hidden
-                  className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
-                />
-              </span>
-            </Link>
-          </li>
-        ))}
+        {group.items.map((item) => {
+          // Sub-item de variante fina (camiseta/pantalon/mallas): sangría sutil
+          // y texto algo atenuado para marcar la jerarquía bajo su prenda.
+          const isVariant = item.familia === "textil" && Boolean(item.variante);
+          return (
+            <li key={`${gender}-${item.label}`}>
+              <Link
+                role="menuitem"
+                href={buildMegaMenuHref(item, gender)}
+                onClick={onItemClick}
+                className={cn(
+                  "group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none",
+                  isVariant && "pl-4 text-[13px] text-zs-muted",
+                )}
+              >
+                <span className="relative">
+                  {item.label}
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+                  />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -293,17 +301,24 @@ export function MegaMenuMobile({
                         {group.title}
                       </p>
                       <ul className="flex flex-col">
-                        {group.items.map((item) => (
-                          <li key={`${section.gender}-${item.label}`}>
-                            <Link
-                              href={buildMegaMenuHref(item, section.gender)}
-                              onClick={onLinkClick}
-                              className="block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
-                            >
-                              {item.label}
-                            </Link>
-                          </li>
-                        ))}
+                        {group.items.map((item) => {
+                          const isVariant =
+                            item.familia === "textil" && Boolean(item.variante);
+                          return (
+                            <li key={`${section.gender}-${item.label}`}>
+                              <Link
+                                href={buildMegaMenuHref(item, section.gender)}
+                                onClick={onLinkClick}
+                                className={cn(
+                                  "block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700",
+                                  isVariant && "pl-4 text-[13px] text-zs-muted",
+                                )}
+                              >
+                                {item.label}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   ))}

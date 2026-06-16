@@ -16,6 +16,11 @@ import { Decimal } from "decimal.js";
 import { db } from "@/lib/db";
 import { processGroup, TaxonomyCache } from "@/lib/importer/process-woocommerce-job";
 import type { ImportMode } from "@/lib/importer/process-woocommerce-job";
+import {
+  deriveFootwearTypeFromSlugs,
+  deriveGarmentTypeFromSlugs,
+  deriveGarmentVariantFromSlugs,
+} from "@/lib/products/derive-type";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,6 +114,100 @@ export async function POST(req: NextRequest) {
     const toDeactivate = await db.product.findMany({ where, select: { name: true, sku: true, externalId: true } });
     const result = await db.product.updateMany({ where, data: { status: "INACTIVE" } });
     return NextResponse.json({ ok: true, deactivated: result.count, items: toDeactivate });
+  }
+
+  // Asignación manual de categorías por SKU (productos que el clasificador no
+  // pudo ubicar). Reutiliza la misma lógica de resolución árbol→IDs que el
+  // import (processGroup): resuelve los slugs canónicos a categoryIds, reemplaza
+  // el m2m ProductCategory, y fija primaryCategoryId + categoryId (legacy) al id
+  // del primarySlug. Deriva footwearType/garmentType/garmentVariant de los slugs.
+  // NO toca status (siguen DRAFT) ni mainImageUrl. Cada item se aísla en su
+  // propia transacción para que un slug irresoluble no tumbe el resto.
+  if (body.action === "set_categories") {
+    type SetItem = { sku: string; categorySlugs: string[]; primarySlug: string };
+    const items: SetItem[] = Array.isArray(body.items) ? body.items : [];
+    const taxonomy = new TaxonomyCache();
+    const results: Array<
+      | { sku: string; ok: true; primary: string; n: number }
+      | { sku: string; ok: false; error: string }
+    > = [];
+
+    for (const item of items) {
+      const sku = String(item?.sku ?? "");
+      const categorySlugs = Array.isArray(item?.categorySlugs)
+        ? item.categorySlugs.map(String)
+        : [];
+      const primarySlug = String(item?.primarySlug ?? "");
+
+      if (!sku) {
+        results.push({ sku, ok: false, error: "sku vacío" });
+        continue;
+      }
+      if (!primarySlug || categorySlugs.length === 0) {
+        results.push({ sku, ok: false, error: "categorySlugs/primarySlug requeridos" });
+        continue;
+      }
+      if (!categorySlugs.includes(primarySlug)) {
+        results.push({ sku, ok: false, error: `primarySlug "${primarySlug}" no está en categorySlugs` });
+        continue;
+      }
+
+      try {
+        await db.$transaction(
+          async (tx) => {
+            const product = await tx.product.findFirst({
+              where: { sku, externalId: { startsWith: "woocommerce:" } },
+              select: { id: true },
+            });
+            if (!product) {
+              results.push({ sku, ok: false, error: "not found" });
+              return;
+            }
+
+            const treeIds = await taxonomy.resolveTreeSlugs(tx, categorySlugs);
+            const missing = categorySlugs.filter((s) => !treeIds.has(s));
+            if (missing.length > 0) {
+              results.push({ sku, ok: false, error: `slug(s) no resuelven: ${missing.join(", ")}` });
+              return;
+            }
+            const primaryId = treeIds.get(primarySlug);
+            if (!primaryId) {
+              results.push({ sku, ok: false, error: `primarySlug "${primarySlug}" no resuelve` });
+              return;
+            }
+
+            // Reemplaza el m2m: borra el anterior y crea los nuevos.
+            await tx.productCategory.deleteMany({ where: { productId: product.id } });
+            await tx.productCategory.createMany({
+              data: Array.from(treeIds.values()).map((categoryId) => ({
+                productId: product.id,
+                categoryId,
+              })),
+              skipDuplicates: true,
+            });
+
+            await tx.product.update({
+              where: { id: product.id },
+              data: {
+                primaryCategoryId: primaryId,
+                categoryId: primaryId, // legacy FK requerido
+                footwearType: deriveFootwearTypeFromSlugs(categorySlugs),
+                garmentType: deriveGarmentTypeFromSlugs(categorySlugs),
+                garmentVariant: deriveGarmentVariantFromSlugs(categorySlugs),
+              },
+            });
+
+            results.push({ sku, ok: true, primary: primarySlug, n: categorySlugs.length });
+          },
+          { maxWait: 15000, timeout: 30000 },
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        results.push({ sku, ok: false, error: message });
+      }
+    }
+
+    return NextResponse.json({ ok: true, results });
   }
 
   const rawGroups: unknown[] = Array.isArray(body.groups) ? body.groups : [];

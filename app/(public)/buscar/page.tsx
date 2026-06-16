@@ -5,7 +5,6 @@ import { buildMetadata } from "@/lib/seo/metadata";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { EmptyState } from "@/components/public/EmptyState";
 import { formatDateES } from "@/lib/utils";
-import { DEMO_PRODUCTS } from "@/lib/demo-products";
 
 export const dynamic = "force-dynamic";
 
@@ -173,18 +172,14 @@ async function fetchProducts(q: string) {
         brand: { select: { name: true, slug: true } },
       },
     });
-    if (real.length > 0) return real;
+    return real;
   } catch (err) {
-    console.warn("[buscar] DB no disponible, fallback demo:", (err as Error).message);
+    // Sin BD: devolvemos vacío. NO caemos a tarjetas demo — sus slugs no existen
+    // en BD y enlazarían a /producto/<slug> con 404 (Bug A). El buscador muestra
+    // "Sin resultados" con CTA a WhatsApp.
+    console.warn("[buscar] DB no disponible:", (err as Error).message);
+    return [];
   }
-  // Fallback demo: filtra el catálogo demo en memoria.
-  const needle = q.toLowerCase();
-  return DEMO_PRODUCTS.filter((p) =>
-    p.name.toLowerCase().includes(needle) ||
-    p.colorName.toLowerCase().includes(needle) ||
-    p.brand.name.toLowerCase().includes(needle) ||
-    p.category.name.toLowerCase().includes(needle),
-  ).slice(0, 24);
 }
 
 async function fetchPosts(q: string) {

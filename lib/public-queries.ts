@@ -1,13 +1,9 @@
 import { db, type Prisma } from "@/lib/db";
 import {
-  DEMO_PRODUCTS,
   getDemoBrands,
   getDemoCategories,
-  getDemoProductsByBrand,
-  getDemoProductsByCategory,
   getDemoProductsByGender,
   type DemoGender,
-  type DemoProduct,
 } from "@/lib/demo-products";
 import { VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
 
@@ -97,22 +93,6 @@ const DEMO_CATEGORY_ALIASES: Record<
   // Mantenemos coherencia con los slugs que sí están directamente en el demo.
 };
 
-function aliasProducts(slug: string): DemoProduct[] {
-  const alias = DEMO_CATEGORY_ALIASES[slug];
-  if (!alias) return [];
-  return DEMO_PRODUCTS.filter((p) => alias.categorySlugs.includes(p.category.slug));
-}
-
-/**
- * Indica si un slug está registrado como alias del mega-menú. Ãštil para
- * distinguir "categoría conocida pero sin productos todavía" de "categoría
- * inexistente". En el primer caso queremos mostrar la página vacía (con hero
- * y CTA) en vez de caer al fallback de "todos los productos demo".
- */
-function isAliasSlug(slug: string): boolean {
-  return Object.prototype.hasOwnProperty.call(DEMO_CATEGORY_ALIASES, slug);
-}
-
 // ---------------------------------------------------------------------------
 // Datos públicos: real-or-demo fallback
 //
@@ -126,7 +106,7 @@ function isAliasSlug(slug: string): boolean {
 
 /**
  * Shape común esperado por `ProductCard` y por los listados públicos. Es un
- * superconjunto de los campos seleccionados desde Prisma y de `DemoProduct`.
+ * superconjunto de los campos seleccionados desde Prisma.
  */
 export type PublicProductCardData = {
   id: string;
@@ -141,22 +121,6 @@ export type PublicProductCardData = {
   brand: { name: string; slug: string };
   isDemo?: boolean;
 };
-
-function demoToCard(p: DemoProduct): PublicProductCardData {
-  return {
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    shortName: p.shortName,
-    colorName: p.colorName,
-    mainImageUrl: p.mainImageUrl,
-    retailPrice: p.retailPrice,
-    salePrice: p.salePrice,
-    source: p.source,
-    brand: p.brand,
-    isDemo: true,
-  };
-}
 
 // Selección estándar para tarjetas en listados.
 const productCardSelect = {
@@ -258,32 +222,15 @@ export async function getCategoryProducts(opts: {
     }
   } catch (err) {
     console.warn(
-      `[demo] getCategoryProducts(${opts.categorySlug}) â†’ fallback demo:`,
+      `[categoria] getCategoryProducts(${opts.categorySlug}) sin BD:`,
       (err as Error).message,
     );
   }
-  // 1) Match directo por slug de categoría
-  let subset = getDemoProductsByCategory(opts.categorySlug);
-  // 2) Match por alias comercial (running, padel, montana, calzado…)
-  if (subset.length === 0) {
-    const aliased = aliasProducts(opts.categorySlug);
-    if (aliased.length > 0) subset = aliased;
-  }
-  // 3) Si el slug es un alias conocido del mega-menú pero sin match natural
-  // (accesorios todavía sin catálogo, "Bebé"…), devolvemos lista vacía. La
-  // página renderiza el hero + estado "Pronto en tienda". Mucho más limpio
-  // que enseñar productos aleatorios.
-  if (subset.length === 0 && isAliasSlug(opts.categorySlug)) {
-    return { products: [], total: 0, isDemo: true };
-  }
-  // 4) Ãšltimo recurso: todos los demo â€” vale más enseñar producto real con
-  // imagen que ninguno.
-  const list = subset.length > 0 ? subset : DEMO_PRODUCTS;
-  return {
-    products: list.slice(skip, skip + take).map(demoToCard),
-    total: list.length,
-    isDemo: true,
-  };
+  // Sin productos reales: NO caemos a tarjetas demo — sus slugs no existen en BD
+  // y enlazan a /producto/<slug> que da 404 (Bug A). Devolvemos lista vacía y la
+  // página renderiza su estado "sin productos todavía". Cuando el cliente
+  // publique catálogo ACTIVE, estos listados se pueblan solos.
+  return { products: [], total: 0, isDemo: false };
 }
 
 /**
@@ -331,19 +278,13 @@ export async function getBrandProducts(opts: {
     }
   } catch (err) {
     console.warn(
-      `[demo] getBrandProducts(${opts.brandSlug}) â†’ fallback demo:`,
+      `[marca] getBrandProducts(${opts.brandSlug}) sin BD:`,
       (err as Error).message,
     );
   }
-  const list = getDemoProductsByBrand(opts.brandSlug);
-  // Si la marca no aparece en el demo, devolvemos lista vacía (no inventamos
-  // productos de otras marcas) pero con isDemo=true para que la UI pueda dar
-  // contexto.
-  return {
-    products: list.slice(skip, skip + take).map(demoToCard),
-    total: list.length,
-    isDemo: true,
-  };
+  // Sin productos reales: lista vacía en lugar de tarjetas demo (sus slugs dan
+  // 404 en la ficha). La página de marca muestra su estado vacío con gracia.
+  return { products: [], total: 0, isDemo: false };
 }
 
 /**
@@ -400,16 +341,13 @@ export async function getProductsByGender(opts: {
     }
   } catch (err) {
     console.warn(
-      `[demo] getProductsByGender(${opts.gender}) â†’ fallback demo:`,
+      `[genero] getProductsByGender(${opts.gender}) sin BD:`,
       (err as Error).message,
     );
   }
-  const list = getDemoProductsByGender(opts.gender);
-  return {
-    products: list.slice(skip, skip + take).map(demoToCard),
-    total: list.length,
-    isDemo: true,
-  };
+  // Sin productos reales: lista vacía en lugar de tarjetas demo (sus slugs dan
+  // 404 en la ficha). La landing de género muestra su estado vacío con gracia.
+  return { products: [], total: 0, isDemo: false };
 }
 
 /**

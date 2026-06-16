@@ -11,17 +11,22 @@
  *  - Accesorios: NO van en los paneles de género; se navegan desde /accesorios.
  */
 
+import { GARMENT_VARIANT_LABELS, type GarmentVariant } from "@/lib/categories/garment";
+
 /** Géneros soportados por el mega-menú. */
 export type MegaMenuGender = "MUJER" | "HOMBRE" | "NINO" | "NINA" | "BEBE";
 
 /**
  * Hoja del menú — dos formas:
  *  - { familia: "calzado", tipo? } → /[seccion]/calzado[?tipo=…]
- *  - { familia: "textil" }         → /[seccion]/textil
+ *  - { familia: "textil", prenda?, variante? } → /[seccion]/textil[?prenda=…[&variante=…]]
+ *
+ * `variante` (valor del enum GarmentVariant, p.ej. "manga_corta") marca un
+ * sub-item indentado bajo su prenda; el componente lo renderiza con sangría.
  */
 export type MegaMenuItem =
   | { label: string; familia: "calzado"; tipo?: string }
-  | { label: string; familia: "textil"; prenda?: string };
+  | { label: string; familia: "textil"; prenda?: string; variante?: string };
 
 /** Grupo (Ropa, Calzado) dentro de una sección. */
 export type MegaMenuGroup = { title: string; items: MegaMenuItem[] };
@@ -56,26 +61,88 @@ const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "n
 // ---------------------------------------------------------------------------
 
 /**
- * Ropa: enlace general al textil + sub-categorías por prenda (Bloque 7 §7.4).
- * Cada sub-item filtra por garmentType vía ?prenda=<tipo>; etiquetas y valores
- * coinciden con GARMENT_TYPE_LABELS/GARMENT_TYPES del Bloque 6.
+ * Ropa: prendas base del grupo. Cada una filtra por garmentType vía
+ * ?prenda=<tipo>; etiquetas y valores coinciden con GARMENT_TYPE_LABELS/
+ * GARMENT_TYPES del Bloque 6. Las que admiten variante fina (camiseta,
+ * pantalon, mallas) generan sub-items indentados por género (ver buildRopa).
  */
-const ROPA: MegaMenuGroup = {
+const ROPA_PRENDAS: Array<{ label: string; prenda: string }> = [
+  { label: "Camisetas", prenda: "camiseta" },
+  { label: "Polos", prenda: "polo" },
+  { label: "Sudaderas", prenda: "sudadera" },
+  { label: "Polares", prenda: "polar" },
+  { label: "Chándal", prenda: "chandal" },
+  { label: "Chaquetas", prenda: "chaqueta" },
+  { label: "Abrigos", prenda: "abrigo" },
+  { label: "Cortavientos", prenda: "cortavientos" },
+  { label: "Conjuntos", prenda: "conjunto" },
+  { label: "Pantalones", prenda: "pantalon" },
+  { label: "Mallas y leggins", prenda: "mallas" },
+  { label: "Bañadores", prenda: "banador" },
+];
+
+/**
+ * Variantes finas por prenda, con disponibilidad por género (Feature A).
+ * tirantes/top SOLO en mujer y niña; el resto en hombre/mujer/niño/niña.
+ * El orden es el de presentación bajo la prenda. Espejo de TEXTIL_VARIANTES en
+ * lib/categories/taxonomy-tree.ts.
+ */
+const PRENDA_VARIANTES: Record<string, Array<{ variante: GarmentVariant; soloGeneros?: MegaMenuGender[] }>> = {
+  camiseta: [
+    { variante: "manga_corta" },
+    { variante: "manga_larga" },
+    { variante: "tirantes", soloGeneros: ["MUJER", "NINA"] },
+    { variante: "top", soloGeneros: ["MUJER", "NINA"] },
+  ],
+  pantalon: [
+    { variante: "pantalon_corto" },
+    { variante: "pantalon_largo" },
+  ],
+  mallas: [
+    { variante: "mallas_cortas" },
+    { variante: "mallas_largas" },
+    { variante: "mallas_piratas" },
+  ],
+};
+
+/**
+ * Construye el grupo "Ropa" para un género: "Ver toda la ropa" + cada prenda
+ * y, justo debajo, sus variantes disponibles para ESE género como sub-items
+ * indentados (con `variante` = valor del enum). Bebé no recibe variantes.
+ */
+function buildRopa(gender: MegaMenuGender): MegaMenuGroup {
+  const items: MegaMenuItem[] = [{ label: "Ver toda la ropa", familia: "textil" }];
+  for (const { label, prenda } of ROPA_PRENDAS) {
+    items.push({ label, familia: "textil", prenda });
+    const variantes = PRENDA_VARIANTES[prenda];
+    if (!variantes) continue;
+    for (const v of variantes) {
+      if (v.soloGeneros && !v.soloGeneros.includes(gender)) continue;
+      items.push({
+        label: GARMENT_VARIANT_LABELS[v.variante],
+        familia: "textil",
+        prenda,
+        variante: v.variante,
+      });
+    }
+  }
+  return { title: "Ropa", items };
+}
+
+// Grupos "Ropa" precalculados por género. Bebé sin variantes (PRENDA_VARIANTES
+// solo añade sub-items a los géneros que lo permiten; para BEBE la guarda
+// soloGeneros excluye top/tirantes y el resto igualmente se omite abajo).
+const ROPA_HOMBRE = buildRopa("HOMBRE");
+const ROPA_MUJER = buildRopa("MUJER");
+const ROPA_NINO = buildRopa("NINO");
+const ROPA_NINA = buildRopa("NINA");
+// Bebé: solo prendas base, sin ninguna variante (espejo de la taxonomía, que
+// excluye a bebé de los nodos de 4º nivel).
+const ROPA_BEBE: MegaMenuGroup = {
   title: "Ropa",
   items: [
     { label: "Ver toda la ropa", familia: "textil" },
-    { label: "Camisetas", familia: "textil", prenda: "camiseta" },
-    { label: "Polos", familia: "textil", prenda: "polo" },
-    { label: "Sudaderas", familia: "textil", prenda: "sudadera" },
-    { label: "Polares", familia: "textil", prenda: "polar" },
-    { label: "Chándal", familia: "textil", prenda: "chandal" },
-    { label: "Chaquetas", familia: "textil", prenda: "chaqueta" },
-    { label: "Abrigos", familia: "textil", prenda: "abrigo" },
-    { label: "Cortavientos", familia: "textil", prenda: "cortavientos" },
-    { label: "Conjuntos", familia: "textil", prenda: "conjunto" },
-    { label: "Pantalones", familia: "textil", prenda: "pantalon" },
-    { label: "Mallas y leggins", familia: "textil", prenda: "mallas" },
-    { label: "Bañadores", familia: "textil", prenda: "banador" },
+    ...ROPA_PRENDAS.map((p) => ({ label: p.label, familia: "textil" as const, prenda: p.prenda })),
   ],
 };
 
@@ -125,33 +192,33 @@ export const MEGA_MENU: {
     href: "/mujer",
     label: "Mujer",
     heroImage: "/category-photos/mujer-hero.webp",
-    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA, CALZADO_MUJER] }],
+    sections: [{ gender: "MUJER", label: "Mujer", groups: [ROPA_MUJER, CALZADO_MUJER] }],
   },
   hombre: {
     href: "/hombre",
     label: "Hombre",
     // Bloque 9: foto real de pádel (antes hombre-hero.webp = hombre en bici).
     heroImage: "/category-photos/padel-hombre.jpg",
-    sections: [{ gender: "HOMBRE", label: "Hombre", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "HOMBRE", label: "Hombre", groups: [ROPA_HOMBRE, CALZADO] }],
   },
   nino: {
     href: "/nino",
     label: "Niño",
     heroImage: "/category-photos/ninos-hero.webp",
-    sections: [{ gender: "NINO", label: "Niño", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "NINO", label: "Niño", groups: [ROPA_NINO, CALZADO] }],
   },
   nina: {
     href: "/nina",
     label: "Niña",
     // Bloque 9: foto propia de niña (antes compartía ninos-hero.webp = niños).
     heroImage: "/category-photos/nina-hero.jpg",
-    sections: [{ gender: "NINA", label: "Niña", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "NINA", label: "Niña", groups: [ROPA_NINA, CALZADO] }],
   },
   bebe: {
     href: "/bebe",
     label: "Bebé",
     heroImage: "/category-photos/ninos-hero.jpg",
-    sections: [{ gender: "BEBE", label: "Bebé", groups: [ROPA, CALZADO] }],
+    sections: [{ gender: "BEBE", label: "Bebé", groups: [ROPA_BEBE, CALZADO] }],
   },
 };
 
@@ -161,12 +228,15 @@ export const MEGA_MENU_KEYS: MegaMenuKey[] = ["mujer", "hombre", "nino", "nina",
 /**
  * Construye la URL navegable de un item del mega-menú:
  *  - calzado → /[seccion]/calzado[?tipo=…]
- *  - textil  → /[seccion]/textil[?prenda=…]
+ *  - textil  → /[seccion]/textil[?prenda=…[&variante=…]]
  */
 export function buildMegaMenuHref(item: MegaMenuItem, gender: MegaMenuGender): string {
   const seccion = SECCION_BY_GENDER[gender];
   if (item.familia === "calzado") {
     return item.tipo ? `/${seccion}/calzado?tipo=${item.tipo}` : `/${seccion}/calzado`;
   }
-  return item.prenda ? `/${seccion}/textil?prenda=${item.prenda}` : `/${seccion}/textil`;
+  if (!item.prenda) return `/${seccion}/textil`;
+  return item.variante
+    ? `/${seccion}/textil?prenda=${item.prenda}&variante=${item.variante}`
+    : `/${seccion}/textil?prenda=${item.prenda}`;
 }
