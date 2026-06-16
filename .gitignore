@@ -79,6 +79,10 @@ prisma/*.db-journal
 # bootstrap-only token, never commit
 .setup-token.tmp
 
+# env de producción con secretos (BLOB token, etc.) — nunca commitear
+.env.prod
+.env.prod.local
+
 # Local-only artifacts
 videomovil/
 .playwright-mcp/
