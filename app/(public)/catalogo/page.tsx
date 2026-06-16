@@ -43,7 +43,7 @@ export async function generateMetadata({
   return buildMetadata({
     title: pageTitle(sp),
     description:
-      "Catálogo completo de Zona Sport: ropa, calzado y accesorios deportivos con filtros por marca, color, talla y precio.",
+      "Catálogo completo de Zona Sport: ropa, calzado y complementos deportivos con filtros por marca, color, talla y precio.",
     path: "/catalogo",
   });
 }

@@ -382,7 +382,7 @@ Tras cruzar meta, **hidratación, estiramientos suaves y comer en menos de
 una hora**. Recuperarás antes y minimizarás agujetas. En la zona de
 avituallamiento final suele haber fruta y bebida isotónica.
 
-Si necesitas reponer material (zapatillas, ropa técnica, accesorios) los
+Si necesitas reponer material (zapatillas, ropa técnica, complementos) los
 días posteriores, pásate por la tienda. Solemos tener **descuento para
 participantes** las dos semanas siguientes presentando el dorsal.
 

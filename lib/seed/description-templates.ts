@@ -471,7 +471,7 @@ const CATEGORIES: CategoryPieces[] = [
     slug: "complementos",
     label: "Complementos",
     intros: [
-      "Accesorio deportivo {color} compacto y resistente.",
+      "Complemento deportivo {color} compacto y resistente.",
       "Complemento {color} para deporte y día a día.",
       "Pieza esencial {color} de {brand}.",
     ],
@@ -481,10 +481,10 @@ const CATEGORIES: CategoryPieces[] = [
     ],
     outros: [
       "Pequeño detalle, gran diferencia.",
-      "Un accesorio que se nota cuando lo tienes y se echa de menos cuando no.",
+      "Un complemento que se nota cuando lo tienes y se echa de menos cuando no.",
     ],
     meta: [
-      "Accesorio deportivo {color} {brand}. Resistente y compacto. Envío 24/48 h.",
+      "Complemento deportivo {color} {brand}. Resistente y compacto. Envío 24/48 h.",
       "Complemento {color} {brand}. Disponible en Zona Sport.",
     ],
   },

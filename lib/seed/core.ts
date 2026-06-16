@@ -120,14 +120,13 @@ export async function runSeed(db: PrismaClient, opts: SeedOptions = {}): Promise
     { name: "Fitness", slug: "fitness", description: "Material y ropa para entrenamiento en sala.", position: 4 },
     { name: "Calzado", slug: "calzado", description: "Zapatillas deportivas y para el día a día.", position: 5, isFeatured: true },
     { name: "Casual / Urban", slug: "casual", description: "Moda deportiva para la calle.", position: 6 },
-    { name: "Complementos", slug: "complementos", description: "Mochilas, calcetines, riñoneras, gorras y accesorios.", position: 7 },
     { name: "Tenis", slug: "tenis", description: "Raquetas, encordados, pelotas y ropa para tenis.", position: 8 },
     // Por tipo de prenda — usado por GenderLanding 4-tiles.
     { name: "Camisetas", slug: "camisetas", description: "Camisetas de manga corta, larga y polos técnicos.", position: 10, isFeatured: true },
     { name: "Pantalones", slug: "pantalones", description: "Pantalones, mallas, shorts y chándales.", position: 11, isFeatured: true },
     { name: "Sudaderas", slug: "sudaderas", description: "Sudaderas con capucha, forros polares y abrigos ligeros.", position: 12, isFeatured: true },
     { name: "Abrigos", slug: "abrigos", description: "Chubasqueros, anoraks y cortavientos técnicos.", position: 13 },
-    { name: "Accesorios", slug: "accesorios", description: "Gorras, mochilas, riñoneras, calcetines y guantes.", position: 14 },
+    { name: "Complementos", slug: "accesorios", description: "Mochilas, balones, calcetines, gorras, guantes y más complementos.", position: 14 },
   ];
 
   for (const c of rootCategories) {

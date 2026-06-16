@@ -144,7 +144,7 @@ export default function CondicionesPage() {
             Para ejercer el derecho de desistimiento, notifícanoslo por email a{" "}
             <a href={`mailto:${STORE_NAP.email}`}>{STORE_NAP.email}</a> o por escrito en
             tienda. Devuelve el producto en su embalaje original, sin uso y con todos los
-            accesorios y etiquetas. Te reembolsaremos el importe abonado (excluidos los
+            complementos y etiquetas. Te reembolsaremos el importe abonado (excluidos los
             gastos de envío de devolución, salvo defecto del producto) en un plazo máximo de
             14 días desde que tengamos constancia de tu decisión.
           </p>
