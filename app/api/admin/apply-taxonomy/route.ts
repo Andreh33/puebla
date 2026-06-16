@@ -93,9 +93,25 @@ export async function POST(req: NextRequest) {
   // al TTL. El cache in-memory por instancia (60s) caduca solo.
   revalidateTag("redirects");
 
+  // 4. Limpieza: borra categorías que NO están en el árbol canónico (cruft del
+  // seed viejo: running, abrigos, camisetas, calzado, montana, fitness, tenis…)
+  // SIEMPRE que no tengan productos, enlaces m2m ni hijas. Seguro con catálogo
+  // vacío; idempotente (en la 2ª llamada ya no hay nada que borrar).
+  const treeSlugs = TAXONOMY_TREE.map((n) => n.slug);
+  const pruned = await db.category.deleteMany({
+    where: {
+      slug: { notIn: treeSlugs },
+      products: { none: {} },
+      primaryFor: { none: {} },
+      categoryLinks: { none: {} },
+      children: { none: {} },
+    },
+  });
+
   return NextResponse.json({
     ok: true,
     upserted: Object.keys(slugToId).length,
     redirectsRemoved: removed.count,
+    prunedCategories: pruned.count,
   });
 }
