@@ -7,6 +7,7 @@ import type { FootwearType } from "@/lib/categories/footwear";
 import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
 import { VARIANT_TO_TYPE } from "@/lib/categories/garment";
 import { deriveGenderFromCategorySlugs } from "@/lib/products/derive-gender";
+import { deriveFootwearTypeFromSlugs, deriveGarmentTypeFromSlugs } from "@/lib/products/derive-type";
 import type { z } from "zod";
 
 export type ProductInput = z.infer<typeof ProductSchema>;
@@ -102,6 +103,8 @@ export async function createProduct(
 
   // Derive gender and resolve primary category from extra.categoryIds (if provided).
   let derivedGender = parsed.gender;
+  let derivedFootwearType: string | null = null;
+  let derivedGarmentType: string | null = null;
   let resolvedPrimaryId: string | undefined = undefined;
   let categoryRows: { id: string; slug: string }[] = [];
 
@@ -113,7 +116,10 @@ export async function createProduct(
     const validIds = categoryRows.map((c) => c.id);
     const primary = extra.primaryCategoryId ?? validIds[0] ?? undefined;
     resolvedPrimaryId = primary;
-    derivedGender = deriveGenderFromCategorySlugs(categoryRows.map((c) => c.slug));
+    const slugs = categoryRows.map((c) => c.slug);
+    derivedGender = deriveGenderFromCategorySlugs(slugs);
+    derivedFootwearType = deriveFootwearTypeFromSlugs(slugs);
+    derivedGarmentType = deriveGarmentTypeFromSlugs(slugs);
   }
 
   const created = await db.$transaction(async (tx) => {
@@ -123,6 +129,8 @@ export async function createProduct(
       description: autoDescription ?? parsed.description,
       metaDescription: autoMeta ?? parsed.metaDescription,
       gender: derivedGender,
+      footwearType: (derivedFootwearType ?? parsed.footwearType ?? null) as FootwearType | null,
+      garmentType: (derivedGarmentType ?? parsed.garmentType ?? null) as GarmentType | null,
       retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
       costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
       salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,
@@ -223,6 +231,8 @@ export async function updateProduct(
 
   // Resolve categories / gender from extra (if provided).
   let derivedGender = parsed.gender;
+  let derivedFootwearType: string | null = null;
+  let derivedGarmentType: string | null = null;
   let resolvedPrimaryId: string | undefined = undefined;
   let categoryRows: { id: string; slug: string }[] = [];
 
@@ -234,7 +244,10 @@ export async function updateProduct(
     const validIds = categoryRows.map((c) => c.id);
     const primary = extra.primaryCategoryId ?? validIds[0] ?? undefined;
     resolvedPrimaryId = primary;
-    derivedGender = deriveGenderFromCategorySlugs(categoryRows.map((c) => c.slug));
+    const slugs = categoryRows.map((c) => c.slug);
+    derivedGender = deriveGenderFromCategorySlugs(slugs);
+    derivedFootwearType = deriveFootwearTypeFromSlugs(slugs);
+    derivedGarmentType = deriveGarmentTypeFromSlugs(slugs);
   } else if (extra.categoryIds !== undefined && extra.categoryIds.length === 0) {
     // Explicit empty array: clear all m2m categories but leave scalar fields alone.
     // Gender stays as parsed.gender; primary stays undefined.
@@ -245,6 +258,8 @@ export async function updateProduct(
       ...parsed,
       slug,
       gender: derivedGender,
+      footwearType: (derivedFootwearType ?? parsed.footwearType ?? null) as FootwearType | null,
+      garmentType: (derivedGarmentType ?? parsed.garmentType ?? null) as GarmentType | null,
       retailPrice: parsed.retailPrice as unknown as Prisma.Decimal,
       costPrice: parsed.costPrice != null ? (parsed.costPrice as unknown as Prisma.Decimal) : null,
       salePrice: parsed.salePrice != null ? (parsed.salePrice as unknown as Prisma.Decimal) : null,

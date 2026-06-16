@@ -31,6 +31,31 @@ const GENEROS: Array<{ slug: string; name: string; position: number }> = [
 
 // Subfamilias de complementos — el sufijo del slug DEBE coincidir con la parte
 // tras "accesorios:" en classify.ts (accesorios-<suffix>).
+const CALZADO_TIPOS: Array<{ slug: string; name: string }> = [
+  { slug: "running", name: "Running" },
+  { slug: "trail", name: "Trail / Montaña" },
+  { slug: "padel", name: "Tenis / Pádel" },
+  { slug: "futbol", name: "Fútbol" },
+  { slug: "futbol-sala", name: "Fútbol sala" },
+  { slug: "casual", name: "Casual" },
+  { slug: "baloncesto", name: "Baloncesto" },
+  { slug: "chanclas", name: "Chanclas" },
+];
+const TEXTIL_TIPOS: Array<{ slug: string; name: string }> = [
+  { slug: "camiseta", name: "Camisetas" },
+  { slug: "polo", name: "Polos" },
+  { slug: "sudadera", name: "Sudaderas" },
+  { slug: "polar", name: "Polares" },
+  { slug: "chandal", name: "Chándal" },
+  { slug: "chaqueta", name: "Chaquetas" },
+  { slug: "abrigo", name: "Abrigos" },
+  { slug: "cortavientos", name: "Cortavientos" },
+  { slug: "conjunto", name: "Conjuntos" },
+  { slug: "pantalon", name: "Pantalones" },
+  { slug: "mallas", name: "Mallas y leggins" },
+  { slug: "banador", name: "Bañadores" },
+];
+
 const COMPLEMENTOS_HIJOS: Array<{ suffix: string; name: string }> = [
   { suffix: "balones", name: "Balones" },
   { suffix: "billeteros", name: "Billeteros" },
@@ -90,4 +115,24 @@ export const TAXONOMY_TREE: TaxonomyNode[] = [
     metaTitle: `${h.name} | Zona Sport`,
     metaDescription: `${h.name} deportivos multimarca en Zona Sport.`,
   })),
+  ...GENEROS.flatMap((g) =>
+    CALZADO_TIPOS.map((t, i) => ({
+      slug: `${g.slug}-calzado-${t.slug}`,
+      name: t.name,
+      parentSlug: `${g.slug}-calzado`,
+      position: i + 1,
+      metaTitle: `${t.name} ${g.name.toLowerCase()} | Zona Sport`,
+      metaDescription: `${t.name} de ${g.name.toLowerCase()} en Zona Sport.`,
+    })),
+  ),
+  ...GENEROS.flatMap((g) =>
+    TEXTIL_TIPOS.map((t, i) => ({
+      slug: `${g.slug}-textil-${t.slug}`,
+      name: t.name,
+      parentSlug: `${g.slug}-textil`,
+      position: i + 1,
+      metaTitle: `${t.name} ${g.name.toLowerCase()} | Zona Sport`,
+      metaDescription: `${t.name} de ${g.name.toLowerCase()} en Zona Sport.`,
+    })),
+  ),
 ];

@@ -39,4 +39,28 @@ describe("TAXONOMY_TREE (árbol canónico de categorías)", () => {
       expect(node!.parentSlug).toBe("accesorios");
     }
   });
+  it("hombre-calzado-padel existe con parent hombre-calzado", () => {
+    const node = TAXONOMY_TREE.find((n) => n.slug === "hombre-calzado-padel");
+    expect(node).toBeTruthy();
+    expect(node!.parentSlug).toBe("hombre-calzado");
+  });
+  it("mujer-textil-camiseta existe con parent mujer-textil", () => {
+    const node = TAXONOMY_TREE.find((n) => n.slug === "mujer-textil-camiseta");
+    expect(node).toBeTruthy();
+    expect(node!.parentSlug).toBe("mujer-textil");
+  });
+  it("cada gen tiene los 8 tipos de calzado como hijos de <gen>-calzado", () => {
+    for (const g of ["hombre", "mujer", "nino", "nina", "bebe"]) {
+      for (const t of ["running", "trail", "padel", "futbol", "futbol-sala", "casual", "baloncesto", "chanclas"]) {
+        expect(slugs.has(`${g}-calzado-${t}`), `${g}-calzado-${t}`).toBe(true);
+      }
+    }
+  });
+  it("cada gen tiene los 12 tipos de textil como hijos de <gen>-textil", () => {
+    for (const g of ["hombre", "mujer", "nino", "nina", "bebe"]) {
+      for (const t of ["camiseta", "polo", "sudadera", "polar", "chandal", "chaqueta", "abrigo", "cortavientos", "conjunto", "pantalon", "mallas", "banador"]) {
+        expect(slugs.has(`${g}-textil-${t}`), `${g}-textil-${t}`).toBe(true);
+      }
+    }
+  });
 });
