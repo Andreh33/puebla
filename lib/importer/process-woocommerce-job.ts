@@ -50,7 +50,7 @@ interface ImportError {
 // Cache Brand/Category (igual estrategia que PRICAT)
 // ---------------------------------------------------------------------------
 
-class TaxonomyCache {
+export class TaxonomyCache {
   private brands = new Map<string, string>();
   private categories = new Map<string, string>();
   private treeBySlug = new Map<string, string>();
@@ -161,7 +161,7 @@ async function buildUniqueProductSlug(
 // Procesa un grupo Padre + variations dentro de la transacción
 // ---------------------------------------------------------------------------
 
-interface GroupResult {
+export interface GroupResult {
   created: boolean;
   updated: boolean;
   errors: ImportError[];
@@ -171,7 +171,7 @@ interface GroupResult {
   externalId: string;
 }
 
-async function processGroup(
+export async function processGroup(
   tx: Prisma.TransactionClient,
   taxonomy: TaxonomyCache,
   group: WooProductGroup,
