@@ -25,7 +25,7 @@ import { MagneticButton } from "@/components/public/MagneticButton";
  * mostrar "N productos disponibles" bajo los CTAs.
  */
 
-type GenderKey = "mujer" | "hombre" | "ninos" | "nino" | "nina";
+type GenderKey = "mujer" | "hombre" | "ninos" | "nino" | "nina" | "bebe";
 
 type GenderHeroConfig = {
   eyebrow: string;
@@ -91,6 +91,15 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     photo: "/category-photos/nina-landing.jpg",
     tintGradient: "from-zs-red-900/55 via-zs-blue-950/35 to-zs-blue-950/70",
     primaryGlow: "var(--shadow-zs-rojo-glow-lg)",
+  },
+  bebe: {
+    eyebrow: "Para los más pequeños",
+    headline: "Los primeros pasos en movimiento.",
+    tagline:
+      "Ropa y calzado deportivo cómodo y resistente para bebés. John Smith, +8000, Joma y más, con asesoramiento de talla en tienda.",
+    photo: "/category-photos/ninos-landing.jpg",
+    tintGradient: "from-emerald-900/45 via-zs-blue-950/40 to-zs-blue-950/75",
+    primaryGlow: "var(--shadow-zs-tennis-glow-lg)",
   },
 };
 

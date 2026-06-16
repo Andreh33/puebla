@@ -21,10 +21,10 @@ import type { DemoGender } from "@/lib/demo-products";
  * mantenemos aquí los antiguos como fallback documental y para SEO.
  */
 export const GENDER_LANDINGS: Record<
-  "mujer" | "hombre" | "ninos" | "nino" | "nina",
+  "mujer" | "hombre" | "ninos" | "nino" | "nina" | "bebe",
   {
     gender: DemoGender;
-    slug: "mujer" | "hombre" | "ninos" | "nino" | "nina";
+    slug: "mujer" | "hombre" | "ninos" | "nino" | "nina" | "bebe";
     label: string;
     headline: string;
     /** Subtítulo editorial mostrado bajo el headline. */
@@ -83,6 +83,16 @@ export const GENDER_LANDINGS: Record<
     tagline: "Calzado y ropa deportiva cómoda para el día a día, el cole y el deporte.",
     seoLead:
       "Selección Zona Sport para niña: calzado, ropa deportiva y outdoor cómoda de John Smith, +8000, Joma y más. Asesoramos la talla en tienda sin compromiso.",
+  },
+  bebe: {
+    gender: "BEBE",
+    slug: "bebe",
+    label: "Bebé",
+    eyebrow: "Para los más pequeños",
+    headline: "Los primeros pasos en movimiento.",
+    tagline: "Ropa y calzado deportivo cómodo y resistente para bebés.",
+    seoLead:
+      "Selección Zona Sport para bebé: ropa deportiva y calzado cómodo de John Smith, +8000, Joma y más. Asesoramos la talla en tienda sin compromiso.",
   },
 };
 

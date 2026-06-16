@@ -37,7 +37,7 @@ export const dynamicParams = true;
 // `categoria` ES la sección (hombre|mujer|nino|nina); lo aliasamos a `seccion`.
 // ----------------------------------------------------------------------------
 
-const VALID_SECCIONES = ["hombre", "mujer", "nino", "nina"] as const;
+const VALID_SECCIONES = ["hombre", "mujer", "nino", "nina", "bebe"] as const;
 const VALID_FAMILIAS = ["textil", "calzado"] as const;
 type Seccion = (typeof VALID_SECCIONES)[number];
 type Familia = (typeof VALID_FAMILIAS)[number];
@@ -113,6 +113,12 @@ export default async function SeccionFamiliaPage({
   if (!category) notFound();
 
   const filters = parseCategoryParams(sp);
+
+  // Coherencia con la exclusión de facetas: ignorar ?prenda=bermuda en mujer.
+  if (seccion === "mujer" && filters.prenda?.length) {
+    filters.prenda = filters.prenda.filter((p) => p !== "bermuda");
+  }
+
   const perPage = filters.perPage ?? 12;
   const currentPageRequested = filters.page ?? 1;
 
@@ -193,6 +199,14 @@ export default async function SeccionFamiliaPage({
         `[seccion/familia] facets fallaron para ${slug}, sidebar sin counts:`,
         (err as Error).message,
       );
+    }
+
+    // Petición cliente: en MUJER no ofrecemos "Bermudas y shorts" como filtro.
+    if (seccion === "mujer") {
+      facets = {
+        ...facets,
+        garmentTypes: facets.garmentTypes.filter((g) => g.value !== "bermuda"),
+      };
     }
   }
 

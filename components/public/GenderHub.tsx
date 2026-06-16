@@ -18,7 +18,7 @@ import { useRef, type CSSProperties, type MouseEvent } from "react";
  * con velo azul para legibilidad del texto.
  */
 
-type Seccion = "hombre" | "mujer" | "nino" | "nina";
+type Seccion = "hombre" | "mujer" | "nino" | "nina" | "bebe";
 
 /** Foto de ropa por género (no hay una genérica; el componente es compartido). */
 const LANDING_BY_SECCION: Record<Seccion, string> = {
@@ -26,6 +26,7 @@ const LANDING_BY_SECCION: Record<Seccion, string> = {
   mujer: "mujer-landing",
   nino: "ninos-landing",
   nina: "textil-nina", // Foto textil propia de niña (cliente, carpetaimagenes)
+  bebe: "ninos-landing", // Reutiliza foto kids hasta que haya foto específica de bebé
 };
 
 // Foto de calzado propia por género (cliente, carpetaimagenes). Sustituye a las
@@ -35,6 +36,7 @@ const CALZADO_BY_SECCION: Record<Seccion, string> = {
   hombre: "/category-photos/calzado-hombre.jpg",
   nino: "/category-photos/calzado-nino.jpg",
   nina: "/category-photos/calzado-nina.jpg",
+  bebe: "/category-photos/calzado-nino.jpg", // Reutiliza foto calzado niño hasta que haya una de bebé
 };
 
 const CARDS: Array<{

@@ -94,9 +94,6 @@ const DEMO_CATEGORY_ALIASES: Record<
   balones: { name: "Balones", categorySlugs: [] },
   "palas-padel": { name: "Palas de pádel", categorySlugs: [] },
 
-  // NIÃ‘OS
-  bebe: { name: "Bebé", categorySlugs: [] },
-
   // Mantenemos coherencia con los slugs que sí están directamente en el demo.
 };
 
@@ -786,6 +783,9 @@ const RESERVED_SLUGS = new Set([
   // la ruta [categoria] no los capture como categoría del catálogo.
   "nino",
   "nina",
+  // Bebé: landing propia en /bebe (Bloque bebe). Reservado para que la ruta
+  // [categoria] no lo capture como categoría del catálogo.
+  "bebe",
   "carrito",
 ]);
 
