@@ -12,6 +12,7 @@
  * y una muestra de los últimos 6 creados.
  */
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { Decimal } from "decimal.js";
 import { db } from "@/lib/db";
 import { processGroup, TaxonomyCache } from "@/lib/importer/process-woocommerce-job";
@@ -114,6 +115,31 @@ export async function POST(req: NextRequest) {
     const toDeactivate = await db.product.findMany({ where, select: { name: true, sku: true, externalId: true } });
     const result = await db.product.updateMany({ where, data: { status: "INACTIVE" } });
     return NextResponse.json({ ok: true, deactivated: result.count, items: toDeactivate });
+  }
+
+  // Publicación masiva: pasa a ACTIVE los productos WooCommerce en DRAFT que
+  // tengan foto. Los sin foto se quedan en DRAFT; los INACTIVE (descatalogados)
+  // NO se tocan. Devuelve el desglose para saber qué quedó fuera y cuántos
+  // publicados están sin stock (se muestran como "agotado", es intencional).
+  if (body.action === "publish_catalog") {
+    const base = { externalId: { startsWith: "woocommerce:" }, status: "DRAFT" as const };
+    const [noPhoto, publishedOutOfStock] = await Promise.all([
+      db.product.count({ where: { ...base, mainImageUrl: null } }),
+      db.product.count({ where: { ...base, mainImageUrl: { not: null }, stock: { lte: 0 } } }),
+    ]);
+    const result = await db.product.updateMany({
+      where: { ...base, mainImageUrl: { not: null } },
+      data: { status: "ACTIVE", publishedAt: new Date() },
+    });
+    // Invalida la caché de TODA la web pública para que el catálogo aparezca ya
+    // (sin esperar al ISR). Revalida todas las rutas bajo el layout raíz.
+    revalidatePath("/", "layout");
+    return NextResponse.json({
+      ok: true,
+      published: result.count,
+      keptDraftNoPhoto: noPhoto,
+      publishedOutOfStock,
+    });
   }
 
   // Asignación manual de categorías por SKU (productos que el clasificador no
