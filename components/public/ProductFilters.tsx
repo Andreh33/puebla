@@ -369,7 +369,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
                     <Checkbox checked={on} onCheckedChange={() => toggleMulti("tipo", t.value)} />
                     <span>{label}</span>
                   </span>
-                  <span className="text-xs text-zs-muted">{t.count}</span>
+                  {t.count > 0 && <span className="text-xs text-zs-muted">{t.count}</span>}
                 </label>
               );
             })}
@@ -400,7 +400,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
                       />
                       <span>{GARMENT_TYPE_LABELS[garmentValue] ?? garmentValue}</span>
                     </span>
-                    <span className="text-xs text-zs-muted">{g.count}</span>
+                    {g.count > 0 && <span className="text-xs text-zs-muted">{g.count}</span>}
                   </label>
                   {/* A1: sub-variantes SOLO visibles si el padre está marcado. */}
                   {checked && variantsOfThis.length > 0 && (

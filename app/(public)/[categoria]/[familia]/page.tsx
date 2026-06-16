@@ -210,6 +210,32 @@ export default async function SeccionFamiliaPage({
     }
   }
 
+  // Filtros de TIPO siempre visibles: si no hay facetas dinámicas (catálogo
+  // vacío o sin productos tipados en esta sección), mostramos la lista canónica
+  // de tipos para que el sidebar no quede pelado. Cuando haya productos reales,
+  // las facetas dinámicas de arriba ganan y el filtro vuelve a ser "como antes".
+  // Orden y contenido reflejan el megamenú (lib/menu/mega-menu.ts).
+  if (familia === "calzado" && facets.footwearTypes.length === 0) {
+    const hidden = seccion === "mujer" ? ["futbol", "futbol_sala", "baloncesto"] : [];
+    facets = {
+      ...facets,
+      footwearTypes: [
+        "running", "trail", "padel", "futbol", "futbol_sala", "casual", "baloncesto", "chanclas",
+      ]
+        .filter((t) => !hidden.includes(t))
+        .map((value) => ({ value, label: value, count: 0 })),
+    };
+  }
+  if (familia === "textil" && facets.garmentTypes.length === 0) {
+    facets = {
+      ...facets,
+      garmentTypes: [
+        "camiseta", "polo", "sudadera", "polar", "chandal", "chaqueta", "abrigo",
+        "cortavientos", "conjunto", "pantalon", "mallas", "calentador", "banador",
+      ].map((value) => ({ value, label: value, count: 0 })),
+    };
+  }
+
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const currentPage = Math.min(currentPageRequested, totalPages);
 
