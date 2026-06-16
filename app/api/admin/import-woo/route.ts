@@ -90,6 +90,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Body JSON inválido" }, { status: 400 });
   }
 
+  // Reconciliación: descatalogar (→ INACTIVE) los productos WooCommerce que ya no
+  // están en el CSV definitivo. NO borra. Guard: aborta si keepWooIds < 100 para
+  // no desactivar el catálogo entero por un payload truncado.
+  if (body.action === "deactivate_missing") {
+    const keepWooIds: string[] = Array.isArray(body.keepWooIds) ? body.keepWooIds.map(String) : [];
+    if (keepWooIds.length < 100) {
+      return NextResponse.json({ ok: false, error: "keepWooIds sospechosamente corto — abortado por seguridad" }, { status: 400 });
+    }
+    const keepExternalIds = keepWooIds.map((id) => `woocommerce:${id}`);
+    const where = {
+      AND: [
+        { externalId: { startsWith: "woocommerce:" } },
+        { externalId: { notIn: keepExternalIds } },
+        { status: { not: "INACTIVE" as const } },
+      ],
+    };
+    const toDeactivate = await db.product.findMany({ where, select: { name: true, sku: true, externalId: true } });
+    const result = await db.product.updateMany({ where, data: { status: "INACTIVE" } });
+    return NextResponse.json({ ok: true, deactivated: result.count, items: toDeactivate });
+  }
+
   const rawGroups: unknown[] = Array.isArray(body.groups) ? body.groups : [];
   const mode: ImportMode = body.mode ?? "create_update";
   const defaultStatus: "DRAFT" | "ACTIVE" | "INACTIVE" = body.defaultStatus ?? "DRAFT";

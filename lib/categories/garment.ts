@@ -246,3 +246,24 @@ export function inferGarmentVariant(
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// Mapeo variante ↔ slug del nodo de 4º nivel del árbol (Feature A)
+// ---------------------------------------------------------------------------
+
+/** GarmentVariant → sufijo de slug tras `<gen>-textil-` (incluye la prenda). */
+export const VARIANT_SLUG_BY_VARIANT: Record<GarmentVariant, string> = {
+  manga_corta: "camiseta-manga-corta",
+  manga_larga: "camiseta-manga-larga",
+  tirantes: "camiseta-tirantes",
+  top: "camiseta-top",
+  pantalon_corto: "pantalon-corto",
+  pantalon_largo: "pantalon-largo",
+  mallas_cortas: "mallas-cortas",
+  mallas_largas: "mallas-largas",
+  mallas_piratas: "mallas-piratas",
+};
+/** Inverso: sufijo `<prenda>-<variante>` → GarmentVariant. */
+export const VARIANT_BY_SLUG_SUFFIX: Record<string, GarmentVariant> = Object.fromEntries(
+  Object.entries(VARIANT_SLUG_BY_VARIANT).map(([v, s]) => [s, v as GarmentVariant]),
+) as Record<string, GarmentVariant>;

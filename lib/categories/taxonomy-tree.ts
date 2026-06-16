@@ -56,6 +56,28 @@ const TEXTIL_TIPOS: Array<{ slug: string; name: string }> = [
   { slug: "banador", name: "Bañadores" },
 ];
 
+// Nivel 3 (4º nivel del árbol): variantes finas de prenda bajo el nodo de tipo
+// textil. tirantes/top SOLO en mujer+niña; el resto en los 4 géneros principales
+// (sin bebé). El slug es `<gen>-textil-<prenda>-<variante>`.
+const TEXTIL_VARIANTES: Array<{ tipo: string; variantes: Array<{ slug: string; name: string; soloGeneros?: string[] }> }> = [
+  { tipo: "camiseta", variantes: [
+    { slug: "manga-corta", name: "Manga corta" },
+    { slug: "manga-larga", name: "Manga larga" },
+    { slug: "tirantes", name: "Tirantes", soloGeneros: ["mujer", "nina"] },
+    { slug: "top", name: "Top", soloGeneros: ["mujer", "nina"] },
+  ]},
+  { tipo: "pantalon", variantes: [
+    { slug: "corto", name: "Pantalón corto" },
+    { slug: "largo", name: "Pantalón largo" },
+  ]},
+  { tipo: "mallas", variantes: [
+    { slug: "cortas", name: "Mallas cortas" },
+    { slug: "largas", name: "Mallas largas" },
+    { slug: "piratas", name: "Mallas piratas" },
+  ]},
+];
+const VARIANT_GENEROS = GENEROS.filter((g) => g.slug !== "bebe"); // hombre, mujer, nino, nina
+
 const COMPLEMENTOS_HIJOS: Array<{ suffix: string; name: string }> = [
   { suffix: "balones", name: "Balones" },
   { suffix: "billeteros", name: "Billeteros" },
@@ -135,4 +157,23 @@ export const TAXONOMY_TREE: TaxonomyNode[] = [
       metaDescription: `${t.name} de ${g.name.toLowerCase()} en Zona Sport.`,
     })),
   ),
+  ...VARIANT_GENEROS.flatMap((g) =>
+    TEXTIL_VARIANTES.flatMap(({ tipo, variantes }) =>
+      variantes
+        .filter((v) => !v.soloGeneros || v.soloGeneros.includes(g.slug))
+        .map((v, i) => ({
+          slug: `${g.slug}-textil-${tipo}-${v.slug}`,
+          name: v.name,
+          parentSlug: `${g.slug}-textil-${tipo}`,
+          position: i + 1,
+          metaTitle: `${v.name} ${g.name.toLowerCase()} | Zona Sport`,
+          metaDescription: `${v.name} de ${g.name.toLowerCase()} en Zona Sport.`,
+        })),
+    ),
+  ),
 ];
+
+/** Slugs de los nodos de variante existentes (4º nivel) — para validar/derivar. */
+export const VALID_VARIANT_SLUGS = new Set(
+  TAXONOMY_TREE.filter((n) => /-textil-(?:camiseta|pantalon|mallas)-/.test(n.slug)).map((n) => n.slug),
+);

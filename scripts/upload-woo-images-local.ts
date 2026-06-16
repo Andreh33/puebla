@@ -20,7 +20,7 @@ import path from "node:path";
 import Papa from "papaparse";
 
 const BASE_URL = "https://zonasport.vercel.app";
-const CSV_PATH = "wp/wc-product-export-19-5-2026-1779208641288.csv";
+const CSV_PATH = "wp/wc-product-export-16-6-2026-1781596350587.csv";
 const TOKEN = fs.readFileSync(".setup-token.tmp", "utf8").trim();
 const CONCURRENCY = 4;
 const PAGE_SIZE = 60;
@@ -150,12 +150,20 @@ async function main() {
   let totalUploadFail = 0;
   const errorSamples: Array<{ sku: string; reason: string }> = [];
 
+  let prevRemaining = Infinity;
   while (true) {
     const { items, remaining } = await getPending();
-    if (items.length === 0) {
+    if (items.length === 0 || remaining === 0) {
       console.log(`✅ Sin pendientes. remaining=${remaining}`);
       break;
     }
+    // Guarda anti-bucle-infinito: si un lote de pendientes no tiene URL en el CSV,
+    // getPending() los devuelve siempre y remaining no baja. Cortamos al estancarse.
+    if (remaining >= prevRemaining) {
+      console.log(`\n⚠️  ${remaining} pendientes sin URL en el CSV — no progresan, corto el bucle.`);
+      break;
+    }
+    prevRemaining = remaining;
     console.log(
       `\n📦 Lote de ${items.length} · pendientes totales: ${remaining} · elapsed ${((Date.now() - t0) / 1000).toFixed(0)}s`,
     );

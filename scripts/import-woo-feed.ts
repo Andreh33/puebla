@@ -34,7 +34,7 @@ function parseArgs(argv: string[]): {
   };
 
   const csvRel =
-    get("--csv") ?? "wp/wc-product-export-19-5-2026-1779208641288.csv";
+    get("--csv") ?? "wp/wc-product-export-16-6-2026-1781596350587.csv";
   const csv = path.isAbsolute(csvRel)
     ? csvRel
     : path.join(process.cwd(), csvRel);
@@ -217,6 +217,21 @@ async function main() {
   console.log(`  ERRORES     : ${totalErrors}`);
   console.log(`  TOTAL FILAS CSV: ${totalRows}`);
   console.log(`  GRUPOS procesados: ${groups.length} de ${allGroups.length}`);
+
+  // 5. Reconciliación: solo en modo completo (sin --limit). Manda al endpoint los
+  // wooId que SÍ están en el CSV definitivo; el servidor pone INACTIVE el resto.
+  if (limit == null) {
+    const keepWooIds = allGroups.map((g) => g.parent.wooId).filter(Boolean);
+    const r = await fetch(`${BASE}/api/admin/import-woo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${TOKEN}` },
+      body: JSON.stringify({ action: "deactivate_missing", keepWooIds }),
+    });
+    const j = await r.json();
+    console.log(`\n=== RECONCILIACIÓN (descatalogados → INACTIVE) ===`);
+    console.log(`  Desactivados: ${j.deactivated ?? "?"}`);
+    if (Array.isArray(j.items)) for (const it of j.items.slice(0, 60)) console.log(`    - ${it.sku} · ${it.name}`);
+  }
 }
 
 main().catch((err) => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TAXONOMY_TREE } from "@/lib/categories/taxonomy-tree";
+import { TAXONOMY_TREE, VALID_VARIANT_SLUGS } from "@/lib/categories/taxonomy-tree";
 
 describe("TAXONOMY_TREE (árbol canónico de categorías)", () => {
   const slugs = new Set(TAXONOMY_TREE.map((n) => n.slug));
@@ -61,6 +61,24 @@ describe("TAXONOMY_TREE (árbol canónico de categorías)", () => {
       for (const t of ["camiseta", "polo", "sudadera", "polar", "chandal", "chaqueta", "abrigo", "cortavientos", "conjunto", "pantalon", "mallas", "banador"]) {
         expect(slugs.has(`${g}-textil-${t}`), `${g}-textil-${t}`).toBe(true);
       }
+    }
+  });
+
+  // --- Feature A: nodos de variante de prenda (4º nivel) ---------------------
+  it("VALID_VARIANT_SLUGS incluye variantes válidas y excluye las prohibidas", () => {
+    expect(VALID_VARIANT_SLUGS.has("hombre-textil-camiseta-manga-corta")).toBe(true);
+    expect(VALID_VARIANT_SLUGS.has("mujer-textil-camiseta-top")).toBe(true);
+    // top/tirantes solo en mujer+niña → hombre no
+    expect(VALID_VARIANT_SLUGS.has("hombre-textil-camiseta-top")).toBe(false);
+    // bebé no tiene nodos de variante
+    expect(VALID_VARIANT_SLUGS.has("bebe-textil-camiseta-manga-corta")).toBe(false);
+  });
+  it("los nodos de variante cuelgan de su nodo de prenda", () => {
+    for (const s of VALID_VARIANT_SLUGS) {
+      const node = TAXONOMY_TREE.find((n) => n.slug === s)!;
+      expect(node, s).toBeTruthy();
+      expect(slugs.has(node.parentSlug!), `${s} → parent ${node.parentSlug}`).toBe(true);
+      expect(/-textil-(?:camiseta|pantalon|mallas)$/.test(node.parentSlug!), node.parentSlug!).toBe(true);
     }
   });
 });
