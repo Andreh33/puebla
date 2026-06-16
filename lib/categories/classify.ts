@@ -11,7 +11,7 @@
  *
  * Precedencia (de más a menos específico):
  *   calzado > accesorios:padel > accesorios:mochilas > accesorios:balones >
- *   accesorios:calcetines > accesorios:otros > textil
+ *   accesorios:calcetines > accesorios:<subfamilia fina> > accesorios:varios > textil
  *
  * Estrategia en 2 pasadas:
  *   1. Primera palabra normalizada (alta confianza) + reglas especiales
@@ -28,7 +28,15 @@ export type FamilyResult =
   | "accesorios:mochilas"
   | "accesorios:balones"
   | "accesorios:calcetines"
-  | "accesorios:otros"
+  | "accesorios:gorras"
+  | "accesorios:guantes"
+  | "accesorios:bolsos"
+  | "accesorios:billeteros"
+  | "accesorios:rinonera"
+  | "accesorios:espinilleras"
+  | "accesorios:gafas-natacion"
+  | "accesorios:patinaje"
+  | "accesorios:varios"
   | "UNCLASSIFIED";
 
 /** MAYÚSCULAS + sin tildes/diacríticos (Ñ→N). */
@@ -54,15 +62,22 @@ const CALZADO = new Set([
 const ACC_MOCHILAS = new Set(["MOCHILA", "MOCHILAS"]);
 const ACC_BALONES = new Set(["BALON", "BALONES"]);
 const ACC_CALCETINES = new Set(["CALCETIN", "CALCETINES", "MEDIA", "MEDIAS"]);
-// PALA/RAQUETERO/PALETERO/OVERGRIP = pádel. RAQUETA = tenis → va a "otros".
+// PALA/RAQUETERO/PALETERO/OVERGRIP = pádel. RAQUETA = tenis → va a "varios".
 const ACC_PADEL = new Set(["PALA", "RAQUETERO", "PALETERO", "OVERGRIP"]);
-const ACC_OTROS = new Set([
-  "GORRA", "GORRO", "GUANTE", "GUANTES", "RINONERA", "BOLSA", "BOLSO",
-  "BUFANDA", "VISERA", "MUNEQUERA", "TOALLA", "TOALLITA", "BOTELLA", "CINTURON",
-  "FUNDA", "GAFAS", "GAFA", "ESPINILLERA", "ESPINILLERAS", "BANDOLERA",
-  "BILLETERO", "ESTUCHE", "PLANTILLA", "PLANTILLAS", "ZAPATILLERO",
-  "ZAPATILLEROS", "BANDA", "TALONERA", "VENDAS", "OREJERAS", "NASDIL",
-  "NASODILATADOR", "PATIN", "PATINES", "RAQUETA", "RAQUETAS",
+const ACC_GORRAS = new Set(["GORRA", "GORRAS", "GORRO", "GORROS", "VISERA", "VISERAS"]);
+const ACC_GUANTES = new Set(["GUANTE", "GUANTES", "MANOPLA", "MANOPLAS"]);
+const ACC_BOLSOS = new Set(["BOLSA", "BOLSAS", "BOLSO", "BOLSOS", "BANDOLERA", "NECESER"]);
+const ACC_BILLETEROS = new Set(["BILLETERO", "BILLETEROS", "MONEDERO", "CARTERA"]);
+const ACC_RINONERA = new Set(["RINONERA", "RINONERAS"]);
+const ACC_ESPINILLERAS = new Set(["ESPINILLERA", "ESPINILLERAS", "TIBIAL", "TIBIALES"]);
+const ACC_GAFAS = new Set(["GAFAS", "GAFA"]);
+const ACC_PATINAJE = new Set(["PATIN", "PATINES", "PROTECCIONES", "CODERA", "CODERAS", "RODILLERA", "RODILLERAS"]);
+// Catch-all de complementos: lo que no encaja en una subfamilia concreta.
+const ACC_VARIOS = new Set([
+  "BUFANDA", "MUNEQUERA", "MUNEQUERAS", "TOALLA", "TOALLITA", "BOTELLA", "CINTURON",
+  "FUNDA", "ESTUCHE", "PLANTILLA", "PLANTILLAS", "ZAPATILLERO", "ZAPATILLEROS",
+  "BANDA", "TALONERA", "VENDAS", "OREJERAS", "NASDIL", "NASODILATADOR",
+  "RAQUETA", "RAQUETAS",
 ]);
 const TEXTIL = new Set([
   "CHAQUETA", "CHAQUETON", "PANTALON", "PANTALONES", "SUDADERA", "CAMISETA",
@@ -101,8 +116,16 @@ function pass1(n: string): FamilyResult | null {
     if (/\bBALON(ES)?\b/.test(n)) return "accesorios:balones";
     return null; // PACK de otra cosa → pasada 2
   }
-  // 6. accesorios:otros
-  if (ACC_OTROS.has(fw)) return "accesorios:otros";
+  // 6. accesorios:<subfamilia fina>
+  if (ACC_GORRAS.has(fw)) return "accesorios:gorras";
+  if (ACC_GUANTES.has(fw)) return "accesorios:guantes";
+  if (ACC_BOLSOS.has(fw)) return "accesorios:bolsos";
+  if (ACC_BILLETEROS.has(fw)) return "accesorios:billeteros";
+  if (ACC_RINONERA.has(fw)) return "accesorios:rinonera";
+  if (ACC_ESPINILLERAS.has(fw)) return "accesorios:espinilleras";
+  if (ACC_GAFAS.has(fw)) return "accesorios:gafas-natacion";
+  if (ACC_PATINAJE.has(fw)) return "accesorios:patinaje";
+  if (ACC_VARIOS.has(fw)) return "accesorios:varios";
   // 7. textil (1ª palabra + SOFT SHELL como frase)
   if (/\bSOFT\s?SHELL\b/.test(n)) return "textil";
   if (TEXTIL.has(fw)) return "textil";
@@ -122,7 +145,15 @@ function pass2(n: string): FamilyResult | null {
   if (has(ACC_MOCHILAS)) return "accesorios:mochilas";
   if (has(ACC_BALONES)) return "accesorios:balones";
   if (has(ACC_CALCETINES)) return "accesorios:calcetines";
-  if (has(ACC_OTROS)) return "accesorios:otros";
+  if (has(ACC_GORRAS)) return "accesorios:gorras";
+  if (has(ACC_GUANTES)) return "accesorios:guantes";
+  if (has(ACC_BOLSOS)) return "accesorios:bolsos";
+  if (has(ACC_BILLETEROS)) return "accesorios:billeteros";
+  if (has(ACC_RINONERA)) return "accesorios:rinonera";
+  if (has(ACC_ESPINILLERAS)) return "accesorios:espinilleras";
+  if (has(ACC_GAFAS)) return "accesorios:gafas-natacion";
+  if (has(ACC_PATINAJE)) return "accesorios:patinaje";
+  if (has(ACC_VARIOS)) return "accesorios:varios";
   if (/\bSOFT\s?SHELL\b/.test(n)) return "textil";
   if (has(TEXTIL)) return "textil";
   return null;
