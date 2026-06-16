@@ -48,11 +48,10 @@ const RequestSchema = z.object({
   cancelUrl: z.string().url().optional(),
 });
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.es").replace(
-    /\/$/,
-    "",
-  );
+function siteUrl(req: NextRequest): string {
+  const fromReq = req.nextUrl?.origin;
+  const base = fromReq || process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.vercel.app";
+  return base.replace(/\/$/, "");
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckoutResponse>> {
@@ -97,7 +96,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
   const { items, deliveryMethod = "shipping", customerEmail, successUrl, cancelUrl } =
     parsed.data;
 
-  const base = siteUrl();
+  const base = siteUrl(req);
 
   // SEGURIDAD: nunca confiamos en el `price` del body. Re-consultamos el precio
   // real de cada producto en BD y construimos el unit_amount en servidor. Así

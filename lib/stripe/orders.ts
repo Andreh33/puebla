@@ -144,7 +144,7 @@ export async function createOrderFromCheckout(
     (expandedSession.metadata?.deliveryMethod as string | undefined) ??
     (shippingDetails ? "shipping" : "pickup");
 
-  return db.order.create({
+  const order = await db.order.create({
     data: {
       stripeSessionId: expandedSession.id,
       stripePaymentIntentId: paymentIntentId,
@@ -166,6 +166,42 @@ export async function createOrderFromCheckout(
       items: { create: items },
     },
   });
+
+  // Descontar stock (idempotente: solo en pedido nuevo, no en early-return).
+  // Por talla si la hay; si no, del stock global del producto. Clamp a >= 0.
+  for (const it of items) {
+    if (!it.productId) continue;
+    try {
+      if (it.variantSize) {
+        await db.productSize.updateMany({
+          where: { productId: it.productId, size: it.variantSize },
+          data: { stock: { decrement: it.quantity } },
+        });
+        await db.productSize.updateMany({
+          where: { productId: it.productId, size: it.variantSize, stock: { lt: 0 } },
+          data: { stock: 0 },
+        });
+      } else {
+        await db.product.update({
+          where: { id: it.productId },
+          data: { stock: { decrement: it.quantity } },
+        }).catch(() => {});
+        await db.product.updateMany({
+          where: { id: it.productId, stock: { lt: 0 } },
+          data: { stock: 0 },
+        });
+      }
+    } catch (e) {
+      console.warn(
+        "[orders] no se pudo descontar stock",
+        it.productId,
+        it.variantSize,
+        (e as Error).message,
+      );
+    }
+  }
+
+  return order;
 }
 
 /** Marca el Order como REFUNDED a partir de un charge.refunded de Stripe. */

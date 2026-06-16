@@ -18,8 +18,7 @@ export default function CartPage() {
           Tu carrito
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zs-muted">
-          Pagos online próximamente. Por ahora confirmamos tu reserva por
-          WhatsApp y recoges en tienda — sin compromiso hasta que vengas.
+          Paga con tarjeta de forma segura o confirma tu reserva por WhatsApp.
         </p>
       </header>
       <CartView />

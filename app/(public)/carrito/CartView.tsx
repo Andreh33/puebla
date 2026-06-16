@@ -16,6 +16,7 @@ import { buildCartWhatsAppMessage } from "@/lib/cart/whatsapp-message";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { formatPriceEUR } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { CheckoutButton } from "@/components/public/CheckoutButton";
 
 export function CartView() {
   const { items, count, total, updateQty, removeItem, clear, ready } =
@@ -147,13 +148,18 @@ export function CartView() {
             </span>
           </div>
 
+          <CheckoutButton
+            items={items}
+            className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-zs-blue-900 px-4 text-base font-semibold text-white shadow-sm transition hover:bg-zs-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+
           <a
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-base font-semibold text-white shadow-sm transition hover:bg-[#1ebe57]"
+            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"
           >
-            <MessageCircle className="h-5 w-5" /> Reservar todo por WhatsApp
+            <MessageCircle className="h-5 w-5" /> Reservar por WhatsApp
           </a>
 
           <button
@@ -171,12 +177,6 @@ export function CartView() {
           >
             Vaciar carrito
           </button>
-
-          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-snug text-amber-900">
-            <strong className="font-semibold">Pagos online próximamente.</strong>{" "}
-            Por ahora confirmamos por WhatsApp y recoges en tienda
-            (C. Silos, 3, Puebla de la Calzada).
-          </div>
         </div>
       </aside>
     </div>

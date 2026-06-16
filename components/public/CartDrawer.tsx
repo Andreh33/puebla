@@ -15,6 +15,7 @@ import { buildCartWhatsAppMessage } from "@/lib/cart/whatsapp-message";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { formatPriceEUR } from "@/lib/utils";
 import { itemKey } from "@/lib/cart/store";
+import { CheckoutButton } from "@/components/public/CheckoutButton";
 
 type Props = {
   open: boolean;
@@ -136,16 +137,16 @@ export function CartDrawer({ open, onOpenChange }: Props) {
               </span>
             </div>
             <p className="mb-3 text-[11px] leading-snug text-zs-muted">
-              IVA incluido. Pagos online próximamente — confirmamos por
-              WhatsApp y recoges en tienda.
+              IVA incluido. Paga con tarjeta o confirma por WhatsApp.
             </p>
             <div className="flex flex-col gap-2">
+              <CheckoutButton items={items} />
               <a
                 href={whatsappHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => onOpenChange(false)}
-                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1ebe57]"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"
               >
                 <MessageCircle className="h-4 w-4" /> Reservar por WhatsApp
               </a>
