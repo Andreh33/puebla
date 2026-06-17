@@ -237,6 +237,9 @@ export async function POST(req: NextRequest) {
                 footwearType: deriveFootwearTypeFromSlugs(categorySlugs),
                 garmentType: deriveGarmentTypeFromSlugs(categorySlugs),
                 garmentVariant: deriveGarmentVariantFromSlugs(categorySlugs),
+                // Marca la corrección manual para que el próximo re-import NO la
+                // pise (processGroup respeta isCustomized en categorías/tipos).
+                isCustomized: true,
               },
             });
 

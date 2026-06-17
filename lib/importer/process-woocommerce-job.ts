@@ -227,6 +227,15 @@ export async function processGroup(
 
   const existing = await tx.product.findUnique({
     where: { source_externalId: { source: "LOCAL", externalId: p.externalId } },
+    select: {
+      id: true,
+      name: true,
+      retailPrice: true,
+      status: true,
+      // isCustomized: el cliente ha corregido categorías/tipos a mano por SKU.
+      // Si es true, el re-import NO debe revertir esa clasificación manual.
+      isCustomized: true,
+    },
   });
 
   if (!existing && options.mode === "update_only") {
@@ -294,14 +303,11 @@ export async function processGroup(
       },
     });
   } else {
-    // Si el producto ya existe con isCustomized, no tocamos nombre/desc/slug/precios.
+    // Campos que SIEMPRE se refrescan desde el feed (inventario, peso, tags,
+    // precios de coste, identificadores), tanto para productos automáticos como
+    // customizados — el cliente reimporta para actualizar stock/precio del feed.
     const updateData: Prisma.ProductUpdateInput = {
       brand: { connect: { id: brandId } },
-      category: { connect: { id: categoryId } },
-      primaryCategory: primaryId ? { connect: { id: primaryId } } : { disconnect: true },
-      footwearType: commonData.footwearType,
-      garmentType: commonData.garmentType,
-      garmentVariant: commonData.garmentVariant,
       modelCode: commonData.modelCode,
       sku: commonData.sku,
       colorName: commonData.colorName,
@@ -314,6 +320,12 @@ export async function processGroup(
     };
 
     if (!existing.isCustomized) {
+      // Producto NO customizado: recibe su clasificación automática completa.
+      updateData.category = { connect: { id: categoryId } };
+      updateData.primaryCategory = primaryId ? { connect: { id: primaryId } } : { disconnect: true };
+      updateData.footwearType = commonData.footwearType;
+      updateData.garmentType = commonData.garmentType;
+      updateData.garmentVariant = commonData.garmentVariant;
       updateData.name = p.name;
       updateData.shortName = p.shortName;
       updateData.description = p.description;
@@ -323,6 +335,10 @@ export async function processGroup(
         updateData.slug = await buildUniqueProductSlug(tx, p.name, existing.id);
       }
     }
+    // Si existing.isCustomized === true: NO se tocan category/primaryCategory/
+    // footwearType/garmentType/garmentVariant (la edición manual del cliente por
+    // SKU). Tampoco name/desc/precios/slug. El m2m ProductCategory se salta más
+    // abajo con la misma condición.
 
     const after = await tx.product.update({
       where: { id: existing.id },
@@ -355,8 +371,10 @@ export async function processGroup(
   // M2M ProductCategory: enlaza el producto con las categorías del árbol canónico.
   // REPLACE idempotente: borra el m2m previo y recrea. Si el producto es UNCLASSIFIED
   // (treeIds vacío), no toca m2m — queda en DRAFT para revisión manual del admin.
+  // Si el producto ya existía y está customizado (categorías corregidas a mano por
+  // el cliente), NO tocamos su m2m — protegido igual que category/primaryCategory.
   const idsToLink = Array.from(treeIds.values());
-  if (idsToLink.length) {
+  if (idsToLink.length && !existing?.isCustomized) {
     await tx.productCategory.deleteMany({ where: { productId } });
     await tx.productCategory.createMany({
       data: idsToLink.map((categoryId) => ({ productId, categoryId })),

@@ -610,17 +610,27 @@ export async function parseWooCommerceFile(filePath: string): Promise<{
     }
   }
 
-  // Si el padre es variable y tiene retailPrice null, lo deducimos del primer variation
+  // Si el padre es variable y tiene retailPrice null, lo deducimos de las
+  // variations. Tomamos el MÍNIMO precio entre las tallas con precio (>0) — así
+  // el padre muestra el "desde X €" correcto cuando hay precios por talla, en
+  // vez de heredar el precio de la primera talla del CSV.
   for (const g of groups) {
-    if (!g.parent.retailPrice && g.variations[0]?.retailPrice) {
-      g.parent.retailPrice = g.variations[0].retailPrice;
-      if (
-        !g.parent.salePrice &&
-        g.variations[0].salePrice &&
-        g.parent.retailPrice &&
-        g.variations[0].salePrice.lt(g.parent.retailPrice)
-      ) {
-        g.parent.salePrice = g.variations[0].salePrice;
+    if (g.parent.retailPrice) continue;
+    const retails = g.variations
+      .map((v) => v.retailPrice)
+      .filter((p): p is Decimal => p != null && p.gt(0));
+    if (retails.length === 0) continue;
+    const minRetail = retails.reduce((min, p) => (p.lt(min) ? p : min));
+    g.parent.retailPrice = minRetail;
+
+    // salePrice: mínimo de las rebajas válidas (>0 y < retail heredado) si el
+    // padre no traía ninguna. Espeja la regla de mapWooParentToProduct.
+    if (!g.parent.salePrice) {
+      const sales = g.variations
+        .map((v) => v.salePrice)
+        .filter((p): p is Decimal => p != null && p.gt(0) && p.lt(minRetail));
+      if (sales.length > 0) {
+        g.parent.salePrice = sales.reduce((min, p) => (p.lt(min) ? p : min));
       }
     }
   }
