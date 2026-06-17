@@ -41,7 +41,7 @@ const CALZADO_TIPOS: Array<{ slug: string; name: string }> = [
   { slug: "baloncesto", name: "Baloncesto" },
   { slug: "chanclas", name: "Chanclas" },
 ];
-const TEXTIL_TIPOS: Array<{ slug: string; name: string }> = [
+const TEXTIL_TIPOS: Array<{ slug: string; name: string; soloGeneros?: string[] }> = [
   { slug: "camiseta", name: "Camisetas" },
   { slug: "polo", name: "Polos" },
   { slug: "sudadera", name: "Sudaderas" },
@@ -54,6 +54,9 @@ const TEXTIL_TIPOS: Array<{ slug: string; name: string }> = [
   { slug: "pantalon", name: "Pantalones" },
   { slug: "mallas", name: "Mallas y leggins" },
   { slug: "banador", name: "Bañadores" },
+  // Faldas y Vestidos SOLO en mujer y niña (no aplican a hombre/niño/bebé).
+  { slug: "falda", name: "Faldas", soloGeneros: ["mujer", "nina"] },
+  { slug: "vestido", name: "Vestidos", soloGeneros: ["mujer", "nina"] },
 ];
 
 // Nivel 3 (4º nivel del árbol): variantes finas de prenda bajo el nodo de tipo
@@ -148,7 +151,7 @@ export const TAXONOMY_TREE: TaxonomyNode[] = [
     })),
   ),
   ...GENEROS.flatMap((g) =>
-    TEXTIL_TIPOS.map((t, i) => ({
+    TEXTIL_TIPOS.filter((t) => !t.soloGeneros || t.soloGeneros.includes(g.slug)).map((t, i) => ({
       slug: `${g.slug}-textil-${t.slug}`,
       name: t.name,
       parentSlug: `${g.slug}-textil`,
