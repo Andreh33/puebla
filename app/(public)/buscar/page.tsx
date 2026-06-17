@@ -101,6 +101,11 @@ export default async function SearchPage({
                       salePrice: p.salePrice != null ? Number(p.salePrice) : null,
                       source: p.source,
                       brand: p.brand,
+                      totalStock:
+                        p.sizes.length > 0
+                          ? p.sizes.reduce((acc, s) => acc + s.stock, 0)
+                          : p.stock,
+                      availableSizes: p.sizes.filter((s) => s.stock > 0).map((s) => s.size),
                     }}
                   />
                 ))}
@@ -169,7 +174,9 @@ async function fetchProducts(q: string) {
         retailPrice: true,
         salePrice: true,
         source: true,
+        stock: true,
         brand: { select: { name: true, slug: true } },
+        sizes: { select: { size: true, stock: true } },
       },
     });
     return real;

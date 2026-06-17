@@ -344,7 +344,7 @@ export default async function SeccionFamiliaPage({
               <EmptyState
                 variant="no-products"
                 cta={{ label: "Quitar todos los filtros", href: `/${seccion}/${familia}` }}
-                secondaryCta={{ label: "Ver todas las categorías", href: "/marcas" }}
+                secondaryCta={{ label: "Ver todas las categorías", href: "/catalogo" }}
               />
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">

@@ -586,9 +586,11 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   </Label>
                   <button
                     type="button"
+                    disabled={mode === "create"}
                     onClick={async () => {
+                      if (mode === "create" || !initial) return;
                       const { generateDescriptionAction } = await import("../_actions");
-                      const res = await generateDescriptionAction(initial!.id);
+                      const res = await generateDescriptionAction(initial.id);
                       if (res.ok) {
                         setValue("description", res.description, { shouldDirty: true });
                         if (!(watched.metaDescription?.trim().length ?? 0)) {
@@ -599,8 +601,12 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         toast.error(res.error);
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
-                    title="Aplica una plantilla genérica adaptada a la categoría del producto"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
+                    title={
+                      mode === "create"
+                        ? "Guarda el producto primero para generar la descripción con IA"
+                        : "Aplica una plantilla genérica adaptada a la categoría del producto"
+                    }
                   >
                     ✨ Generar descripción
                   </button>
@@ -1081,9 +1087,11 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   </Label>
                   <button
                     type="button"
+                    disabled={mode === "create"}
                     onClick={async () => {
+                      if (mode === "create" || !initial) return;
                       const { generateMetaDescriptionAction } = await import("../_actions");
-                      const res = await generateMetaDescriptionAction(initial!.id);
+                      const res = await generateMetaDescriptionAction(initial.id);
                       if (res.ok) {
                         setValue("metaDescription", res.metaDescription, { shouldDirty: true });
                         toast.success("Meta descripción generada.");
@@ -1091,8 +1099,12 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         toast.error(res.error);
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
-                    title="Genera un meta description corto (155 chars max) a partir de marca, color y categoría"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
+                    title={
+                      mode === "create"
+                        ? "Guarda el producto primero para generar la meta con IA"
+                        : "Genera un meta description corto (155 chars max) a partir de marca, color y categoría"
+                    }
                   >
                     ✨ Generar meta
                   </button>

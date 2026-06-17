@@ -897,7 +897,18 @@ export function buildProductWhere(opts: {
     };
   }
   if (filters.oferta) {
-    where.salePrice = { not: null };
+    // "En oferta" debe coincidir con lo que la card marca como oferta: una card
+    // solo pinta oferta si salePrice < retailPrice (ver lib/price.ts → effectivePrice).
+    // Un salePrice no nulo pero >= retailPrice NO es oferta. Prisma no compara dos
+    // columnas en un where simple, pero sí admite la comparación por referencia de
+    // campo ({ _ref, _container }) desde Prisma 5; la usamos para exigir
+    // salePrice != null Y salePrice < retailPrice sin raw SQL ni post-filtro
+    // (mantiene buildProductWhere puro/síncrono y un único `where` para count,
+    // findMany y facetas).
+    where.salePrice = {
+      not: null,
+      lt: db.product.fields.retailPrice,
+    };
   }
   if (filters.nuevo) {
     const date = new Date();

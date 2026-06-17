@@ -241,6 +241,17 @@ export default async function CategoryPage({
     return qs ? `/${category.slug}?${qs}` : `/${category.slug}`;
   };
 
+  // Chips de sub-categoría: conservan los filtros activos (marca/color/talla/
+  // precio…) y solo cambian/limpian ?sub=, reseteando la paginación. baseQs ya
+  // excluye `page`; pasar `null` como slug equivale al chip "Todos".
+  const subUrl = (slug: string | null) => {
+    const q = new URLSearchParams(baseQs);
+    if (slug) q.set("sub", slug);
+    else q.delete("sub");
+    const qs = q.toString();
+    return qs ? `/${category.slug}?${qs}` : `/${category.slug}`;
+  };
+
   // Borde pastel animado en ~20% del listado actual (no del catálogo total).
   const animatedIds = selectAnimatedBorderIds(products);
 
@@ -318,8 +329,8 @@ export default async function CategoryPage({
                 tiene hijas (p.ej. accesorios). "Todos" + cada hija; ?sub= filtra. */}
             {subCats.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                <a
-                  href={`/${category.slug}`}
+                <Link
+                  href={subUrl(null)}
                   className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
                     !activeSub
                       ? "bg-zs-red-600 text-white"
@@ -327,11 +338,11 @@ export default async function CategoryPage({
                   }`}
                 >
                   Todos
-                </a>
+                </Link>
                 {subCats.map((c) => (
-                  <a
+                  <Link
                     key={c.id}
-                    href={`/${category.slug}?sub=${encodeURIComponent(c.slug)}`}
+                    href={subUrl(c.slug)}
                     className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
                       activeSub?.id === c.id
                         ? "bg-zs-red-600 text-white"
@@ -339,7 +350,7 @@ export default async function CategoryPage({
                     }`}
                   >
                     {c.name}
-                  </a>
+                  </Link>
                 ))}
               </div>
             )}
@@ -352,7 +363,7 @@ export default async function CategoryPage({
               <EmptyState
                 variant="no-products"
                 cta={{ label: "Quitar todos los filtros", href: `/${category.slug}` }}
-                secondaryCta={{ label: "Ver todas las categorías", href: "/marcas" }}
+                secondaryCta={{ label: "Ver todas las categorías", href: "/catalogo" }}
               />
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
