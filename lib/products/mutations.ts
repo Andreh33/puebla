@@ -124,9 +124,16 @@ export async function createProduct(
     derivedGarmentVariant = deriveGarmentVariantFromSlugs(slugs);
   }
 
+  // brandId/categoryId son los FK ESCALARES; abajo conectamos las relaciones
+  // (brand/category) con `connect`. Hay que excluirlos del objeto de datos en
+  // RUNTIME: el `as Omit<…>` anterior solo cambiaba el TIPO, no el valor, así
+  // que `brandId`/`categoryId` seguían colándose en el spread y Prisma rechaza
+  // recibir a la vez el escalar y la relación → lanzaba 500 al crear el producto.
+  const { brandId, categoryId, ...productScalars } = parsed;
+
   const created = await db.$transaction(async (tx) => {
     const createData: Prisma.ProductCreateInput = {
-      ...(parsed as Omit<typeof parsed, "brandId" | "categoryId">),
+      ...productScalars,
       slug,
       description: autoDescription ?? parsed.description,
       metaDescription: autoMeta ?? parsed.metaDescription,
@@ -142,8 +149,8 @@ export async function createProduct(
       externalUrl: parsed.externalUrl || null,
       colorHex: parsed.colorHex || null,
       publishedAt: parsed.status === "ACTIVE" ? new Date() : null,
-      brand: { connect: { id: parsed.brandId } },
-      category: { connect: { id: extra.categoryIds?.length && resolvedPrimaryId ? resolvedPrimaryId : parsed.categoryId } },
+      brand: { connect: { id: brandId } },
+      category: { connect: { id: extra.categoryIds?.length && resolvedPrimaryId ? resolvedPrimaryId : categoryId } },
     };
 
     if (resolvedPrimaryId) {
