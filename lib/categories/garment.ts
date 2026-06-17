@@ -33,7 +33,7 @@ export const GARMENT_TYPE_LABELS: Record<GarmentType, string> = {
   chaqueta: "Chaquetas",
   abrigo: "Abrigos",
   cortavientos: "Cortavientos",
-  chandal: "Chándales",
+  chandal: "Chándal",
   conjunto: "Conjuntos",
   pantalon: "Pantalones",
   bermuda: "Bermudas y shorts",

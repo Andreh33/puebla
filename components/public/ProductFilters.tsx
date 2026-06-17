@@ -272,7 +272,9 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
 
       {data.brands.length > 0 && (
         <FilterGroup title="Marca" defaultOpen={groupOpen} className={compact ? "order-2" : undefined}>
-          {data.brands.map((b) => (
+          {/* "Sin marca" oculto del filtro a petición del cliente (los productos
+              conservan su marca; solo no se ofrece como chip de filtro). */}
+          {data.brands.filter((b) => !/^sin[\s-]?marca$/i.test(b.label)).map((b) => (
             <label key={b.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2">
                 <Checkbox
@@ -381,7 +383,9 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       {showGarmentFilter && data.garmentTypes && data.garmentTypes.length > 0 && (
         <FilterGroup title="Tipo de prenda" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1">
-            {data.garmentTypes.map((g) => {
+            {/* "chaqueta" oculta del filtro a petición del cliente (los productos
+                siguen en la tienda; solo no se ofrece el chip de filtro). */}
+            {data.garmentTypes.filter((g) => g.value !== "chaqueta").map((g) => {
               const garmentValue = g.value as GarmentType;
               const checked = activePrenda.includes(garmentValue);
               const hasVariants = (TYPES_WITH_VARIANT as readonly string[]).includes(garmentValue);

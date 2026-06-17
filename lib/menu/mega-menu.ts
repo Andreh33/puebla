@@ -72,7 +72,9 @@ const ROPA_PRENDAS: Array<{ label: string; prenda: string }> = [
   { label: "Sudaderas", prenda: "sudadera" },
   { label: "Polares", prenda: "polar" },
   { label: "Chándal", prenda: "chandal" },
-  { label: "Chaquetas", prenda: "chaqueta" },
+  // "Chaquetas" oculto del megamenú a petición del cliente (los productos siguen
+  // en la tienda; reactivar = descomentar la línea):
+  // { label: "Chaquetas", prenda: "chaqueta" },
   { label: "Abrigos", prenda: "abrigo" },
   { label: "Cortavientos", prenda: "cortavientos" },
   { label: "Conjuntos", prenda: "conjunto" },
