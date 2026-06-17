@@ -472,6 +472,26 @@ model Order {
   @@index([customerEmail])
 }
 
+// ----------------------------------------------------------------------------
+// Clientes (libreta del TPV) — entidad reutilizable para el punto de venta.
+// Se rellena al pulsar "Guardar cliente" en la caja y, best-effort, en cada
+// venta presencial con nombre/teléfono. Los pedidos siguen guardando su
+// customerName/customerPhone denormalizado; no hay FK (la deduplicación se
+// hace por teléfono o, en su defecto, por nombre).
+// ----------------------------------------------------------------------------
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([phone])
+}
+
 model OrderItem {
   id          String   @id @default(cuid())
   orderId     String

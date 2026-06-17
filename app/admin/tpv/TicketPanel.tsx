@@ -14,9 +14,17 @@ import {
   X,
   ShoppingCart,
   CreditCard,
+  Loader2,
+  Search,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn, formatPriceEUR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  searchCustomersAction,
+  saveCustomerAction,
+  type PosCustomer,
+} from "@/app/admin/pedidos/pos-actions";
 import {
   Popover,
   PopoverContent,
@@ -361,13 +369,70 @@ function CustomerPill({
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState(cart.customerName);
   const [phone, setPhone] = React.useState(cart.customerPhone);
+  const [results, setResults] = React.useState<PosCustomer[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
 
+  // Al abrir: precarga los campos con el cliente del ticket vigente.
   React.useEffect(() => {
     if (open) {
       setName(cart.customerName);
       setPhone(cart.customerPhone);
     }
   }, [open, cart.customerName, cart.customerPhone]);
+
+  // Busca en la libreta según el campo Nombre (debounce 250 ms). Vacío = recientes.
+  React.useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    setLoading(true);
+    const t = setTimeout(() => {
+      searchCustomersAction(name.trim())
+        .then((rows) => alive && setResults(rows))
+        .catch(() => alive && setResults([]))
+        .finally(() => alive && setLoading(false));
+    }, 250);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [open, name]);
+
+  function pick(c: PosCustomer) {
+    onSetCustomer(c.name, c.phone ?? "");
+    setOpen(false);
+  }
+
+  function attachOnly() {
+    onSetCustomer(name.trim(), phone.trim());
+    setOpen(false);
+  }
+
+  async function save() {
+    const n = name.trim();
+    const p = phone.trim();
+    if (!n && !p) {
+      toast.error("Indica al menos el nombre o el WhatsApp");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await saveCustomerAction({ name: n, phone: p });
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      onSetCustomer(res.customer.name, res.customer.phone ?? "");
+      toast.success("Cliente guardado en la libreta");
+      setOpen(false);
+    } catch {
+      toast.error("No se pudo guardar el cliente");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const showResults = loading || results.length > 0 || name.trim().length > 0;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -396,15 +461,49 @@ function CustomerPill({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zs-muted">Datos del cliente</p>
-        <input
-          autoFocus
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre"
-          className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-sm outline-none focus:border-zs-blue-700"
-        />
+      <PopoverContent align="start" className="w-72 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zs-muted">Cliente</p>
+
+        {/* Nombre — también busca en la libreta de clientes guardados */}
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zs-muted" />
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre (o busca uno guardado)"
+            className="h-9 w-full rounded-lg border border-zs-border pl-8 pr-2.5 text-sm outline-none focus:border-zs-blue-700"
+          />
+        </div>
+
+        {/* Desplegable de la libreta */}
+        {showResults && (
+          <div className="max-h-36 overflow-y-auto scrollbar-thin rounded-lg border border-zs-border">
+            {loading ? (
+              <p className="px-2.5 py-2 text-xs text-zs-muted">Buscando…</p>
+            ) : results.length === 0 ? (
+              <p className="px-2.5 py-2 text-xs text-zs-muted">
+                {name.trim()
+                  ? "Sin coincidencias — pulsa Guardar para crearlo."
+                  : "Aún no hay clientes guardados."}
+              </p>
+            ) : (
+              results.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => pick(c)}
+                  className="flex w-full items-center gap-2 border-b border-zs-border px-2.5 py-1.5 text-left last:border-0 hover:bg-zs-surface"
+                >
+                  <User className="h-3.5 w-3.5 shrink-0 text-zs-muted" />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-zs-ink">{c.name}</span>
+                  {c.phone && <span className="shrink-0 text-xs tabular-nums text-zs-muted">{c.phone}</span>}
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
@@ -412,17 +511,16 @@ function CustomerPill({
           inputMode="tel"
           className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-sm outline-none focus:border-zs-blue-700"
         />
-        <Button
-          type="button"
-          size="sm"
-          className="w-full"
-          onClick={() => {
-            onSetCustomer(name.trim(), phone.trim());
-            setOpen(false);
-          }}
-        >
-          Guardar cliente
-        </Button>
+
+        <div className="grid grid-cols-2 gap-2 pt-0.5">
+          <Button type="button" variant="outline" size="sm" onClick={attachOnly}>
+            Solo este ticket
+          </Button>
+          <Button type="button" size="sm" disabled={saving} onClick={save}>
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Guardar
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );
