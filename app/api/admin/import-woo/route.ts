@@ -253,37 +253,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, results });
   }
 
-  // Diagnóstico de conexión a Stripe (aísla: clave malformada vs egress de red).
-  // NO expone la clave: solo longitud, prefijo (sk_live_/sk_test_) y si tiene
-  // espacios. Prueba un fetch crudo a Stripe y a un host neutro (egress general).
-  if (body.action === "stripe_diag") {
-    const key = process.env.STRIPE_SECRET_KEY ?? "";
-    const probe = async (url: string, headers?: Record<string, string>) => {
-      try {
-        const r = await fetch(url, { headers, signal: AbortSignal.timeout(15000) });
-        return { reached: true, status: r.status };
-      } catch (e) {
-        return { reached: false, error: (e as Error).message };
-      }
-    };
-    const [stripeApi, neutral] = await Promise.all([
-      probe("https://api.stripe.com/v1/balance", { Authorization: `Bearer ${key.trim()}` }),
-      probe("https://api.github.com"),
-    ]);
-    return NextResponse.json({
-      ok: true,
-      key: {
-        present: key.length > 0,
-        length: key.length,
-        prefix: key.slice(0, 8),
-        hasWhitespace: /\s/.test(key),
-        trimmedLength: key.trim().length,
-      },
-      stripeApi,
-      neutralHost: neutral,
-    });
-  }
-
   const rawGroups: unknown[] = Array.isArray(body.groups) ? body.groups : [];
   const mode: ImportMode = body.mode ?? "create_update";
   const defaultStatus: "DRAFT" | "ACTIVE" | "INACTIVE" = body.defaultStatus ?? "DRAFT";

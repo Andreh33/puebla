@@ -32,8 +32,15 @@ export function getStripe(): Stripe | null {
   if (_stripe) return _stripe;
   const key = process.env[STRIPE_ENV_VARS.secret];
   if (!key) return null;
+  // Defensa: una clave pegada en Vercel puede traer saltos de línea o espacios
+  // (p.ej. copiada desde un correo/doc que la parte en 2 líneas). Un \n en
+  // MEDIO de la clave rompe la cabecera Authorization → "invalid header value"
+  // → StripeConnectionError ("error de conexión con Stripe"). Las claves de
+  // Stripe nunca contienen whitespace, así que lo quitamos todo para que
+  // funcione aunque venga mal pegada.
+  const cleanKey = key.replace(/\s+/g, "");
 
-  _stripe = new Stripe(key, {
+  _stripe = new Stripe(cleanKey, {
     // Pin de versión: usamos la última soportada por el SDK instalado
     // (`stripe@22.x` → `2026-04-22.dahlia`). El typings de `LatestApiVersion`
     // se actualiza con el paquete; un cliente sin pin usa por defecto la
