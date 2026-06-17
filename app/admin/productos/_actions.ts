@@ -339,6 +339,55 @@ export async function generateDescriptionAction(productId: string): Promise<
   return { ok: true, description: result.description, metaDescription: result.metaDescription };
 }
 
+export interface DescriptionFieldsActionInput {
+  name: string;
+  brandName?: string | null;
+  categorySlug?: string | null;
+  colorName?: string | null;
+}
+
+/**
+ * Genera una descripción a partir de los CAMPOS del formulario (sin que el
+ * producto esté guardado). Funciona tanto al crear como al editar: el editor
+ * pasa name/brandName/categorySlug/colorName resueltos en cliente. Si no hay
+ * plantillas sembradas devuelve error con la pista del setup.
+ */
+export async function generateDescriptionFromFieldsAction(
+  input: DescriptionFieldsActionInput,
+): Promise<{ ok: true; description: string } | { ok: false; error: string }> {
+  await requireSession();
+  if (!input?.name || !input.name.trim()) {
+    return { ok: false, error: "Escribe primero el nombre del producto." };
+  }
+  const { generateDescriptionFromFields } = await import("@/lib/products/description");
+  const description = await generateDescriptionFromFields(input);
+  if (!description) {
+    return {
+      ok: false,
+      error:
+        "No hay plantillas para esta categoría. Siembra los templates con POST /api/admin/setup primero.",
+    };
+  }
+  return { ok: true, description };
+}
+
+/**
+ * Genera una meta description a partir de los CAMPOS del formulario (sin
+ * guardar). Siempre devuelve un meta razonable (cae en la genérica si no hay
+ * plantilla con metaShort). Requiere al menos el nombre.
+ */
+export async function generateMetaFromFieldsAction(
+  input: DescriptionFieldsActionInput,
+): Promise<{ ok: true; metaDescription: string } | { ok: false; error: string }> {
+  await requireSession();
+  if (!input?.name || !input.name.trim()) {
+    return { ok: false, error: "Escribe primero el nombre del producto." };
+  }
+  const { generateMetaFromFields } = await import("@/lib/products/description");
+  const metaDescription = await generateMetaFromFields(input);
+  return { ok: true, metaDescription };
+}
+
 export async function generateMetaDescriptionAction(productId: string): Promise<
   | { ok: true; metaDescription: string }
   | { ok: false; error: string }

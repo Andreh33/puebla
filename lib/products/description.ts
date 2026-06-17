@@ -129,3 +129,76 @@ function truncateMeta(text: string): string {
 export function applyTemplate(template: string, product: ProductInfo): string {
   return applyPlaceholders(template, product);
 }
+
+// ---------------------------------------------------------------------------
+// Generación desde los CAMPOS del formulario (sin producto guardado)
+// ---------------------------------------------------------------------------
+
+export interface DescriptionFieldsInput {
+  name: string;
+  brandName?: string | null;
+  categorySlug?: string | null;
+  colorName?: string | null;
+}
+
+/**
+ * Convierte un slug de categoría en un nombre legible para el placeholder
+ * {category} (no tenemos el Category.name aquí). "anorack-treking" →
+ * "anorack treking". Es una aproximación suficiente para el copy comercial;
+ * el admin edita el texto después.
+ */
+function readableCategory(slug: string | null | undefined): string {
+  if (!slug || slug === "default") return "deportivo";
+  return slug.replace(/-/g, " ");
+}
+
+/**
+ * Construye un ProductInfo a partir de los campos sueltos del form,
+ * rellenando con valores neutros lo que falte, para reutilizar
+ * `applyPlaceholders` tal cual.
+ */
+function fieldsToProductInfo(input: DescriptionFieldsInput): ProductInfo {
+  return {
+    name: input.name?.trim() || "Producto",
+    colorName: input.colorName?.trim() || "Único",
+    brand: { name: input.brandName?.trim() || "Zona Sport" },
+    category: {
+      name: readableCategory(input.categorySlug),
+      slug: input.categorySlug?.trim() || "default",
+    },
+  };
+}
+
+/**
+ * Igual que `generateAutoDescription` pero a partir de los CAMPOS del
+ * formulario (no de un productId). NO lee el producto de la BD —permite
+ * generar antes de guardar, al CREAR—, aunque SÍ consulta `descriptionTemplate`
+ * para elegir la plantilla por categoría (fallback "default"). Devuelve el
+ * texto ya con los placeholders sustituidos, o `null` si no hay plantillas
+ * sembradas.
+ */
+export async function generateDescriptionFromFields(
+  input: DescriptionFieldsInput,
+): Promise<string | null> {
+  const productInfo = fieldsToProductInfo(input);
+  const template = await pickTemplateForCategory(productInfo.category.slug);
+  if (!template) return null;
+  return applyPlaceholders(template.body, productInfo);
+}
+
+/**
+ * Igual que la meta automática pero desde los campos del form. Si hay una
+ * plantilla de la categoría con `metaShort`, la usa (y trunca); si no, cae
+ * en la meta genérica por concatenación. Nunca devuelve null: siempre hay
+ * un meta razonable aunque no haya plantillas en BD.
+ */
+export async function generateMetaFromFields(
+  input: DescriptionFieldsInput,
+): Promise<string> {
+  const productInfo = fieldsToProductInfo(input);
+  const template = await pickTemplateForCategory(productInfo.category.slug);
+  if (template?.metaShort) {
+    return truncateMeta(applyPlaceholders(template.metaShort, productInfo));
+  }
+  return generateAutoMetaFromProduct(productInfo);
+}

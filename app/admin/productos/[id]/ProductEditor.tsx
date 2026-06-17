@@ -445,6 +445,18 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     return cats.find((c) => c.id === primaryCategoryId)?.slug ?? null;
   }, [primaryCategoryId, cats]);
 
+  // Construye el input para las acciones "generar desde campos del form".
+  // Resuelve brandName del brandId seleccionado contra la lista `brands`,
+  // y usa el slug de la categoría principal. Funciona pre-guardado.
+  function descriptionFieldsInput() {
+    return {
+      name: watched.name?.trim() ?? "",
+      brandName: brands.find((b) => b.id === watched.brandId)?.name ?? null,
+      categorySlug: primaryCatSlug,
+      colorName: watched.colorName ?? null,
+    };
+  }
+
   // Submit
   const onSubmit = (publish: boolean): SubmitHandler<FormValues> => async (values) => {
     if (slugStatus === "taken") {
@@ -588,15 +600,22 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   </Label>
                   <button
                     type="button"
-                    disabled={mode === "create"}
                     onClick={async () => {
-                      if (mode === "create" || !initial) return;
-                      const { generateDescriptionAction } = await import("../_actions");
-                      const res = await generateDescriptionAction(initial.id);
+                      if (!watched.name?.trim()) {
+                        toast.error("Escribe primero el nombre del producto.");
+                        return;
+                      }
+                      const { generateDescriptionFromFieldsAction } = await import("../_actions");
+                      const res = await generateDescriptionFromFieldsAction(descriptionFieldsInput());
                       if (res.ok) {
                         setValue("description", res.description, { shouldDirty: true });
                         if (!(watched.metaDescription?.trim().length ?? 0)) {
-                          setValue("metaDescription", res.metaDescription, { shouldDirty: true });
+                          const metaRes = await (await import("../_actions")).generateMetaFromFieldsAction(
+                            descriptionFieldsInput(),
+                          );
+                          if (metaRes.ok) {
+                            setValue("metaDescription", metaRes.metaDescription, { shouldDirty: true });
+                          }
                         }
                         toast.success("Descripción generada. Edítala si quieres ajustarla.");
                       } else {
@@ -604,11 +623,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                       }
                     }}
                     className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
-                    title={
-                      mode === "create"
-                        ? "Guarda el producto primero para generar la descripción con IA"
-                        : "Aplica una plantilla genérica adaptada a la categoría del producto"
-                    }
+                    title="Aplica una plantilla adaptada a la categoría a partir de los campos del formulario"
                   >
                     ✨ Generar descripción
                   </button>
@@ -1096,11 +1111,13 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   </Label>
                   <button
                     type="button"
-                    disabled={mode === "create"}
                     onClick={async () => {
-                      if (mode === "create" || !initial) return;
-                      const { generateMetaDescriptionAction } = await import("../_actions");
-                      const res = await generateMetaDescriptionAction(initial.id);
+                      if (!watched.name?.trim()) {
+                        toast.error("Escribe primero el nombre del producto.");
+                        return;
+                      }
+                      const { generateMetaFromFieldsAction } = await import("../_actions");
+                      const res = await generateMetaFromFieldsAction(descriptionFieldsInput());
                       if (res.ok) {
                         setValue("metaDescription", res.metaDescription, { shouldDirty: true });
                         toast.success("Meta descripción generada.");
@@ -1109,11 +1126,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                       }
                     }}
                     className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
-                    title={
-                      mode === "create"
-                        ? "Guarda el producto primero para generar la meta con IA"
-                        : "Genera un meta description corto (155 chars max) a partir de marca, color y categoría"
-                    }
+                    title="Genera un meta description corto (155 chars max) a partir de los campos del formulario"
                   >
                     ✨ Generar meta
                   </button>

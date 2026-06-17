@@ -256,6 +256,72 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, results });
   }
 
+  // Re-siembra el banco de plantillas de descripción: borra TODAS las
+  // DescriptionTemplate actuales y re-inserta el banco ampliado de
+  // lib/seed/description-templates.ts. Idempotente (deja la BD igual al banco).
+  if (body.action === "reseed_description_templates") {
+    const { DESCRIPTION_TEMPLATES } = await import("@/lib/seed/description-templates");
+    await db.descriptionTemplate.deleteMany({});
+    await db.descriptionTemplate.createMany({
+      data: DESCRIPTION_TEMPLATES.map((t) => ({
+        slug: t.slug,
+        label: t.label,
+        categorySlug: t.categorySlug,
+        body: t.body,
+        metaShort: t.metaShort ?? null,
+        position: t.position,
+        isActive: true,
+      })),
+      skipDuplicates: true,
+    });
+    const count = await db.descriptionTemplate.count();
+    return NextResponse.json({ ok: true, count });
+  }
+
+  // Genera descripción (y meta si está vacía) en LOTE para productos SIN
+  // descripción. Reutiliza el motor por id (los productos están guardados).
+  // Filtra description vacío/null + isCustomized:false. Llamar en bucle hasta
+  // que `remaining` sea 0 (como el feeder del import).
+  if (body.action === "generate_descriptions") {
+    const limit =
+      Number.isFinite(body.limit) && body.limit > 0 ? Math.min(Math.floor(body.limit), 500) : 150;
+    const { generateAutoDescription } = await import("@/lib/products/description");
+
+    const where = {
+      isCustomized: false,
+      OR: [{ description: null }, { description: "" }],
+    };
+
+    const products = await db.product.findMany({
+      where,
+      select: { id: true, metaDescription: true },
+      take: limit,
+      orderBy: { createdAt: "asc" },
+    });
+
+    let updated = 0;
+    for (const p of products) {
+      try {
+        const result = await generateAutoDescription(p.id);
+        if (!result) continue;
+        const data: { description: string; metaDescription?: string } = {
+          description: result.description,
+        };
+        if (!p.metaDescription || p.metaDescription.trim() === "") {
+          data.metaDescription = result.metaDescription;
+        }
+        await db.product.update({ where: { id: p.id }, data });
+        updated += 1;
+      } catch (err) {
+        console.error(`[generate_descriptions] ${p.id} falló:`, err);
+      }
+    }
+
+    const remaining = await db.product.count({ where });
+    if (updated > 0) revalidatePath("/", "layout");
+    return NextResponse.json({ ok: true, updated, remaining });
+  }
+
   const rawGroups: unknown[] = Array.isArray(body.groups) ? body.groups : [];
   const mode: ImportMode = body.mode ?? "create_update";
   const defaultStatus: "DRAFT" | "ACTIVE" | "INACTIVE" = body.defaultStatus ?? "DRAFT";
