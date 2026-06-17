@@ -87,6 +87,7 @@ export function MegaMenu({
       ref={panelRef}
       id={panelId}
       role="menu"
+      data-mega-panel="true"
       aria-labelledby={triggerId}
       aria-hidden={!open}
       style={{ top: pos.top, left: pos.left, width: pos.width }}

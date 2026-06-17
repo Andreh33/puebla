@@ -222,7 +222,7 @@ export function Header() {
       // El panel cuelga FUERA de navRef (es hermano de la pill). Sin contemplarlo,
       // pulsar una opción del panel cierra el menú en `mousedown` y desmonta el
       // enlace ANTES de que el click navegue → el enlace no lleva a ningún sitio.
-      const inPanel = document.querySelector('[role="menu"]')?.contains(target) ?? false;
+      const inPanel = document.querySelector('[data-mega-panel]')?.contains(target) ?? false;
       if (!inNav && !inPanel) {
         setMegaKey(null);
       }
@@ -243,7 +243,7 @@ export function Header() {
       const pill = navRef.current?.getBoundingClientRect();
       if (!pill) return;
       const panel = document
-        .querySelector('[role="menu"]')
+        .querySelector('[data-mega-panel]')
         ?.getBoundingClientRect();
       const left = panel ? Math.min(pill.left, panel.left) : pill.left;
       const right = panel ? Math.max(pill.right, panel.right) : pill.right;
@@ -297,7 +297,7 @@ export function Header() {
           <div
             ref={navRef}
             className={cn(
-              "mx-auto flex max-w-[1180px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-2.5 backdrop-blur-md transition-shadow sm:gap-3 sm:px-4 sm:py-3",
+              "mx-auto flex max-w-[1380px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-3 backdrop-blur-md transition-shadow sm:gap-3 sm:px-5 sm:py-3.5",
               scrolled ? "shadow-xl" : "shadow-lg",
             )}
             style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
@@ -340,7 +340,7 @@ export function Header() {
                     onFocus={() => openMega(tab.key)}
                     onClick={() => setMegaKey(null)}
                     className={cn(
-                      "inline-flex items-center rounded-full px-4 py-1.5 text-sm font-bold uppercase tracking-tight transition-all",
+                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-all",
                       active || expanded
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
