@@ -123,12 +123,13 @@ export async function POST(req: NextRequest) {
   // publicados están sin stock (se muestran como "agotado", es intencional).
   if (body.action === "publish_catalog") {
     const base = { externalId: { startsWith: "woocommerce:" }, status: "DRAFT" as const };
-    const [noPhoto, publishedOutOfStock] = await Promise.all([
+    const [noPhoto, keptDraftNoStock] = await Promise.all([
       db.product.count({ where: { ...base, mainImageUrl: null } }),
       db.product.count({ where: { ...base, mainImageUrl: { not: null }, stock: { lte: 0 } } }),
     ]);
+    // Regla del cliente: solo entra en tienda lo que tiene foto Y stock (>0).
     const result = await db.product.updateMany({
-      where: { ...base, mainImageUrl: { not: null } },
+      where: { ...base, mainImageUrl: { not: null }, stock: { gt: 0 } },
       data: { status: "ACTIVE", publishedAt: new Date() },
     });
     // Invalida la caché de TODA la web pública para que el catálogo aparezca ya
@@ -138,8 +139,24 @@ export async function POST(req: NextRequest) {
       ok: true,
       published: result.count,
       keptDraftNoPhoto: noPhoto,
-      publishedOutOfStock,
+      keptDraftNoStock,
     });
+  }
+
+  // Regla del cliente: si un producto no tiene stock, NO debe estar en la tienda.
+  // Pasa a DRAFT los productos ACTIVE sin stock (se ocultan del público). Es
+  // reversible: si vuelven a tener stock y se publican, reaparecen.
+  if (body.action === "draft_zero_stock") {
+    const where = {
+      AND: [
+        { externalId: { startsWith: "woocommerce:" } },
+        { status: "ACTIVE" as const },
+        { stock: { lte: 0 } },
+      ],
+    };
+    const result = await db.product.updateMany({ where, data: { status: "DRAFT" } });
+    revalidatePath("/", "layout");
+    return NextResponse.json({ ok: true, drafted: result.count });
   }
 
   // Asignación manual de categorías por SKU (productos que el clasificador no
