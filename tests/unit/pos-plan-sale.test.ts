@@ -4,12 +4,16 @@ import { planSale, type PosLineInput, type PosProduct } from "@/lib/pos/sale";
 const SHOE: PosProduct = {
   id: "p1", name: "Zapatilla LLO878 Azul", sku: "LLO878", modelCode: null,
   externalId: null, primaryCategorySlug: "hombre-calzado", taxRate: 21,
-  productStock: 0, sizes: [{ size: "40", stock: 3 }, { size: "41", stock: 0 }],
+  productStock: 0, costPrice: 18,
+  sizes: [
+    { size: "40", stock: 3, costPrice: 19.5 },
+    { size: "41", stock: 0 },
+  ],
 };
 const BALL: PosProduct = {
   id: "p2", name: "Balón Joma", sku: "BAL1", modelCode: null,
   externalId: null, primaryCategorySlug: "accesorios", taxRate: 21,
-  productStock: 5, sizes: [],
+  productStock: 5, costPrice: 6, sizes: [],
 };
 
 describe("planSale", () => {
@@ -61,5 +65,30 @@ describe("planSale", () => {
       { productId: "p2", size: null, quantity: 3, unitPrice: 12, lineDiscount: 0 },
     ];
     expect(() => planSale(dup, [BALL])).toThrow(/stock/i);
+  });
+
+  it("congela unitCost: usa el coste de la talla si lo trae", () => {
+    const r = planSale([{ productId: "p1", size: "40", quantity: 1, unitPrice: 30, lineDiscount: 0 }], [SHOE]);
+    expect(r.items[0]!.unitCost).toBe(19.5); // coste de la talla 40
+  });
+
+  it("congela unitCost: cae al coste del producto si la talla no lo trae", () => {
+    // SHOE talla 41 no tiene costPrice propio → fallback al del producto (18),
+    // pero su stock es 0; le subimos stock para que la línea sea válida.
+    const shoeWithStock: PosProduct = {
+      ...SHOE,
+      sizes: [{ size: "41", stock: 2 /* sin costPrice */ }],
+    };
+    const r = planSale(
+      [{ productId: "p1", size: "41", quantity: 1, unitPrice: 30, lineDiscount: 0 }],
+      [shoeWithStock],
+    );
+    expect(r.items[0]!.unitCost).toBe(18); // coste del producto (fallback)
+  });
+
+  it("unitCost null si el producto no tiene coste", () => {
+    const noCost: PosProduct = { ...BALL, id: "p3", costPrice: null };
+    const r = planSale([{ productId: "p3", size: null, quantity: 1, unitPrice: 12, lineDiscount: 0 }], [noCost]);
+    expect(r.items[0]!.unitCost).toBeNull();
   });
 });

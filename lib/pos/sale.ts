@@ -2,6 +2,7 @@ import "server-only";
 import { db, type Prisma } from "@/lib/db";
 import { buildVariantSku, productFamily, skuOrFallback } from "@/lib/pos/sku";
 import { planTotals, round2 } from "@/lib/pos/totals";
+import { recomputeProductStock } from "@/lib/products/stock";
 
 export type PosLineInput = {
   productId: string;
@@ -20,7 +21,9 @@ export type PosProduct = {
   primaryCategorySlug: string | null;
   taxRate: number;
   productStock: number;
-  sizes: Array<{ size: string; stock: number }>;
+  /** Coste del producto (fallback si la talla no trae el suyo). null si no hay. */
+  costPrice?: number | null;
+  sizes: Array<{ size: string; stock: number; costPrice?: number | null }>;
 };
 
 export type PlannedItem = {
@@ -29,6 +32,8 @@ export type PlannedItem = {
   productSku: string;
   variantSize: string | null;
   unitPrice: number;
+  /** Coste unitario congelado (margen histórico). null si el producto no tiene. */
+  unitCost: number | null;
   quantity: number;
   subtotal: number;
 };
@@ -80,12 +85,18 @@ export function planSale(
     const family = productFamily(p.primaryCategorySlug);
     const baseSku = skuOrFallback(p);
     const subtotal = Math.max(0, round2(line.unitPrice * line.quantity - (line.lineDiscount ?? 0)));
+    // Coste unitario: el de la talla si lo trae, si no el del producto.
+    const sizeCost = line.size
+      ? p.sizes.find((s) => s.size === line.size)?.costPrice
+      : undefined;
+    const unitCost = sizeCost ?? p.costPrice ?? null;
     items.push({
       productId: p.id,
       productName: p.name,
       productSku: buildVariantSku({ baseSku, size: line.size, family }),
       variantSize: line.size,
       unitPrice: round2(line.unitPrice),
+      unitCost: unitCost != null ? round2(unitCost) : null,
       quantity: line.quantity,
       subtotal,
     });
@@ -146,15 +157,20 @@ export async function createInStoreSale(
       where: { id: { in: productIds } },
       select: {
         id: true, name: true, sku: true, modelCode: true, externalId: true,
-        stock: true, taxRate: true,
+        stock: true, taxRate: true, costPrice: true,
         primaryCategory: { select: { slug: true } },
-        sizes: { select: { size: true, stock: true } },
+        sizes: { select: { size: true, stock: true, costPrice: true } },
       },
     });
     const products: PosProduct[] = rows.map((r) => ({
       id: r.id, name: r.name, sku: r.sku, modelCode: r.modelCode, externalId: r.externalId,
       primaryCategorySlug: r.primaryCategory?.slug ?? null,
-      taxRate: Number(r.taxRate), productStock: r.stock, sizes: r.sizes,
+      taxRate: Number(r.taxRate), productStock: r.stock,
+      costPrice: r.costPrice != null ? Number(r.costPrice) : null,
+      sizes: r.sizes.map((s) => ({
+        size: s.size, stock: s.stock,
+        costPrice: s.costPrice != null ? Number(s.costPrice) : null,
+      })),
     }));
 
     const planned = planSale(input.lines, products, input.totalDiscount ?? 0);
@@ -171,6 +187,12 @@ export async function createInStoreSale(
           data: { stock: { decrement: delta.quantity } },
         });
       }
+    }
+
+    // Sincroniza Product.stock (suma de tallas) y aplica la regla sellout→DRAFT
+    // también en la caja física: si una venta agota el producto, sale de la web.
+    for (const productId of productIds) {
+      await recomputeProductStock(tx, productId);
     }
 
     const ticketNumber = await nextTicketNumber(tx);
@@ -203,6 +225,7 @@ export async function createInStoreSale(
             productSku: it.productSku,
             variantSize: it.variantSize,
             unitPrice: it.unitPrice.toFixed(2),
+            unitCost: it.unitCost != null ? it.unitCost.toFixed(2) : null,
             quantity: it.quantity,
             subtotal: it.subtotal.toFixed(2),
           })),

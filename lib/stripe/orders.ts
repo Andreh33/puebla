@@ -14,6 +14,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { Prisma, type Order } from "@prisma/client";
 import { db } from "@/lib/db";
+import { recomputeProductStock } from "@/lib/products/stock";
 import { getStripe } from "./client";
 import type { OrderDetail, OrderSummary, ShippingAddress } from "./types";
 
@@ -117,6 +118,11 @@ export async function createOrderFromCheckout(
   if (existing) return existing;
 
   const items = buildItemsFromSession(expandedSession);
+
+  // Congelar el coste unitario (margen histórico). No viene en la metadata de
+  // Stripe, así que lo resolvemos de la BD: ProductSize.costPrice de la talla si
+  // la hay, si no Product.costPrice. Se hace en bloque para no abrir N queries.
+  await fillUnitCosts(items);
   // Subtotal en cntimos ENTEROS directamente desde Stripe (`amount_subtotal`
   // por lnea ya viene en cntimos). Evita el round-trip Decimal-euros → float
   // que reintroduca error de coma flotante (19.99*100 = 1998.9999…).
@@ -144,64 +150,200 @@ export async function createOrderFromCheckout(
     (expandedSession.metadata?.deliveryMethod as string | undefined) ??
     (shippingDetails ? "shipping" : "pickup");
 
-  const order = await db.order.create({
-    data: {
-      stripeSessionId: expandedSession.id,
-      stripePaymentIntentId: paymentIntentId,
-      stripeCustomerId: customerId,
-      customerName:
-        expandedSession.customer_details?.name ?? shippingDetails?.name ?? null,
-      customerEmail: expandedSession.customer_details?.email ?? null,
-      customerPhone: expandedSession.customer_details?.phone ?? null,
-      shippingAddress: extractShippingAddress(expandedSession),
-      subtotal: fromCents(subtotalCents),
-      shippingCost: fromCents(shippingCents),
-      tax: fromCents(taxCents),
-      total: fromCents(totalCents),
-      currency: (expandedSession.currency ?? "eur").toUpperCase(),
-      status: "PAID",
-      paymentStatus: expandedSession.payment_status ?? null,
-      deliveryMethod,
-      metadata: (expandedSession.metadata ?? {}) as Prisma.InputJsonValue,
-      items: { create: items },
-    },
-  });
+  const baseMetadata = (expandedSession.metadata ?? {}) as Record<string, unknown>;
 
-  // Descontar stock (idempotente: solo en pedido nuevo, no en early-return).
-  // Por talla si la hay; si no, del stock global del producto. Clamp a >= 0.
-  for (const it of items) {
-    if (!it.productId) continue;
-    try {
-      if (it.variantSize) {
-        await db.productSize.updateMany({
-          where: { productId: it.productId, size: it.variantSize },
-          data: { stock: { decrement: it.quantity } },
-        });
-        await db.productSize.updateMany({
-          where: { productId: it.productId, size: it.variantSize, stock: { lt: 0 } },
+  // Order + descuento de stock en UNA transacción atómica. El descuento usa una
+  // guarda condicional (`stock >= qty`) para no permitir sobreventa bajo carrera.
+  // Si la carrera ya agotó el stock tras el cobro NO abortamos (el dinero ya
+  // entró): registramos la línea en metadata.oversold para resolución manual.
+  try {
+    const order = await db.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          stripeSessionId: expandedSession.id,
+          stripePaymentIntentId: paymentIntentId,
+          stripeCustomerId: customerId,
+          customerName:
+            expandedSession.customer_details?.name ?? shippingDetails?.name ?? null,
+          customerEmail: expandedSession.customer_details?.email ?? null,
+          customerPhone: expandedSession.customer_details?.phone ?? null,
+          shippingAddress: extractShippingAddress(expandedSession),
+          subtotal: fromCents(subtotalCents),
+          shippingCost: fromCents(shippingCents),
+          tax: fromCents(taxCents),
+          total: fromCents(totalCents),
+          currency: (expandedSession.currency ?? "eur").toUpperCase(),
+          status: "PAID",
+          paymentStatus: expandedSession.payment_status ?? null,
+          deliveryMethod,
+          metadata: baseMetadata as Prisma.InputJsonValue,
+          items: { create: items },
+        },
+      });
+
+      // Descuento condicional + recompute. Acumula líneas sin stock (carrera).
+      const oversold: Array<{ productId: string; size: string | null; qty: number }> =
+        [];
+      const affected = new Set<string>();
+      for (const it of items) {
+        if (!it.productId) continue;
+        affected.add(it.productId);
+        if (it.variantSize) {
+          const res = await tx.productSize.updateMany({
+            where: {
+              productId: it.productId,
+              size: it.variantSize,
+              stock: { gte: it.quantity },
+            },
+            data: { stock: { decrement: it.quantity } },
+          });
+          if (res.count === 0) {
+            oversold.push({
+              productId: it.productId,
+              size: it.variantSize,
+              qty: it.quantity,
+            });
+          }
+        } else {
+          const res = await tx.product.updateMany({
+            where: { id: it.productId, stock: { gte: it.quantity } },
+            data: { stock: { decrement: it.quantity } },
+          });
+          if (res.count === 0) {
+            oversold.push({ productId: it.productId, size: null, qty: it.quantity });
+          }
+        }
+        // Clamp defensivo a >= 0 por si quedó algo negativo de un estado previo.
+        await tx.productSize.updateMany({
+          where: { productId: it.productId, stock: { lt: 0 } },
           data: { stock: 0 },
         });
-      } else {
-        await db.product.update({
-          where: { id: it.productId },
-          data: { stock: { decrement: it.quantity } },
-        }).catch(() => {});
-        await db.product.updateMany({
+        await tx.product.updateMany({
           where: { id: it.productId, stock: { lt: 0 } },
           data: { stock: 0 },
         });
       }
-    } catch (e) {
-      console.warn(
-        "[orders] no se pudo descontar stock",
-        it.productId,
-        it.variantSize,
-        (e as Error).message,
-      );
-    }
-  }
 
-  return order;
+      // Sincroniza Product.stock (suma de tallas) y oculta a DRAFT si llegó a 0.
+      for (const productId of affected) {
+        await recomputeProductStock(tx, productId);
+      }
+
+      // Si hubo sobreventa, deja constancia en el pedido (no rompe la venta).
+      if (oversold.length) {
+        await tx.order.update({
+          where: { id: created.id },
+          data: {
+            metadata: { ...baseMetadata, oversold } as Prisma.InputJsonValue,
+          },
+        });
+      }
+
+      return created;
+    });
+
+    return order;
+  } catch (e) {
+    // Carrera entre dos webhooks: el otro ya creó el Order con este
+    // stripeSessionId/paymentIntentId. Tratar P2002 como éxito (devolver el
+    // existente) para que el webhook acabe en 200 y Stripe no reintente.
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      const winner = await db.order.findUnique({
+        where: { stripeSessionId: expandedSession.id },
+      });
+      if (winner) return winner;
+    }
+    throw e;
+  }
+}
+
+/**
+ * Resuelve y congela el coste unitario de cada item con productId. Lee
+ * ProductSize.costPrice (si hay talla) o Product.costPrice. Muta los items
+ * añadiendo `unitCost` (Decimal). Hace como mucho 2 queries (productos + tallas).
+ */
+async function fillUnitCosts(
+  items: Prisma.OrderItemCreateWithoutOrderInput[],
+): Promise<void> {
+  const productIds = [
+    ...new Set(items.map((it) => it.productId).filter((id): id is string => !!id)),
+  ];
+  if (!productIds.length) return;
+
+  const [products, sizes] = await Promise.all([
+    db.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, costPrice: true },
+    }),
+    db.productSize.findMany({
+      where: { productId: { in: productIds } },
+      select: { productId: true, size: true, costPrice: true },
+    }),
+  ]);
+  const productCost = new Map(products.map((p) => [p.id, p.costPrice]));
+  const sizeCost = new Map(
+    sizes.map((s) => [`${s.productId}::${s.size}`, s.costPrice]),
+  );
+
+  for (const it of items) {
+    if (!it.productId) continue;
+    const fromSize = it.variantSize
+      ? sizeCost.get(`${it.productId}::${it.variantSize}`)
+      : undefined;
+    const cost = fromSize ?? productCost.get(it.productId) ?? null;
+    if (cost != null) it.unitCost = cost;
+  }
+}
+
+// Estados en los que el stock YA se descontó (creación con status=PAID, o
+// avances de fulfillment). Solo desde estos hay que restaurar al revertir.
+const STOCK_DEDUCTED_STATUSES: ReadonlySet<Order["status"]> = new Set([
+  "PAID",
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+]);
+
+/**
+ * Restaura el stock de un pedido (increment por talla/producto) y recalcula el
+ * agregado, en una sola transacción. Idempotente vía marca metadata.stockRestored:
+ * si ya se restauró antes, no duplica. El recompute solo OCULTA (nunca republica),
+ * así que un producto que quedó agotado sigue en DRAFT tras devolverle unidades.
+ */
+async function restoreStockForOrder(orderId: string): Promise<void> {
+  await db.$transaction(async (tx) => {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { metadata: true, items: { select: { productId: true, variantSize: true, quantity: true } } },
+    });
+    if (!order) return;
+    const meta = (order.metadata as Record<string, unknown> | null) ?? {};
+    if (meta.stockRestored === true) return; // ya restaurado
+
+    const affected = new Set<string>();
+    for (const it of order.items) {
+      if (!it.productId) continue;
+      affected.add(it.productId);
+      if (it.variantSize) {
+        await tx.productSize.updateMany({
+          where: { productId: it.productId, size: it.variantSize },
+          data: { stock: { increment: it.quantity } },
+        });
+      } else {
+        await tx.product.updateMany({
+          where: { id: it.productId },
+          data: { stock: { increment: it.quantity } },
+        });
+      }
+    }
+    for (const productId of affected) {
+      await recomputeProductStock(tx, productId);
+    }
+    await tx.order.update({
+      where: { id: orderId },
+      data: { metadata: { ...meta, stockRestored: true } as Prisma.InputJsonValue },
+    });
+  });
 }
 
 /** Marca el Order como REFUNDED a partir de un charge.refunded de Stripe. */
@@ -216,6 +358,15 @@ export async function markOrderRefunded(charge: Stripe.Charge): Promise<Order | 
     where: { stripePaymentIntentId: intentId },
   });
   if (!order) return null;
+
+  // Idempotente: si ya estaba REFUNDED, no re-restaurar ni re-marcar.
+  if (order.status === "REFUNDED") return order;
+
+  // Restaura stock SOLO si el pedido había descontado (estaba en un estado
+  // post-pago). La marca metadata.stockRestored evita restaurar dos veces.
+  if (STOCK_DEDUCTED_STATUSES.has(order.status)) {
+    await restoreStockForOrder(order.id);
+  }
 
   return db.order.update({
     where: { id: order.id },
@@ -233,6 +384,14 @@ export async function markOrderCancelled(
   // Si no había Order creado todavía (el flujo falló antes del completed),
   // no hay nada que cancelar. No es un error.
   if (!order) return null;
+
+  if (order.status === "CANCELLED") return order; // idempotente
+
+  // Si el pedido ya había descontado stock (PAID/PROCESSING/…), restaurar.
+  // Si estaba PENDING (sin descuento), no tocar stock.
+  if (STOCK_DEDUCTED_STATUSES.has(order.status)) {
+    await restoreStockForOrder(order.id);
+  }
 
   return db.order.update({
     where: { id: order.id },

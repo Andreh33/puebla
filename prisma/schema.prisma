@@ -480,6 +480,10 @@ model OrderItem {
   productSku  String?
   variantSize String?
   unitPrice   Decimal  @db.Decimal(10, 2)
+  // Coste unitario CONGELADO en el momento de la venta (margen histórico).
+  // Nullable y aditivo → se aplica solo con `prisma db push` en build. Se rellena
+  // desde ProductSize.costPrice (si hay talla) o Product.costPrice.
+  unitCost    Decimal? @db.Decimal(10, 2)
   quantity    Int
   subtotal    Decimal  @db.Decimal(10, 2)
   metadata    Json?

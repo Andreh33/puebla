@@ -24,6 +24,7 @@ import type { CreateCheckoutResponse } from "@/lib/stripe/types";
 import { db } from "@/lib/db";
 import { effectivePrice } from "@/lib/price";
 import { cleanProductName } from "@/lib/utils/html";
+import { assertStockAvailable } from "@/lib/stripe/stock-check";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,10 +114,36 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       retailPrice: true,
       salePrice: true,
       mainImageUrl: true,
+      stock: true,
+      sizes: { select: { size: true, stock: true } },
       brand: { select: { name: true } },
     },
   });
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+  // VALIDACIÓN DE STOCK antes de cobrar. Espeja el TPV físico: rechaza si la
+  // talla pedida (o el stock global, si no hay talla) no cubre la demanda
+  // ACUMULADA del carrito. Sin esto, el online cobraba sin comprobar existencias.
+  const stockCheck = assertStockAvailable(
+    items.map((it) => ({
+      productId: it.productId,
+      name: it.name,
+      size: it.size,
+      qty: it.qty,
+    })),
+    new Map(
+      dbProducts.map((p) => [
+        p.id,
+        { id: p.id, name: p.name, stock: p.stock, sizes: p.sizes },
+      ]),
+    ),
+  );
+  if (!stockCheck.ok) {
+    return NextResponse.json<CreateCheckoutResponse>(
+      { ok: false, error: "out_of_stock", message: stockCheck.message },
+      { status: 409 },
+    );
+  }
 
   // El tipo concreto `Stripe.Checkout.SessionCreateParams.LineItem` no se
   // re-exporta como sub-namespace en el SDK actual; dejamos que TS infiera
