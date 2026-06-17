@@ -44,6 +44,15 @@ export function ProductActions({
   const effectiveSize: string | null = onlyUnica ? "ÚNICA" : selected;
   const canCta = !requiresSize || !!selected;
 
+  // Stock de la talla elegida → se pasa al botón para capar la cantidad en el
+  // carrito y avisar antes de llegar al checkout (1 color = 1 producto, la
+  // talla es la variante con stock propio).
+  const selectedSizeStock = onlyUnica
+    ? inStock[0]?.stock ?? null
+    : selected != null
+      ? inStock.find((s) => s.size === selected)?.stock ?? null
+      : null;
+
   const reservationHref = whatsappUrl(
     WhatsAppMessages.reservation(productName, effectiveSize ?? undefined),
   );
@@ -124,6 +133,7 @@ export function ProductActions({
             product={product}
             selectedSize={effectiveSize}
             requiresSize={requiresSize}
+            maxStock={selectedSizeStock}
             className="flex-1"
           />
         ) : null}

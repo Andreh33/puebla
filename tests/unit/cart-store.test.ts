@@ -125,6 +125,39 @@ describe("updateQtyPure", () => {
   });
 });
 
+describe("tope de stock por talla (maxStock)", () => {
+  it("addItemPure no supera el stock de la talla al sumar", () => {
+    const start = addItemPure([], makeItem({ qty: 1, maxStock: 2 }));
+    const after = addItemPure(start, makeItem({ qty: 5, maxStock: 2 }));
+    expect(after[0]?.qty).toBe(2); // capado a 2, no 6
+  });
+
+  it("addItemPure sin maxStock no capa (comportamiento previo)", () => {
+    const start = addItemPure([], makeItem({ qty: 1 }));
+    const after = addItemPure(start, makeItem({ qty: 5 }));
+    expect(after[0]?.qty).toBe(6);
+  });
+
+  it("updateQtyPure respeta el tope de stock", () => {
+    const a = makeItem({ qty: 1, maxStock: 3 });
+    const result = updateQtyPure([a], a.productId, a.size, 10);
+    expect(result[0]?.qty).toBe(3);
+  });
+
+  it("sanitización parsea y capa el maxStock guardado", () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      CART_STORAGE_KEY,
+      JSON.stringify([
+        { productId: "p1", qty: 9, price: 10, addedAt: 1, maxStock: 2 },
+      ]),
+    );
+    const read = readCart(storage);
+    expect(read[0]?.qty).toBe(2);
+    expect(read[0]?.maxStock).toBe(2);
+  });
+});
+
 describe("totales", () => {
   it("totalItemsPure suma qty de todas las líneas", () => {
     const items = [

@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { buildMetadata } from "@/lib/seo/metadata";
+import { cleanProductName } from "@/lib/utils/html";
 import {
   STORE_NAP,
   breadcrumbSchema,
@@ -330,7 +331,7 @@ export default async function LandingPage({ params }: PageProps) {
                         {p.brand.name}
                       </p>
                       <p className="line-clamp-2 text-sm font-semibold text-zs-ink">
-                        {p.shortName ?? p.name}
+                        {cleanProductName(p.name)}
                       </p>
                       <div className="mt-auto flex items-baseline gap-2 pt-3">
                         <span className="text-base font-bold text-zs-blue-900">

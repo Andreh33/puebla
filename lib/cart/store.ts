@@ -21,6 +21,12 @@ export type CartItem = {
   size: string | null;
   /** Precio unitario congelado al añadir (final, IVA incluido). */
   price: number;
+  /**
+   * Stock disponible de la talla en el momento de añadir. Permite capar la
+   * cantidad en el carrito (botón "+") y avisar antes de llegar al checkout.
+   * `undefined` en items antiguos / añadidos sin stock conocido → sin tope.
+   */
+  maxStock?: number;
   qty: number;
   addedAt: number;
 };
@@ -53,6 +59,10 @@ function sanitizeItems(value: unknown): CartItem[] {
       if (!productId) return null;
       const qty = typeof v.qty === "number" && v.qty > 0 ? Math.floor(v.qty) : 1;
       const price = typeof v.price === "number" && Number.isFinite(v.price) ? v.price : 0;
+      const maxStock =
+        typeof v.maxStock === "number" && v.maxStock > 0
+          ? Math.floor(v.maxStock)
+          : undefined;
       return {
         productId,
         slug: typeof v.slug === "string" ? v.slug : productId,
@@ -62,8 +72,11 @@ function sanitizeItems(value: unknown): CartItem[] {
         colorName: typeof v.colorName === "string" ? v.colorName : "Único",
         size: typeof v.size === "string" ? v.size : null,
         price,
-        qty,
+        qty: maxStock ? Math.min(qty, maxStock) : qty,
         addedAt: typeof v.addedAt === "number" ? v.addedAt : Date.now(),
+        // Solo incluimos la clave si la conocemos: así el tipo inferido la deja
+        // opcional (igual que en CartItem) y el type-guard de abajo encaja.
+        ...(maxStock !== undefined ? { maxStock } : {}),
       } satisfies CartItem;
     })
     .filter((x): x is CartItem => x !== null);
@@ -108,9 +121,14 @@ export function addItemPure(items: CartItem[], next: CartItem): CartItem[] {
   if (existing >= 0) {
     const updated = [...items];
     const prev = updated[existing]!;
+    // Stock vivo: usamos el del último añadido si viene, si no el previo.
+    const maxStock = next.maxStock ?? prev.maxStock;
+    const mergedQty = prev.qty + next.qty;
     updated[existing] = {
       ...prev,
-      qty: prev.qty + next.qty,
+      // Nunca dejamos pasar más unidades de las que hay en stock de la talla.
+      qty: maxStock ? Math.min(mergedQty, maxStock) : mergedQty,
+      maxStock,
       // refrescamos info "viva" por si cambió precio/imagen entre añadidos
       price: next.price,
       imageUrl: next.imageUrl ?? prev.imageUrl,
@@ -144,9 +162,12 @@ export function updateQtyPure(
   if (safeQty === 0) {
     return items.filter((i) => itemKey(i.productId, i.size) !== key);
   }
-  return items.map((i) =>
-    itemKey(i.productId, i.size) === key ? { ...i, qty: safeQty } : i,
-  );
+  return items.map((i) => {
+    if (itemKey(i.productId, i.size) !== key) return i;
+    // Respetamos el tope de stock de la talla si lo conocemos.
+    const capped = i.maxStock ? Math.min(safeQty, i.maxStock) : safeQty;
+    return { ...i, qty: capped };
+  });
 }
 
 export function totalItemsPure(items: CartItem[]): number {

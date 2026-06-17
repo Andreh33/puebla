@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, productSchema, jsonLd } from "@/lib/seo/schema-org";
 import { formatPriceEUR } from "@/lib/utils";
-import { sanitizeHtml } from "@/lib/utils/html";
+import { sanitizeHtml, cleanProductName } from "@/lib/utils/html";
 import { effectivePrice } from "@/lib/price";
 import { ProductGallery } from "@/components/public/ProductGallery";
 import { ProductActions } from "@/components/public/ProductActions";
@@ -67,7 +67,7 @@ export async function generateMetadata({
 
   const title =
     p.metaTitle ||
-    `${p.shortName ?? p.name}${p.brand ? ` · ${p.brand.name}` : ""}${
+    `${cleanProductName(p.name)}${p.brand ? ` · ${p.brand.name}` : ""}${
       p.colorName && p.colorName !== "Único" ? ` (${p.colorName})` : ""
     }`;
   return buildMetadata({
@@ -166,7 +166,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       ? [{ name: product.category.parent.name, path: `/${product.category.parent.slug}` }]
       : []),
     { name: product.category.name, path: `/${product.category.slug}` },
-    { name: product.shortName ?? product.name, path: `/producto/${product.slug}` },
+    { name: cleanProductName(product.name), path: `/producto/${product.slug}` },
   ];
 
   const galleryImages =
@@ -185,7 +185,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         : [];
 
   const productLd = productSchema({
-    name: product.name,
+    name: cleanProductName(product.name),
     description: product.description,
     images: galleryImages.map((i) => i.url),
     sku: product.id,
@@ -284,14 +284,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             />
 
             <ProductActions
-              productName={product.shortName ?? product.name}
+              productName={cleanProductName(product.name)}
               sizes={sizes}
               source={product.source}
               externalUrl={product.externalUrl}
               product={{
                 id: product.id,
                 slug: product.slug,
-                name: product.shortName ?? product.name,
+                name: cleanProductName(product.name),
                 brand: product.brand.name,
                 imageUrl: product.mainImageUrl ?? galleryImages[0]?.url ?? null,
                 colorName: product.colorName,
@@ -325,7 +325,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 <OtherColors
                   siblings={colorSiblings}
                   currentColor={product.colorName ?? "Único"}
-                  productName={product.shortName ?? product.name}
+                  productName={cleanProductName(product.name)}
                 />
               </div>
             )}

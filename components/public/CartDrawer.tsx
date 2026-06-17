@@ -111,6 +111,7 @@ export function CartDrawer({ open, onOpenChange }: Props) {
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <QtyStepper
                         value={item.qty}
+                        max={item.maxStock}
                         onChange={(qty) =>
                           updateQty(item.productId, item.size, qty)
                         }
@@ -169,37 +170,48 @@ function QtyStepper({
   value,
   onChange,
   ariaLabel,
+  max,
 }: {
   value: number;
   onChange: (qty: number) => void;
   ariaLabel: string;
+  max?: number | null;
 }) {
+  const atMax = max != null && value >= max;
   return (
-    <div
-      className="inline-flex items-center rounded-lg border border-zs-border bg-white"
-      role="group"
-      aria-label={ariaLabel}
-    >
-      <button
-        type="button"
-        onClick={() => onChange(Math.max(1, value - 1))}
-        disabled={value <= 1}
-        aria-label="Reducir cantidad"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-l-lg text-zs-ink transition hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-40"
+    <div className="inline-flex flex-col gap-1">
+      <div
+        className="inline-flex items-center rounded-lg border border-zs-border bg-white"
+        role="group"
+        aria-label={ariaLabel}
       >
-        <Minus className="h-3.5 w-3.5" />
-      </button>
-      <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
-        {value}
-      </span>
-      <button
-        type="button"
-        onClick={() => onChange(value + 1)}
-        aria-label="Aumentar cantidad"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-r-lg text-zs-ink transition hover:bg-zs-surface"
-      >
-        <Plus className="h-3.5 w-3.5" />
-      </button>
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(1, value - 1))}
+          disabled={value <= 1}
+          aria-label="Reducir cantidad"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-l-lg text-zs-ink transition hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(value + 1)}
+          disabled={atMax}
+          aria-label="Aumentar cantidad"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-r-lg text-zs-ink transition hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      {atMax && (
+        <span className="text-[10px] leading-none text-zs-muted">
+          Máx. {max} disponible{max === 1 ? "" : "s"}
+        </span>
+      )}
     </div>
   );
 }

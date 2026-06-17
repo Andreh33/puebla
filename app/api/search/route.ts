@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { cleanProductName } from "@/lib/utils/html";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,7 +67,7 @@ export async function GET(req: Request) {
         products: products.map((p) => ({
           id: p.id,
           slug: p.slug,
-          name: p.shortName || p.name,
+          name: cleanProductName(p.name),
           colorName: p.colorName,
           brandName: p.brand?.name,
           mainImageUrl: p.mainImageUrl,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useCart, type CartItem } from "@/lib/cart/use-cart";
+import { itemKey } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
 
 export type AddToCartProduct = {
@@ -21,6 +22,12 @@ type Props = {
   selectedSize: string | null;
   /** Si true, no aceptamos null como talla — bloqueamos hasta que elija. */
   requiresSize: boolean;
+  /**
+   * Stock disponible de la talla seleccionada. Si ya está en el carrito al
+   * máximo, no dejamos añadir más (evita que el checkout rechace luego).
+   * `null`/`undefined` = desconocido → sin tope.
+   */
+  maxStock?: number | null;
   className?: string;
   /** Texto a mostrar (por defecto "Añadir al carrito"). */
   label?: string;
@@ -30,10 +37,11 @@ export function AddToCartButton({
   product,
   selectedSize,
   requiresSize,
+  maxStock,
   className,
   label = "Añadir al carrito",
 }: Props) {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const [justAdded, setJustAdded] = useState(false);
 
   const blocked = requiresSize && !selectedSize;
@@ -42,6 +50,22 @@ export function AddToCartButton({
     if (blocked) {
       toast.info("Selecciona una talla para continuar.");
       return;
+    }
+    // Tope de stock: si ya tenemos en el carrito todas las unidades que hay de
+    // esta talla, avisamos en vez de añadir (el checkout lo rechazaría igual).
+    if (maxStock != null) {
+      const inCart =
+        items.find(
+          (i) => itemKey(i.productId, i.size) === itemKey(product.id, selectedSize),
+        )?.qty ?? 0;
+      if (inCart >= maxStock) {
+        toast.error(
+          maxStock === 1
+            ? "Solo queda 1 unidad de esta talla y ya la tienes en el carrito."
+            : `Solo quedan ${maxStock} unidades de esta talla y ya las tienes en el carrito.`,
+        );
+        return;
+      }
     }
     const item: CartItem = {
       productId: product.id,
@@ -52,6 +76,7 @@ export function AddToCartButton({
       colorName: product.colorName,
       size: selectedSize,
       price: product.price,
+      maxStock: maxStock ?? undefined,
       qty: 1,
       addedAt: Date.now(),
     };
