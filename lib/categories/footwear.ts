@@ -25,7 +25,9 @@ export type FootwearType = (typeof FOOTWEAR_TYPES)[number];
 export const FOOTWEAR_TYPE_LABELS: Record<FootwearType, string> = {
   running: "Running",
   trail: "Trail / Montaña",
-  padel: "Pádel",
+  // "Tenis / Pádel" (tenis se fusionó en padel, Bloque 8.8): mismo texto que el
+  // megamenú ("Tenis/Pádel"), para que el filtro y el menú coincidan.
+  padel: "Tenis / Pádel",
   casual: "Casual / Lifestyle",
   baloncesto: "Baloncesto",
   futbol: "Fútbol",
