@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="John Smith: deporte accesible para toda la familia">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#14225b"/>
+      <stop offset="1" stop-color="#0b1640"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1040" cy="150" r="240" fill="#e879f9" opacity="0.16"/>
+  <circle cx="1110" cy="120" r="120" fill="#e879f9" opacity="0.22"/>
+  <g opacity="0.5" stroke="#e879f9" stroke-width="2" fill="none">
+    <path d="M -40 470 Q 260 380 560 460 T 1240 450"/>
+    <path d="M -40 530 Q 260 440 560 520 T 1240 510" opacity="0.55"/>
+  </g>
+  <rect x="90" y="120" width="64" height="8" rx="4" fill="#e879f9"/>
+  <text x="170" y="129" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="22" font-weight="700" fill="#e879f9" letter-spacing="5" dominant-baseline="middle">ZONA SPORT · MARCAS</text>
+  <text x="90" y="303" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">John Smith:</text>
+  <text x="90" y="379" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">deporte accesible</text>
+  <text x="90" y="455" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="-2">para toda la familia</text>
+  <g transform="translate(90 560)">
+    <rect x="0" y="-26" width="14" height="38" rx="3" fill="#c8da46"/>
+    <text x="28" y="0" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="26" font-weight="800" fill="#ffffff" dominant-baseline="middle">ZONA SPORT</text>
+    <text x="232" y="0" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="22" font-weight="500" fill="#ffffff" opacity="0.7" dominant-baseline="middle">· Puebla de la Calzada</text>
+  </g>
+</svg>
