@@ -67,6 +67,15 @@ import { createCategoryAction } from "@/app/admin/categorias/_actions";
 const FormSchema = ProductSchema.extend({
   sizes: z.array(ProductSizeSchema).default([]),
   hasSizes: z.boolean().default(true),
+  // categoryId NO es un campo editable del formulario: se DERIVA en onSubmit
+  // desde el selector de categorías (selectedCategoryIds → primaryCategoryId) y
+  // nunca se hace setValue("categoryId"). Con la validación estricta de
+  // ProductSchema (cuid obligatorio), su valor por defecto "" rompe SIEMPRE la
+  // validación de cliente → el formulario no se envía (Guardar/Publicar no hace
+  // nada y no se ve ningún campo en rojo). Se valida aparte en onSubmit
+  // ("Selecciona al menos una categoría") y el servidor la revalida con
+  // ProductSchema antes de guardar.
+  categoryId: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
