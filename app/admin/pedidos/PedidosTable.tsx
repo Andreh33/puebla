@@ -36,8 +36,8 @@ import {
   getOrderDetail,
   syncCatalogToStripe,
   updateOrderStatus,
-  FULFILLMENT_STATUSES,
 } from "./_actions";
+import { FULFILLMENT_STATUSES } from "./constants";
 
 const FULFILLMENT_LABELS: Record<(typeof FULFILLMENT_STATUSES)[number], string> = {
   PROCESSING: "Procesando",

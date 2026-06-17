@@ -21,6 +21,7 @@ import {
   STOCK_DEDUCTED_STATUSES,
 } from "@/lib/stripe/orders";
 import type { OrderDetail } from "@/lib/stripe/types";
+import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
   | { ok: true; data?: T }
@@ -61,18 +62,9 @@ export async function getOrderDetail(
 // Cambio de estado de fulfillment (manual desde el admin)
 // ---------------------------------------------------------------------------
 
-/**
- * Estados de FULFILLMENT que el admin puede asignar a mano. PAID lo crea el
- * webhook al cobrar; REFUNDED lo gestiona Stripe (charge.refunded) para mantener
- * la verdad del dinero en Stripe. Desde aquí solo se avanza/cancela el envío.
- */
-export const FULFILLMENT_STATUSES = [
-  "PROCESSING",
-  "SHIPPED",
-  "DELIVERED",
-  "CANCELLED",
-] as const;
-type FulfillmentStatus = (typeof FULFILLMENT_STATUSES)[number];
+// FULFILLMENT_STATUSES + el tipo FulfillmentStatus viven en ./constants: un
+// módulo "use server" SOLO puede exportar funciones async, nunca valores; si
+// no, se rompe el dispatch de TODAS las server actions del fichero (500).
 
 function isFulfillmentStatus(v: string): v is FulfillmentStatus {
   return (FULFILLMENT_STATUSES as readonly string[]).includes(v);
