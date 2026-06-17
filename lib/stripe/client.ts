@@ -41,6 +41,13 @@ export function getStripe(): Stripe | null {
     // ver de un vistazo contra qué API hablamos.
     apiVersion: "2026-04-22.dahlia",
     typescript: true,
+    // En serverless (Vercel Fluid Compute) el cliente HTTP por defecto del SDK
+    // (Node `https` con keep-alive) reutiliza sockets entre invocaciones que
+    // pueden estar muertos → "An error occurred with our connection to Stripe.
+    // Request was retried N times". El cliente basado en `fetch` (global de
+    // Node 24) crea conexiones limpias y evita ese fallo de conexión.
+    httpClient: Stripe.createFetchHttpClient(),
+    maxNetworkRetries: 3,
     appInfo: {
       name: "Zona Sport",
       url: "https://zonasport.es",
