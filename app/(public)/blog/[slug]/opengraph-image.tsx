@@ -8,15 +8,13 @@ export const contentType = "image/png";
 
 export default async function OpengraphImage({ params }: { params: { slug: string } }) {
   let title = "Zona Sport — Blog";
-  let cover: string | null = null;
   try {
     const post = await db.blogPost.findUnique({
       where: { slug: params.slug },
-      select: { title: true, coverImageUrl: true, ogImageUrl: true },
+      select: { title: true },
     });
     if (post) {
       title = post.title;
-      cover = post.ogImageUrl ?? post.coverImageUrl ?? null;
     }
   } catch {
     // ignore
@@ -61,22 +59,21 @@ export default async function OpengraphImage({ params }: { params: { slug: strin
           </div>
         </div>
 
-        {cover && (
-          // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-          <img
-            src={cover}
-            style={{
-              position: "absolute",
-              right: -180,
-              bottom: -180,
-              width: 800,
-              height: 800,
-              opacity: 0.18,
-              objectFit: "cover",
-              borderRadius: 400,
-            }}
-          />
-        )}
+        {/* Adorno geométrico: círculo en degradado. (No usamos <img src=.svg>
+            porque Satori NO rasteriza SVG referenciado por src dentro del
+            ImageResponse → quedaría vacío/roto.) */}
+        <div
+          style={{
+            position: "absolute",
+            right: -180,
+            bottom: -180,
+            width: 800,
+            height: 800,
+            borderRadius: 400,
+            background:
+              "radial-gradient(circle at 30% 30%, rgba(200,218,70,0.18), rgba(220,38,38,0.10) 60%, transparent 75%)",
+          }}
+        />
 
         <div style={{ display: "flex", flexDirection: "column", maxWidth: 980 }}>
           <span

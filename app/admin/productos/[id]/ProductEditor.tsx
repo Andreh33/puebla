@@ -526,8 +526,8 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
         const res = await createProductAction(payload as never);
         toast.success("Producto creado");
         router.push(`/admin/productos/${res.id}`);
-      } else {
-        await updateProductAction(initial!.id, payload as never);
+      } else if (mode === "edit" && initial) {
+        await updateProductAction(initial.id, payload as never);
         toast.success(publish ? "Producto publicado" : "Cambios guardados");
         router.refresh();
       }
@@ -622,7 +622,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         toast.error(res.error);
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
                     title="Aplica una plantilla adaptada a la categoría a partir de los campos del formulario"
                   >
                     ✨ Generar descripción
@@ -1125,7 +1125,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                         toast.error(res.error);
                       }
                     }}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-zs-blue-50"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-zs-blue-300 bg-zs-blue-50 px-3 text-xs font-semibold text-zs-blue-900 transition-colors hover:bg-zs-blue-100"
                     title="Genera un meta description corto (155 chars max) a partir de los campos del formulario"
                   >
                     ✨ Generar meta

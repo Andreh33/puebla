@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Las portadas del blog son SVG de generación propia (/blog-covers/*.svg).
+    // next/image los rechaza por defecto (HTTP 400 en /_next/image). Como son de
+    // confianza (no de usuario), los permitimos con una CSP estricta que bloquea
+    // scripts y sandboxea el render → riesgo nulo.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
       { protocol: "https", hostname: "m.media-amazon.com" },

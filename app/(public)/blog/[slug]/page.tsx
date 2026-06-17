@@ -61,7 +61,11 @@ export async function generateMetadata({
       title: post.metaTitle ?? post.title,
       description: post.metaDescription ?? post.excerpt ?? undefined,
       path: `/blog/${slug}`,
-      ogImage: post.ogImageUrl ?? post.coverImageUrl ?? undefined,
+      // OG/Twitter usan el PNG que genera la convención opengraph-image.tsx
+      // (1200x630). Las portadas son .svg, que WhatsApp/Facebook no previsualizan
+      // y que ANULARÍAN la convención si las fijáramos aquí. La portada en la
+      // página (coverImageUrl .svg) se renderiza aparte con next/image.
+      ogImage: absoluteUrl(`/blog/${slug}/opengraph-image`),
       ogType: "article",
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt?.toISOString(),

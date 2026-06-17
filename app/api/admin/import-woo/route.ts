@@ -261,19 +261,23 @@ export async function POST(req: NextRequest) {
   // lib/seed/description-templates.ts. Idempotente (deja la BD igual al banco).
   if (body.action === "reseed_description_templates") {
     const { DESCRIPTION_TEMPLATES } = await import("@/lib/seed/description-templates");
-    await db.descriptionTemplate.deleteMany({});
-    await db.descriptionTemplate.createMany({
-      data: DESCRIPTION_TEMPLATES.map((t) => ({
-        slug: t.slug,
-        label: t.label,
-        categorySlug: t.categorySlug,
-        body: t.body,
-        metaShort: t.metaShort ?? null,
-        position: t.position,
-        isActive: true,
-      })),
-      skipDuplicates: true,
-    });
+    // Atómico: delete + create en una sola transacción. Si el create falla, el
+    // delete se revierte y la tabla NO queda vacía.
+    await db.$transaction([
+      db.descriptionTemplate.deleteMany({}),
+      db.descriptionTemplate.createMany({
+        data: DESCRIPTION_TEMPLATES.map((t) => ({
+          slug: t.slug,
+          label: t.label,
+          categorySlug: t.categorySlug,
+          body: t.body,
+          metaShort: t.metaShort ?? null,
+          position: t.position,
+          isActive: true,
+        })),
+        skipDuplicates: true,
+      }),
+    ]);
     const count = await db.descriptionTemplate.count();
     return NextResponse.json({ ok: true, count });
   }

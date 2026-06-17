@@ -725,6 +725,11 @@ const RESERVED_SLUGS = new Set([
   // [categoria] no lo capture como categoría del catálogo.
   "bebe",
   "carrito",
+  // Rutas estáticas nuevas: tienen su propio route y el segmento estático gana,
+  // pero las reservamos por coherencia para que [categoria] nunca las capture.
+  "outlet",
+  "catalogo",
+  "checkout",
 ]);
 
 export function isReservedSlug(slug: string): boolean {
