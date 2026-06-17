@@ -10,6 +10,11 @@ import {
   Info,
   TrendingUp,
   CheckCircle2,
+  Euro,
+  ShoppingCart,
+  Receipt,
+  Wallet,
+  Boxes,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { RecentActivity, type ActivityItem } from "@/components/admin/RecentActivity";
 import { LeadsChart } from "@/components/admin/LeadsChart";
+import { SalesChart } from "@/components/admin/SalesChart";
 import {
   getProductCounts,
   getRecentLeads,
@@ -24,6 +30,12 @@ import {
   getBlogStats,
   getSettingsAlerts,
 } from "@/lib/admin/dashboard-queries";
+import {
+  getSalesKpis,
+  getSalesByDay,
+  getTopProductos,
+} from "@/lib/admin/sales-queries";
+import { formatPriceEUR } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 
 export const metadata = { title: "Dashboard" };
@@ -68,13 +80,17 @@ const SEVERITY_STYLES = {
 
 export default async function AdminDashboard() {
   const session = await auth();
-  const [products, leads, imports, blog, alerts] = await Promise.all([
-    getProductCounts(),
-    getRecentLeads(7),
-    getRecentImports(5),
-    getBlogStats(),
-    getSettingsAlerts(),
-  ]);
+  const [products, leads, imports, blog, alerts, salesKpis, salesByDay, topProductos] =
+    await Promise.all([
+      getProductCounts(),
+      getRecentLeads(7),
+      getRecentImports(5),
+      getBlogStats(),
+      getSettingsAlerts(),
+      getSalesKpis(30),
+      getSalesByDay(30),
+      getTopProductos(30, 8),
+    ]);
 
   const activity: ActivityItem[] = [
     ...imports.map(
@@ -128,6 +144,112 @@ export default async function AdminDashboard() {
           Resumen del estado del catálogo, leads recientes y acciones pendientes.
         </p>
       </div>
+
+      {/* Ventas (últimos 30 días) */}
+      <section aria-labelledby="sales-heading" className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2
+            id="sales-heading"
+            className="text-lg font-semibold text-zs-blue-900"
+          >
+            Ventas (últimos 30 días)
+          </h2>
+          <Link
+            href="/admin/pedidos"
+            className="text-sm font-semibold text-zs-blue-700 hover:underline"
+          >
+            Ver pedidos →
+          </Link>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <KpiCard
+            label="Ingresos"
+            value={formatPriceEUR(salesKpis.ingresos)}
+            hint={`${salesKpis.pedidos} ${salesKpis.pedidos === 1 ? "pedido" : "pedidos"}`}
+            icon={Euro}
+            tone="success"
+          />
+          <KpiCard
+            label="Pedidos"
+            value={salesKpis.pedidos}
+            hint="Pagados y en curso"
+            href="/admin/pedidos"
+            icon={ShoppingCart}
+          />
+          <KpiCard
+            label="Ticket medio"
+            value={formatPriceEUR(salesKpis.ticketMedio)}
+            hint="Ingresos / pedidos"
+            icon={Receipt}
+          />
+          <KpiCard
+            label="Beneficio"
+            value={formatPriceEUR(salesKpis.beneficio)}
+            hint="Margen bruto (coste congelado)"
+            icon={Wallet}
+            tone={salesKpis.beneficio > 0 ? "success" : "default"}
+          />
+          <KpiCard
+            label="Unidades"
+            value={salesKpis.unidades}
+            hint={
+              salesKpis.devueltos > 0
+                ? `${formatPriceEUR(salesKpis.devueltos)} devueltos`
+                : "Artículos vendidos"
+            }
+            icon={Boxes}
+            tone={salesKpis.devueltos > 0 ? "warning" : "default"}
+          />
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-emerald-700" aria-hidden="true" />
+                Ingresos por día
+              </CardTitle>
+              <Badge variant="outline">{formatPriceEUR(salesKpis.ingresos)} total</Badge>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <SalesChart data={salesByDay} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Top productos vendidos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {topProductos.length === 0 ? (
+                <p className="text-sm text-zs-muted">Aún no hay ventas.</p>
+              ) : (
+                <ol className="space-y-2" aria-label="Productos más vendidos">
+                  {topProductos.map((p, i) => (
+                    <li
+                      key={`${p.productName}-${i}`}
+                      className="flex items-center justify-between gap-3 text-sm"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zs-surface text-xs font-semibold tabular-nums text-zs-muted">
+                          {i + 1}
+                        </span>
+                        <span className="truncate font-medium text-zs-ink">
+                          {p.productName}
+                        </span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-zs-muted">
+                        {p.unidades} uds · {formatPriceEUR(p.ingresos)}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       {/* KPIs */}
       <section aria-labelledby="kpis-heading">

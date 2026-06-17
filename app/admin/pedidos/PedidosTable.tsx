@@ -20,7 +20,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Download, ExternalLink, RefreshCw, Search } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertTriangle,
+  Download,
+  ExternalLink,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 import { formatDateTimeES, formatPriceEUR, truncate } from "@/lib/utils";
 import { toast } from "sonner";
 import type { OrderDetail, OrderSummary } from "@/lib/stripe/types";
@@ -28,7 +35,16 @@ import {
   exportOrdersCsv,
   getOrderDetail,
   syncCatalogToStripe,
+  updateOrderStatus,
+  FULFILLMENT_STATUSES,
 } from "./_actions";
+
+const FULFILLMENT_LABELS: Record<(typeof FULFILLMENT_STATUSES)[number], string> = {
+  PROCESSING: "Procesando",
+  SHIPPED: "Enviado",
+  DELIVERED: "Entregado",
+  CANCELLED: "Cancelado",
+};
 
 function statusBadge(status: OrderStatus) {
   switch (status) {
@@ -86,6 +102,11 @@ export function PedidosTable({
   const [syncing, setSyncing] = React.useState(false);
   const [selected, setSelected] = React.useState<OrderDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
+  const [newStatus, setNewStatus] = React.useState<
+    (typeof FULFILLMENT_STATUSES)[number] | ""
+  >("");
+  const [note, setNote] = React.useState("");
+  const [updatingStatus, setUpdatingStatus] = React.useState(false);
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -149,6 +170,8 @@ export function PedidosTable({
 
   async function openDetail(id: string) {
     setLoadingDetail(true);
+    setNewStatus("");
+    setNote("");
     try {
       const res = await getOrderDetail(id);
       if (!res.ok) {
@@ -160,6 +183,37 @@ export function PedidosTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setLoadingDetail(false);
+    }
+  }
+
+  async function handleUpdateStatus() {
+    if (!selected || !newStatus) return;
+    if (
+      newStatus === "CANCELLED" &&
+      !confirm(
+        "¿Cancelar este pedido? Si ya había descontado stock, se restaurará automáticamente.",
+      )
+    ) {
+      return;
+    }
+    setUpdatingStatus(true);
+    try {
+      const res = await updateOrderStatus(selected.id, newStatus, note);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(`Estado actualizado a ${FULFILLMENT_LABELS[newStatus]}`);
+      // Refresca el detalle abierto y el listado de fondo.
+      const fresh = await getOrderDetail(selected.id);
+      if (fresh.ok) setSelected(fresh.data!);
+      setNote("");
+      setNewStatus("");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setUpdatingStatus(false);
     }
   }
 
@@ -265,7 +319,17 @@ export function PedidosTable({
                   key={o.id}
                   className="border-t border-zs-border hover:bg-zs-surface/50"
                 >
-                  <td className="px-3 py-2 align-top">{statusBadge(o.status)}</td>
+                  <td className="px-3 py-2 align-top">
+                    <div className="flex flex-col items-start gap-1">
+                      {statusBadge(o.status)}
+                      {o.oversold && (
+                        <Badge variant="warning" className="gap-1">
+                          <AlertTriangle className="h-3 w-3" aria-hidden />
+                          Revisar stock
+                        </Badge>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-3 py-2 align-top">
                     {formatDateTimeES(o.createdAt)}
                   </td>
@@ -356,6 +420,17 @@ export function PedidosTable({
                   </span>
                 </div>
 
+                {selected.oversold && (
+                  <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                    <p className="text-xs">
+                      <span className="font-semibold">Revisar stock:</span> alguna
+                      línea se vendió sin stock disponible (carrera de inventario).
+                      Comprueba existencias antes de preparar el envío.
+                    </p>
+                  </div>
+                )}
+
                 <section>
                   <h3 className="mb-2 text-xs font-semibold uppercase text-zs-muted">
                     Cliente
@@ -444,6 +519,55 @@ export function PedidosTable({
                     <span>Total</span>
                     <span>{formatPriceEUR(selected.total)}</span>
                   </div>
+                </section>
+
+                <section className="border-t border-zs-border pt-3">
+                  <h3 className="mb-2 text-xs font-semibold uppercase text-zs-muted">
+                    Gestionar estado
+                  </h3>
+                  <div className="space-y-2">
+                    <Select
+                      value={newStatus}
+                      onValueChange={(v) =>
+                        setNewStatus(v as (typeof FULFILLMENT_STATUSES)[number])
+                      }
+                    >
+                      <SelectTrigger aria-label="Nuevo estado">
+                        <SelectValue placeholder="Cambiar estado a…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FULFILLMENT_STATUSES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {FULFILLMENT_LABELS[s]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Textarea
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Nota / seguimiento (opcional): nº de seguimiento, transportista…"
+                      className="min-h-[60px] text-sm"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleUpdateStatus}
+                      disabled={!newStatus || updatingStatus}
+                      className="w-full sm:w-auto"
+                    >
+                      {updatingStatus ? "Actualizando…" : "Actualizar estado"}
+                    </Button>
+                  </div>
+                  {selected.notes && (
+                    <div className="mt-3 rounded-lg border border-zs-border bg-zs-surface/50 p-2">
+                      <p className="mb-1 text-xs font-semibold uppercase text-zs-muted">
+                        Notas / seguimiento
+                      </p>
+                      <pre className="whitespace-pre-wrap break-words font-sans text-xs text-zs-ink">
+                        {selected.notes}
+                      </pre>
+                    </div>
+                  )}
                 </section>
 
                 {selected.stripePaymentIntentId && (

@@ -15,7 +15,11 @@ import { db } from "@/lib/db";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { syncProductsToStripe, type SyncResult } from "@/lib/stripe/sync-products";
 import { isStripeConfigured, missingStripeEnv } from "@/lib/stripe/client";
-import { toOrderDetail } from "@/lib/stripe/orders";
+import {
+  toOrderDetail,
+  restoreStockForOrder,
+  STOCK_DEDUCTED_STATUSES,
+} from "@/lib/stripe/orders";
 import type { OrderDetail } from "@/lib/stripe/types";
 
 type ActionResult<T = unknown> =
@@ -48,6 +52,78 @@ export async function getOrderDetail(
     });
     if (!order) return { ok: false, error: "Pedido no encontrado" };
     return { ok: true, data: toOrderDetail(order) };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cambio de estado de fulfillment (manual desde el admin)
+// ---------------------------------------------------------------------------
+
+/**
+ * Estados de FULFILLMENT que el admin puede asignar a mano. PAID lo crea el
+ * webhook al cobrar; REFUNDED lo gestiona Stripe (charge.refunded) para mantener
+ * la verdad del dinero en Stripe. Desde aquí solo se avanza/cancela el envío.
+ */
+export const FULFILLMENT_STATUSES = [
+  "PROCESSING",
+  "SHIPPED",
+  "DELIVERED",
+  "CANCELLED",
+] as const;
+type FulfillmentStatus = (typeof FULFILLMENT_STATUSES)[number];
+
+function isFulfillmentStatus(v: string): v is FulfillmentStatus {
+  return (FULFILLMENT_STATUSES as readonly string[]).includes(v);
+}
+
+/**
+ * Cambia el estado de un pedido a uno de fulfillment. Si pasa a CANCELLED y el
+ * pedido estaba en un estado que YA había descontado stock (PAID/PROCESSING/
+ * SHIPPED/DELIVERED), restaura el stock reutilizando `restoreStockForOrder`
+ * (idempotente vía metadata.stockRestored). Si llega una `note`, se anexa a
+ * Order.notes con sello de fecha.
+ */
+export async function updateOrderStatus(
+  orderId: string,
+  status: string,
+  note?: string,
+): Promise<ActionResult<{ status: FulfillmentStatus }>> {
+  try {
+    await requireSession();
+
+    if (!isFulfillmentStatus(status)) {
+      return { ok: false, error: `Estado no permitido: ${status}` };
+    }
+
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, status: true, notes: true },
+    });
+    if (!order) return { ok: false, error: "Pedido no encontrado" };
+
+    // Restaura stock solo al CANCELAR desde un estado que ya lo había descontado.
+    // La marca metadata.stockRestored evita doble restauración (idempotente).
+    if (status === "CANCELLED" && STOCK_DEDUCTED_STATUSES.has(order.status)) {
+      await restoreStockForOrder(order.id);
+    }
+
+    const trimmedNote = note?.trim();
+    let notes = order.notes;
+    if (trimmedNote) {
+      const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+      const line = `[${stamp} · ${status}] ${trimmedNote}`;
+      notes = notes ? `${notes}\n${line}` : line;
+    }
+
+    await db.order.update({
+      where: { id: orderId },
+      data: { status, ...(trimmedNote ? { notes } : {}) },
+    });
+
+    revalidatePath("/admin/pedidos");
+    return { ok: true, data: { status } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error" };
   }

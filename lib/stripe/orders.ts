@@ -297,7 +297,7 @@ async function fillUnitCosts(
 
 // Estados en los que el stock YA se descontó (creación con status=PAID, o
 // avances de fulfillment). Solo desde estos hay que restaurar al revertir.
-const STOCK_DEDUCTED_STATUSES: ReadonlySet<Order["status"]> = new Set([
+export const STOCK_DEDUCTED_STATUSES: ReadonlySet<Order["status"]> = new Set([
   "PAID",
   "PROCESSING",
   "SHIPPED",
@@ -310,7 +310,7 @@ const STOCK_DEDUCTED_STATUSES: ReadonlySet<Order["status"]> = new Set([
  * si ya se restauró antes, no duplica. El recompute solo OCULTA (nunca republica),
  * así que un producto que quedó agotado sigue en DRAFT tras devolverle unidades.
  */
-async function restoreStockForOrder(orderId: string): Promise<void> {
+export async function restoreStockForOrder(orderId: string): Promise<void> {
   await db.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id: orderId },
@@ -427,8 +427,18 @@ export function toOrderSummary(o: OrderWithCount): OrderSummary {
     paymentStatus: o.paymentStatus,
     deliveryMethod: o.deliveryMethod,
     itemCount: o._count.items,
+    oversold: hasOversold(o.metadata),
     createdAt: o.createdAt,
   };
+}
+
+/** true si metadata.oversold es un array no vacío (líneas vendidas sin stock). */
+function hasOversold(metadata: Prisma.JsonValue | null): boolean {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return false;
+  }
+  const o = (metadata as Record<string, unknown>).oversold;
+  return Array.isArray(o) && o.length > 0;
 }
 
 type OrderWithItems = Prisma.OrderGetPayload<{ include: { items: true } }>;
@@ -450,6 +460,7 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
     paymentStatus: o.paymentStatus,
     deliveryMethod: o.deliveryMethod,
     itemCount: o.items.length,
+    oversold: hasOversold(o.metadata),
     createdAt: o.createdAt,
     shippingAddress: (o.shippingAddress as ShippingAddress | null) ?? null,
     notes: o.notes,

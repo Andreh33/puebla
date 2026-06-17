@@ -84,6 +84,8 @@ export interface OrderSummary {
   paymentStatus: string | null;
   deliveryMethod: string | null;
   itemCount: number;
+  /** true si metadata.oversold tiene líneas (venta sin stock por carrera). */
+  oversold: boolean;
   createdAt: Date;
 }
 
