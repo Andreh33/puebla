@@ -112,6 +112,20 @@ export async function createOrderFromCheckout(
     });
   }
 
+  // GUARDA DE PAGO: `checkout.session.completed` puede llegar con el pago AÚN
+  // no confirmado (métodos asíncronos, o sesión completada sin captura). NO
+  // creamos pedido ni descontamos stock hasta que el pago esté realmente
+  // confirmado. Si se confirma más tarde, llega
+  // `checkout.session.async_payment_succeeded` y el pedido se crea entonces
+  // (ya con payment_status = "paid").
+  const payStatus = expandedSession.payment_status;
+  if (payStatus !== "paid" && payStatus !== "no_payment_required") {
+    console.warn(
+      `[stripe] sesión ${expandedSession.id} sin pago confirmado (payment_status=${payStatus}); pedido NO creado.`,
+    );
+    return null;
+  }
+
   const existing = await db.order.findUnique({
     where: { stripeSessionId: expandedSession.id },
   });

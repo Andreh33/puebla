@@ -24,6 +24,7 @@ export function formatDateES(date: Date | string | null | undefined): string {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Madrid",
   }).format(d);
 }
 
@@ -36,6 +37,11 @@ export function formatDateTimeES(date: Date | string | null | undefined): string
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    // Zona horaria FIJA: el server (UTC) y el cliente (Europe/Madrid) deben
+    // renderizar el MISMO texto. Si no, React lanza un error de hidratación
+    // (#418) que deja la página en estado roto y las server actions del panel
+    // (Ver detalle, Exportar CSV…) empiezan a devolver 500.
+    timeZone: "Europe/Madrid",
   }).format(d);
 }
 

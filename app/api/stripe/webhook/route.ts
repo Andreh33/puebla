@@ -5,17 +5,18 @@
  * proyecta sobre nuestra tabla `Order`.
  *
  * Eventos manejados:
- *   - checkout.session.completed     → crea Order con status=PAID
- *   - charge.refunded                → marca Order como REFUNDED
- *   - payment_intent.payment_failed  → marca Order como CANCELLED
+ *   - checkout.session.completed              → crea Order PAID SOLO si está pagada
+ *   - checkout.session.async_payment_succeeded → idem para métodos asíncronos
+ *   - charge.refunded                         → marca Order como REFUNDED
+ *   - payment_intent.payment_failed           → marca Order como CANCELLED
  *
  * Si STRIPE_SECRET_KEY o STRIPE_WEBHOOK_SECRET están ausentes devuelve 503
  * (no 500) para que Stripe reintente cuando se configuren.
  *
  * Configuración del endpoint en el dashboard Stripe:
  *   URL:     https://zonasport.es/api/stripe/webhook
- *   Eventos: checkout.session.completed, charge.refunded,
- *            payment_intent.payment_failed
+ *   Eventos: checkout.session.completed, checkout.session.async_payment_succeeded,
+ *            charge.refunded, payment_intent.payment_failed
  *   Versión API: la que uses (cualquier `2024-*` o posterior vale).
  */
 
@@ -77,7 +78,12 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
-      case "checkout.session.completed": {
+      // `completed` llega al terminar el checkout; `async_payment_succeeded`
+      // llega cuando un método de pago asíncrono confirma DESPUÉS. En ambos
+      // delegamos en createOrderFromCheckout, que solo crea el pedido si
+      // payment_status ya es "paid" — nunca antes de cobrar.
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
         const order = await createOrderFromCheckout(session);
         return NextResponse.json({
