@@ -55,7 +55,7 @@ const HERO_CONFIG: Record<GenderKey, GenderHeroConfig> = {
     eyebrow: "Para él",
     headline: "Equipación para entrenar, competir y disfrutar.",
     tagline:
-      "Running, pádel, montaña, fitness y casual con marcas como John Smith, +8000, Joma, Puma, Babolat, Joluvi, Ditchil y Shayber.",
+      "Running, pádel, montaña, fitness y casual con marcas como John Smith, +8000, Joma, Puma, Babolat, Joluvi, Ditchil y Jhayber.",
     photo: "/category-photos/padel.jpg",
     tintGradient:
       "from-zs-blue-950/65 via-zs-blue-900/35 to-zs-blue-950/80",

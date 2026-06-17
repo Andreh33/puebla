@@ -37,7 +37,7 @@ const BRANDS_TICKER = [
   "BABOLAT",
   "JOLUVI",
   "DITCHIL",
-  "SHAYBER",
+  "JHAYBER",
 ] as const;
 
 export function HomeHero() {
@@ -273,7 +273,7 @@ export function HomeHero() {
         </div>
       </div>
 
-      {/* Banner "OFERTAS DE LA SEMANA" — franja CTA dramática */}
+      {/* Banner "OUTLET" — franja CTA dramática que lleva a /outlet */}
       <div
         className="relative mx-auto max-w-[1600px] px-4 pb-12 sm:px-8 sm:pb-16"
         style={{
@@ -284,8 +284,8 @@ export function HomeHero() {
         }}
       >
         <Link
-          href="#catalogo"
-          data-cursor="Ofertas"
+          href="/outlet"
+          data-cursor="Outlet"
           /* Banner cambiado de rojo a naranja por petición del cliente.
              Glow naranja inline para coherencia (el token --shadow-zs-rojo-glow
              sigue siendo rojo y se sigue usando en otros sitios como el CTA
@@ -306,21 +306,21 @@ export function HomeHero() {
             </span>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-white/80">
-                Ofertas de la semana
+                Outlet
               </p>
               <p
                 className="mt-1 font-display font-black leading-[0.95] tracking-[-0.03em]"
                 style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
               >
-                Ofertas en una <span className="text-zs-tennis-300">selección</span>
+                Outlet en una <span className="text-zs-tennis-300">selección</span>
               </p>
               <p className="mt-1 text-sm text-white/80">
-                Running, montaña y calzado urbano · termina el domingo
+                Textil y calzado de marca a precio reducido · mientras haya stock
               </p>
             </div>
           </div>
           <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold uppercase tracking-[0.06em] text-orange-600 transition-transform group-hover:translate-x-1">
-            Ver ofertas
+            Ver outlet
             <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
           </span>
         </Link>

@@ -594,7 +594,7 @@ const MARQUEE_BRAND_NAMES = [
   "Babolat",
   "Joluvi",
   "Ditchil",
-  "Shayber",
+  "Jhayber",
 ] as const;
 
 function normalizeBrandName(s: string): string {
@@ -819,9 +819,17 @@ export function buildProductWhere(opts: {
   categoryId?: string | string[];
   brandId?: string;
   filters: CategoryFilterParams;
+  // Outlet (aditivo): si `isOutlet` se pasa, exige Product.isOutlet === valor.
+  // `categorySlugContains` restringe a productos enlazados (pivote m2m) a una
+  // categoría cuyo slug contiene el patrón (p.ej. "-textil" / "-calzado").
+  // Ambos son opcionales: si no se pasan, el `where` mantiene su forma previa
+  // (los tests estructurales de buildProductWhere no los usan).
+  isOutlet?: boolean;
+  categorySlugContains?: string;
 }): Prisma.ProductWhereInput {
-  const { categoryId, brandId, filters } = opts;
+  const { categoryId, brandId, filters, isOutlet, categorySlugContains } = opts;
   const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
+  if (isOutlet !== undefined) where.isOutlet = isOutlet;
   // Bloque 3 §12: filtrado por categoría vía pivote m2m del Bloque 2 (apariciones
   // públicas, incluye dup UNISEX/BEBE). El categoryId antiguo NO se reasignó al
   // árbol nuevo (smoke en dev: 0 productos). Se mantiene mientras conviven ambos
@@ -830,6 +838,12 @@ export function buildProductWhere(opts: {
     // Bug B: incluir descendientes — los productos cuelgan de las hojas, no del padre.
     const ids = Array.isArray(categoryId) ? categoryId : [categoryId];
     where.categories = { some: { categoryId: { in: ids } } };
+  } else if (categorySlugContains) {
+    // Outlet: familia (textil/calzado) determinada por el slug de la categoría
+    // enlazada vía pivote m2m. textil → slugs "*-textil*"; calzado → "*-calzado*".
+    where.categories = {
+      some: { category: { slug: { contains: categorySlugContains } } },
+    };
   }
   if (brandId) where.brandId = brandId;
 
@@ -926,7 +940,31 @@ export async function getCategoryFacets(categoryId: string | string[]) {
   // Bug B: acepta array (padre + descendientes) para categorías con hijas.
   const catIds = Array.isArray(categoryId) ? categoryId : [categoryId];
   const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId: { in: catIds } } } };
+  return computeFacets(baseWhere);
+}
 
+/**
+ * Facetas del Outlet para una familia (textil/calzado): mismas facetas que una
+ * categoría, pero el universo base es `isOutlet:true` + categoría cuyo slug
+ * contiene `-${familia}` (vía pivote m2m). Reutiliza `computeFacets` para no
+ * duplicar la lógica de groupBy/aggregate.
+ */
+export async function getOutletFacets(familia: "textil" | "calzado") {
+  const baseWhere = {
+    status: "ACTIVE" as const,
+    isOutlet: true,
+    categories: { some: { category: { slug: { contains: `-${familia}` } } } },
+  } satisfies Prisma.ProductWhereInput;
+  return computeFacets(baseWhere);
+}
+
+/**
+ * Núcleo de cálculo de facetas independientes a partir de un `where` base
+ * arbitrario (categoría, outlet, …). Extraído de getCategoryFacets para que el
+ * outlet reutilice exactamente la misma forma de facetas (marca/género/color/
+ * talla/precio/tipo de calzado/tipo de prenda/variante).
+ */
+async function computeFacets(baseWhere: Prisma.ProductWhereInput) {
   const [brands, genders, colors, sizes, priceRange, footwearGroups, garmentGroups, garmentVariantGroups] = await Promise.all([
     db.product.groupBy({
       by: ["brandId"],

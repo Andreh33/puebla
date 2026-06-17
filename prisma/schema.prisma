@@ -143,6 +143,7 @@ model Product {
   stock        Int           @default(0)
   weight       Decimal?      @db.Decimal(8, 3)
   isFeatured   Boolean       @default(false)
+  isOutlet     Boolean       @default(false) // si true, aparece ADEMÁS en /outlet (no se quita de su categoría)
   isCustomized Boolean       @default(false) // si true, no sobrescribir desde feed
 
   metaTitle       String?
@@ -165,6 +166,7 @@ model Product {
   @@index([status, publishedAt])
   @@index([modelCode])
   @@index([isFeatured, status])
+  @@index([isOutlet, status])
 }
 
 model ProductImage {

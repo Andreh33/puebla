@@ -9,7 +9,7 @@ export const revalidate = 600;
 export const metadata = buildMetadata({
   title: "Marcas que trabajamos",
   description:
-    "Catálogo de marcas deportivas disponibles en Zona Sport — Puebla de la Calzada. John Smith, +8000, Joma, Puma, Babolat, Joluvi, Ditchil, Shayber y muchas más.",
+    "Catálogo de marcas deportivas disponibles en Zona Sport — Puebla de la Calzada. John Smith, +8000, Joma, Puma, Babolat, Joluvi, Ditchil, Jhayber y muchas más.",
   path: "/marcas",
 });
 

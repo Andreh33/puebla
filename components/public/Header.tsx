@@ -63,6 +63,18 @@ const SUBTABS_NINOS: Array<{ label: string; href: string }> = [
   { label: "Complementos", href: "/accesorios" },
 ];
 
+/**
+ * Outlet — entrada propia (NO encaja en el modelo género→familia del mega-menú,
+ * así que es un link directo "Outlet" con un mini-dropdown Textil/Calzado en
+ * desktop y dos sub-links en el drawer móvil). El hub /outlet también enlaza a
+ * ambas familias, así que el link principal sigue siendo útil por sí solo.
+ */
+const OUTLET_HREF = "/outlet";
+const OUTLET_LINKS: Array<{ label: string; href: string }> = [
+  { label: "Textil", href: "/outlet/textil" },
+  { label: "Calzado", href: "/outlet/calzado" },
+];
+
 const GENDER_TABS: Array<{
   key: MegaMenuKey;
   label: string;
@@ -108,7 +120,7 @@ const GENDER_TABS: Array<{
 const TICKER_PHRASES = [
   "Desde Puebla de la Calzada hasta cualquier parte del mundo",
   "Años de calidad y trato cercano",
-  "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Shayber",
+  "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Jhayber",
   "Atendemos por WhatsApp · Recogida en tienda",
   "Pádel, running, montaña, fitness — todo en una sola tienda",
   "Asesoramiento real, no postureo",
@@ -362,6 +374,53 @@ export function Header() {
                 );
               })}
 
+              {/* Outlet — link directo con mini-dropdown (Textil/Calzado) en
+                  hover/focus. `group` controla la visibilidad del panel. */}
+              <div className="group relative">
+                <Link
+                  href={OUTLET_HREF}
+                  aria-current={
+                    pathname === OUTLET_HREF || pathname.startsWith(`${OUTLET_HREF}/`)
+                      ? "page"
+                      : undefined
+                  }
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-colors",
+                    pathname === OUTLET_HREF || pathname.startsWith(`${OUTLET_HREF}/`)
+                      ? "bg-zs-red-600 text-white"
+                      : "text-zs-red-600 hover:bg-zs-red-50 hover:text-zs-red-700",
+                  )}
+                >
+                  Outlet
+                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
+                </Link>
+                <div
+                  role="menu"
+                  aria-label="Outlet"
+                  className="invisible absolute left-0 top-full z-50 mt-1 min-w-[160px] translate-y-1 rounded-2xl border border-zs-border bg-white p-1.5 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
+                >
+                  {OUTLET_LINKS.map((item) => {
+                    const active = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        role="menuitem"
+                        href={item.href}
+                        aria-current={active ? "page" : undefined}
+                        className={cn(
+                          "block rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
+                          active
+                            ? "bg-zs-red-50 text-zs-red-700"
+                            : "text-zs-ink hover:bg-zs-surface hover:text-zs-red-700",
+                        )}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Separador entre TIENDA (Mujer/Hombre/Niños + sub-tabs) y
                   PÁGINA (Contacto/Blog/App). Diferenciación visual:
                   «aquí compras» vs «aquí informas». */}
@@ -592,6 +651,38 @@ export function Header() {
                   );
                 })}
               </ul>
+
+              {/* Outlet (drawer móvil): link al hub + dos sub-links Textil/Calzado */}
+              <div className="mb-3 overflow-hidden rounded-2xl border border-zs-red-200 bg-zs-red-50/40">
+                <Link
+                  href={OUTLET_HREF}
+                  onClick={() => setMobileOpen(false)}
+                  className="block px-3 py-3 text-sm font-extrabold uppercase tracking-wider text-zs-red-700"
+                >
+                  Outlet
+                </Link>
+                <ul className="grid grid-cols-2 gap-2 px-3 pb-3">
+                  {OUTLET_LINKS.map((item) => {
+                    const active = pathname === item.href;
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            "block rounded-lg px-3 py-2 text-center text-sm font-semibold",
+                            active
+                              ? "bg-zs-red-600 text-white"
+                              : "border border-zs-red-200 bg-white text-zs-red-700 hover:bg-zs-red-50",
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
 
               <ul className="flex flex-col gap-1">
                 {SPORT_NAV.map((item, i) => (

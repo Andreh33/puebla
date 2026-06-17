@@ -98,6 +98,7 @@ export const ProductSchema = z.object({
   stock: z.number().int().min(0).default(0),
   weight: z.number().min(0).optional().nullable(),
   isFeatured: z.boolean().default(false),
+  isOutlet: z.boolean().default(false),
   isCustomized: z.boolean().default(false),
   metaTitle: z.string().max(70).optional().nullable(),
   metaDescription: z.string().max(170).optional().nullable(),

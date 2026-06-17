@@ -74,6 +74,7 @@ export default async function EditProductPage({
     stock: product.stock,
     weight: product.weight ? Number(product.weight) : null,
     isFeatured: product.isFeatured,
+    isOutlet: product.isOutlet,
     isCustomized: product.isCustomized,
     metaTitle: product.metaTitle,
     metaDescription: product.metaDescription,

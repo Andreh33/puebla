@@ -119,6 +119,7 @@ interface EditorProps {
     stock: number;
     weight: number | null;
     isFeatured: boolean;
+    isOutlet: boolean;
     isCustomized: boolean;
     metaTitle: string | null;
     metaDescription: string | null;
@@ -260,6 +261,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     stock: initial?.stock ?? 0,
     weight: initial?.weight ?? null,
     isFeatured: initial?.isFeatured ?? false,
+    isOutlet: initial?.isOutlet ?? false,
     isCustomized: initial?.isCustomized ?? false,
     metaTitle: initial?.metaTitle ?? null,
     metaDescription: initial?.metaDescription ?? null,
@@ -818,6 +820,13 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                     onCheckedChange={(v) => setValue("isFeatured", v, { shouldDirty: true })}
                   />
                   Destacado
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch
+                    checked={watched.isOutlet}
+                    onCheckedChange={(v) => setValue("isOutlet", v, { shouldDirty: true })}
+                  />
+                  Outlet
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <Switch

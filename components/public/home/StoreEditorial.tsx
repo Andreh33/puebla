@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowUpRight, MapPin, MessageCircle, Star } from "lucide-react";
+import { Activity, ArrowUpRight, MapPin, MessageCircle, Star } from "lucide-react";
 import { Reveal } from "@/components/public/Reveal";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
@@ -144,6 +144,36 @@ export function StoreEditorial() {
             <p className="text-xs uppercase tracking-[0.22em] text-zs-muted/80">
               L–V 10:00 – 14:00 · 17:30 – 20:30 — S 10:00 – 14:00
             </p>
+          </Reveal>
+
+          {/* Servicio en tienda: encordado de raquetas. Bloque integrado en
+              "La tienda" con su propio CTA de WhatsApp. */}
+          <Reveal variant="fade-up" delay={420}>
+            <div className="flex items-start gap-4 rounded-2xl border border-zs-blue-900/10 bg-white p-5 shadow-sm">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zs-tennis-300/40 text-zs-blue-950">
+                <Activity className="h-6 w-6" strokeWidth={2} />
+              </span>
+              <div className="space-y-2">
+                <p className="font-display text-lg font-bold leading-tight text-zs-blue-950">
+                  Encordado de raquetas en tienda
+                </p>
+                <p className="text-sm leading-relaxed text-zs-muted">
+                  Encordamos tu raqueta de pádel o tenis aquí mismo, en Puebla de
+                  la Calzada (Badajoz). Pásate o escríbenos por WhatsApp y te
+                  decimos plazo y precio.
+                </p>
+                <a
+                  href={whatsappUrl(WhatsAppMessages.generic())}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cursor="WhatsApp"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-zs-blue-900 underline-offset-4 hover:underline"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Consultar encordado
+                </a>
+              </div>
+            </div>
           </Reveal>
         </div>
       </div>

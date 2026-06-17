@@ -35,11 +35,11 @@ type Tile = {
 
 const TILES: Tile[] = [
   {
-    href: "/hombre/calzado?tipo=running&oferta=1",
-    eyebrow: "Solo esta semana",
-    title: "Ofertas de la semana",
-    caption: "Asfalto, trail y zapatilla diaria. Termina el domingo.",
-    cta: "Ver ofertas",
+    href: "/outlet",
+    eyebrow: "Precio reducido",
+    title: "Outlet",
+    caption: "Textil y calzado de marca rebajado. Mientras haya stock.",
+    cta: "Ver outlet",
     Icon: Flame,
     gradient: "from-zs-red-600 via-zs-red-600 to-[#7a1e1e]",
     accent: "text-white/80",
