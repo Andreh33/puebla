@@ -111,7 +111,7 @@ export default async function PedidosPage({
           <StripeNotConfigured
             missing={missing}
             envKeys={STRIPE_ENV_VARS}
-            siteUrl={process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.es"}
+            siteUrl={process.env.NEXT_PUBLIC_SITE_URL || "https://zonasport.vercel.app"}
           />
         </div>
       )}

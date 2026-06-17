@@ -169,7 +169,7 @@ export function HeroLuxe({ primaryHref }: Props) {
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:py-24 lg:grid-cols-2 lg:items-center lg:py-32">
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> Tienda local · Online próximamente
+            <Sparkles className="h-3.5 w-3.5" /> Tienda local · Compra online
           </p>
           <h1
             ref={titleRef}

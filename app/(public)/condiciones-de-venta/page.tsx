@@ -94,24 +94,25 @@ export default function CondicionesPage() {
               plazos. La reserva se mantiene hasta 48 horas sin compromiso.
             </li>
             <li>
-              <strong>Compra:</strong> el cliente pasa por la tienda física a pagar y recoger,
-              o bien se acuerda envío con pago anticipado por transferencia (en este caso,
-              hasta que esté operativa la pasarela de pago online).
+              <strong>Compra:</strong> paga online con tarjeta desde la web y recoge en
+              tienda o recibe el pedido por envío; o pasa por la tienda física a pagar y
+              recoger.
             </li>
           </ol>
 
           <h2>4. Formas de pago</h2>
           <ul>
             <li>
+              <strong>Online:</strong> pago con tarjeta (Visa, Mastercard) de forma segura
+              a través de Stripe, directamente desde la web.
+            </li>
+            <li>
               <strong>En tienda:</strong> efectivo, tarjeta bancaria (Visa, Mastercard) o
               Bizum.
             </li>
             <li>
-              <strong>Reservas con envío:</strong> transferencia bancaria previa al envío.
-            </li>
-            <li>
-              <strong>Próximamente:</strong> pago con tarjeta y wallets digitales (Apple Pay,
-              Google Pay) directamente desde la web, una vez activada la pasarela de pago.
+              <strong>Reserva por WhatsApp:</strong> también puedes reservar un producto y
+              acordar el pago y la recogida o el envío.
             </li>
           </ul>
 

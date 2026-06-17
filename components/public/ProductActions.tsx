@@ -151,8 +151,8 @@ export function ProductActions({
         <p className="text-xs text-zs-muted">Selecciona una talla para continuar.</p>
       )}
       <p className="text-[11px] leading-snug text-zs-muted">
-        Pagos online próximamente. Añade al carrito y confirma por WhatsApp; te
-        lo reservamos para recogida en tienda.
+        Paga online con tarjeta de forma segura, o resérvalo por WhatsApp para
+        recogerlo en tienda.
       </p>
     </div>
   );
