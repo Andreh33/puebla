@@ -176,16 +176,33 @@ export async function createInStoreSale(
     const planned = planSale(input.lines, products, input.totalDiscount ?? 0);
 
     for (const delta of planned.stockDeltas) {
+      // Descuento ATÓMICO con guarda `stock >= qty`: la validación de planSale
+      // se hizo sobre el stock LEÍDO al abrir la transacción; si otra venta (otra
+      // caja, otra pestaña o el checkout web) agotó la talla entremedias, aquí
+      // count===0 y abortamos la venta entera (la transacción revierte) en vez de
+      // dejar stock NEGATIVO. Espeja lib/stripe/orders.ts (checkout online).
+      const name = products.find((p) => p.id === delta.productId)?.name ?? delta.productId;
+      const label = delta.size ? `${name} (talla ${delta.size})` : name;
       if (delta.size) {
-        await tx.productSize.updateMany({
-          where: { productId: delta.productId, size: delta.size },
+        const res = await tx.productSize.updateMany({
+          where: {
+            productId: delta.productId,
+            size: delta.size,
+            stock: { gte: delta.quantity },
+          },
           data: { stock: { decrement: delta.quantity } },
         });
+        if (res.count === 0) {
+          throw new Error(`Sin stock suficiente de ${label}. Otra venta lo agotó; revisa el ticket.`);
+        }
       } else {
-        await tx.product.update({
-          where: { id: delta.productId },
+        const res = await tx.product.updateMany({
+          where: { id: delta.productId, stock: { gte: delta.quantity } },
           data: { stock: { decrement: delta.quantity } },
         });
+        if (res.count === 0) {
+          throw new Error(`Sin stock suficiente de ${label}. Otra venta lo agotó; revisa el ticket.`);
+        }
       }
     }
 

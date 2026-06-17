@@ -123,53 +123,49 @@ export async function bulkAction(ids: string[], action: BulkActionType) {
   const session = await requireSession();
   if (!ids.length) return { ok: false as const, error: "Nada seleccionado" };
 
-  let count = 0;
-  switch (action.kind) {
-    case "publish":
-      count = await bulkSetStatus(ids, "ACTIVE", session.user.id);
-      break;
-    case "unpublish":
-      count = await bulkSetStatus(ids, "DRAFT", session.user.id);
-      break;
-    case "archive":
-      count = await bulkSetStatus(ids, "INACTIVE", session.user.id);
-      break;
-    case "delete":
-      count = await bulkDelete(ids, session.user.id);
-      break;
-    case "category":
-      count = await bulkSetCategory(ids, action.categoryId, session.user.id);
-      break;
-    case "addTags":
-      count = await bulkAddTags(ids, action.tags, session.user.id);
-      break;
-    case "footwearType":
-      try {
+  // Todo el switch envuelto en try/catch: si una mutación lanza (p.ej. un id
+  // borrado en paralelo provoca violación de FK en el audit), devolvemos
+  // {ok:false} en lugar de un 500 sin cuerpo. Antes solo footwear/garment lo
+  // capturaban; el resto (delete/category/addTags/publish…) quedaba expuesto.
+  try {
+    let count = 0;
+    switch (action.kind) {
+      case "publish":
+        count = await bulkSetStatus(ids, "ACTIVE", session.user.id);
+        break;
+      case "unpublish":
+        count = await bulkSetStatus(ids, "DRAFT", session.user.id);
+        break;
+      case "archive":
+        count = await bulkSetStatus(ids, "INACTIVE", session.user.id);
+        break;
+      case "delete":
+        count = await bulkDelete(ids, session.user.id);
+        break;
+      case "category":
+        count = await bulkSetCategory(ids, action.categoryId, session.user.id);
+        break;
+      case "addTags":
+        count = await bulkAddTags(ids, action.tags, session.user.id);
+        break;
+      case "footwearType":
         count = await bulkSetFootwearType(ids, action.footwearType, session.user.id);
-      } catch (e) {
-        return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
-      }
-      break;
-    case "garmentType":
-      try {
+        break;
+      case "garmentType":
         count = await bulkSetGarmentType(ids, action.garmentType, session.user.id);
-      } catch (e) {
-        return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
-      }
-      break;
-    case "garmentVariant":
-      try {
+        break;
+      case "garmentVariant":
         count = await bulkSetGarmentVariant(ids, action.garmentVariant, session.user.id);
-      } catch (e) {
-        return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
-      }
-      break;
-    case "draftZeroStock":
-      count = await bulkDraftZeroStock(ids, session.user.id);
-      break;
+        break;
+      case "draftZeroStock":
+        count = await bulkDraftZeroStock(ids, session.user.id);
+        break;
+    }
+    revalidatePath("/admin/productos");
+    return { ok: true as const, count };
+  } catch (e) {
+    return { ok: false as const, error: e instanceof Error ? e.message : "Error" };
   }
-  revalidatePath("/admin/productos");
-  return { ok: true as const, count };
 }
 
 // ---------------------------------------------------------------------------

@@ -4,21 +4,31 @@ import { revalidateTag } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { invalidateRedirectCache } from "@/lib/redirects";
+import { invalidateRedirectCache, normalizePath } from "@/lib/redirects";
 
-const RuleSchema = z.object({
-  from: z
-    .string()
-    .min(1, "Ruta origen requerida")
-    .startsWith("/", "Debe empezar con /")
-    .max(500),
-  to: z.string().min(1, "Destino requerido").max(2000),
-  type: z.coerce.number().int().refine((n) => n === 301 || n === 302, {
-    message: "El tipo debe ser 301 o 302",
-  }),
-  isActive: z.coerce.boolean().default(true),
-  notes: z.string().max(500).optional().nullable(),
-});
+const RuleSchema = z
+  .object({
+    from: z
+      .string()
+      .min(1, "Ruta origen requerida")
+      .startsWith("/", "Debe empezar con /")
+      .max(500),
+    to: z.string().min(1, "Destino requerido").max(2000),
+    type: z.coerce.number().int().refine((n) => n === 301 || n === 302, {
+      message: "El tipo debe ser 301 o 302",
+    }),
+    isActive: z.coerce.boolean().default(true),
+    notes: z.string().max(500).optional().nullable(),
+  })
+  // Anti-bucle: una regla con origen === destino (misma ruta interna) provocaría
+  // un 301→301→… infinito (ERR_TOO_MANY_REDIRECTS). Se rechaza al guardar.
+  .refine(
+    (r) => r.to.startsWith("http") || normalizePath(r.from) !== normalizePath(r.to),
+    {
+      message: "El origen y el destino no pueden ser la misma ruta (crearía un bucle).",
+      path: ["to"],
+    },
+  );
 
 export type RuleInput = z.infer<typeof RuleSchema>;
 

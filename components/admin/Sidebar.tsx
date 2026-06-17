@@ -59,7 +59,9 @@ export const ADMIN_NAV: NavItem[] = [
   // La ruta /admin/redirecciones sigue accesible si la escribes a mano,
   // pero no aparece en el sidebar. Para reactivarla: descomenta la línea.
   // { label: "Redirecciones", href: "/admin/redirecciones", icon: ArrowLeftRight },
-  { label: "Ajustes", href: "/admin/ajustes", icon: Settings, ownerOnly: true },
+  // "Ajustes" oculto: la página /admin/ajustes aún no existe (el enlace daba
+  // 404). Reactivar esta línea cuando se cree la página de ajustes.
+  // { label: "Ajustes", href: "/admin/ajustes", icon: Settings, ownerOnly: true },
   { label: "Usuarios admin", href: "/admin/usuarios", icon: ShieldCheck, ownerOnly: true },
 ];
 

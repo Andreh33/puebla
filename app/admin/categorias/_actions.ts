@@ -93,6 +93,18 @@ export async function deleteCategoryAction(id: string) {
 
 export async function reorderCategories(updates: Array<{ id: string; parentId: string | null; position: number }>) {
   await requireSession();
+  // Validación anti-ciclo: una server action es invocable directamente, no solo
+  // desde el drag&drop de hermanos de la UI. Rechazamos auto-parent y mover una
+  // categoría bajo uno de sus descendientes (crearía un ciclo que deja ramas
+  // huérfanas/invisibles en el árbol y bucles en las queries recursivas).
+  for (const u of updates) {
+    if (u.parentId === u.id) {
+      throw new Error("Una categoría no puede ser hija de sí misma.");
+    }
+    if (u.parentId && (await isDescendant(u.id, u.parentId))) {
+      throw new Error("El reordenamiento crearía un ciclo en el árbol de categorías.");
+    }
+  }
   await db.$transaction(
     updates.map((u) =>
       db.category.update({

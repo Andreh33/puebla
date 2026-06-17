@@ -209,7 +209,11 @@ export async function exportOrdersCsv(
     ];
 
     const esc = (v: unknown) => {
-      const s = v == null ? "" : String(v);
+      let s = v == null ? "" : String(v);
+      // Anti-inyección de fórmulas: nombre/email/teléfono vienen del cliente vía
+      // Stripe; una celda que empieza por = + - @ tab/CR se ejecutaría al abrir
+      // el CSV en Excel/LibreOffice. La neutralizamos con un apóstrofo delante.
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
       if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
       return s;
     };

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { lookupRedirect } from "@/lib/redirects";
+import { lookupRedirect, normalizePath } from "@/lib/redirects";
 
 // ---------------------------------------------------------------------------
 // Edge-safe middleware.
@@ -52,7 +52,13 @@ export async function middleware(req: NextRequest) {
   // ---- (1) RedirectRule ----------------------------------------------------
   if (!shouldSkipRedirectLookup(pathname)) {
     const rule = await lookupRedirect(pathname, origin);
-    if (rule) {
+    // Anti-bucle: ignoramos una regla cuyo destino interno es la propia ruta
+    // actual (to === from), que provocaría un 301→301→… infinito en producción.
+    const selfLoop =
+      rule != null &&
+      !rule.to.startsWith("http") &&
+      normalizePath(rule.to) === normalizePath(pathname);
+    if (rule && !selfLoop) {
       const dest = rule.to.startsWith("http") ? rule.to : new URL(rule.to + search, req.url);
       // Fire-and-forget para sumar el hit. NO bloqueamos la respuesta.
       void fetch(`${origin}/api/redirects`, {

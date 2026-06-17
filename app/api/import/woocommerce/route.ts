@@ -75,9 +75,19 @@ export async function POST(req: Request) {
   }
 
   const optionsRaw = form.get("options");
-  const options = ImportOptionsSchema.parse(
-    optionsRaw && typeof optionsRaw === "string" ? JSON.parse(optionsRaw) : {},
-  );
+  let optionsJson: unknown = {};
+  if (optionsRaw && typeof optionsRaw === "string") {
+    try {
+      optionsJson = JSON.parse(optionsRaw);
+    } catch {
+      return NextResponse.json({ error: "Opciones de importación inválidas (JSON malformado)" }, { status: 400 });
+    }
+  }
+  const optionsParsed = ImportOptionsSchema.safeParse(optionsJson);
+  if (!optionsParsed.success) {
+    return NextResponse.json({ error: "Opciones de importación inválidas" }, { status: 400 });
+  }
+  const options = optionsParsed.data;
 
   const dir = path.join(tmpdir(), "zs-imports");
   await mkdir(dir, { recursive: true });

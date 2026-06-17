@@ -9,7 +9,11 @@ function parseList(value: string | null): string[] {
 
 function csvEscape(v: unknown): string {
   if (v == null) return "";
-  const s = String(v);
+  let s = String(v);
+  // Anti-inyección de fórmulas (CSV injection): una celda que empieza por
+  // = + - @ tab o CR puede ejecutarse como fórmula al abrir el CSV en
+  // Excel/LibreOffice. La neutralizamos con un apóstrofo delante.
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   if (s.includes(",") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
     return `"${s.replace(/"/g, '""')}"`;
   }

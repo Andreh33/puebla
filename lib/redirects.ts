@@ -53,7 +53,7 @@ export function invalidateRedirectCache() {
   globalThis.__zs_redirects_cache = undefined;
 }
 
-function normalizePath(p: string): string {
+export function normalizePath(p: string): string {
   if (!p) return "/";
   let path = p.trim();
   if (!path.startsWith("/")) path = `/${path}`;
