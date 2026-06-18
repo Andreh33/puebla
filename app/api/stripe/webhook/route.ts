@@ -29,6 +29,8 @@ import {
   markOrderCancelled,
   markOrderRefunded,
 } from "@/lib/stripe/orders";
+import { issueInvoiceForOrder } from "@/lib/holded/invoice";
+import { isHoldedConfigured } from "@/lib/holded/client";
 
 // Stripe requiere el cuerpo crudo para verificar la firma → runtime Node.
 export const runtime = "nodejs";
@@ -86,10 +88,15 @@ export async function POST(req: NextRequest) {
       case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
         const order = await createOrderFromCheckout(session);
+        // Facturación fiscal (Modelo B): los pedidos ONLINE se facturan en Holded
+        // → VeriFactu. Best-effort: un fallo de Holded NUNCA rompe el webhook ni
+        // el pedido (ya creado y cobrado).
+        const invoiced = order ? await maybeInvoiceOnlineOrder(order.id) : null;
         return NextResponse.json({
           received: true,
           handled: event.type,
           orderId: order?.id ?? null,
+          invoiced,
         });
       }
 
@@ -126,6 +133,33 @@ export async function POST(req: NextRequest) {
       { error: "processing_failed", event: event.type, message },
       { status: 500 },
     );
+  }
+}
+
+/**
+ * Emite la factura del pedido online en Holded si la auto-facturación está
+ * activada (`HOLDED_AUTO_INVOICE === "on"`) y la key está configurada.
+ *
+ * Best-effort: captura cualquier error y lo loggea; NUNCA lanza — un fallo de
+ * Holded no debe afectar al webhook ni al pedido (que ya está creado y cobrado).
+ * Devuelve el docId emitido, "skipped" si está desactivada/no configurada, o
+ * null si la emisión falló (queda en logs para reintentar a mano).
+ */
+async function maybeInvoiceOnlineOrder(orderId: string): Promise<string | null> {
+  if (process.env.HOLDED_AUTO_INVOICE !== "on" || !isHoldedConfigured()) {
+    return "skipped";
+  }
+  try {
+    const res = await issueInvoiceForOrder(orderId);
+    if (res.ok) return res.docId ?? "ok";
+    console.error(`[holded] no se pudo facturar el pedido ${orderId}: ${res.error}`);
+    return null;
+  } catch (e) {
+    console.error(
+      `[holded] error facturando el pedido ${orderId}:`,
+      e instanceof Error ? e.message : e,
+    );
+    return null;
   }
 }
 

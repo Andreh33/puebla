@@ -465,6 +465,12 @@ model Order {
   notes                 String?     @db.Text
   items                 OrderItem[]
   metadata              Json?
+  // Facturación fiscal (Holded/VeriFactu): se rellenan al emitir la factura del
+  // pedido en Holded (pedidos online + facturas a petición). Las ventas de TPV
+  // NO se facturan por aquí (Modelo B). holdedDocId actúa de guarda idempotente.
+  holdedDocId           String?
+  holdedInvoiceNumber   String?
+  invoicedAt            DateTime?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
 
