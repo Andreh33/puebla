@@ -71,6 +71,7 @@ function statusBadge(status: OrderStatus) {
 function deliveryLabel(method: string | null): string {
   if (method === "pickup") return "Recogida";
   if (method === "shipping") return "Envío";
+  if (method === "in_store") return "TPV (tienda)";
   return "—";
 }
 
@@ -108,6 +109,7 @@ export function PedidosTable({
   >("");
   const [note, setNote] = React.useState("");
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
+  const [cancellingId, setCancellingId] = React.useState<string | null>(null);
   const [fiscal, setFiscal] = React.useState({ nif: "", name: "", address: "", city: "", cp: "" });
   const [issuing, setIssuing] = React.useState(false);
 
@@ -218,6 +220,40 @@ export function PedidosTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setUpdatingStatus(false);
+    }
+  }
+
+  // Cancela una venta del TPV (in_store) en un clic y devuelve su stock al
+  // inventario. Reutiliza updateOrderStatus → "CANCELLED", que restaura el stock
+  // porque la venta se creó en PAID. Solo se ofrece para ventas del TPV: los
+  // pedidos online se cancelan/reembolsan desde Stripe, que es quien repone su
+  // stock (así no se descuadra el dinero con el inventario).
+  async function cancelOrder(orderId: string) {
+    if (
+      !confirm(
+        "¿Cancelar esta venta del TPV? Se devolverá al inventario el stock que descontó.",
+      )
+    ) {
+      return;
+    }
+    setCancellingId(orderId);
+    try {
+      const res = await updateOrderStatus(orderId, "CANCELLED");
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Venta cancelada · stock devuelto al inventario");
+      // Si el modal está abierto sobre este mismo pedido, refresca su detalle.
+      if (selected?.id === orderId) {
+        const fresh = await getOrderDetail(orderId);
+        if (fresh.ok) setSelected(fresh.data!);
+      }
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setCancellingId(null);
     }
   }
 
@@ -389,14 +425,29 @@ export function PedidosTable({
                     {formatPriceEUR(o.total)}
                   </td>
                   <td className="px-3 py-2 align-top">
-                    <button
-                      onClick={() => openDetail(o.id)}
-                      className="text-xs text-zs-blue-700 hover:underline"
-                      disabled={loadingDetail}
-                      type="button"
-                    >
-                      Ver detalle
-                    </button>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <button
+                        onClick={() => openDetail(o.id)}
+                        className="text-xs text-zs-blue-700 hover:underline"
+                        disabled={loadingDetail}
+                        type="button"
+                      >
+                        Ver detalle
+                      </button>
+                      {o.deliveryMethod === "in_store" &&
+                        o.status !== "CANCELLED" &&
+                        o.status !== "REFUNDED" && (
+                          <button
+                            onClick={() => cancelOrder(o.id)}
+                            className="text-xs font-semibold text-zs-red-600 hover:underline disabled:opacity-50"
+                            disabled={cancellingId === o.id}
+                            type="button"
+                            title="Cancela la venta del TPV y devuelve el stock al inventario"
+                          >
+                            {cancellingId === o.id ? "Cancelando…" : "Cancelar"}
+                          </button>
+                        )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -625,7 +676,11 @@ export function PedidosTable({
                         <SelectValue placeholder="Cambiar estado a…" />
                       </SelectTrigger>
                       <SelectContent>
-                        {FULFILLMENT_STATUSES.map((s) => (
+                        {/* "Cancelado" se gestiona con el botón dedicado (solo
+                            TPV), no desde aquí: así no hay dos vías de cancelar. */}
+                        {FULFILLMENT_STATUSES.filter(
+                          (s) => s !== "CANCELLED",
+                        ).map((s) => (
                           <SelectItem key={s} value={s}>
                             {FULFILLMENT_LABELS[s]}
                           </SelectItem>
@@ -647,6 +702,27 @@ export function PedidosTable({
                       {updatingStatus ? "Actualizando…" : "Actualizar estado"}
                     </Button>
                   </div>
+                  {selected.deliveryMethod === "in_store" &&
+                    selected.status !== "CANCELLED" &&
+                    selected.status !== "REFUNDED" && (
+                      <div className="mt-4 border-t border-zs-border pt-4">
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => cancelOrder(selected.id)}
+                          disabled={cancellingId === selected.id}
+                          className="w-full sm:w-auto"
+                        >
+                          {cancellingId === selected.id
+                            ? "Cancelando…"
+                            : "Cancelar venta y devolver stock"}
+                        </Button>
+                        <p className="mt-1.5 text-xs text-zs-muted">
+                          Solo para ventas del TPV. Marca la venta como cancelada y
+                          devuelve al inventario el stock que descontó.
+                        </p>
+                      </div>
+                    )}
                   {selected.notes && (
                     <div className="mt-3 rounded-lg border border-zs-border bg-zs-surface/50 p-2">
                       <p className="mb-1 text-xs font-semibold uppercase text-zs-muted">

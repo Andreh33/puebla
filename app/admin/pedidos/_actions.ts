@@ -117,12 +117,24 @@ export async function updateOrderStatus(
 
     const order = await db.order.findUnique({
       where: { id: orderId },
-      select: { id: true, status: true, notes: true },
+      select: { id: true, status: true, notes: true, deliveryMethod: true },
     });
     if (!order) return { ok: false, error: "Pedido no encontrado" };
 
-    // Restaura stock solo al CANCELAR desde un estado que ya lo había descontado.
-    // La marca metadata.stockRestored evita doble restauración (idempotente).
+    // Cancelar con devolución de stock SOLO para ventas del TPV (in_store). La
+    // caja física no pasa por Stripe, así que el inventario se corrige aquí. Un
+    // pedido online se cancela/reembolsa desde Stripe (charge.refunded), que es
+    // quien repone su stock; cancelarlo a mano aquí descuadraría dinero y stock.
+    if (status === "CANCELLED" && order.deliveryMethod !== "in_store") {
+      return {
+        ok: false,
+        error:
+          "Aquí solo se cancelan ventas del TPV. Un pedido online se cancela reembolsándolo en Stripe, que devuelve el stock automáticamente.",
+      };
+    }
+
+    // Restaura stock al CANCELAR (TPV) desde un estado que ya lo había
+    // descontado. La marca metadata.stockRestored evita doble restauración.
     if (status === "CANCELLED" && STOCK_DEDUCTED_STATUSES.has(order.status)) {
       await restoreStockForOrder(order.id);
     }
