@@ -242,3 +242,31 @@ export function buildMegaMenuHref(item: MegaMenuItem, gender: MegaMenuGender): s
     ? `/${seccion}/textil?prenda=${item.prenda}&variante=${item.variante}`
     : `/${seccion}/textil?prenda=${item.prenda}`;
 }
+
+/**
+ * Entrada de menú ya agrupada: una prenda/categoría `base` y, si las tiene, sus
+ * `variants` finas (manga corta/larga, pantalón corto/largo, mallas…). El render
+ * cuelga las variantes en un desplegable CERRADO por defecto bajo la prenda.
+ */
+export type MegaMenuEntry = { base: MegaMenuItem; variants: MegaMenuItem[] };
+
+/**
+ * Agrupa la lista PLANA de items de un grupo en entradas `{ base, variants }`:
+ * cada item NO-variante abre una entrada nueva; las variantes (textil con
+ * `variante`) se cuelgan de la última entrada abierta. Funciona porque buildRopa
+ * emite cada variante justo detrás de su prenda. Calzado no tiene variantes, así
+ * que cada item queda como su propia entrada sin variantes.
+ */
+export function groupMegaMenuItems(items: MegaMenuItem[]): MegaMenuEntry[] {
+  const entries: MegaMenuEntry[] = [];
+  for (const item of items) {
+    const isVariant = item.familia === "textil" && Boolean(item.variante);
+    const last = entries[entries.length - 1];
+    if (isVariant && last) {
+      last.variants.push(item);
+    } else {
+      entries.push({ base: item, variants: [] });
+    }
+  }
+  return entries;
+}

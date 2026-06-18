@@ -4,14 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   MEGA_MENU,
+  type MegaMenuEntry,
   type MegaMenuGroup,
+  type MegaMenuItem,
   type MegaMenuKey,
   type MegaMenuSection,
   buildMegaMenuHref,
+  groupMegaMenuItems,
 } from "@/lib/menu/mega-menu";
 
 /**
@@ -211,34 +214,119 @@ function GroupColumn({
         {group.title}
       </h4>
       <ul className="flex flex-col gap-1.5">
-        {group.items.map((item) => {
-          // Sub-item de variante fina (camiseta/pantalon/mallas): sangría sutil
-          // y texto algo atenuado para marcar la jerarquía bajo su prenda.
-          const isVariant = item.familia === "textil" && Boolean(item.variante);
-          return (
-            <li key={`${gender}-${item.label}`}>
-              <Link
-                role="menuitem"
-                href={buildMegaMenuHref(item, gender)}
-                onClick={onItemClick}
-                className={cn(
-                  "group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none",
-                  isVariant && "pl-4 text-[13px] text-zs-muted",
-                )}
-              >
-                <span className="relative">
-                  {item.label}
-                  <span
-                    aria-hidden
-                    className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
-                  />
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+        {groupMegaMenuItems(group.items).map((entry) => (
+          <GroupColumnEntry
+            key={`${gender}-${entry.base.label}`}
+            entry={entry}
+            gender={gender}
+            onItemClick={onItemClick}
+          />
+        ))}
       </ul>
     </div>
+  );
+}
+
+/** Enlace de un item del panel desktop, con subrayado animado. `variant` aplica
+ *  la sangría/atenuado de las variantes finas bajo su prenda. */
+function DesktopItemLink({
+  item,
+  gender,
+  onItemClick,
+  variant = false,
+}: {
+  item: MegaMenuItem;
+  gender: MegaMenuSection["gender"];
+  onItemClick: () => void;
+  variant?: boolean;
+}) {
+  return (
+    <Link
+      role="menuitem"
+      href={buildMegaMenuHref(item, gender)}
+      onClick={onItemClick}
+      className={cn(
+        "group inline-flex items-center gap-1 py-1 text-sm text-zs-ink transition-colors hover:text-zs-blue-900 focus-visible:text-zs-blue-900 focus-visible:outline-none",
+        variant && "pl-4 text-[13px] text-zs-muted",
+      )}
+    >
+      <span className="relative">
+        {item.label}
+        <span
+          aria-hidden
+          className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+        />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * Entrada del panel desktop: la prenda/categoría como enlace + (si tiene
+ * variantes) una flecha que abre un desplegable CERRADO por defecto con sus
+ * variantes finas. La prenda sigue navegando a su página; solo la flecha togglea.
+ */
+function GroupColumnEntry({
+  entry,
+  gender,
+  onItemClick,
+}: {
+  entry: MegaMenuEntry;
+  gender: MegaMenuSection["gender"];
+  onItemClick: () => void;
+}) {
+  const { base, variants } = entry;
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+
+  if (variants.length === 0) {
+    return (
+      <li>
+        <DesktopItemLink item={base} gender={gender} onItemClick={onItemClick} />
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <div className="flex items-center justify-between gap-2">
+        <DesktopItemLink item={base} gender={gender} onItemClick={onItemClick} />
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? "Ocultar" : "Mostrar"} tipos de ${base.label.toLowerCase()}`}
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-700"
+        >
+          <ChevronDown
+            className={cn("h-4 w-4 transition-transform duration-200", open && "rotate-180")}
+          />
+        </button>
+      </div>
+      <div
+        id={panelId}
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <ul className="flex flex-col gap-1.5 pt-1.5">
+            {variants.map((v) => (
+              <li key={`${gender}-${v.label}`}>
+                <DesktopItemLink
+                  item={v}
+                  gender={gender}
+                  onItemClick={onItemClick}
+                  variant
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </li>
   );
 }
 
@@ -302,24 +390,14 @@ export function MegaMenuMobile({
                         {group.title}
                       </p>
                       <ul className="flex flex-col">
-                        {group.items.map((item) => {
-                          const isVariant =
-                            item.familia === "textil" && Boolean(item.variante);
-                          return (
-                            <li key={`${section.gender}-${item.label}`}>
-                              <Link
-                                href={buildMegaMenuHref(item, section.gender)}
-                                onClick={onLinkClick}
-                                className={cn(
-                                  "block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700",
-                                  isVariant && "pl-4 text-[13px] text-zs-muted",
-                                )}
-                              >
-                                {item.label}
-                              </Link>
-                            </li>
-                          );
-                        })}
+                        {groupMegaMenuItems(group.items).map((entry) => (
+                          <MobileGarmentEntry
+                            key={`${section.gender}-${entry.base.label}`}
+                            entry={entry}
+                            gender={section.gender}
+                            onLinkClick={onLinkClick}
+                          />
+                        ))}
                       </ul>
                     </div>
                   ))}
@@ -331,5 +409,87 @@ export function MegaMenuMobile({
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * Entrada del panel mobile: la prenda como enlace + (si tiene variantes) una
+ * flecha con área táctil amplia que abre un desplegable CERRADO por defecto con
+ * sus variantes finas. La prenda sigue navegando a su página.
+ */
+function MobileGarmentEntry({
+  entry,
+  gender,
+  onLinkClick,
+}: {
+  entry: MegaMenuEntry;
+  gender: MegaMenuSection["gender"];
+  onLinkClick: () => void;
+}) {
+  const { base, variants } = entry;
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+
+  if (variants.length === 0) {
+    return (
+      <li>
+        <Link
+          href={buildMegaMenuHref(base, gender)}
+          onClick={onLinkClick}
+          className="block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
+        >
+          {base.label}
+        </Link>
+      </li>
+    );
+  }
+
+  return (
+    <li>
+      <div className="flex items-center justify-between gap-1">
+        <Link
+          href={buildMegaMenuHref(base, gender)}
+          onClick={onLinkClick}
+          className="block flex-1 py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
+        >
+          {base.label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-controls={panelId}
+          aria-label={`${open ? "Ocultar" : "Mostrar"} tipos de ${base.label.toLowerCase()}`}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-700"
+        >
+          <ChevronDown
+            className={cn("h-5 w-5 transition-transform duration-200", open && "rotate-180")}
+          />
+        </button>
+      </div>
+      <div
+        id={panelId}
+        className={cn(
+          "grid overflow-hidden transition-[grid-template-rows] duration-300 ease-out",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="overflow-hidden">
+          <ul className="flex flex-col pb-1">
+            {variants.map((v) => (
+              <li key={`${gender}-${v.label}`}>
+                <Link
+                  href={buildMegaMenuHref(v, gender)}
+                  onClick={onLinkClick}
+                  className="block py-1.5 pl-4 text-[13px] text-zs-muted hover:text-zs-blue-700"
+                >
+                  {v.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </li>
   );
 }
