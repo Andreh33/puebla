@@ -46,15 +46,32 @@ function checkAuth(req: NextRequest): NextResponse | null {
   return null;
 }
 
-/** Pedido de ejemplo con precios CON IVA realistas (total 124,88 €). */
-function syntheticOrder(): OrderForInvoice {
+/**
+ * Pedido de ejemplo con precios CON IVA realistas.
+ *  - por defecto: 124,88 € (1×19,95 + 2×49,99 + 4,95 envío).
+ *  - ?basket=awkward: 120,62 € (3×9,99 + 7×12,95) — cantidades > 1 y precios
+ *    "feos" que estresan el redondeo por línea del IVA.
+ */
+function syntheticOrder(basket: string | null): OrderForInvoice {
+  if (basket === "awkward") {
+    return {
+      id: "PRUEBA-REDONDEO",
+      customerName: "Prueba Zona Sport",
+      customerEmail: null,
+      shippingCost: 0,
+      total: 120.62,
+      items: [
+        { productName: "Calcetines técnicos", variantSize: null, unitPrice: 9.99, quantity: 3 },
+        { productName: "Camiseta algodón", variantSize: "L", unitPrice: 12.95, quantity: 7 },
+      ],
+    };
+  }
   return {
     id: "PRUEBA-CONEXION",
     customerName: "Prueba Zona Sport",
     customerEmail: null,
     shippingCost: 4.95,
     total: 124.88,
-    createdAt: new Date(),
     items: [
       { productName: "Camiseta técnica", variantSize: "M", unitPrice: 19.95, quantity: 1 },
       { productName: "Zapatillas running", variantSize: "42", unitPrice: 49.99, quantity: 2 },
@@ -97,7 +114,6 @@ export async function POST(req: NextRequest) {
         customerEmail: true,
         shippingCost: true,
         total: true,
-        createdAt: true,
         items: {
           select: { productName: true, variantSize: true, unitPrice: true, quantity: true },
         },
@@ -108,7 +124,7 @@ export async function POST(req: NextRequest) {
     }
     order = o;
   } else {
-    order = syntheticOrder();
+    order = syntheticOrder(url.searchParams.get("basket"));
   }
 
   const { body, expectedTotal } = buildInvoiceBody(order);
@@ -145,7 +161,7 @@ export async function POST(req: NextRequest) {
     }
 
     const totalsMatch =
-      holdedTotal != null && Math.abs(holdedTotal - expectedTotal) < 0.015;
+      holdedTotal != null && Math.abs(holdedTotal - expectedTotal) < 0.005;
 
     return NextResponse.json({
       ok: true,

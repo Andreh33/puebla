@@ -7,13 +7,16 @@
  * IVA: nuestros precios son CON IVA (21% incl.). Holded espera el precio
  * UNITARIO SIN IVA por línea + el % de IVA, y recalcula el total. Enviamos el
  * neto en alta precisión (sin pre-redondear) para que Holded redondee UNA vez
- * al final y el total reconstruya el importe cobrado. El endpoint de prueba
- * (/api/admin/holded-test) verifica que el total de Holded == total del pedido.
+ * al final y el total reconstruya el importe cobrado. Tras emitir se VERIFICA
+ * que el total de Holded == el total del pedido; si no cuadra se deja marcado en
+ * metadata + logs (la factura ya es irreversible, pero nunca queda mal en
+ * silencio). El endpoint /api/admin/holded-test valida esto con una proforma.
  */
 import "server-only";
-import { db } from "@/lib/db";
+import { db, type Prisma } from "@/lib/db";
 import {
   createDocument,
+  getDocument,
   type HoldedCreateDocBody,
   type HoldedItem,
 } from "./client";
@@ -36,6 +39,17 @@ function decToNum(d: unknown): number {
   if (typeof d === "number") return Number.isFinite(d) ? d : 0;
   const n = Number(typeof d === "string" ? d : (d as { toString(): string }).toString());
   return Number.isFinite(n) ? n : 0;
+}
+
+/** Lee el total (gross) de un documento devuelto por Holded. null si no se puede. */
+function readDocTotal(doc: Record<string, unknown>): number | null {
+  const t = doc.total;
+  if (typeof t === "number") return Number.isFinite(t) ? t : null;
+  if (typeof t === "string" && t.trim() !== "") {
+    const n = Number(t);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
 }
 
 /** Datos fiscales para una factura COMPLETA (con NIF). Sin esto = simplificada. */
@@ -61,7 +75,6 @@ export type OrderForInvoice = {
   customerEmail: string | null;
   shippingCost: unknown;
   total: unknown;
-  createdAt: Date;
   items: Array<{
     productName: string;
     variantSize: string | null;
@@ -100,7 +113,10 @@ export function buildInvoiceBody(
     contactCp: f?.cp || undefined,
     contactProvince: f?.province || undefined,
     contactCountryCode: "ES",
-    date: Math.floor(order.createdAt.getTime() / 1000),
+    // Fecha de EMISIÓN (hoy), no la del pedido: el id del documento es la fecha
+    // de expedición de la factura. Holded la muestra en la zona horaria de la
+    // cuenta (España), evitando el desfase UTC de medianoche.
+    date: Math.floor(Date.now() / 1000),
     currency: "eur",
     language: "es",
     items,
@@ -115,13 +131,23 @@ export type IssueResult = {
   alreadyInvoiced?: boolean;
   docId?: string;
   invoiceNumber?: string | null;
+  /** Aviso no fatal: factura emitida pero su total no cuadra con lo cobrado. */
+  warning?: string;
   error?: string;
 };
 
 /**
  * Emite la factura (documento `invoice`, fiscal) de un pedido en Holded.
- * Idempotente: si el pedido ya tiene holdedDocId, no re-emite. Guarda el id +
- * número + fecha en el pedido.
+ *
+ * Anti-duplicado (Stripe entrega eventos at-least-once + dos tipos de evento):
+ * se RECLAMA el pedido de forma atómica (updateMany con guarda holdedDocId/
+ * invoicedAt NULL) ANTES de llamar a Holded. Si no se obtiene el reclamo, otro
+ * proceso ya está facturando → no se re-emite. Si Holded falla, se LIBERA el
+ * reclamo para poder reintentar. Así dos entregas simultáneas no generan dos
+ * facturas/numeraciones AEAT.
+ *
+ * Tras crear la factura se verifica el total contra el cobrado; un descuadre se
+ * marca en metadata + logs (la factura ya es irreversible).
  */
 export async function issueInvoiceForOrder(
   orderId: string,
@@ -135,8 +161,8 @@ export async function issueInvoiceForOrder(
       customerEmail: true,
       shippingCost: true,
       total: true,
-      createdAt: true,
       holdedDocId: true,
+      metadata: true,
       items: {
         select: { productName: true, variantSize: true, unitPrice: true, quantity: true },
       },
@@ -148,16 +174,76 @@ export async function issueInvoiceForOrder(
   }
   if (!order.items.length) return { ok: false, error: "El pedido no tiene líneas" };
 
-  const { body } = buildInvoiceBody(order, opts);
-  const res = await createDocument("invoice", body);
-  const docId = res.id;
-  if (!docId) return { ok: false, error: "Holded no devolvió id de documento" };
+  // Reclamo ATÓMICO: marca invoicedAt SOLO si nadie lo ha reclamado/facturado.
+  const claim = await db.order.updateMany({
+    where: { id: orderId, holdedDocId: null, invoicedAt: null },
+    data: { invoicedAt: new Date() },
+  });
+  if (claim.count === 0) {
+    const fresh = await db.order.findUnique({
+      where: { id: orderId },
+      select: { holdedDocId: true },
+    });
+    return { ok: true, alreadyInvoiced: true, docId: fresh?.holdedDocId ?? undefined };
+  }
 
-  const invoiceNumber = res.invoiceNum ?? res.docNumber ?? null;
+  // A partir de aquí SOMOS los dueños del reclamo. Si algo falla antes de
+  // persistir el docId, liberamos el reclamo (invoicedAt → null) para reintentar.
+  const releaseClaim = () =>
+    db.order.updateMany({
+      where: { id: orderId, holdedDocId: null },
+      data: { invoicedAt: null },
+    });
+
+  const { body, expectedTotal } = buildInvoiceBody(order, opts);
+
+  let docId: string | undefined;
+  let invoiceNumber: string | null = null;
+  try {
+    const res = await createDocument("invoice", body);
+    docId = res.id;
+    invoiceNumber = res.invoiceNum ?? res.docNumber ?? null;
+  } catch (e) {
+    await releaseClaim();
+    throw e;
+  }
+  if (!docId) {
+    await releaseClaim();
+    return { ok: false, error: "Holded no devolvió id de documento" };
+  }
+
+  // Verificación post-emisión: ¿el total de Holded == el cobrado? La factura ya
+  // existe (irreversible); un descuadre se deja VISIBLE, nunca se ignora.
+  let warning: string | undefined;
+  let mismatch: { expected: number; holded: number } | null = null;
+  try {
+    const doc = await getDocument("invoice", docId);
+    const holdedTotal = readDocTotal(doc);
+    if (holdedTotal != null && Math.abs(holdedTotal - expectedTotal) >= 0.005) {
+      mismatch = { expected: expectedTotal, holded: holdedTotal };
+      warning = `Factura ${invoiceNumber ?? docId} emitida, pero el total de Holded (${holdedTotal} €) no cuadra con lo cobrado (${expectedTotal} €). Revisar en Holded.`;
+      console.error(`[holded] DESCUADRE total en ${docId} (pedido ${orderId}): esperado ${expectedTotal}, Holded ${holdedTotal}`);
+    }
+  } catch {
+    /* el GET de verificación no debe bloquear: la factura ya está emitida */
+  }
+
+  const existingMeta =
+    order.metadata && typeof order.metadata === "object" && !Array.isArray(order.metadata)
+      ? (order.metadata as Record<string, unknown>)
+      : {};
+
   await db.order.update({
     where: { id: order.id },
-    data: { holdedDocId: docId, holdedInvoiceNumber: invoiceNumber, invoicedAt: new Date() },
+    data: {
+      holdedDocId: docId,
+      holdedInvoiceNumber: invoiceNumber,
+      invoicedAt: new Date(),
+      ...(mismatch
+        ? { metadata: { ...existingMeta, invoiceTotalMismatch: mismatch } as Prisma.InputJsonValue }
+        : {}),
+    },
   });
 
-  return { ok: true, docId, invoiceNumber };
+  return { ok: true, docId, invoiceNumber, warning };
 }

@@ -14,7 +14,8 @@
  * (no 500) para que Stripe reintente cuando se configuren.
  *
  * Configuración del endpoint en el dashboard Stripe:
- *   URL:     https://zonasport.es/api/stripe/webhook
+ *   URL:     https://zonasport.vercel.app/api/stripe/webhook  (NO zonasport.es:
+ *            ese dominio está aparcado/spam y el webhook no crearía pedidos)
  *   Eventos: checkout.session.completed, checkout.session.async_payment_succeeded,
  *            charge.refunded, payment_intent.payment_failed
  *   Versión API: la que uses (cualquier `2024-*` o posterior vale).
