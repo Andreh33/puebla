@@ -55,6 +55,7 @@ import { FOOTWEAR_TYPES, FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear"
 import { GARMENT_TYPES, GARMENT_TYPE_LABELS, GARMENT_VARIANTS, GARMENT_VARIANT_LABELS, VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
 import { slugifyEs } from "@/lib/seo/slug";
 import { formatDateTimeES } from "@/lib/utils";
+import { parseNullableNumber } from "@/lib/forms/number";
 import {
   createProductAction,
   updateProductAction,
@@ -943,7 +944,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                     type="number"
                     step="0.01"
                     min={0}
-                    {...register("costPrice", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
+                    {...register("costPrice", { setValueAs: parseNullableNumber })}
                   />
                 </div>
               )}
@@ -966,7 +967,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   type="number"
                   step="0.01"
                   min={0}
-                  {...register("salePrice", { setValueAs: (v) => (v === "" ? null : Number(v)) })}
+                  {...register("salePrice", { setValueAs: parseNullableNumber })}
                 />
               </div>
               <div>
@@ -1053,7 +1054,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                               min={0}
                               step="0.01"
                               {...register(`sizes.${idx}.retailPrice` as const, {
-                                setValueAs: (v) => (v === "" ? null : Number(v)),
+                                setValueAs: parseNullableNumber,
                               })}
                               className="h-9 w-28"
                             />
