@@ -274,7 +274,10 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
         <FilterGroup title="Marca" defaultOpen={groupOpen} className={compact ? "order-2" : undefined}>
           {/* "Sin marca" oculto del filtro a petición del cliente (los productos
               conservan su marca; solo no se ofrece como chip de filtro). */}
-          {data.brands.filter((b) => !/^sin[\s-]?marca$/i.test(b.label)).map((b) => (
+          {data.brands
+            .filter((b) => !/^sin[\s-]?marca$/i.test(b.label))
+            .sort((a, b) => a.label.localeCompare(b.label, "es"))
+            .map((b) => (
             <label key={b.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2">
                 <Checkbox
@@ -309,7 +312,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       {data.colors.length > 0 && (
         <FilterGroup title="Color" defaultOpen={groupOpen} className={compact ? "order-5" : undefined}>
           <div className="flex flex-wrap gap-1.5">
-            {data.colors.map((c) => {
+            {[...data.colors].sort((a, b) => a.label.localeCompare(b.label, "es")).map((c) => {
               const on = activeColors.includes(c.value);
               return (
                 <button
@@ -362,7 +365,14 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
       {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
         <FilterGroup title="Tipo de calzado" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1.5">
-            {data.footwearTypes.map((t) => {
+            {[...data.footwearTypes]
+              .sort((a, b) =>
+                (FOOTWEAR_TYPE_LABELS[a.value as keyof typeof FOOTWEAR_TYPE_LABELS] ?? a.label).localeCompare(
+                  FOOTWEAR_TYPE_LABELS[b.value as keyof typeof FOOTWEAR_TYPE_LABELS] ?? b.label,
+                  "es",
+                ),
+              )
+              .map((t) => {
               const on = activeTipo.includes(t.value);
               const label = FOOTWEAR_TYPE_LABELS[t.value as keyof typeof FOOTWEAR_TYPE_LABELS] ?? t.label;
               return (
@@ -385,14 +395,27 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
           <div className="flex flex-col gap-1">
             {/* "chaqueta" oculta del filtro a petición del cliente (los productos
                 siguen en la tienda; solo no se ofrece el chip de filtro). */}
-            {data.garmentTypes.filter((g) => g.value !== "chaqueta").map((g) => {
+            {data.garmentTypes
+              .filter((g) => g.value !== "chaqueta")
+              .sort((a, b) =>
+                (GARMENT_TYPE_LABELS[a.value as GarmentType] ?? a.value).localeCompare(
+                  GARMENT_TYPE_LABELS[b.value as GarmentType] ?? b.value,
+                  "es",
+                ),
+              )
+              .map((g) => {
               const garmentValue = g.value as GarmentType;
               const checked = activePrenda.includes(garmentValue);
               const hasVariants = (TYPES_WITH_VARIANT as readonly string[]).includes(garmentValue);
               const variantsOfThis = hasVariants
-                ? (data.garmentVariants ?? []).filter(
-                    (v) => VARIANT_TO_TYPE[v.value as GarmentVariant] === garmentValue,
-                  )
+                ? (data.garmentVariants ?? [])
+                    .filter((v) => VARIANT_TO_TYPE[v.value as GarmentVariant] === garmentValue)
+                    .sort((a, b) =>
+                      GARMENT_VARIANT_LABELS[a.value as GarmentVariant].localeCompare(
+                        GARMENT_VARIANT_LABELS[b.value as GarmentVariant],
+                        "es",
+                      ),
+                    )
                 : [];
               return (
                 <div key={garmentValue}>
