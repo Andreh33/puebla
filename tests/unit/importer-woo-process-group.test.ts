@@ -31,6 +31,7 @@ function makeParent(over: Partial<WooNormalizedParent> = {}): WooNormalizedParen
     name: "ZAPATILLA RUNNING JOMA ROJO",
     shortName: null,
     description: null,
+    shortDescription: null,
     brand: "Joma",
     category: "Calzado",
     slugSeed: "zapatilla-running-joma-rojo",

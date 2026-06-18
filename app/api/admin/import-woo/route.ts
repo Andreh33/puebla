@@ -326,6 +326,60 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, updated, remaining });
   }
 
+  // Aplica las descripciones REALES de la web antigua (CSV WooCommerce) por wooId:
+  //  - description (ficha)    ← descripción larga del CSV
+  //  - metaDescription (SEO)  ← "descripción corta" del CSV (ya recortada en el feeder)
+  // Casa por externalId = `woocommerce:<wooId>` y SOLO actualiza productos con
+  // isCustomized:false (respeta lo editado a mano). Escribe únicamente los campos
+  // presentes en cada item. Idempotente: relanzable.
+  if (body.action === "set_descriptions") {
+    type DescItem = { wooId?: string | number; description?: string; metaDescription?: string };
+    const items: DescItem[] = Array.isArray(body.items) ? body.items : [];
+    let updated = 0;
+    let notFoundOrCustom = 0;
+    let skipped = 0;
+    const errors: Array<{ wooId: string; error: string }> = [];
+
+    for (const item of items) {
+      const wooId = String(item?.wooId ?? "").trim();
+      if (!wooId) {
+        skipped += 1;
+        continue;
+      }
+      const data: { description?: string; metaDescription?: string } = {};
+      if (typeof item.description === "string" && item.description.trim()) {
+        data.description = item.description;
+      }
+      if (typeof item.metaDescription === "string" && item.metaDescription.trim()) {
+        data.metaDescription = item.metaDescription;
+      }
+      if (Object.keys(data).length === 0) {
+        skipped += 1;
+        continue;
+      }
+      try {
+        const res = await db.product.updateMany({
+          where: { externalId: `woocommerce:${wooId}`, isCustomized: false },
+          data,
+        });
+        if (res.count > 0) updated += res.count;
+        else notFoundOrCustom += 1;
+      } catch (err) {
+        errors.push({ wooId, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    if (updated > 0) revalidatePath("/", "layout");
+    return NextResponse.json({
+      ok: true,
+      updated,
+      notFoundOrCustom,
+      skipped,
+      errorCount: errors.length,
+      errors: errors.slice(0, 50),
+    });
+  }
+
   const rawGroups: unknown[] = Array.isArray(body.groups) ? body.groups : [];
   const mode: ImportMode = body.mode ?? "create_update";
   const defaultStatus: "DRAFT" | "ACTIVE" | "INACTIVE" = body.defaultStatus ?? "DRAFT";

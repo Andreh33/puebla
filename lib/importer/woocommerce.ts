@@ -42,6 +42,8 @@ export interface WooNormalizedParent {
   name: string;
   shortName: string | null;
   description: string | null;
+  /** "Descripción corta" de Woo, limpia. Base para el meta description (SEO). */
+  shortDescription: string | null;
   brand: string;
   /** Categoría hoja elegida (Title Case castellano). */
   category: string;
@@ -414,6 +416,7 @@ export function mapWooParentToProduct(
     name: cleaned,
     shortName: shortNameFromRow(row),
     description: cleanDescription(pickStr(row, "Descripción")),
+    shortDescription: cleanDescription(pickStr(row, "Descripción corta")),
     brand,
     category,
     slugSeed: basicSlug(cleaned),
