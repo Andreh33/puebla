@@ -6,7 +6,8 @@
  * llamadas lanzan un HoldedError 503 con mensaje útil (el build de Vercel no
  * falla por ausencia de la key, y los endpoints devuelven un error claro).
  *
- * Auth: la API v1 usa la cabecera `key: <API_KEY>` (NO Bearer; eso es la v2).
+ * Auth: cabecera `Authorization: Bearer <token>`. Los API Token de Holded (con
+ * permisos granulares) usan Bearer; el viejo header `key` devolvía "Invalid key".
  * Base: https://api.holded.com/api/invoicing/v1
  *
  * IMPORTANTE (fiscal): crear un documento `invoice` EMITE una factura real; con
@@ -105,7 +106,7 @@ async function holdedFetch<T>(path: string, init: RequestInit): Promise<T> {
     res = await fetch(`${BASE}${path}`, {
       ...init,
       headers: {
-        key,
+        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
         Accept: "application/json",
         ...(init.headers ?? {}),
