@@ -140,13 +140,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Recuperar la proforma para leer el total calculado por Holded.
+    // 2. Recuperar la proforma para leer el total calculado por Holded. El GET
+    //    justo tras crear puede llegar antes de que Holded lo calcule (total=null);
+    //    reintenta una vez con un pequeño margen.
     let holdedTotal: number | null = null;
-    try {
-      const fetched = await getDocument("proform", docId);
-      holdedTotal = extractTotal(fetched);
-    } catch {
-      /* el GET puede fallar sin invalidar la prueba de creación */
+    for (let attempt = 0; attempt < 2 && holdedTotal == null; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1200));
+      try {
+        holdedTotal = extractTotal(await getDocument("proform", docId));
+      } catch {
+        /* el GET puede fallar sin invalidar la prueba de creación */
+      }
     }
 
     // 3. Borrar la proforma de prueba (salvo ?keep=1).

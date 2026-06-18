@@ -479,6 +479,8 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
     shippingAddress: (o.shippingAddress as ShippingAddress | null) ?? null,
     notes: o.notes,
     metadata: (o.metadata as Record<string, unknown> | null) ?? null,
+    holdedInvoiceNumber: o.holdedInvoiceNumber,
+    invoicedAt: o.invoicedAt,
     items: o.items.map((it) => ({
       id: it.id,
       productId: it.productId,

@@ -34,6 +34,7 @@ import type { OrderDetail, OrderSummary } from "@/lib/stripe/types";
 import {
   exportOrdersCsv,
   getOrderDetail,
+  issueInvoiceAction,
   syncCatalogToStripe,
   updateOrderStatus,
 } from "./_actions";
@@ -107,6 +108,8 @@ export function PedidosTable({
   >("");
   const [note, setNote] = React.useState("");
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
+  const [fiscal, setFiscal] = React.useState({ nif: "", name: "", address: "", city: "", cp: "" });
+  const [issuing, setIssuing] = React.useState(false);
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -172,6 +175,7 @@ export function PedidosTable({
     setLoadingDetail(true);
     setNewStatus("");
     setNote("");
+    setFiscal({ nif: "", name: "", address: "", city: "", cp: "" });
     try {
       const res = await getOrderDetail(id);
       if (!res.ok) {
@@ -214,6 +218,36 @@ export function PedidosTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setUpdatingStatus(false);
+    }
+  }
+
+  async function handleIssueInvoice() {
+    if (!selected) return;
+    if (
+      !confirm(
+        "¿Emitir la factura de este pedido en Holded? Si VeriFactu está activo se enviará a la AEAT y no se podrá borrar (solo rectificar).",
+      )
+    ) {
+      return;
+    }
+    setIssuing(true);
+    try {
+      const res = await issueInvoiceAction(selected.id, fiscal);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(
+        `Factura emitida${res.data?.invoiceNumber ? `: ${res.data.invoiceNumber}` : ""}`,
+      );
+      if (res.data?.warning) toast(res.data.warning);
+      const fresh = await getOrderDetail(selected.id);
+      if (fresh.ok) setSelected(fresh.data!);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setIssuing(false);
     }
   }
 
@@ -519,6 +553,61 @@ export function PedidosTable({
                     <span>Total</span>
                     <span>{formatPriceEUR(selected.total)}</span>
                   </div>
+                </section>
+
+                <section className="border-t border-zs-border pt-3">
+                  <h3 className="mb-2 text-xs font-semibold uppercase text-zs-muted">
+                    Factura (Holded · VeriFactu)
+                  </h3>
+                  {selected.holdedInvoiceNumber ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="text-sm font-semibold text-emerald-900">
+                        ✓ Factura emitida: {selected.holdedInvoiceNumber}
+                      </p>
+                      {selected.invoicedAt && (
+                        <p className="text-xs text-emerald-700">
+                          {formatDateTimeES(selected.invoicedAt)}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-zs-muted">
+                        Sin NIF → factura simplificada. Con NIF/datos → factura completa.
+                        Se emite en Holded y va a VeriFactu (AEAT) si está activo.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          value={fiscal.nif}
+                          onChange={(e) => setFiscal((f) => ({ ...f, nif: e.target.value }))}
+                          placeholder="NIF / CIF (opcional)"
+                        />
+                        <Input
+                          value={fiscal.name}
+                          onChange={(e) => setFiscal((f) => ({ ...f, name: e.target.value }))}
+                          placeholder="Razón social (opcional)"
+                        />
+                        <Input
+                          value={fiscal.address}
+                          onChange={(e) => setFiscal((f) => ({ ...f, address: e.target.value }))}
+                          placeholder="Dirección (opcional)"
+                        />
+                        <Input
+                          value={fiscal.city}
+                          onChange={(e) => setFiscal((f) => ({ ...f, city: e.target.value }))}
+                          placeholder="Ciudad (opcional)"
+                        />
+                        <Input
+                          value={fiscal.cp}
+                          onChange={(e) => setFiscal((f) => ({ ...f, cp: e.target.value }))}
+                          placeholder="C.P. (opcional)"
+                        />
+                      </div>
+                      <Button type="button" onClick={handleIssueInvoice} disabled={issuing}>
+                        {issuing ? "Emitiendo…" : "Emitir factura"}
+                      </Button>
+                    </div>
+                  )}
                 </section>
 
                 <section className="border-t border-zs-border pt-3">

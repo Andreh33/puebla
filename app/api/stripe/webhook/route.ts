@@ -138,8 +138,9 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Emite la factura del pedido online en Holded si la auto-facturación está
- * activada (`HOLDED_AUTO_INVOICE === "on"`) y la key está configurada.
+ * Emite la factura del pedido online en Holded. Auto-facturación ACTIVADA por
+ * defecto cuando Holded está configurado (HOLDED_API_KEY presente); para
+ * desactivarla puntualmente, poner `HOLDED_AUTO_INVOICE=off` en Vercel.
  *
  * Best-effort: captura cualquier error y lo loggea; NUNCA lanza — un fallo de
  * Holded no debe afectar al webhook ni al pedido (que ya está creado y cobrado).
@@ -147,7 +148,7 @@ export async function POST(req: NextRequest) {
  * null si la emisión falló (queda en logs para reintentar a mano).
  */
 async function maybeInvoiceOnlineOrder(orderId: string): Promise<string | null> {
-  if (process.env.HOLDED_AUTO_INVOICE !== "on" || !isHoldedConfigured()) {
+  if (process.env.HOLDED_AUTO_INVOICE === "off" || !isHoldedConfigured()) {
     return "skipped";
   }
   try {

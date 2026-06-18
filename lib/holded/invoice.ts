@@ -216,16 +216,21 @@ export async function issueInvoiceForOrder(
   // existe (irreversible); un descuadre se deja VISIBLE, nunca se ignora.
   let warning: string | undefined;
   let mismatch: { expected: number; holded: number } | null = null;
-  try {
-    const doc = await getDocument("invoice", docId);
-    const holdedTotal = readDocTotal(doc);
-    if (holdedTotal != null && Math.abs(holdedTotal - expectedTotal) >= 0.005) {
-      mismatch = { expected: expectedTotal, holded: holdedTotal };
-      warning = `Factura ${invoiceNumber ?? docId} emitida, pero el total de Holded (${holdedTotal} €) no cuadra con lo cobrado (${expectedTotal} €). Revisar en Holded.`;
-      console.error(`[holded] DESCUADRE total en ${docId} (pedido ${orderId}): esperado ${expectedTotal}, Holded ${holdedTotal}`);
+  // El GET justo tras crear puede llegar antes de que Holded calcule el total
+  // (devuelve total=null). Reintenta una vez con un pequeño margen.
+  let holdedTotal: number | null = null;
+  for (let attempt = 0; attempt < 2 && holdedTotal == null; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 1200));
+    try {
+      holdedTotal = readDocTotal(await getDocument("invoice", docId));
+    } catch {
+      /* el GET de verificación no debe bloquear: la factura ya está emitida */
     }
-  } catch {
-    /* el GET de verificación no debe bloquear: la factura ya está emitida */
+  }
+  if (holdedTotal != null && Math.abs(holdedTotal - expectedTotal) >= 0.005) {
+    mismatch = { expected: expectedTotal, holded: holdedTotal };
+    warning = `Factura ${invoiceNumber ?? docId} emitida, pero el total de Holded (${holdedTotal} €) no cuadra con lo cobrado (${expectedTotal} €). Revisar en Holded.`;
+    console.error(`[holded] DESCUADRE total en ${docId} (pedido ${orderId}): esperado ${expectedTotal}, Holded ${holdedTotal}`);
   }
 
   const existingMeta =

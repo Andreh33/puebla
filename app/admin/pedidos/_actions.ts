@@ -21,6 +21,8 @@ import {
   STOCK_DEDUCTED_STATUSES,
 } from "@/lib/stripe/orders";
 import type { OrderDetail } from "@/lib/stripe/types";
+import { issueInvoiceForOrder, type FiscalData } from "@/lib/holded/invoice";
+import { isHoldedConfigured } from "@/lib/holded/client";
 import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
@@ -53,6 +55,30 @@ export async function getOrderDetail(
     });
     if (!order) return { ok: false, error: "Pedido no encontrado" };
     return { ok: true, data: toOrderDetail(order) };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+/**
+ * Emite la factura del pedido en Holded (→ VeriFactu). Con datos fiscales (NIF)
+ * sale factura COMPLETA; sin NIF, simplificada. Idempotente: issueInvoiceForOrder
+ * no re-emite si el pedido ya tiene factura.
+ */
+export async function issueInvoiceAction(
+  orderId: string,
+  fiscal?: FiscalData,
+): Promise<ActionResult<{ invoiceNumber: string | null; warning?: string }>> {
+  try {
+    await requireSession();
+    if (!isHoldedConfigured()) {
+      return { ok: false, error: "Holded no configurado: falta HOLDED_API_KEY en Vercel." };
+    }
+    const hasFiscal = !!(fiscal && (fiscal.nif || fiscal.name || fiscal.address));
+    const res = await issueInvoiceForOrder(orderId, hasFiscal ? { fiscal } : {});
+    if (!res.ok) return { ok: false, error: res.error ?? "No se pudo emitir la factura" };
+    revalidatePath("/admin/pedidos");
+    return { ok: true, data: { invoiceNumber: res.invoiceNumber ?? null, warning: res.warning } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error" };
   }

@@ -93,6 +93,9 @@ export interface OrderDetail extends OrderSummary {
   shippingAddress: ShippingAddress | null;
   notes: string | null;
   metadata: Record<string, unknown> | null;
+  /** Facturación fiscal (Holded). null si aún no se ha emitido la factura. */
+  holdedInvoiceNumber: string | null;
+  invoicedAt: Date | null;
   items: OrderItemDetail[];
 }
 
