@@ -47,7 +47,6 @@ const TEXTIL_TIPOS: Array<{ slug: string; name: string; soloGeneros?: string[] }
   { slug: "sudadera", name: "Sudaderas" },
   { slug: "polar", name: "Polares" },
   { slug: "chandal", name: "Chándal" },
-  { slug: "chaqueta", name: "Chaquetas" },
   { slug: "abrigo", name: "Abrigos" },
   { slug: "cortavientos", name: "Cortavientos" },
   { slug: "conjunto", name: "Conjuntos" },

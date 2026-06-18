@@ -56,9 +56,9 @@ describe("TAXONOMY_TREE (árbol canónico de categorías)", () => {
       }
     }
   });
-  it("cada gen tiene los 12 tipos de textil como hijos de <gen>-textil", () => {
+  it("cada gen tiene los 11 tipos de textil como hijos de <gen>-textil", () => {
     for (const g of ["hombre", "mujer", "nino", "nina", "bebe"]) {
-      for (const t of ["camiseta", "polo", "sudadera", "polar", "chandal", "chaqueta", "abrigo", "cortavientos", "conjunto", "pantalon", "mallas", "banador"]) {
+      for (const t of ["camiseta", "polo", "sudadera", "polar", "chandal", "abrigo", "cortavientos", "conjunto", "pantalon", "mallas", "banador"]) {
         expect(slugs.has(`${g}-textil-${t}`), `${g}-textil-${t}`).toBe(true);
       }
     }

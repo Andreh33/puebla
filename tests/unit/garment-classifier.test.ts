@@ -58,7 +58,7 @@ describe("Pasada 2 — token (primer término), tolera acentos y símbolos", () 
     expect(matchByToken("K-WAY DECATHLON")).toBe("cortavientos"); // símbolo → KWAY
     expect(matchByToken("ANORAK +8000")).toBe("abrigo"); // A3
     expect(matchByToken("TOP NIKE")).toBe("camiseta"); // A3
-    expect(matchByToken("SOFT-SHELL JOMA")).toBe("chaqueta"); // A3 → SOFTSHELL
+    expect(matchByToken("SOFT-SHELL JOMA")).toBe("sudadera"); // A3 → SOFTSHELL → sudadera
   });
   it("nombre que empieza por marca (no token) → null", () => {
     expect(matchByToken("JHAYBER SET LUMINIX")).toBeNull();
@@ -78,7 +78,7 @@ describe("inferGarmentType — composición de pasadas", () => {
   });
   it("P2 cuando la categoría es genérica (hombre/mujer)", () => {
     expect(inferGarmentType({ categorySlug: "hombre", name: "BERMUDA JOMA SHORT CRETA" })).toBe("bermuda");
-    expect(inferGarmentType({ categorySlug: "mujer", name: "CHAQUETA JOHN SMITH UALAGA" })).toBe("chaqueta");
+    expect(inferGarmentType({ categorySlug: "mujer", name: "CHAQUETA JOHN SMITH UALAGA" })).toBe("sudadera");
   });
   it("P3 fuzzy: primer token no casa pero hay token en otra posición", () => {
     expect(inferGarmentType({ categorySlug: "uncategorized", name: "ACTIVE SHORT PACIFIC" })).toBe("bermuda");

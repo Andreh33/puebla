@@ -85,7 +85,7 @@ const CATEGORY_MAP: Record<string, GarmentType> = {
 const TOKEN_ENTRIES: [string[], GarmentType][] = [
   [["BERMUDA", "BERMUDAS"], "bermuda"],
   [["CALENTADOR", "CALENTADORES"], "calentador"],
-  [["CHAQUETA", "CHAQUETAS"], "chaqueta"],
+  [["CHAQUETA", "CHAQUETAS"], "sudadera"],     // chaqueta unificada en sudadera (cliente)
   [["CAMISETA", "CAMISETAS"], "camiseta"],
   [["POLO", "POLOS"], "polo"],
   [["LEGGING", "LEGGINGS", "MALLA", "MALLAS"], "mallas"],
@@ -101,7 +101,7 @@ const TOKEN_ENTRIES: [string[], GarmentType][] = [
   [["CONJUNTO", "CONJUNTOS", "SET"], "conjunto"],
   [["ANORAK", "ANORAKS"], "abrigo"],            // A3
   [["TOP", "TOPS"], "camiseta"],                // A3
-  [["SOFT", "SOFTSHELL"], "chaqueta"],          // A3 (SOFT-SHELL→SOFTSHELL tras strip)
+  [["SOFT", "SOFTSHELL"], "sudadera"],          // A3 softshell → sudadera (chaqueta unificada)
   [["VESTIDO", "VESTIDOS"], "vestido"],         // A3 + override (P0)
   [["CHALECO", "CHALECOS"], "chaleco"],         // A3 + override (P0)
 ];
