@@ -180,8 +180,12 @@ export async function POST(req: NextRequest) {
     });
   } catch (e) {
     if (e instanceof HoldedError) {
+      const authIssue = e.status === 401 || e.status === 400;
+      const hint = authIssue
+        ? "Holded rechaza el token. Revisa: (1) que el token tenga PERMISOS de Facturación/Ventas + Contactos (un token sin permisos da 401), (2) que esté pegado COMPLETO en Vercel HOLDED_API_KEY, (3) que el plan esté activo. Tras cambiarlo en Vercel hay que REDESPLEGAR."
+        : undefined;
       return NextResponse.json(
-        { ok: false, error: e.message, status: e.status, body: e.body },
+        { ok: false, error: e.message, status: e.status, body: e.body, ...(hint ? { hint } : {}) },
         { status: 502 },
       );
     }
