@@ -32,9 +32,11 @@ describe("planSale", () => {
     expect(r.stockDeltas).toEqual([{ productId: "p2", size: null, quantity: 1 }]);
   });
 
-  it("lanza si la talla no tiene stock suficiente", () => {
-    expect(() => planSale([{ productId: "p1", size: "41", quantity: 1, unitPrice: 30, lineDiscount: 0 }], [SHOE]))
-      .toThrow(/stock/i);
+  it("TPV: permite vender una talla sin stock (el stock puede ir negativo)", () => {
+    // SHOE talla 41 tiene stock 0 → en la caja física se vende igual.
+    const r = planSale([{ productId: "p1", size: "41", quantity: 1, unitPrice: 30, lineDiscount: 0 }], [SHOE]);
+    expect(r.stockDeltas).toEqual([{ productId: "p1", size: "41", quantity: 1 }]);
+    expect(r.items[0]!.productSku).toBe("LLO878/41");
   });
 
   it("lanza si el producto no existe o la cantidad es <= 0", () => {
@@ -42,29 +44,22 @@ describe("planSale", () => {
     expect(() => planSale([{ productId: "p2", size: null, quantity: 0, unitPrice: 1, lineDiscount: 0 }], [BALL])).toThrow();
   });
 
-  it("acumula demanda entre líneas del mismo producto/talla (no permite oversell)", () => {
-    // 2 líneas de talla 40 (stock 3): 2 + 2 = 4 > 3 → debe lanzar.
+  it("TPV: permite varias líneas del mismo producto/talla aunque superen el stock", () => {
+    // 2 + 2 = 4 > stock 3, pero la caja física lo permite (stock negativo).
     const dup: PosLineInput[] = [
       { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
       { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
     ];
-    expect(() => planSale(dup, [SHOE])).toThrow(/stock/i);
-
-    // 2 + 1 = 3 ≤ 3 → válido (dos líneas).
-    const ok: PosLineInput[] = [
-      { productId: "p1", size: "40", quantity: 2, unitPrice: 30, lineDiscount: 0 },
-      { productId: "p1", size: "40", quantity: 1, unitPrice: 30, lineDiscount: 0 },
-    ];
-    expect(planSale(ok, [SHOE]).items).toHaveLength(2);
+    expect(planSale(dup, [SHOE]).items).toHaveLength(2);
   });
 
-  it("acumula demanda sin talla contra Product.stock", () => {
-    // 2 líneas del balón (stock 5): 3 + 3 = 6 > 5 → debe lanzar.
+  it("TPV: permite vender sin talla aunque supere Product.stock", () => {
+    // 3 + 3 = 6 > stock 5, pero se permite (caja física).
     const dup: PosLineInput[] = [
       { productId: "p2", size: null, quantity: 3, unitPrice: 12, lineDiscount: 0 },
       { productId: "p2", size: null, quantity: 3, unitPrice: 12, lineDiscount: 0 },
     ];
-    expect(() => planSale(dup, [BALL])).toThrow(/stock/i);
+    expect(planSale(dup, [BALL]).items).toHaveLength(2);
   });
 
   it("congela unitCost: usa el coste de la talla si lo trae", () => {

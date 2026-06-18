@@ -56,11 +56,6 @@ export function planSale(
   const byId = new Map(products.map((p) => [p.id, p]));
   const items: PlannedItem[] = [];
   const stockDeltas: StockDelta[] = [];
-  // Demanda ACUMULADA por (productId, talla|‹sin talla›). Si el mismo artículo
-  // aparece en varias líneas del carrito, validamos contra la SUMA, no contra
-  // cada línea por separado — evita el oversell (stock negativo).
-  const consumed = new Map<string, number>();
-
   for (const line of lines) {
     const p = byId.get(line.productId);
     if (!p) throw new Error(`Producto no encontrado: ${line.productId}`);
@@ -69,18 +64,13 @@ export function planSale(
     }
     if (line.unitPrice < 0) throw new Error(`Precio inválido para "${p.name}".`);
 
-    const key = `${p.id}::${line.size ?? ""}`;
-    const wanted = (consumed.get(key) ?? 0) + line.quantity;
-    if (line.size) {
-      const ps = p.sizes.find((s) => s.size === line.size);
-      if (!ps) throw new Error(`La talla ${line.size} no existe en "${p.name}".`);
-      if (ps.stock < wanted) {
-        throw new Error(`Sin stock suficiente de "${p.name}" talla ${line.size} (hay ${ps.stock}).`);
-      }
-    } else if (p.productStock < wanted) {
-      throw new Error(`Sin stock suficiente de "${p.name}" (hay ${p.productStock}).`);
+    // TPV físico: NO se valida el stock. En la caja vendes lo que tienes en la
+    // mano aunque el sistema marque 0, así que el stock puede quedar NEGATIVO
+    // (señal de descuadre para reconciliar luego). El checkout online SÍ evita
+    // la sobreventa (lib/stripe/orders.ts): no puedes enviar lo que no tienes.
+    if (line.size && !p.sizes.some((s) => s.size === line.size)) {
+      throw new Error(`La talla ${line.size} no existe en "${p.name}".`);
     }
-    consumed.set(key, wanted);
 
     const family = productFamily(p.primaryCategorySlug);
     const baseSku = skuOrFallback(p);
@@ -176,33 +166,25 @@ export async function createInStoreSale(
     const planned = planSale(input.lines, products, input.totalDiscount ?? 0);
 
     for (const delta of planned.stockDeltas) {
-      // Descuento ATÓMICO con guarda `stock >= qty`: la validación de planSale
-      // se hizo sobre el stock LEÍDO al abrir la transacción; si otra venta (otra
-      // caja, otra pestaña o el checkout web) agotó la talla entremedias, aquí
-      // count===0 y abortamos la venta entera (la transacción revierte) en vez de
-      // dejar stock NEGATIVO. Espeja lib/stripe/orders.ts (checkout online).
+      // Descuento SIN guarda de stock: la caja física vende lo que hay en la
+      // mano aunque el sistema diga 0, dejando el stock en NEGATIVO (señal de
+      // descuadre a reconciliar). count===0 solo significa que la fila no existe
+      // (talla/producto borrado), no falta de stock. El checkout online SÍ
+      // impide la sobreventa (lib/stripe/orders.ts).
       const name = products.find((p) => p.id === delta.productId)?.name ?? delta.productId;
-      const label = delta.size ? `${name} (talla ${delta.size})` : name;
       if (delta.size) {
         const res = await tx.productSize.updateMany({
-          where: {
-            productId: delta.productId,
-            size: delta.size,
-            stock: { gte: delta.quantity },
-          },
+          where: { productId: delta.productId, size: delta.size },
           data: { stock: { decrement: delta.quantity } },
         });
         if (res.count === 0) {
-          throw new Error(`Sin stock suficiente de ${label}. Otra venta lo agotó; revisa el ticket.`);
+          throw new Error(`No se encontró la talla ${delta.size} de "${name}".`);
         }
       } else {
-        const res = await tx.product.updateMany({
-          where: { id: delta.productId, stock: { gte: delta.quantity } },
+        await tx.product.updateMany({
+          where: { id: delta.productId },
           data: { stock: { decrement: delta.quantity } },
         });
-        if (res.count === 0) {
-          throw new Error(`Sin stock suficiente de ${label}. Otra venta lo agotó; revisa el ticket.`);
-        }
       }
     }
 

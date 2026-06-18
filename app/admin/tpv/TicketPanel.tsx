@@ -306,14 +306,15 @@ function LineMenu({
                   <button
                     key={s.size}
                     type="button"
-                    disabled={out}
                     onClick={() => onPatch(line.key, { size: s.size })}
+                    title={out ? `Sin stock (${s.stock})` : `${s.stock} en stock`}
                     className={cn(
                       "min-w-[2.25rem] rounded-lg border px-2 py-1 text-sm font-semibold",
                       sel
                         ? "border-zs-blue-700 bg-zs-blue-50 text-zs-blue-900"
-                        : "border-zs-border hover:bg-zs-surface",
-                      out && "cursor-not-allowed opacity-40 line-through",
+                        : out
+                          ? "border-amber-300 bg-amber-50 text-amber-700"
+                          : "border-zs-border hover:bg-zs-surface",
                     )}
                   >
                     {s.size}

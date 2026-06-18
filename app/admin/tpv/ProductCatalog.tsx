@@ -40,7 +40,10 @@ type Filters = {
 };
 
 const DEFAULT_FILTERS: Filters = {
-  inStock: true,
+  // TPV físico: mostramos TODO por defecto (también sin stock) para poder vender
+  // lo que hay en la mano aunque el sistema marque 0. El chip "En stock" sigue
+  // disponible para filtrar a solo-disponibles.
+  inStock: false,
   featured: false,
   onSale: false,
   categorySlug: null,
@@ -443,15 +446,15 @@ function SizePicker({
               <button
                 key={s.size}
                 type="button"
-                disabled={out}
                 onClick={() => setSize(s.size)}
-                title={out ? "Sin stock" : `${s.stock} en stock`}
+                title={out ? `Sin stock (${s.stock}) — se vende igual` : `${s.stock} en stock`}
                 className={cn(
                   "min-w-[2.5rem] rounded-lg border px-2.5 py-1.5 text-sm font-semibold transition-colors",
                   sel
                     ? "border-zs-blue-700 bg-zs-blue-50 text-zs-blue-900 ring-1 ring-zs-blue-700"
-                    : "border-zs-border bg-white text-zs-ink hover:border-zs-blue-300 hover:bg-zs-surface",
-                  out && "cursor-not-allowed opacity-40 line-through hover:bg-white",
+                    : out
+                      ? "border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                      : "border-zs-border bg-white text-zs-ink hover:border-zs-blue-300 hover:bg-zs-surface",
                 )}
               >
                 {s.size}
