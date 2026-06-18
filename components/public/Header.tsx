@@ -297,7 +297,7 @@ export function Header() {
           <div
             ref={navRef}
             className={cn(
-              "mx-auto flex max-w-[1380px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/95 px-3 py-3 backdrop-blur-md transition-shadow sm:gap-3 sm:px-5 sm:py-3.5",
+              "mx-auto flex max-w-[1380px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/85 px-3 py-3 backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/70 sm:gap-3 sm:px-5 sm:py-3.5",
               scrolled ? "shadow-xl" : "shadow-lg",
             )}
             style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}

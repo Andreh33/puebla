@@ -14,15 +14,27 @@ export function whatsappUrl(message: string, phone: string = WHATSAPP_NUMBER): s
 export const WhatsAppMessages = {
   generic: () => "Hola, tengo una consulta sobre Zona Sport.",
 
-  product: (productName: string, size?: string) =>
-    size
-      ? `Hola, me interesa "${productName}" (talla ${size}). ¿Lo tenéis disponible?`
-      : `Hola, me interesa "${productName}". ¿Lo tenéis disponible?`,
+  product: (
+    productName: string,
+    size?: string,
+    extra?: { url?: string; price?: string },
+  ) => {
+    const sz = size ? ` (talla ${size})` : "";
+    const pr = extra?.price ? ` — ${extra.price}` : "";
+    const link = extra?.url ? `\n${extra.url}` : "";
+    return `Hola, me interesa "${productName}"${sz}${pr}. ¿Lo tenéis disponible?${link}`;
+  },
 
-  reservation: (productName: string, size?: string) =>
-    size
-      ? `Hola, quiero reservar "${productName}" (talla ${size}) para pasar a recogerlo por la tienda.`
-      : `Hola, quiero reservar "${productName}" para pasar a recogerlo por la tienda.`,
+  reservation: (
+    productName: string,
+    size?: string,
+    extra?: { url?: string; price?: string },
+  ) => {
+    const sz = size ? ` (talla ${size})` : "";
+    const pr = extra?.price ? ` — ${extra.price}` : "";
+    const link = extra?.url ? `\n${extra.url}` : "";
+    return `Hola, quiero reservar "${productName}"${sz}${pr} para pasar a recogerlo por la tienda.${link}`;
+  },
 
   contactFromPage: (pageTitle: string) =>
     `Hola, os escribo desde la página "${pageTitle}" de la web de Zona Sport.`,

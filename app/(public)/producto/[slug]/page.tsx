@@ -285,6 +285,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
             <ProductActions
               productName={cleanProductName(product.name)}
+              priceLabel={formatPriceEUR(final.toNumber())}
               sizes={sizes}
               source={product.source}
               externalUrl={product.externalUrl}

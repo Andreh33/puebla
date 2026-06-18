@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { SizeSelector, type SizeOption } from "./SizeSelector";
 import { AddToCartButton, type AddToCartProduct } from "./AddToCartButton";
@@ -8,6 +8,8 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
 type Props = {
   productName: string;
+  /** Precio ya formateado (p. ej. "39,95 €") — se incluye en el mensaje de WhatsApp. */
+  priceLabel?: string;
   sizes: SizeOption[];
   source?: "LOCAL" | "MIRAVIA" | "AMAZON";
   externalUrl?: string | null;
@@ -17,6 +19,7 @@ type Props = {
 
 export function ProductActions({
   productName,
+  priceLabel,
   sizes,
   source,
   externalUrl,
@@ -40,6 +43,13 @@ export function ProductActions({
   const presetSize = !onlyUnica && inStock.length === 1 ? inStock[0]!.size : null;
   const [selected, setSelected] = useState<string | null>(presetSize);
 
+  // URL del producto (cliente): se añade al mensaje de WhatsApp para que el chat
+  // muestre la vista previa con la imagen OG — la "mini-ficha".
+  const [pageUrl, setPageUrl] = useState("");
+  useEffect(() => {
+    setPageUrl(window.location.href);
+  }, []);
+
   const requiresSize = inStock.length > 0 && !onlyUnica;
   const effectiveSize: string | null = onlyUnica ? "ÚNICA" : selected;
   const canCta = !requiresSize || !!selected;
@@ -54,7 +64,10 @@ export function ProductActions({
       : null;
 
   const reservationHref = whatsappUrl(
-    WhatsAppMessages.reservation(productName, effectiveSize ?? undefined),
+    WhatsAppMessages.reservation(productName, effectiveSize ?? undefined, {
+      url: pageUrl || undefined,
+      price: priceLabel,
+    }),
   );
 
   // Caso sin stock: el producto tiene tallas pero ninguna disponible. Ocultamos
@@ -70,7 +83,12 @@ export function ProductActions({
           </p>
         </div>
         <a
-          href={whatsappUrl(WhatsAppMessages.product(productName))}
+          href={whatsappUrl(
+            WhatsAppMessages.product(productName, undefined, {
+              url: pageUrl || undefined,
+              price: priceLabel,
+            }),
+          )}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-6 text-base font-semibold text-[#107a3e] shadow-sm transition hover:bg-[#e8fbf0]"

@@ -74,7 +74,7 @@ export function BottomNav() {
       <nav
         aria-label="Navegación principal mobile"
         className={cn(
-          "fixed inset-x-0 bottom-0 z-40 border-t border-zs-border bg-white/95 backdrop-blur md:hidden",
+          "fixed inset-x-0 bottom-0 z-40 border-t border-zs-border bg-white/85 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/70 md:hidden",
           "pb-[env(safe-area-inset-bottom)]",
           "transition-transform duration-500 will-change-transform",
           mounted ? "translate-y-0" : "translate-y-full",

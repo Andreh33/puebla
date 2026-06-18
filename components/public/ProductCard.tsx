@@ -69,7 +69,7 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
     <Link
       href={`/producto/${product.slug}`}
       className={cn(
-        "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
+        "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-soft transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
         className,
       )}
       aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
