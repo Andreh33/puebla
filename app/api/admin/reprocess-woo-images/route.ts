@@ -116,24 +116,14 @@ export async function POST(req: NextRequest) {
       await db.product.update({
         where: { id: product.id },
         data: {
+          // uploadProductImage YA creó la fila ProductImage (se le pasó productId).
+          // Aquí solo fijamos la principal y publicamos. NO recrear la imagen: ese
+          // images.create duplicaba la foto (bug histórico; datos limpiados con
+          // /api/admin/dedup-images el 2026-06-18).
           mainImageUrl: result.url,
           status: product.status === "DRAFT" ? "ACTIVE" : product.status,
           publishedAt:
             product.status === "DRAFT" ? new Date() : undefined,
-          images: {
-            create: {
-              url: result.url,
-              urlMedium: result.urlMedium,
-              urlThumb: result.urlThumb,
-              alt: product.name,
-              position: 0,
-              width: result.width,
-              height: result.height,
-              blurDataUrl: result.blurDataUrl,
-              source: "url-external",
-              originalUrl: url,
-            },
-          },
         },
       });
       processed++;

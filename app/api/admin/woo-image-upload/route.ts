@@ -102,23 +102,12 @@ export async function POST(req: NextRequest) {
     await db.product.update({
       where: { id: product.id },
       data: {
-        mainImageUrl: result.url,
+        // uploadProductImage YA creó la fila ProductImage (se le pasó productId).
+        // NO recrear la imagen aquí: ese images.create duplicaba la foto (mismo bug
+        // que reprocess-woo-images; datos limpiados con /api/admin/dedup-images).
         // NO se toca el status: el catálogo importado permanece en DRAFT
         // hasta que el cliente lo revise y publique en bloque desde /admin.
-        images: {
-          create: {
-            url: result.url,
-            urlMedium: result.urlMedium,
-            urlThumb: result.urlThumb,
-            alt: product.name,
-            position: 0,
-            width: result.width,
-            height: result.height,
-            blurDataUrl: result.blurDataUrl,
-            source: "url-external",
-            originalUrl: originalUrl,
-          },
-        },
+        mainImageUrl: result.url,
       },
     });
 
