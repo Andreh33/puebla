@@ -125,6 +125,28 @@ export async function POST(req: NextRequest) {
 
   const totalRemaining = work.length;
 
+  // Modo PLAN: devuelve la lista de imágenes que faltan (con posición y setMain
+  // ya asignados) SIN descargar. Lo usa el orquestador local para bajar las fotos
+  // desde una IP no bloqueada por Cloudflare y empujarlas a /api/admin/push-image.
+  if (url.searchParams.get("plan") === "1") {
+    const planLimit = Math.max(
+      1,
+      Math.min(10000, Number(url.searchParams.get("limit") ?? "5000") || 5000),
+    );
+    return NextResponse.json({
+      ok: true,
+      plan: true,
+      total: totalRemaining,
+      productosEmparejados: products.length,
+      items: work.slice(0, planLimit).map((w) => ({
+        productId: w.productId,
+        src: w.src,
+        position: w.position,
+        setMain: w.setMain,
+      })),
+    });
+  }
+
   if (dry) {
     return NextResponse.json({
       ok: true,
