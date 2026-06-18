@@ -11,16 +11,21 @@ describe("buildProductWhere — filtro prenda (garmentType) Bloque 6", () => {
     const where = buildProductWhere({ filters: { prenda: ["camiseta"] } });
     expect(Array.isArray(where.AND)).toBe(true);
     const and = where.AND as Record<string, unknown>[];
-    const clause = and.find((c) => "garmentType" in c);
-    expect(clause).toEqual({ garmentType: { in: ["camiseta"] } });
+    const clause = and.find((c) => has(c, '"garmentType"'));
+    expect(clause).toBeDefined();
+    // Ahora es un OR: garmentType=camiseta O categoría m2m *-textil-camiseta.
+    expect(has(clause, '"garmentType":{"in":["camiseta"]}')).toBe(true);
+    expect(has(clause, "-textil-camiseta")).toBe(true);
     expect((where as Record<string, unknown>).OR).toBeUndefined();
   });
 
   it("(b) prenda multi (CSV): garmentType { in: [camiseta, sudadera] }", () => {
     const where = buildProductWhere({ filters: { prenda: ["camiseta", "sudadera"] } });
     const and = where.AND as Record<string, unknown>[];
-    const clause = and.find((c) => "garmentType" in c);
-    expect(clause).toEqual({ garmentType: { in: ["camiseta", "sudadera"] } });
+    const clause = and.find((c) => has(c, '"garmentType"'));
+    expect(has(clause, '"garmentType":{"in":["camiseta","sudadera"]}')).toBe(true);
+    expect(has(clause, "-textil-camiseta")).toBe(true);
+    expect(has(clause, "-textil-sudadera")).toBe(true);
   });
 
   it("(c) prenda + talla: ambos en el MISMO AND, talla stock-aware, sin colisión", () => {

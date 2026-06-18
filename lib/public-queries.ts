@@ -893,14 +893,35 @@ export function buildProductWhere(opts: {
       })),
     });
   }
-  // Bloque 3: filtro multi de tipo de calzado. Va en el MISMO andClauses para
-  // preservar la combinación AND (fix de filtros combinados intocado). Sin valor → se ignora.
+  // Bloque 3 + multi-categoría: un producto sale bajo un tipo de calzado si su
+  // footwearType coincide O si está asignado (m2m) a la categoría de ese tipo
+  // (`*-calzado-X`). Así un producto puesto en 2 categorías de calzado aparece en
+  // los 2 filtros. Va en el MISMO andClauses (intersección AND con el resto).
   if (filters.tipo && filters.tipo.length > 0) {
-    andClauses.push({ footwearType: { in: filters.tipo } });
+    andClauses.push({
+      OR: [
+        { footwearType: { in: filters.tipo } },
+        ...filters.tipo.map((t) => ({
+          categories: {
+            some: { category: { slug: { endsWith: `-calzado-${t.replace(/_/g, "-")}` } } },
+          },
+        })),
+      ],
+    });
   }
-  // Bloque 6: filtro multi de tipo de prenda (textil). Mismo andClauses (intersección AND).
+  // Bloque 6 + multi-categoría: igual que el tipo de calzado pero textil
+  // (`*-textil-X`). Un producto en 2 categorías de prenda sale en los 2 filtros.
   if (filters.prenda && filters.prenda.length > 0) {
-    andClauses.push({ garmentType: { in: filters.prenda } });
+    andClauses.push({
+      OR: [
+        { garmentType: { in: filters.prenda } },
+        ...filters.prenda.map((p) => ({
+          categories: {
+            some: { category: { slug: { endsWith: `-textil-${p.replace(/_/g, "-")}` } } },
+          },
+        })),
+      ],
+    });
   }
   // Bloque 6 §18: filtro multi de variante fina (mismo andClauses).
   if (filters.variante && filters.variante.length > 0) {

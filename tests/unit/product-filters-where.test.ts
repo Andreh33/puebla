@@ -26,8 +26,11 @@ describe("buildProductWhere — filtros combinados + Bloque 3", () => {
   it("(b) + tipo=padel: footwearType en el MISMO AND; los 4 filtros en intersección", () => {
     const where = buildProductWhere({ filters: { color: ["negro"], talla: ["40"], marca: ["joma"], tipo: ["padel"] } });
     const and = where.AND as Record<string, unknown>[];
-    const footwear = and.find((c) => "footwearType" in c);
-    expect(footwear).toEqual({ footwearType: { in: ["padel"] } });
+    const footwear = and.find((c) => has(c, '"footwearType"'));
+    expect(footwear).toBeDefined();
+    // Ahora es un OR: footwearType=padel O categoría m2m *-calzado-padel.
+    expect(has(footwear, '"footwearType":{"in":["padel"]}')).toBe(true);
+    expect(has(footwear, "-calzado-padel")).toBe(true);
     expect(and.some((c) => has(c, '"colorName"'))).toBe(true);
     expect(and.some((c) => has(c, '"equals":"40"'))).toBe(true);
     expect(where.brand).toBeDefined();

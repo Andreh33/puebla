@@ -12,7 +12,7 @@ describe("buildProductWhere — filtro variante + inferencia inversa (Bloque 6 �
     const where = whereFrom({ variante: "manga_corta" });
     const and = where.AND as Record<string, unknown>[];
     expect(and.find((c) => "garmentVariant" in c)).toEqual({ garmentVariant: { in: ["manga_corta"] } });
-    expect(and.find((c) => "garmentType" in c)).toEqual({ garmentType: { in: ["camiseta"] } });
+    expect(has(and.find((c) => has(c, '"garmentType"')), '"garmentType":{"in":["camiseta"]}')).toBe(true);
   });
 
   it("(b) variante multi infiere prendas ÚNICAS (dedup: 2 camiseta + 1 pantalon → [camiseta, pantalon])", () => {
@@ -22,14 +22,14 @@ describe("buildProductWhere — filtro variante + inferencia inversa (Bloque 6 �
     expect(and.find((c) => "garmentVariant" in c)).toEqual({
       garmentVariant: { in: ["manga_corta", "top", "pantalon_largo"] },
     });
-    expect(and.find((c) => "garmentType" in c)).toEqual({ garmentType: { in: ["camiseta", "pantalon"] } });
+    expect(has(and.find((c) => has(c, '"garmentType"')), '"garmentType":{"in":["camiseta","pantalon"]}')).toBe(true);
   });
 
   it("(c) variante + prenda explícita: respeta la prenda dada (no la sobrescribe)", () => {
     const filters = parseCategoryParams({ prenda: "camiseta", variante: "manga_corta" });
     expect(filters.prenda).toEqual(["camiseta"]);
     const and = buildProductWhere({ filters }).AND as Record<string, unknown>[];
-    expect(and.find((c) => "garmentType" in c)).toEqual({ garmentType: { in: ["camiseta"] } });
+    expect(has(and.find((c) => has(c, '"garmentType"')), '"garmentType":{"in":["camiseta"]}')).toBe(true);
     expect(and.find((c) => "garmentVariant" in c)).toEqual({ garmentVariant: { in: ["manga_corta"] } });
   });
 
