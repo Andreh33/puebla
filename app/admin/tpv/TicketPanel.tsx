@@ -227,6 +227,9 @@ function TicketLine({
           <LineMenu line={line} onPatch={onPatch} onRemove={onRemove} />
         </div>
         <p className="text-xs text-zs-muted">
+          {line.colorName && line.colorName !== "Único" && (
+            <span className="font-medium text-zs-blue-700">{line.colorName} · </span>
+          )}
           {line.size ? (
             <>
               Talla <span className="font-semibold text-zs-red-600">{line.size}</span>

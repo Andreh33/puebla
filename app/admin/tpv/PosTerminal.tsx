@@ -130,6 +130,7 @@ export function PosTerminal({
           productId: item.id,
           name: item.name,
           baseSku: item.baseSku,
+          colorName: item.colorName,
           mainImageUrl: item.mainImageUrl,
           family: item.family,
           size: s,

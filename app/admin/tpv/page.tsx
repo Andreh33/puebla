@@ -16,7 +16,7 @@ export default async function TpvPage() {
 
   const [filters, initialProducts] = await Promise.all([
     getPosFilters().catch(() => ({ brands: [], categories: [], tags: [] })),
-    searchPosCatalog({ inStock: true, take: 24 }).catch(() => []),
+    searchPosCatalog({ inStock: false, take: 24 }).catch(() => []),
   ]);
 
   return <PosTerminal user={user} filters={filters} initialProducts={initialProducts} />;

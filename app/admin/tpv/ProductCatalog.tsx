@@ -434,6 +434,11 @@ function SizePicker({
 
   return (
     <div className="w-[16.5rem]">
+      {item.colorName && item.colorName !== "Único" && (
+        <p className="mb-1.5 inline-flex rounded-md bg-zs-blue-50 px-2 py-0.5 text-xs font-semibold text-zs-blue-800">
+          Color: {item.colorName}
+        </p>
+      )}
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zs-muted">
         {hasSizes ? "Talla" : "Producto sin tallas"}
       </p>
@@ -538,7 +543,12 @@ function ProductCard({
             <p className="line-clamp-2 text-xs font-semibold leading-snug text-zs-ink">
               {item.name}
             </p>
-            <p className="text-[10px] text-zs-muted">{item.baseSku}</p>
+            <p className="text-[10px] text-zs-muted">
+              {item.baseSku}
+              {item.colorName && item.colorName !== "Único" && (
+                <span className="ml-1 font-semibold text-zs-blue-700">· {item.colorName}</span>
+              )}
+            </p>
             <PriceTag item={item} className="mt-auto text-sm" />
           </div>
         </button>
@@ -577,6 +587,7 @@ function ProductRow({
             <span className="block truncate text-sm font-semibold text-zs-ink">{item.name}</span>
             <span className="block truncate text-xs text-zs-muted">
               {item.baseSku}
+              {item.colorName && item.colorName !== "Único" ? ` · ${item.colorName}` : ""}
               {hasVariants ? ` · ${item.sizes.length} tallas` : ""}
             </span>
           </span>

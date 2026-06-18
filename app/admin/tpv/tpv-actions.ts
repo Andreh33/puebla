@@ -62,6 +62,7 @@ export async function searchPosCatalog(
     select: {
       id: true,
       name: true,
+      colorName: true,
       sku: true,
       modelCode: true,
       externalId: true,
@@ -86,6 +87,7 @@ export async function searchPosCatalog(
       id: r.id,
       name: r.name,
       baseSku: skuOrFallback(r),
+      colorName: r.colorName,
       family: productFamily(r.primaryCategory?.slug ?? r.category?.slug ?? null),
       mainImageUrl: r.mainImageUrl,
       unitPrice: onSale ? (sale as number) : retail,

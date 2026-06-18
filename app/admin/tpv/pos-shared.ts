@@ -13,6 +13,8 @@ export type PosCatalogItem = {
   id: string;
   name: string;
   baseSku: string;
+  /** Color del producto (cada color es un producto independiente). "Único" = sin color. */
+  colorName: string;
   family: ProductFamily;
   mainImageUrl: string | null;
   /** Precio de venta efectivo (salePrice si está en oferta, si no retailPrice). */
@@ -55,6 +57,7 @@ export type CartLine = {
   productId: string;
   name: string;
   baseSku: string;
+  colorName: string;
   mainImageUrl: string | null;
   family: ProductFamily;
   size: string | null;
