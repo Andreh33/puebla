@@ -112,20 +112,24 @@ const PRENDA_VARIANTES: Record<string, Array<{ variante: GarmentVariant; soloGen
  * y, justo debajo, sus variantes disponibles para ESE género como sub-items
  * indentados (con `variante` = valor del enum). Bebé no recibe variantes.
  */
+/** Orden alfabético español por etiqueta (acentos/ñ incluidos). */
+const byLabelEs = (a: { label: string }, b: { label: string }) =>
+  a.label.localeCompare(b.label, "es");
+
 function buildRopa(gender: MegaMenuGender): MegaMenuGroup {
+  // "Ver toda la ropa" SIEMPRE primero; el resto de prendas alfabético, y dentro
+  // de cada prenda sus variantes también alfabéticas.
   const items: MegaMenuItem[] = [{ label: "Ver toda la ropa", familia: "textil" }];
-  for (const { label, prenda } of ROPA_PRENDAS) {
+  for (const { label, prenda } of [...ROPA_PRENDAS].sort(byLabelEs)) {
     items.push({ label, familia: "textil", prenda });
     const variantes = PRENDA_VARIANTES[prenda];
     if (!variantes) continue;
-    for (const v of variantes) {
-      if (v.soloGeneros && !v.soloGeneros.includes(gender)) continue;
-      items.push({
-        label: GARMENT_VARIANT_LABELS[v.variante],
-        familia: "textil",
-        prenda,
-        variante: v.variante,
-      });
+    const disponibles = variantes
+      .filter((v) => !v.soloGeneros || v.soloGeneros.includes(gender))
+      .map((v) => ({ variante: v.variante, label: GARMENT_VARIANT_LABELS[v.variante] }))
+      .sort(byLabelEs);
+    for (const v of disponibles) {
+      items.push({ label: v.label, familia: "textil", prenda, variante: v.variante });
     }
   }
   return { title: "Ropa", items };
@@ -144,7 +148,9 @@ const ROPA_BEBE: MegaMenuGroup = {
   title: "Ropa",
   items: [
     { label: "Ver toda la ropa", familia: "textil" },
-    ...ROPA_PRENDAS.map((p) => ({ label: p.label, familia: "textil" as const, prenda: p.prenda })),
+    ...[...ROPA_PRENDAS]
+      .sort(byLabelEs)
+      .map((p) => ({ label: p.label, familia: "textil" as const, prenda: p.prenda })),
   ],
 };
 
@@ -156,15 +162,20 @@ const CALZADO: MegaMenuGroup = {
   title: "Calzado",
   items: [
     { label: "Ver todo el calzado", familia: "calzado" },
-    { label: "Running", familia: "calzado", tipo: "running" },
-    { label: "Trail", familia: "calzado", tipo: "trail" },
-    // Bloque 8.8: 'Tenis' fusionado en 'Pádel' (footwearType tenis→padel).
-    { label: "Tenis/Pádel", familia: "calzado", tipo: "padel" },
-    { label: "Fútbol", familia: "calzado", tipo: "futbol" },
-    { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },
-    { label: "Casual", familia: "calzado", tipo: "casual" },
-    { label: "Baloncesto", familia: "calzado", tipo: "baloncesto" },
-    { label: "Chanclas", familia: "calzado", tipo: "chanclas" },
+    // Tipos de calzado en orden alfabético. Bloque 8.8: 'Tenis' fusionado en
+    // 'Pádel' (footwearType tenis→padel).
+    ...(
+      [
+        { label: "Running", familia: "calzado", tipo: "running" },
+        { label: "Trail", familia: "calzado", tipo: "trail" },
+        { label: "Tenis/Pádel", familia: "calzado", tipo: "padel" },
+        { label: "Fútbol", familia: "calzado", tipo: "futbol" },
+        { label: "Fútbol sala", familia: "calzado", tipo: "futbol_sala" },
+        { label: "Casual", familia: "calzado", tipo: "casual" },
+        { label: "Baloncesto", familia: "calzado", tipo: "baloncesto" },
+        { label: "Chanclas", familia: "calzado", tipo: "chanclas" },
+      ] as MegaMenuItem[]
+    ).sort(byLabelEs),
   ],
 };
 
