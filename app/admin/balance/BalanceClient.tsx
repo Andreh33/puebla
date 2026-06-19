@@ -19,7 +19,7 @@ import {
   type GenderRow,
   type Metrics,
   type Period,
-} from "@/lib/admin/balance-queries";
+} from "@/lib/admin/balance-types";
 
 const WIDGET_IDS = ["textil", "calzado", "complemento", "general", "mensual"] as const;
 type WidgetId = (typeof WIDGET_IDS)[number];

@@ -17,46 +17,30 @@ import { SOLD_STATUSES } from "./sales-queries";
  * complemento (accesorios/varios). Género: Product.gender (UNISEX/sin = "Otros").
  */
 
-export type FamilyKey = "textil" | "calzado" | "complemento";
-export type GenderKey = "HOMBRE" | "MUJER" | "NINO" | "NINA" | "BEBE" | "OTROS";
-export type Period = "mes" | "ano" | "todo";
+// Tipos y etiquetas PUROS viven en ./balance-types (sin "server-only") para que
+// el componente cliente pueda importarlos sin arrastrar este módulo al navegador.
+import {
+  GENDER_ORDER,
+  FAMILY_ORDER,
+  type FamilyKey,
+  type GenderKey,
+  type Period,
+  type Metrics,
+  type GenderRow,
+  type FamilyTable,
+  type BalanceData,
+} from "./balance-types";
 
-export type Metrics = {
-  coste: number; // valor de inventario a coste (€)
-  stock: number; // unidades en stock
-  vendidas: number; // unidades vendidas en el periodo
-  ventas: number; // ingresos en el periodo (€)
-  beneficio: number; // margen en el periodo (€)
-};
-
-export type GenderRow = { gender: GenderKey; metrics: Metrics };
-export type FamilyTable = { family: FamilyKey; rows: GenderRow[]; total: Metrics };
-
-export type BalanceData = {
-  period: Period;
-  families: FamilyTable[];
-  byGender: GenderRow[];
-  grandTotal: Metrics;
-  profitByMonth: Array<{ month: string; label: string; beneficio: number; ventas: number }>;
-};
-
-export const FAMILY_LABELS: Record<FamilyKey, string> = {
-  textil: "Textil",
-  calzado: "Calzado",
-  complemento: "Complementos",
-};
-
-export const GENDER_LABELS: Record<GenderKey, string> = {
-  HOMBRE: "Hombre",
-  MUJER: "Mujer",
-  NINO: "Niño",
-  NINA: "Niña",
-  BEBE: "Bebé",
-  OTROS: "Otros / unisex",
-};
-
-const GENDER_ORDER: GenderKey[] = ["HOMBRE", "MUJER", "NINO", "NINA", "BEBE", "OTROS"];
-const FAMILY_ORDER: FamilyKey[] = ["textil", "calzado", "complemento"];
+export type {
+  FamilyKey,
+  GenderKey,
+  Period,
+  Metrics,
+  GenderRow,
+  FamilyTable,
+  BalanceData,
+} from "./balance-types";
+export { FAMILY_LABELS, GENDER_LABELS } from "./balance-types";
 
 // ---------------------------------------------------------------------------
 // Helpers
