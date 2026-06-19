@@ -262,3 +262,15 @@ export async function isSlugAvailable(slug: string, excludeId?: string): Promise
   if (!found) return true;
   return excludeId ? found.id === excludeId : false;
 }
+
+/**
+ * ¿El SKU está libre? El SKU es @unique en toda la tienda. Vacío = libre (es
+ * opcional). `excludeId` permite editar un producto sin chocar consigo mismo.
+ */
+export async function isSkuAvailable(sku: string, excludeId?: string): Promise<boolean> {
+  const trimmed = sku.trim();
+  if (!trimmed) return true;
+  const found = await db.product.findUnique({ where: { sku: trimmed }, select: { id: true } });
+  if (!found) return true;
+  return excludeId ? found.id === excludeId : false;
+}

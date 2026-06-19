@@ -233,6 +233,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
   );
   const [mainImageUrl, setMainImageUrl] = React.useState<string | null>(initial?.mainImageUrl ?? null);
   const [slugStatus, setSlugStatus] = React.useState<"idle" | "checking" | "ok" | "taken" | "invalid">("idle");
+  const [skuStatus, setSkuStatus] = React.useState<"idle" | "checking" | "ok" | "taken">("idle");
 
   // Category multi-selection state
   const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<string[]>(
@@ -343,6 +344,30 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     }, 350);
     return () => clearTimeout(t);
   }, [watched.slug, initial?.id]);
+
+  // SKU validation debounced — avisa si el SKU ya existe en OTRO producto (es
+  // @unique en toda la tienda). Vacío = sin aviso. Excluye el propio producto.
+  React.useEffect(() => {
+    const sku = watched.sku?.trim();
+    if (!sku) {
+      setSkuStatus("idle");
+      return;
+    }
+    setSkuStatus("checking");
+    const t = setTimeout(async () => {
+      try {
+        const url = new URL("/api/products/sku-check", window.location.origin);
+        url.searchParams.set("sku", sku);
+        if (initial?.id) url.searchParams.set("excludeId", initial.id);
+        const res = await fetch(url.toString());
+        const data: { available: boolean } = await res.json();
+        setSkuStatus(data.available ? "ok" : "taken");
+      } catch {
+        setSkuStatus("idle");
+      }
+    }, 350);
+    return () => clearTimeout(t);
+  }, [watched.sku, initial?.id]);
 
   // Tags input
   const [tagInput, setTagInput] = React.useState("");
@@ -472,6 +497,11 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     if (slugStatus === "taken") {
       toast.error("El slug ya existe. Cambia el slug.");
       setTab("general");
+      return;
+    }
+    if (skuStatus === "taken") {
+      toast.error("El SKU ya existe en otro producto. Cámbialo o déjalo vacío.");
+      setTab("origen");
       return;
     }
 
@@ -1225,12 +1255,25 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 <div className="sm:col-span-2">
                   <Label htmlFor="sku">
                     SKU / Referencia interna
+                    {skuStatus === "checking" && (
+                      <span className="ml-2 text-xs text-zs-muted">comprobando…</span>
+                    )}
+                    {skuStatus === "ok" && (
+                      <span className="ml-2 text-xs text-emerald-600">disponible</span>
+                    )}
+                    {skuStatus === "taken" && (
+                      <span className="ml-2 text-xs font-semibold text-zs-red-600">
+                        ⚠ ya existe en otro producto
+                      </span>
+                    )}
                   </Label>
                   <Input
                     id="sku"
                     {...register("sku")}
                     placeholder="ZS-RUNN-001 (único en toda la tienda)"
                     autoComplete="off"
+                    aria-invalid={skuStatus === "taken"}
+                    className={skuStatus === "taken" ? "border-zs-red-600 focus-visible:ring-zs-red-600/40" : undefined}
                   />
                   <p className="mt-1 text-xs text-zs-muted">
                     Aparece en la ficha pública como «Referencia». Debe ser único.
