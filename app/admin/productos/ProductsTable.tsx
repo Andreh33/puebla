@@ -544,7 +544,7 @@ export function ProductsTable({
   const [isPending, startTransition] = React.useTransition();
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [confirm, setConfirm] = React.useState<RowConfirm | null>(null);
-  const [keepStockOnDuplicate, setKeepStockOnDuplicate] = React.useState(false);
+  const [keepStockOnDuplicate, setKeepStockOnDuplicate] = React.useState(true);
   const [newColorOnDuplicate, setNewColorOnDuplicate] = React.useState("");
   const [bulkConfirm, setBulkConfirm] = React.useState<null | "delete" | "draftZeroStock">(null);
   const [footwearOpen, setFootwearOpen] = React.useState(false);
@@ -889,7 +889,7 @@ export function ProductsTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setConfirm(null);
-      setKeepStockOnDuplicate(false);
+      setKeepStockOnDuplicate(true);
       setNewColorOnDuplicate("");
     }
   }
@@ -1329,7 +1329,7 @@ export function ProductsTable({
         onOpenChange={(o) => {
           if (!o) {
             setConfirm(null);
-            setKeepStockOnDuplicate(false);
+            setKeepStockOnDuplicate(true);
             setNewColorOnDuplicate("");
           }
         }}
