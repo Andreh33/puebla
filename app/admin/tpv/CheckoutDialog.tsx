@@ -110,13 +110,21 @@ export function CheckoutDialog({
     }
   }
 
+  // Cierra el diálogo. Si la venta YA se registró (done), vacía el carrito para
+  // que esos productos NO queden seleccionados y no se vuelvan a cobrar por error
+  // en otro ticket. Cubre cualquier vía de cierre: X, clic fuera y "Nueva venta".
+  function handleOpenChange(v: boolean) {
+    if (saving) return;
+    if (!v && done) onCompleted();
+    onOpenChange(v);
+  }
+
   function finishAndClear() {
-    onCompleted();
-    onOpenChange(false);
+    handleOpenChange(false);
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (saving ? null : onOpenChange(v))}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         {done ? (
           <>
