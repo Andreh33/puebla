@@ -519,3 +519,19 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
 }
+
+// ----------------------------------------------------------------------------
+// Analítica propia: contador de visitas agregado por (ruta, día). Lo alimenta
+// POST /api/track desde el cliente, SOLO con consentimiento de cookies
+// "analytics". 1 fila por (path, day) → la tabla no crece sin control.
+// ----------------------------------------------------------------------------
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  day       DateTime @db.Date
+  count     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([path, day])
+  @@index([day])
+}

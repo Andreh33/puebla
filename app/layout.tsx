@@ -5,6 +5,7 @@ import { buildMetadata } from "@/lib/seo/metadata";
 import { localBusinessSchema, websiteSchema, jsonLd } from "@/lib/seo/schema-org";
 import { CookieConsent } from "@/components/public/CookieConsent";
 import { AnalyticsGate } from "@/components/public/AnalyticsGate";
+import { TrackPageView } from "@/components/public/TrackPageView";
 import { ServiceWorkerRegistration } from "@/components/public/ServiceWorkerRegistration";
 import "./globals.css";
 
@@ -79,6 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <CookieConsent />
         <AnalyticsGate />
+        <TrackPageView />
         <ServiceWorkerRegistration />
       </body>
     </html>
