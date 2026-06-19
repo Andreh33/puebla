@@ -75,12 +75,8 @@ export default async function VisitasPage() {
         </div>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Stat label={`Visitas (${DAYS} días)`} value={total.toLocaleString("es-ES")} />
-            <Stat
-              label="Media por día"
-              value={Math.round(total / DAYS).toLocaleString("es-ES")}
-            />
             <Stat
               label="Páginas distintas"
               value={topPaths.length >= 15 ? "15+" : String(topPaths.length)}
