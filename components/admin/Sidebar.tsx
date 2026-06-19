@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
+  LayoutGrid,
   FolderTree,
   Tags,
   Upload,
@@ -44,6 +45,7 @@ export type NavItem = {
 export const ADMIN_NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Productos", href: "/admin/productos", icon: Package },
+  { label: "Modelos", href: "/admin/modelos", icon: LayoutGrid },
   { label: "Categorías", href: "/admin/categorias", icon: FolderTree },
   { label: "Marcas", href: "/admin/marcas", icon: Tags },
   { label: "Importar", href: "/admin/importar/xlsx", icon: Upload },
