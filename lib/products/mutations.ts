@@ -499,6 +499,15 @@ export async function duplicateProduct(
         })),
       });
     }
+    // Copia el ÁRBOL de categorías (m2m ProductCategory) del original para que el
+    // duplicado nazca con las MISMAS categorías marcadas en el editor, no solo
+    // con la principal (categoryId/primaryCategoryId, que ya se copian arriba).
+    if (src.categories.length) {
+      await tx.productCategory.createMany({
+        data: src.categories.map((c) => ({ productId: product.id, categoryId: c.categoryId })),
+        skipDuplicates: true,
+      });
+    }
     await tx.productAudit.create({
       data: {
         productId: product.id,

@@ -1347,7 +1347,7 @@ export function ProductsTable({
               {confirm?.type === "archive" &&
                 `"${confirm?.name}" pasará a estado Inactivo y dejará de mostrarse en la web.`}
               {confirm?.type === "duplicate" &&
-                `Se creará una copia de "${confirm.name}" como borrador (hereda categoría y tipo del original). Tendrás que ajustar EAN y datos únicos.`}
+                `Se creará una copia de "${confirm.name}" como borrador (hereda el árbol de categorías y el tipo del original). Tendrás que ajustar EAN y datos únicos.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {confirm?.type === "duplicate" && (
