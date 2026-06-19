@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Printer,
   ShoppingBag,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ import {
   createInStoreSaleAction,
   generateTicketAction,
 } from "@/app/admin/pedidos/pos-actions";
+import { issueInvoiceAction } from "@/app/admin/pedidos/_actions";
 import { cartTotals, type Cart, type PaymentMethod } from "./pos-shared";
 
 const METHODS: Array<{ value: PaymentMethod; label: string; icon: React.ReactNode }> = [
@@ -54,6 +56,12 @@ export function CheckoutDialog({
   const [phone, setPhone] = React.useState(cart.customerPhone);
   const [saving, setSaving] = React.useState<null | "plain" | "ticket">(null);
   const [done, setDone] = React.useState<Done | null>(null);
+  // Factura Holded (sobre la venta ya registrada). Datos fiscales del CLIENTE:
+  // con NIF sale factura completa; sin NIF, simplificada.
+  const [showFiscal, setShowFiscal] = React.useState(false);
+  const [fiscal, setFiscal] = React.useState({ nif: "", name: "", address: "", city: "", cp: "" });
+  const [issuing, setIssuing] = React.useState(false);
+  const [invoiceNumber, setInvoiceNumber] = React.useState<string | null>(null);
 
   // Reinicia el formulario cada vez que se abre con el carrito vigente.
   React.useEffect(() => {
@@ -63,6 +71,10 @@ export function CheckoutDialog({
       setPhone(cart.customerPhone);
       setDone(null);
       setSaving(null);
+      setShowFiscal(false);
+      setFiscal({ nif: "", name: "", address: "", city: "", cp: "" });
+      setIssuing(false);
+      setInvoiceNumber(null);
     }
   }, [open, cart.payment, cart.customerName, cart.customerPhone]);
 
@@ -121,6 +133,38 @@ export function CheckoutDialog({
 
   function finishAndClear() {
     handleOpenChange(false);
+  }
+
+  // Emite la factura fiscal en Holded sobre la venta ya registrada (done.orderId).
+  // Reutiliza issueInvoiceAction (el mismo motor que los pedidos online). Con NIF
+  // sale completa; sin NIF, simplificada. Es FISCAL: con VeriFactu va a la AEAT.
+  async function handleInvoice() {
+    if (!done) return;
+    if (
+      !confirm(
+        "¿Emitir factura en Holded para esta venta? Si tienes VeriFactu activo se enviará a Hacienda y será irreversible (solo se puede rectificar).",
+      )
+    ) {
+      return;
+    }
+    setIssuing(true);
+    try {
+      const res = await issueInvoiceAction(done.orderId, fiscal);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      setInvoiceNumber(res.data?.invoiceNumber ?? "emitida");
+      setShowFiscal(false);
+      toast.success(
+        `Factura emitida${res.data?.invoiceNumber ? `: ${res.data.invoiceNumber}` : ""}`,
+      );
+      if (res.data?.warning) toast(res.data.warning);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al emitir la factura");
+    } finally {
+      setIssuing(false);
+    }
   }
 
   return (
@@ -192,6 +236,74 @@ export function CheckoutDialog({
                   }}
                 >
                   <Receipt className="h-4 w-4" /> Generar ticket
+                </Button>
+              )}
+              {/* Factura fiscal (Holded) sobre la venta ya registrada. */}
+              {invoiceNumber ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-center text-sm font-semibold text-emerald-900">
+                  ✓ Factura emitida{invoiceNumber !== "emitida" ? `: ${invoiceNumber}` : ""}
+                </div>
+              ) : showFiscal ? (
+                <div className="space-y-2 rounded-xl border border-zs-border p-3 text-left">
+                  <p className="text-xs text-zs-muted">
+                    Con NIF sale factura <strong>completa</strong>; sin NIF,{" "}
+                    <strong>simplificada</strong>. Se emite en Holded (va a Hacienda si tienes
+                    VeriFactu activo).
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      value={fiscal.nif}
+                      onChange={(e) => setFiscal((f) => ({ ...f, nif: e.target.value }))}
+                      placeholder="NIF / CIF (opcional)"
+                      className="h-10 rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700"
+                    />
+                    <input
+                      value={fiscal.name}
+                      onChange={(e) => setFiscal((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Nombre / razón social"
+                      className="h-10 rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700"
+                    />
+                    <input
+                      value={fiscal.address}
+                      onChange={(e) => setFiscal((f) => ({ ...f, address: e.target.value }))}
+                      placeholder="Dirección"
+                      className="col-span-2 h-10 rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700"
+                    />
+                    <input
+                      value={fiscal.city}
+                      onChange={(e) => setFiscal((f) => ({ ...f, city: e.target.value }))}
+                      placeholder="Ciudad"
+                      className="h-10 rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700"
+                    />
+                    <input
+                      value={fiscal.cp}
+                      onChange={(e) => setFiscal((f) => ({ ...f, cp: e.target.value }))}
+                      placeholder="C.P."
+                      className="h-10 rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="h-11 w-full"
+                    disabled={issuing}
+                    onClick={handleInvoice}
+                  >
+                    {issuing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                    {issuing ? "Emitiendo…" : "Emitir factura"}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  onClick={() => setShowFiscal(true)}
+                >
+                  <FileText className="h-4 w-4" /> Emitir factura (Holded)
                 </Button>
               )}
               <Button type="button" className="h-11" onClick={finishAndClear}>
