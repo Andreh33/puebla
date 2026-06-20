@@ -93,6 +93,7 @@ model Product {
   name         String
   shortName    String?
   description  String?       @db.Text
+  technicalDescription String? @db.Text   // Ficha técnica en texto libre (materiales, tecnología, cuidados)
 
   brandId      String
   brand        Brand         @relation(fields: [brandId], references: [id])

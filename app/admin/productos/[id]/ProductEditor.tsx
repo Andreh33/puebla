@@ -104,6 +104,7 @@ interface EditorProps {
     slug: string;
     shortName: string | null;
     description: string | null;
+    technicalDescription: string | null;
     brandId: string;
     categoryId: string;
     source: string;
@@ -248,6 +249,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     slug: initial?.slug ?? "",
     shortName: initial?.shortName ?? null,
     description: initial?.description ?? null,
+    technicalDescription: initial?.technicalDescription ?? null,
     brandId: initial?.brandId ?? "",
     categoryId: initial?.categoryId ?? "",
     source: (initial?.source as "LOCAL" | "MIRAVIA" | "AMAZON") ?? "LOCAL",
@@ -674,6 +676,25 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   maxLength={20000}
                   {...register("description")}
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="technicalDescription">
+                  Descripción técnica{" "}
+                  <span className="text-xs text-zs-muted">
+                    (materiales, tecnología, cuidados… — opcional)
+                  </span>
+                </Label>
+                <Textarea
+                  id="technicalDescription"
+                  rows={6}
+                  maxLength={20000}
+                  placeholder="Composición, tecnologías, instrucciones de lavado, etc."
+                  {...register("technicalDescription")}
+                />
+                <p className="mt-1 text-xs text-zs-muted">
+                  Se muestra en la ficha pública justo debajo de la descripción normal.
+                </p>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">

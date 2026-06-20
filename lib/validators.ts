@@ -64,6 +64,7 @@ export const ProductSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Solo minúsculas, números y guiones"),
   shortName: z.string().max(120).optional().nullable(),
   description: z.string().max(20000).optional().nullable(),
+  technicalDescription: z.string().max(20000).optional().nullable(),
   brandId: z.string().cuid(),
   categoryId: z.string().cuid(),
   source: z.enum(["LOCAL", "MIRAVIA", "AMAZON"]).default("LOCAL"),

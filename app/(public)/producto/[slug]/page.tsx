@@ -364,6 +364,26 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               </div>
             )}
 
+            {/* Descripción técnica (texto libre, opcional) — debajo de la normal */}
+            {product.technicalDescription &&
+              (/<[a-z][\s\S]*?>/i.test(product.technicalDescription) ? (
+                <article className="prose prose-zs mt-8 max-w-none">
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción técnica</h2>
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeHtml(product.technicalDescription),
+                    }}
+                  />
+                </article>
+              ) : (
+                <article className="prose prose-zs mt-8 max-w-none">
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción técnica</h2>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {product.technicalDescription}
+                  </ReactMarkdown>
+                </article>
+              ))}
+
             {/* Ficha técnica */}
             <dl className="mt-8 grid grid-cols-1 gap-x-6 gap-y-3 rounded-2xl border border-zs-border bg-white p-5 text-sm sm:grid-cols-2">
               {product.brand && (

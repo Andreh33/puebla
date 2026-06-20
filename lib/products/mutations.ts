@@ -434,6 +434,7 @@ export async function duplicateProduct(
         name: finalName,
         shortName: src.shortName,
         description: src.description,
+        technicalDescription: src.technicalDescription,
         brandId: src.brandId,
         categoryId: src.categoryId,
         // Bloque 2: la categoría principal (breadcrumbs/canonical) se copia para
