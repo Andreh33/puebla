@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { SizeSelector, type SizeOption } from "./SizeSelector";
 import { AddToCartButton, type AddToCartProduct } from "./AddToCartButton";
@@ -15,6 +15,9 @@ type Props = {
   externalUrl?: string | null;
   /** Datos necesarios para añadir al carrito. Si falta, sólo mostramos WhatsApp. */
   product?: AddToCartProduct;
+  /** Bloque que se muestra ENTRE el selector de talla y el botón de añadir al
+   *  carrito (p. ej. la descripción técnica). Se renderiza en el servidor. */
+  descriptionSlot?: ReactNode;
 };
 
 export function ProductActions({
@@ -24,6 +27,7 @@ export function ProductActions({
   source,
   externalUrl,
   product,
+  descriptionSlot,
 }: Props) {
   // Bloque 1: trabajamos sólo con tallas que tienen stock real (> 0). Las
   // tallas agotadas no se muestran ni cuentan para la CTA — el stock es la
@@ -82,6 +86,7 @@ export function ProductActions({
             Consulta disponibilidad por WhatsApp y te avisamos en cuanto vuelva.
           </p>
         </div>
+        {descriptionSlot}
         <a
           href={whatsappUrl(
             WhatsAppMessages.product(productName, undefined, {
@@ -112,6 +117,7 @@ export function ProductActions({
             />
           </div>
         )}
+        {descriptionSlot}
         <a
           href={externalUrl}
           target="_blank"
@@ -144,6 +150,8 @@ export function ProductActions({
           />
         </div>
       )}
+
+      {descriptionSlot}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {product ? (
