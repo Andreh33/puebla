@@ -327,13 +327,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Aplica las descripciones REALES de la web antigua (CSV WooCommerce) por wooId:
-  //  - description (ficha)    ← descripción larga del CSV
-  //  - metaDescription (SEO)  ← "descripción corta" del CSV (ya recortada en el feeder)
+  //  - description (ficha)          ← descripción corta del CSV (debajo del precio)
+  //  - technicalDescription (ficha) ← descripción larga del CSV (abajo del todo)
+  //  - metaDescription (SEO)        ← "descripción corta" recortada en el feeder
   // Casa por externalId = `woocommerce:<wooId>` y SOLO actualiza productos con
   // isCustomized:false (respeta lo editado a mano). Escribe únicamente los campos
   // presentes en cada item. Idempotente: relanzable.
   if (body.action === "set_descriptions") {
-    type DescItem = { wooId?: string | number; description?: string; metaDescription?: string };
+    type DescItem = {
+      wooId?: string | number;
+      description?: string;
+      technicalDescription?: string;
+      metaDescription?: string;
+    };
     const items: DescItem[] = Array.isArray(body.items) ? body.items : [];
     let updated = 0;
     let notFoundOrCustom = 0;
@@ -346,9 +352,16 @@ export async function POST(req: NextRequest) {
         skipped += 1;
         continue;
       }
-      const data: { description?: string; metaDescription?: string } = {};
+      const data: {
+        description?: string;
+        technicalDescription?: string;
+        metaDescription?: string;
+      } = {};
       if (typeof item.description === "string" && item.description.trim()) {
         data.description = item.description;
+      }
+      if (typeof item.technicalDescription === "string" && item.technicalDescription.trim()) {
+        data.technicalDescription = item.technicalDescription;
       }
       if (typeof item.metaDescription === "string" && item.metaDescription.trim()) {
         data.metaDescription = item.metaDescription;
