@@ -676,6 +676,9 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   maxLength={20000}
                   {...register("description")}
                 />
+                <p className="mt-1 text-xs text-zs-muted">
+                  Se muestra en la ficha pública debajo del precio.
+                </p>
               </div>
 
               <div>
@@ -693,7 +696,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   {...register("technicalDescription")}
                 />
                 <p className="mt-1 text-xs text-zs-muted">
-                  Se muestra en la ficha pública justo debajo de la descripción normal.
+                  Se muestra abajo del todo en la ficha, bajo el título «Descripción técnica».
                 </p>
               </div>
 
