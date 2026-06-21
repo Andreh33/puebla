@@ -117,22 +117,22 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       : product.stock;
   const inStock = totalStock > 0 || product.source === "AMAZON";
 
-  // Descripción técnica (cuidados): se muestra dentro del bloque de compra, ENTRE
-  // el selector de talla y el botón de añadir al carrito (no debajo, para no
-  // repetirla). Se renderiza aquí (servidor) y se pasa como slot a ProductActions.
-  const technicalDescriptionSlot = product.technicalDescription ? (
+  // Descripción comercial (corta): se muestra dentro del bloque de compra,
+  // ENTRE el selector de talla y el botón de añadir al carrito. Se renderiza
+  // aquí (servidor) y se pasa como slot a ProductActions.
+  const descriptionSlot = product.description ? (
     <div className="rounded-xl border border-zs-border bg-zs-surface/60 p-4">
       <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-zs-muted">
-        Descripción técnica
+        Descripción
       </p>
       <div className="prose prose-sm prose-zs max-w-none">
-        {/<[a-z][\s\S]*?>/i.test(product.technicalDescription) ? (
+        {/<[a-z][\s\S]*?>/i.test(product.description) ? (
           <div
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.technicalDescription) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
           />
         ) : (
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {product.technicalDescription}
+            {product.description}
           </ReactMarkdown>
         )}
       </div>
@@ -306,7 +306,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             />
 
             <ProductActions
-              descriptionSlot={technicalDescriptionSlot}
+              descriptionSlot={descriptionSlot}
               productName={cleanProductName(product.name)}
               priceLabel={formatPriceEUR(final.toNumber())}
               sizes={sizes}
@@ -359,30 +359,27 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         {/* Descripción + acordeones */}
         <div className="mt-12 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            {product.description ? (
-              /<[a-z][\s\S]*?>/i.test(product.description) ? (
-                // Descripciones importadas desde WooCommerce vienen como HTML
-                // (<ul><li><strong>…</strong></li></ul>). React Markdown las
-                // muestra como texto plano con los tags visibles. Renderizamos
-                // como HTML sanitizado (allowlist: ul/li/strong/p/em/h2…h6/a).
+            {product.technicalDescription ? (
+              /<[a-z][\s\S]*?>/i.test(product.technicalDescription) ? (
+                // Descripciones importadas desde WooCommerce vienen como HTML.
                 <article className="prose prose-zs max-w-none">
-                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
-                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }} />
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción técnica</h2>
+                  <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.technicalDescription) }} />
                 </article>
               ) : (
                 <article className="prose prose-zs max-w-none">
-                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
+                  <h2 className="text-2xl font-bold text-zs-blue-900">Descripción técnica</h2>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {product.description}
+                    {product.technicalDescription}
                   </ReactMarkdown>
                 </article>
               )
             ) : (
               <div>
-                <h2 className="text-2xl font-bold text-zs-blue-900">Descripción</h2>
+                <h2 className="text-2xl font-bold text-zs-blue-900">Descripción técnica</h2>
                 <p className="mt-2 text-sm text-zs-muted">
-                  Sin descripción detallada. Si necesitas información extra, consúltanos
-                  por WhatsApp y te ayudamos.
+                  Sin descripción técnica detallada. Si necesitas información extra,
+                  consúltanos por WhatsApp y te ayudamos.
                 </p>
               </div>
             )}
