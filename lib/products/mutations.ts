@@ -171,6 +171,10 @@ export async function createProduct(
           position: i,
         })),
       });
+      // El escalar Product.stock debe reflejar la suma de tallas, no el campo
+      // "Stock total" del formulario (oculto cuando hay tallas).
+      const sizesTotal = sizes.reduce((acc, s) => acc + (s.stock ?? 0), 0);
+      await tx.product.update({ where: { id: product.id }, data: { stock: sizesTotal } });
     }
 
     if (extra.categoryIds?.length && categoryRows.length) {
@@ -312,6 +316,13 @@ export async function updateProduct(
             position: i,
           })),
         });
+        // Sincroniza el escalar Product.stock con la suma real de tallas. Sin
+        // esto el agregado se quedaba con el valor (a veces 0/obsoleto) del
+        // campo oculto del formulario, y el listado/balance mostraban un stock
+        // incorrecto. No tocamos `status` aquí: el admin decide el estado en
+        // este formulario (el sellout→DRAFT automático vive en la venta/TPV).
+        const sizesTotal = sizes.reduce((acc, s) => acc + (s.stock ?? 0), 0);
+        await tx.product.update({ where: { id }, data: { stock: sizesTotal } });
       }
     }
 

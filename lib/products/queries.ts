@@ -159,6 +159,23 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
     }),
   ]);
 
+  // Stock REAL para mostrar: para productos con tallas la verdad es la suma de
+  // ProductSize.stock (igual que la tienda y recomputeProductStock), NO el
+  // escalar Product.stock — que puede quedar obsoleto (p.ej. importación que
+  // carga stock por talla sin tocar el agregado, o ediciones previas). Sin esto
+  // el listado/CSV mostraban 0 en productos que sí tienen stock por talla.
+  const pageIds = rows.map((r) => r.id);
+  const sizeAgg = pageIds.length
+    ? await db.productSize.groupBy({
+        by: ["productId"],
+        where: { productId: { in: pageIds } },
+        _sum: { stock: true },
+      })
+    : [];
+  const sizeStockByProduct = new Map(
+    sizeAgg.map((s) => [s.productId, s._sum.stock ?? 0]),
+  );
+
   return {
     total,
     page,
@@ -187,7 +204,8 @@ export async function listProducts(filters: ProductListFilters = {}): Promise<Pr
       retailPrice: r.retailPrice.toString(),
       salePrice: r.salePrice ? r.salePrice.toString() : null,
       costPrice: r.costPrice ? r.costPrice.toString() : null,
-      stock: r.stock,
+      // Con tallas → suma real por talla; sin tallas → escalar del producto.
+      stock: r._count.sizes > 0 ? (sizeStockByProduct.get(r.id) ?? 0) : r.stock,
       sizesCount: r._count.sizes,
       tags: r.tags,
       isFeatured: r.isFeatured,
