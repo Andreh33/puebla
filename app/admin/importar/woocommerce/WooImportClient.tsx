@@ -46,6 +46,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { UploadErrorDialog } from "@/components/admin/UploadErrorDialog";
+import {
+  validateTableFile,
+  issuesToUploadError,
+  type UploadError,
+} from "@/lib/admin/upload-validation";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -112,6 +118,7 @@ export function WooImportClient() {
   const [preview, setPreview] = React.useState<PreviewRow[]>([]);
   const [job, setJob] = React.useState<JobState | null>(null);
   const [serverError, setServerError] = React.useState<string | null>(null);
+  const [uploadError, setUploadError] = React.useState<UploadError | null>(null);
 
   const { handleSubmit, control } = useForm<FormValues>({
     defaultValues: {
@@ -154,25 +161,27 @@ export function WooImportClient() {
   // Handlers
   // ---------------------------------------------------------------------------
 
-  const validateFile = (f: File): string | null => {
-    if (!f.name.toLowerCase().endsWith(".csv")) return "Sólo se aceptan ficheros .csv";
-    if (f.size === 0) return "El fichero está vacío";
-    if (f.size > MAX_SIZE) {
-      return `Máximo 20MB (este pesa ${(f.size / 1024 / 1024).toFixed(1)}MB)`;
-    }
-    return null;
-  };
-
   const handleFileSelected = async (f: File) => {
-    const err = validateFile(f);
-    setFileError(err);
+    const issue = validateTableFile(f, {
+      exts: [".csv"],
+      maxSizeMB: MAX_SIZE / (1024 * 1024),
+      label: "CSV de WooCommerce (.csv)",
+    });
     setServerError(null);
-    if (err) {
+    if (issue) {
+      setFileError(issue.message);
+      setUploadError(
+        issuesToUploadError(
+          [issue],
+          "Exporta tus productos de WooCommerce como CSV. Máximo 20 MB.",
+        ),
+      );
       setFile(null);
       setPreview([]);
       setPhase("idle");
       return;
     }
+    setFileError(null);
     setFile(f);
     setPhase("previewing");
     setPreview([]);
@@ -330,14 +339,6 @@ export function WooImportClient() {
                 </div>
               )}
             </label>
-          )}
-
-          {fileError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Archivo no válido</AlertTitle>
-              <AlertDescription>{fileError}</AlertDescription>
-            </Alert>
           )}
 
           {serverError && (
@@ -570,6 +571,14 @@ export function WooImportClient() {
             </div>
           )}
         </form>
+
+        <UploadErrorDialog
+          error={uploadError}
+          onClose={() => {
+            setUploadError(null);
+            setFileError(null);
+          }}
+        />
       </CardContent>
     </Card>
   );

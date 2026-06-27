@@ -21,6 +21,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { UploadErrorDialog } from "./UploadErrorDialog";
+import {
+  validateImageFile,
+  issuesToUploadError,
+  IMAGE_MAX_MB,
+  type UploadError,
+  type UploadIssue,
+} from "@/lib/admin/upload-validation";
 
 export type UploadedImage = {
   url: string;
@@ -91,6 +99,8 @@ export function UploadDropzone({
   const [urlInput, setUrlInput] = React.useState("");
   const [urlBusy, setUrlBusy] = React.useState(false);
   const [urlError, setUrlError] = React.useState<string | null>(null);
+  // Aviso centrado cuando un archivo no se puede añadir (tipo/tamaño/vacío).
+  const [uploadError, setUploadError] = React.useState<UploadError | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
   // Input separado con `capture="environment"` — abre la cámara trasera del
   // móvil directamente. En desktop con webcam también funciona; en móviles
@@ -142,11 +152,39 @@ export function UploadDropzone({
 
   const handleFiles = React.useCallback(
     async (files: FileList | File[]) => {
-      const arr = Array.from(files).slice(0, maxFiles);
+      let arr = Array.from(files);
       if (!arr.length) return;
-      if (!multiple && arr.length > 1) arr.length = 1;
+      if (!multiple && arr.length > 1) arr = arr.slice(0, 1);
 
-      const newTasks: FileTask[] = arr.map((file) => ({
+      // Pre-validación en cliente: separa válidos de inválidos y avisa con un
+      // mensaje CENTRADO y específico de qué pasa con cada archivo. Solo se
+      // suben los válidos (no bloquea el resto por uno malo).
+      const issues: UploadIssue[] = [];
+      if (arr.length > maxFiles) {
+        issues.push({
+          code: "too-many",
+          title: "Demasiados archivos",
+          message: `Has añadido ${arr.length} archivos y el máximo son ${maxFiles}. Subiré solo los primeros ${maxFiles}.`,
+        });
+        arr = arr.slice(0, maxFiles);
+      }
+      const valid: File[] = [];
+      for (const file of arr) {
+        const issue = validateImageFile(file, IMAGE_MAX_MB);
+        if (issue) issues.push(issue);
+        else valid.push(file);
+      }
+      if (issues.length) {
+        setUploadError(
+          issuesToUploadError(
+            issues,
+            `Formatos válidos: JPG, PNG, WebP o AVIF · Máximo ${IMAGE_MAX_MB} MB por imagen.`,
+          ),
+        );
+      }
+      if (!valid.length) return;
+
+      const newTasks: FileTask[] = valid.map((file) => ({
         id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         file,
         name: file.name,
@@ -411,6 +449,8 @@ export function UploadDropzone({
           ))}
         </ul>
       )}
+
+      <UploadErrorDialog error={uploadError} onClose={() => setUploadError(null)} />
     </div>
   );
 }

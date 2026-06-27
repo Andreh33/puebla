@@ -40,6 +40,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { UploadErrorDialog } from "@/components/admin/UploadErrorDialog";
+import {
+  validateTableFile,
+  issuesToUploadError,
+  type UploadError,
+} from "@/lib/admin/upload-validation";
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -137,6 +143,7 @@ export function ImportXlsxClient() {
   );
   const [job, setJob] = React.useState<JobState | null>(null);
   const [serverError, setServerError] = React.useState<string | null>(null);
+  const [uploadError, setUploadError] = React.useState<UploadError | null>(null);
 
   const { register, handleSubmit, control } = useForm<FormValues>({
     defaultValues: {
@@ -180,26 +187,27 @@ export function ImportXlsxClient() {
   // Handlers
   // ---------------------------------------------------------------------------
 
-  const validateFile = (f: File): string | null => {
-    const lower = f.name.toLowerCase();
-    if (!ACCEPTED_EXTENSIONS.some((ext) => lower.endsWith(ext))) {
-      return "Formato no soportado. Acepta: Excel (.xlsx, .xls, .xlsb), ODS, CSV, TSV o TXT";
-    }
-    if (f.size === 0) return "El fichero está vacío";
-    if (f.size > MAX_SIZE) return `Máximo 20MB (este pesa ${(f.size / 1024 / 1024).toFixed(1)}MB)`;
-    return null;
-  };
-
   const handleFileSelected = async (f: File) => {
-    const err = validateFile(f);
-    setFileError(err);
+    const issue = validateTableFile(f, {
+      exts: ACCEPTED_EXTENSIONS,
+      maxSizeMB: MAX_SIZE / (1024 * 1024),
+      label: "Excel (.xlsx, .xls, .xlsb), ODS, CSV, TSV o TXT",
+    });
     setServerError(null);
-    if (err) {
+    if (issue) {
+      setFileError(issue.message);
+      setUploadError(
+        issuesToUploadError(
+          [issue],
+          "Detectamos automáticamente PRICAT, WooCommerce o tabla genérica. Máximo 20 MB.",
+        ),
+      );
       setFile(null);
       setPreview([]);
       setPhase("idle");
       return;
     }
+    setFileError(null);
     setFile(f);
     setPhase("previewing");
     setPreview([]);
@@ -363,14 +371,6 @@ export function ImportXlsxClient() {
                 </div>
               )}
             </label>
-          )}
-
-          {fileError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Archivo no válido</AlertTitle>
-              <AlertDescription>{fileError}</AlertDescription>
-            </Alert>
           )}
 
           {serverError && (
@@ -605,6 +605,14 @@ export function ImportXlsxClient() {
             </div>
           )}
         </form>
+
+        <UploadErrorDialog
+          error={uploadError}
+          onClose={() => {
+            setUploadError(null);
+            setFileError(null);
+          }}
+        />
       </CardContent>
     </Card>
   );
