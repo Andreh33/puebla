@@ -16,7 +16,7 @@ import { Prisma, type Order } from "@prisma/client";
 import { db } from "@/lib/db";
 import { recomputeProductStock } from "@/lib/products/stock";
 import { getStripe } from "./client";
-import type { OrderDetail, OrderSummary, ShippingAddress } from "./types";
+import type { OrderDetail, OrderItemReturn, OrderSummary, ShippingAddress } from "./types";
 
 /**
  * Convierte céntimos de Stripe a Decimal con 2 decimales (EUR).
@@ -455,6 +455,27 @@ function hasOversold(metadata: Prisma.JsonValue | null): boolean {
   return Array.isArray(o) && o.length > 0;
 }
 
+/** Lee y normaliza `metadata.returns` (devoluciones de línea TPV). Tolerante. */
+function readReturns(metadata: Prisma.JsonValue | null): OrderItemReturn[] {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return [];
+  const raw = (metadata as Record<string, unknown>).returns;
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((e): OrderItemReturn[] => {
+    if (!e || typeof e !== "object") return [];
+    const o = e as Record<string, unknown>;
+    return [
+      {
+        itemId: typeof o.itemId === "string" ? o.itemId : "",
+        productName: typeof o.productName === "string" ? o.productName : "",
+        variantSize: typeof o.variantSize === "string" ? o.variantSize : null,
+        qty: typeof o.qty === "number" ? o.qty : 0,
+        amount: typeof o.amount === "number" ? o.amount : 0,
+        at: typeof o.at === "string" ? o.at : "",
+      },
+    ];
+  });
+}
+
 type OrderWithItems = Prisma.OrderGetPayload<{ include: { items: true } }>;
 
 export function toOrderDetail(o: OrderWithItems): OrderDetail {
@@ -481,6 +502,7 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
     metadata: (o.metadata as Record<string, unknown> | null) ?? null,
     holdedInvoiceNumber: o.holdedInvoiceNumber,
     invoicedAt: o.invoicedAt,
+    returns: readReturns(o.metadata),
     items: o.items.map((it) => ({
       id: it.id,
       productId: it.productId,

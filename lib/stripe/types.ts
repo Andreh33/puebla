@@ -97,6 +97,20 @@ export interface OrderDetail extends OrderSummary {
   holdedInvoiceNumber: string | null;
   invoicedAt: Date | null;
   items: OrderItemDetail[];
+  /** Devoluciones por línea (TPV). Vacío si no ha habido ninguna. */
+  returns: OrderItemReturn[];
+}
+
+/** Una devolución de línea registrada en `Order.metadata.returns` (solo TPV). */
+export interface OrderItemReturn {
+  itemId: string;
+  productName: string;
+  variantSize: string | null;
+  qty: number;
+  /** Bruto (IVA incl.) devuelto al cliente por esta operación. */
+  amount: number;
+  /** ISO timestamp de la devolución. */
+  at: string;
 }
 
 export interface OrderItemDetail {

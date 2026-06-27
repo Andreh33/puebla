@@ -35,9 +35,11 @@ import {
   exportOrdersCsv,
   getOrderDetail,
   issueInvoiceAction,
+  returnOrderItem,
   syncCatalogToStripe,
   updateOrderStatus,
 } from "./_actions";
+import { computeItemReturn } from "@/lib/pos/returns";
 import { FULFILLMENT_STATUSES } from "./constants";
 
 const FULFILLMENT_LABELS: Record<(typeof FULFILLMENT_STATUSES)[number], string> = {
@@ -112,6 +114,21 @@ export function PedidosTable({
   const [cancellingId, setCancellingId] = React.useState<string | null>(null);
   const [fiscal, setFiscal] = React.useState({ nif: "", name: "", address: "", city: "", cp: "" });
   const [issuing, setIssuing] = React.useState(false);
+  // Devolución por línea (solo TPV): qué línea se está devolviendo y cuántas uds.
+  const [returningItemId, setReturningItemId] = React.useState<string | null>(null);
+  const [returnQty, setReturnQty] = React.useState(1);
+  const [returningBusy, setReturningBusy] = React.useState(false);
+
+  // Un pedido admite devolución por línea solo si es venta de TPV y no está ya
+  // cancelado/reembolsado. Las devoluciones se acumulan en selected.returns.
+  const isTpv = selected?.deliveryMethod === "in_store";
+  const orderReturnable =
+    !!selected && isTpv && selected.status !== "CANCELLED" && selected.status !== "REFUNDED";
+  const returnedByItem = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of selected?.returns ?? []) m.set(r.itemId, (m.get(r.itemId) ?? 0) + r.qty);
+    return m;
+  }, [selected]);
 
   function applyFilters() {
     const params = new URLSearchParams();
@@ -254,6 +271,33 @@ export function PedidosTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setCancellingId(null);
+    }
+  }
+
+  // Devuelve `qty` unidades de una línea de una venta TPV: repone su stock y la
+  // descuenta del total. Solo TPV; no toca Stripe ni Holded. Si era la última
+  // unidad del pedido, este queda cancelado.
+  async function handleReturnItem(itemId: string, qty: number) {
+    if (!selected) return;
+    setReturningBusy(true);
+    try {
+      const res = await returnOrderItem(selected.id, itemId, qty);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(
+        `Devuelto · ${formatPriceEUR(res.data?.refundedAmount ?? 0)} · stock repuesto`,
+      );
+      if (res.data?.warning) toast(res.data.warning);
+      setReturningItemId(null);
+      const fresh = await getOrderDetail(selected.id);
+      if (fresh.ok) setSelected(fresh.data!);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setReturningBusy(false);
     }
   }
 
@@ -499,7 +543,12 @@ export function PedidosTable({
 
               <div className="space-y-4 text-sm">
                 <div className="flex items-center justify-between">
-                  {statusBadge(selected.status)}
+                  <div className="flex items-center gap-2">
+                    {statusBadge(selected.status)}
+                    {orderReturnable && selected.returns.length > 0 && (
+                      <Badge variant="warning">Devolución parcial</Badge>
+                    )}
+                  </div>
                   <span className="text-lg font-bold">
                     {formatPriceEUR(selected.total)}
                   </span>
@@ -567,24 +616,115 @@ export function PedidosTable({
                   <h3 className="mb-2 text-xs font-semibold uppercase text-zs-muted">
                     Productos ({selected.items.length})
                   </h3>
-                  <ul className="space-y-1 rounded-lg border border-zs-border p-3">
-                    {selected.items.map((it) => (
-                      <li key={it.id} className="flex justify-between gap-2">
-                        <span>
-                          {it.quantity}× {it.productName}
-                          {it.variantSize && (
-                            <span className="text-zs-muted">
-                              {" "}
-                              · talla {it.variantSize}
+                  <ul className="rounded-lg border border-zs-border p-3">
+                    {selected.items.map((it) => {
+                      const returned = returnedByItem.get(it.id) ?? 0;
+                      const fullyReturned = it.quantity === 0;
+                      const canReturn = orderReturnable && it.quantity > 0;
+                      const isReturning = returningItemId === it.id;
+                      const clampedQty = Math.min(Math.max(returnQty, 1), it.quantity || 1);
+                      const previewAmount = isReturning
+                        ? computeItemReturn(it.subtotal, it.quantity, clampedQty).returnedGross
+                        : 0;
+                      return (
+                        <li
+                          key={it.id}
+                          className="flex flex-col gap-1 border-b border-zs-border/40 py-1.5 first:pt-0 last:border-0 last:pb-0"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className={fullyReturned ? "text-zs-muted line-through" : ""}>
+                              {it.quantity}× {it.productName}
+                              {it.variantSize && (
+                                <span className="text-zs-muted"> · talla {it.variantSize}</span>
+                              )}
+                              {returned > 0 && (
+                                <span className="ml-1 text-xs font-semibold text-zs-red-600">
+                                  · devuelto: {returned}
+                                </span>
+                              )}
                             </span>
+                            <span className="flex shrink-0 items-center gap-2">
+                              <span
+                                className={`font-medium ${fullyReturned ? "text-zs-muted line-through" : ""}`}
+                              >
+                                {formatPriceEUR(it.subtotal)}
+                              </span>
+                              {canReturn && !isReturning && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReturningItemId(it.id);
+                                    setReturnQty(it.quantity);
+                                  }}
+                                  className="text-xs font-semibold text-zs-red-600 hover:underline"
+                                  title="Devolver este artículo: vuelve al inventario y se descuenta de la venta"
+                                >
+                                  Devolver
+                                </button>
+                              )}
+                            </span>
+                          </div>
+                          {isReturning && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-zs-surface/60 p-2 text-xs">
+                              {it.quantity > 1 ? (
+                                <label className="flex items-center gap-1">
+                                  Unidades:
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={it.quantity}
+                                    value={clampedQty}
+                                    onChange={(e) => {
+                                      const v = Math.round(Number(e.target.value));
+                                      setReturnQty(
+                                        Number.isFinite(v)
+                                          ? Math.min(Math.max(v, 1), it.quantity)
+                                          : 1,
+                                      );
+                                    }}
+                                    className="h-8 w-16"
+                                  />
+                                  <span className="text-zs-muted">de {it.quantity}</span>
+                                </label>
+                              ) : (
+                                <span>Devolver 1 unidad</span>
+                              )}
+                              <span className="font-semibold">
+                                Devuelve {formatPriceEUR(previewAmount)} al cliente
+                              </span>
+                              <span className="ml-auto flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={returningBusy}
+                                  onClick={() => handleReturnItem(it.id, clampedQty)}
+                                >
+                                  {returningBusy ? "Devolviendo…" : "Confirmar devolución"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={returningBusy}
+                                  onClick={() => setReturningItemId(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </span>
+                            </div>
                           )}
-                        </span>
-                        <span className="shrink-0 font-medium">
-                          {formatPriceEUR(it.subtotal)}
-                        </span>
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
+                  {orderReturnable && (
+                    <p className="mt-1.5 text-xs text-zs-muted">
+                      Pulsa <span className="font-semibold text-zs-red-600">Devolver</span> en un
+                      artículo para reponerlo al inventario y descontarlo de la venta (efectivo en
+                      mano). Solo ventas de tienda (TPV).
+                    </p>
+                  )}
                 </section>
 
                 <section className="space-y-1 border-t border-zs-border pt-3">

@@ -23,6 +23,7 @@ import {
 import type { OrderDetail } from "@/lib/stripe/types";
 import { issueInvoiceForOrder, type FiscalData } from "@/lib/holded/invoice";
 import { isHoldedConfigured } from "@/lib/holded/client";
+import { performItemReturn } from "@/lib/pos/return-order";
 import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
@@ -154,6 +155,36 @@ export async function updateOrderStatus(
 
     revalidatePath("/admin/pedidos");
     return { ok: true, data: { status } };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+/**
+ * Devuelve UN artículo (o varias unidades de una línea) de una venta de TPV:
+ * repone su stock al inventario, lo descuenta del total del pedido y lo registra
+ * en `metadata.returns` + notas. SOLO ventas de tienda (`in_store`): no toca
+ * Stripe ni Holded. Todo en una transacción atómica vía `performItemReturn`. Si
+ * se devuelve la última unidad del pedido, este queda CANCELLED. El balance
+ * netea solo (lee los totales/líneas ya reducidos).
+ */
+export async function returnOrderItem(
+  orderId: string,
+  itemId: string,
+  qty: number,
+): Promise<ActionResult<{ status: OrderStatus; refundedAmount: number; warning?: string }>> {
+  try {
+    await requireSession();
+    const res = await db.$transaction((tx) =>
+      performItemReturn(tx, { orderId, itemId, qty }),
+    );
+    revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/productos");
+    revalidatePath("/admin/balance");
+    return {
+      ok: true,
+      data: { status: res.status, refundedAmount: res.refundedAmount, warning: res.warning },
+    };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error" };
   }
