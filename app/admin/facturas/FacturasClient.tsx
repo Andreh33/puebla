@@ -2,7 +2,22 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Plus, Trash2, Search, ChevronLeft, ChevronRight, X, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -109,12 +124,13 @@ export function FacturasClient({
   const [month, setMonth] = React.useState(todayYmd.slice(0, 7));
   const [creating, setCreating] = React.useState(false);
 
-  React.useEffect(() => {
-    setRows(invoices);
-  }, [invoices]);
-  React.useEffect(() => {
-    setCols(columns);
-  }, [columns]);
+  // El estado local (rows/cols) es la fuente de verdad durante la sesión: NO lo
+  // resincronizamos con las props en cada revalidación. Hacerlo pisaba ediciones
+  // en vuelo — p. ej. la fecha de un vencimiento recién creado "se iba a hoy"
+  // cuando el refresh de la creación llegaba tarde. Al navegar fuera y volver, el
+  // componente se remonta con datos frescos del servidor.
+
+  const colSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   // --- mutadores optimistas (rollback + toast si la acción falla) -----------
   const patchInvoice = (id: string, patch: Partial<InvoiceDTO>) =>
@@ -248,13 +264,13 @@ export function FacturasClient({
     }
   }
 
-  async function moveColumn(id: string, dir: -1 | 1) {
-    const idx = cols.findIndex((c) => c.id === id);
-    const target = idx + dir;
-    if (idx < 0 || target < 0 || target >= cols.length) return;
+  async function onColumnDragEnd(e: DragEndEvent) {
+    if (!e.over || e.active.id === e.over.id) return;
+    const oldIdx = cols.findIndex((c) => c.id === e.active.id);
+    const newIdx = cols.findIndex((c) => c.id === e.over!.id);
+    if (oldIdx < 0 || newIdx < 0) return;
     const snapshot = cols;
-    const next = cols.slice();
-    [next[idx], next[target]] = [next[target]!, next[idx]!];
+    const next = arrayMove(cols, oldIdx, newIdx);
     setCols(next);
     const res = await safeAction(() => reorderColumnsAction(next.map((c) => c.id)));
     if (!res.ok) {
@@ -392,9 +408,11 @@ export function FacturasClient({
         </Button>
       </div>
 
-      {/* Tabla tipo hoja */}
-      <div className="overflow-x-auto rounded-xl border border-zs-border bg-white">
-        <table className="w-full min-w-[920px] border-collapse text-sm">
+      {/* Tabla tipo hoja — columnas personalizadas arrastrables */}
+      <DndContext sensors={colSensors} collisionDetection={closestCenter} onDragEnd={onColumnDragEnd}>
+        <SortableContext items={cols.map((c) => c.id)} strategy={horizontalListSortingStrategy}>
+          <div className="overflow-x-auto rounded-xl border border-zs-border bg-white">
+            <table className="w-full min-w-[920px] border-collapse text-sm">
           <thead className="bg-zs-surface text-left text-xs uppercase text-zs-muted">
             <tr>
               <th className="px-2 py-2 font-medium">Fecha</th>
@@ -402,59 +420,25 @@ export function FacturasClient({
               <th className="px-2 py-2 font-medium">Marca</th>
               <th className="px-2 py-2 font-medium">Nº factura</th>
               <th className="px-2 py-2 font-medium">Concepto</th>
-              {cols.map((col, idx) => (
-                <th
+              {cols.map((col) => (
+                <SortableColumnHeader
                   key={col.id}
-                  style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
-                  className="relative px-1 py-1 font-medium"
-                >
-                  <div className="flex items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => moveColumn(col.id, -1)}
-                      disabled={idx === 0}
-                      aria-label="Mover columna a la izquierda"
-                      className="shrink-0 text-zs-muted hover:text-zs-ink disabled:opacity-30"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5" />
-                    </button>
-                    <ColumnNameInput value={col.name} onCommit={(n) => commitColumnName(col.id, n, col.name)} />
-                    <button
-                      type="button"
-                      onClick={() => moveColumn(col.id, 1)}
-                      disabled={idx === cols.length - 1}
-                      aria-label="Mover columna a la derecha"
-                      className="shrink-0 text-zs-muted hover:text-zs-ink disabled:opacity-30"
-                    >
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeColumn(col.id)}
-                      aria-label={`Borrar columna ${col.name}`}
-                      className="shrink-0 text-zs-muted hover:text-red-600"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <span
-                    onMouseDown={(e) => startResize(e, col.id, col.width)}
-                    className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-zs-blue-300"
-                    aria-hidden
-                  />
-                </th>
+                  col={col}
+                  onRename={(n) => commitColumnName(col.id, n, col.name)}
+                  onRemove={() => removeColumn(col.id)}
+                  onResizeStart={(e) => startResize(e, col.id, col.width)}
+                />
               ))}
               <th className="px-2 py-2 text-right font-medium">Total</th>
               <th className="px-2 py-2 text-right font-medium">Pendiente</th>
               <th className="px-2 py-2 font-medium">Estado</th>
-              <th className="px-2 py-2 font-medium">Vencimientos</th>
               <th className="px-2 py-2" />
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10 + cols.length} className="px-4 py-10 text-center text-sm text-zs-muted">
+                <td colSpan={9 + cols.length} className="px-4 py-10 text-center text-sm text-zs-muted">
                   {rows.length === 0
                     ? "Aún no hay facturas. Pulsa «Añadir factura» para empezar."
                     : "Ninguna factura coincide con el filtro."}
@@ -465,7 +449,8 @@ export function FacturasClient({
                 const status = invoiceStatus(inv.dueDates, todayYmd);
                 const meta = STATUS_META[status];
                 return (
-                  <tr key={inv.id} className={`border-t border-zs-border align-top ${meta.row}`}>
+                  <React.Fragment key={inv.id}>
+                  <tr className={`border-t border-zs-border align-top ${meta.row}`}>
                     <td className="px-1 py-1">
                       <EditableCell
                         type="date"
@@ -523,30 +508,61 @@ export function FacturasClient({
                         {meta.label}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5">
-                      <div className="space-y-1.5">
+                    <td className="px-2 py-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => removeInvoice(inv.id)}
+                        aria-label="Borrar factura"
+                        className="text-zs-muted hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                  <tr className={meta.row}>
+                    <td colSpan={9 + cols.length} className="border-b border-zs-border px-3 pb-3 pt-0.5">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-zs-muted">
+                          Vencimientos
+                        </span>
+                        {inv.dueDates.length === 0 && (
+                          <span className="text-xs text-zs-muted">sin vencimientos todavía</span>
+                        )}
                         {inv.dueDates.map((d) => {
                           const overdue = !d.paid && d.dueDate < todayYmd;
                           return (
-                            <div key={d.id} className="flex items-center gap-1.5">
+                            <div
+                              key={d.id}
+                              className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 ${
+                                d.paid
+                                  ? "border-emerald-200 bg-emerald-50"
+                                  : overdue
+                                    ? "border-red-200 bg-red-50"
+                                    : "border-amber-200 bg-amber-50"
+                              }`}
+                            >
                               <input
                                 type="checkbox"
                                 checked={d.paid}
                                 onChange={(e) => toggleDuePaid(inv.id, d.id, e.target.checked)}
                                 aria-label="Pagado"
+                                title={d.paid ? "Pagado" : "Marcar como pagado"}
                                 className="h-4 w-4 shrink-0 accent-emerald-600"
                               />
-                              <input
-                                type="date"
-                                value={d.dueDate}
-                                onChange={(e) => commitDue(inv.id, d.id, { dueDate: e.target.value }, { dueDate: d.dueDate })}
-                                className={`rounded border px-1 py-0.5 text-xs ${overdue ? "border-red-300 text-red-700" : "border-zs-border"}`}
-                              />
+                              <div className="w-[130px]">
+                                <EditableCell
+                                  type="date"
+                                  value={d.dueDate}
+                                  className="rounded border border-zs-border bg-white"
+                                  onCommit={(v) => commitDue(inv.id, d.id, { dueDate: v }, { dueDate: d.dueDate })}
+                                />
+                              </div>
                               <EditableCell
-                                value={String(d.amount)}
+                                value={d.amount === 0 ? "" : String(d.amount)}
+                                placeholder="0"
                                 align="right"
                                 inputMode="decimal"
-                                className="w-20 rounded border border-zs-border"
+                                className="w-24 rounded border border-zs-border bg-white"
                                 onCommit={(v) => commitDue(inv.id, d.id, { amount: v }, { amount: d.amount })}
                               />
                               <span className="text-xs text-zs-muted">€</span>
@@ -564,29 +580,22 @@ export function FacturasClient({
                         <button
                           type="button"
                           onClick={() => addDue(inv.id)}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-zs-blue-700 hover:underline"
+                          className="inline-flex items-center gap-1 rounded-lg border border-dashed border-zs-blue-300 px-2 py-1 text-xs font-medium text-zs-blue-700 hover:bg-zs-blue-50"
                         >
-                          <Plus className="h-3.5 w-3.5" /> Vencimiento
+                          <Plus className="h-3.5 w-3.5" /> Añadir vencimiento
                         </button>
                       </div>
                     </td>
-                    <td className="px-2 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => removeInvoice(inv.id)}
-                        aria-label="Borrar factura"
-                        className="text-zs-muted hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
                   </tr>
+                  </React.Fragment>
                 );
               })
             )}
           </tbody>
         </table>
       </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Calendario de vencimientos + próximos pagos */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -692,6 +701,59 @@ function EditableCell({
       }}
       className={`bg-transparent px-2 py-1.5 text-sm outline-none focus:rounded focus:bg-white focus:ring-1 focus:ring-zs-blue-300 ${align === "right" ? "text-right tabular-nums" : "w-full"} ${className ?? ""}`}
     />
+  );
+}
+
+function SortableColumnHeader({
+  col,
+  onRename,
+  onRemove,
+  onResizeStart,
+}: {
+  col: ColumnDTO;
+  onRename: (name: string) => void;
+  onRemove: () => void;
+  onResizeStart: (e: React.MouseEvent) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: col.id,
+  });
+  const style: React.CSSProperties = {
+    width: col.width,
+    minWidth: col.width,
+    maxWidth: col.width,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  return (
+    <th ref={setNodeRef} style={style} className="relative px-1 py-1 font-medium">
+      <div className="flex items-center gap-0.5">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label="Arrastrar para mover la columna"
+          className="shrink-0 cursor-grab text-zs-muted hover:text-zs-ink active:cursor-grabbing"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <ColumnNameInput value={col.name} onCommit={onRename} />
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Borrar columna ${col.name}`}
+          className="shrink-0 text-zs-muted hover:text-red-600"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <span
+        onMouseDown={onResizeStart}
+        className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-zs-blue-300"
+        aria-hidden
+      />
+    </th>
   );
 }
 
