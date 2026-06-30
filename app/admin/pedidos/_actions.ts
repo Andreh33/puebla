@@ -235,7 +235,8 @@ export async function exportOrdersCsv(
     if (filters.from || filters.to) {
       where.createdAt = {};
       if (filters.from) where.createdAt.gte = new Date(filters.from);
-      if (filters.to) where.createdAt.lte = new Date(filters.to);
+      // `to` inclusivo hasta el final del día (coherente con el listado).
+      if (filters.to) where.createdAt.lte = new Date(`${filters.to}T23:59:59.999Z`);
     }
 
     const rows = await db.order.findMany({

@@ -53,7 +53,9 @@ export default async function PedidosPage({
   if (from || to) {
     where.createdAt = {};
     if (from) where.createdAt.gte = new Date(from);
-    if (to) where.createdAt.lte = new Date(to);
+    // `to` inclusivo: hasta el final del día indicado (si no, new Date("YYYY-MM-DD")
+    // cae en medianoche UTC y excluye casi todo ese día).
+    if (to) where.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
   }
 
   const [total, ordersRaw, counts] = await Promise.all([

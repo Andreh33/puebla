@@ -130,13 +130,37 @@ export function PedidosTable({
     return m;
   }, [selected]);
 
-  function applyFilters() {
+  function isoDaysAgo(days: number): string {
+    const d = new Date();
+    d.setDate(d.getDate() - days);
+    return d.toLocaleDateString("en-CA"); // YYYY-MM-DD en horario local
+  }
+
+  function applyFilters(over?: { from?: string; to?: string }) {
+    const f = over?.from ?? from;
+    const t = over?.to ?? to;
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status && status !== "ALL") params.set("status", status);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
+    if (f) params.set("from", f);
+    if (t) params.set("to", t);
     router.push(`/admin/pedidos?${params.toString()}`);
+  }
+
+  // Presets de rango: fijan `from`/`to` y filtran en el mismo tick (pasando el
+  // override para no depender del re-render del estado). `null` = todo el
+  // histórico (sin fechas → comportamiento por defecto del servidor).
+  function applyDatePreset(days: number | null) {
+    if (days === null) {
+      setFrom("");
+      setTo("");
+      applyFilters({ from: "", to: "" });
+      return;
+    }
+    const f = isoDaysAgo(days);
+    setFrom(f);
+    setTo("");
+    applyFilters({ from: f, to: "" });
   }
 
   function goToPage(p: number) {
@@ -379,8 +403,25 @@ export function PedidosTable({
         />
       </div>
 
+      {/* Rango rápido por fecha */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-zs-muted">Rango:</span>
+        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(30)}>
+          Últimos 30 días
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(60)}>
+          Últimos 60 días
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(90)}>
+          Últimos 90 días
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(null)}>
+          Todo el histórico
+        </Button>
+      </div>
+
       <div className="flex flex-wrap gap-2">
-        <Button onClick={applyFilters} type="button">
+        <Button onClick={() => applyFilters()} type="button">
           <Search className="mr-2 h-4 w-4" /> Filtrar
         </Button>
         <Button
