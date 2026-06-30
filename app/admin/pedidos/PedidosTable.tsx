@@ -27,7 +27,11 @@ import {
   ExternalLink,
   RefreshCw,
   Search,
+  TrendingUp,
 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SalesChart } from "@/components/admin/SalesChart";
+import type { SeriesPoint } from "@/lib/admin/order-series";
 import { formatDateTimeES, formatPriceEUR, truncate } from "@/lib/utils";
 import { toast } from "sonner";
 import type { OrderDetail, OrderSummary } from "@/lib/stripe/types";
@@ -77,6 +81,26 @@ function deliveryLabel(method: string | null): string {
   return "—";
 }
 
+/** YYYY-MM-DD de hace N días (horario local). */
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toLocaleDateString("en-CA");
+}
+
+type RangePreset = "30" | "60" | "90" | "todo" | "custom";
+
+/** Deduce qué preset corresponde a un from/to (best-effort, para resaltar el activo). */
+function inferPreset(from: string, to: string): RangePreset {
+  if (!from && !to) return "todo";
+  if (from && !to) {
+    for (const n of [30, 60, 90] as const) {
+      if (from === isoDaysAgo(n)) return String(n) as RangePreset;
+    }
+  }
+  return "custom";
+}
+
 interface Props {
   orders: OrderSummary[];
   total: number;
@@ -85,6 +109,7 @@ interface Props {
   filters: { q: string; status: OrderStatus | "ALL"; from: string; to: string };
   counts: Record<string, number>;
   role: "OWNER" | "EDITOR";
+  chartData: SeriesPoint[];
 }
 
 export function PedidosTable({
@@ -95,6 +120,7 @@ export function PedidosTable({
   filters,
   counts,
   role,
+  chartData,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -102,6 +128,9 @@ export function PedidosTable({
   const [status, setStatus] = React.useState<OrderStatus | "ALL">(filters.status);
   const [from, setFrom] = React.useState(filters.from);
   const [to, setTo] = React.useState(filters.to);
+  const [activePreset, setActivePreset] = React.useState<RangePreset>(() =>
+    inferPreset(filters.from, filters.to),
+  );
   const [exporting, setExporting] = React.useState(false);
   const [syncing, setSyncing] = React.useState(false);
   const [selected, setSelected] = React.useState<OrderDetail | null>(null);
@@ -130,12 +159,6 @@ export function PedidosTable({
     return m;
   }, [selected]);
 
-  function isoDaysAgo(days: number): string {
-    const d = new Date();
-    d.setDate(d.getDate() - days);
-    return d.toLocaleDateString("en-CA"); // YYYY-MM-DD en horario local
-  }
-
   function applyFilters(over?: { from?: string; to?: string }) {
     const f = over?.from ?? from;
     const t = over?.to ?? to;
@@ -152,11 +175,13 @@ export function PedidosTable({
   // histórico (sin fechas → comportamiento por defecto del servidor).
   function applyDatePreset(days: number | null) {
     if (days === null) {
+      setActivePreset("todo");
       setFrom("");
       setTo("");
       applyFilters({ from: "", to: "" });
       return;
     }
+    setActivePreset(String(days) as RangePreset);
     const f = isoDaysAgo(days);
     setFrom(f);
     setTo("");
@@ -392,13 +417,19 @@ export function PedidosTable({
         <Input
           type="date"
           value={from}
-          onChange={(e) => setFrom(e.target.value)}
+          onChange={(e) => {
+            setFrom(e.target.value);
+            setActivePreset("custom");
+          }}
           aria-label="Desde"
         />
         <Input
           type="date"
           value={to}
-          onChange={(e) => setTo(e.target.value)}
+          onChange={(e) => {
+            setTo(e.target.value);
+            setActivePreset("custom");
+          }}
           aria-label="Hasta"
         />
       </div>
@@ -406,19 +437,38 @@ export function PedidosTable({
       {/* Rango rápido por fecha */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-zs-muted">Rango:</span>
-        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(30)}>
+        <Button type="button" variant={activePreset === "30" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(30)}>
           Últimos 30 días
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(60)}>
+        <Button type="button" variant={activePreset === "60" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(60)}>
           Últimos 60 días
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(90)}>
+        <Button type="button" variant={activePreset === "90" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(90)}>
           Últimos 90 días
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => applyDatePreset(null)}>
+        <Button type="button" variant={activePreset === "todo" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(null)}>
           Todo el histórico
         </Button>
       </div>
+
+      {/* Evolución de pedidos — refleja el rango y los filtros activos */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <TrendingUp className="h-4 w-4 text-zs-blue-700" aria-hidden="true" /> Evolución de pedidos
+          </CardTitle>
+          <span className="text-xs text-zs-muted">
+            {activePreset === "todo"
+              ? "Todo el histórico"
+              : activePreset === "custom"
+                ? "Rango seleccionado"
+                : `Últimos ${activePreset} días`}
+          </span>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <SalesChart data={chartData} />
+        </CardContent>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => applyFilters()} type="button">

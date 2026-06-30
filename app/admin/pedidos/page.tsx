@@ -10,6 +10,7 @@ import { STRIPE_ENV_VARS } from "@/lib/stripe/types";
 import { toOrderSummary } from "@/lib/stripe/orders";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
+import { buildOrderSeries } from "@/lib/admin/order-series";
 
 export const metadata: Metadata = { title: "Pedidos" };
 export const dynamic = "force-dynamic";
@@ -58,7 +59,7 @@ export default async function PedidosPage({
     if (to) where.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
   }
 
-  const [total, ordersRaw, counts] = await Promise.all([
+  const [total, ordersRaw, counts, chartOrders] = await Promise.all([
     db.order.count({ where }).catch(() => 0),
     db.order
       .findMany({
@@ -70,9 +71,22 @@ export default async function PedidosPage({
       })
       .catch(() => []),
     db.order.groupBy({ by: ["status"], _count: { _all: true } }).catch(() => []),
+    // Serie para la gráfica: MISMO filtro que la tabla, sin paginar.
+    db.order
+      .findMany({ where, select: { createdAt: true, total: true }, orderBy: { createdAt: "asc" } })
+      .catch(() => []),
   ]);
 
   const orders = ordersRaw.map(toOrderSummary);
+
+  // Evolución de pedidos para la gráfica (rango efectivo: from/to o, si "todo",
+  // desde el pedido más antiguo del conjunto hasta hoy).
+  const todayYmd = new Date().toISOString().slice(0, 10);
+  const points = chartOrders.map((o) => ({
+    day: o.createdAt.toISOString().slice(0, 10),
+    total: Number(o.total),
+  }));
+  const chartData = buildOrderSeries(points, from || points[0]?.day || todayYmd, to || todayYmd);
 
   const countMap = Object.fromEntries(
     counts.map((c) => [c.status, c._count._all]),
@@ -126,6 +140,7 @@ export default async function PedidosPage({
         filters={{ q, status, from, to }}
         counts={countMap}
         role={role}
+        chartData={chartData}
       />
     </div>
   );
