@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Search } from "lucide-react";
+import { Plus, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +47,23 @@ type EditableField = "supplier" | "brandLabel" | "invoiceNumber" | "concept" | "
 
 const EUR = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
 const fmt = (n: number) => EUR.format(n);
+
+/** Suma `delta` meses a un "YYYY-MM" (Date.UTC normaliza el cruce de año). */
+function addMonthToYm(ym: string, delta: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(Date.UTC(y ?? 2026, (m ?? 1) - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+/** "YYYY-MM-DD" → "30 jun 2026". */
+function formatDueDate(ymd: string): string {
+  return new Date(`${ymd}T00:00:00Z`).toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 const STATUS_META: Record<InvoiceStatus, { label: string; row: string; badge: string }> = {
   paid: { label: "Pagada", row: "bg-emerald-50", badge: "bg-emerald-100 text-emerald-800 border border-emerald-200" },
@@ -401,21 +418,63 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
         </table>
       </div>
 
-      {/* Calendario de vencimientos */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-zs-ink">Calendario de pagos</h2>
-            <span className="text-xs capitalize text-zs-muted">{monthLabel}</span>
-          </div>
-          <MonthCalendar month={month} rows={rows} todayYmd={todayYmd} />
-          <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-zs-muted">
-            <Legend className="bg-emerald-200" label="Pagado" />
-            <Legend className="bg-amber-200" label="Pendiente" />
-            <Legend className="bg-red-200" label="Vencido" />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Calendario de vencimientos + próximos pagos */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardContent className="p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-zs-ink">Calendario de pagos</h2>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setMonth(addMonthToYm(month, -1))}
+                  aria-label="Mes anterior"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="min-w-[130px] text-center text-sm font-medium capitalize text-zs-ink">
+                  {monthLabel}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setMonth(addMonthToYm(month, 1))}
+                  aria-label="Mes siguiente"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="ml-1 h-7"
+                  onClick={() => setMonth(todayYmd.slice(0, 7))}
+                >
+                  Hoy
+                </Button>
+              </div>
+            </div>
+            <MonthCalendar month={month} rows={rows} todayYmd={todayYmd} />
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-zs-muted">
+              <Legend className="bg-emerald-200" label="Pagado" />
+              <Legend className="bg-amber-200" label="Pendiente" />
+              <Legend className="bg-red-200" label="Vencido" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="mb-3 text-sm font-semibold text-zs-ink">Próximos pagos</h2>
+            <UpcomingPayments rows={rows} todayYmd={todayYmd} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -467,16 +526,19 @@ function EditableCell({
 }
 
 function MonthCalendar({ month, rows, todayYmd }: { month: string; rows: InvoiceDTO[]; todayYmd: string }) {
-  const dueByDay = React.useMemo(() => {
-    const m = new Map<string, { paid: number; pending: number; overdue: number }>();
+  const byDay = React.useMemo(() => {
+    const m = new Map<string, { supplier: string; amount: number; paid: boolean; overdue: boolean }[]>();
     for (const inv of rows) {
       for (const d of inv.dueDates) {
         if (!d.dueDate.startsWith(month)) continue;
-        const e = m.get(d.dueDate) ?? { paid: 0, pending: 0, overdue: 0 };
-        if (d.paid) e.paid += d.amount;
-        else if (d.dueDate < todayYmd) e.overdue += d.amount;
-        else e.pending += d.amount;
-        m.set(d.dueDate, e);
+        const list = m.get(d.dueDate) ?? [];
+        list.push({
+          supplier: inv.supplier || "—",
+          amount: d.amount,
+          paid: d.paid,
+          overdue: !d.paid && d.dueDate < todayYmd,
+        });
+        m.set(d.dueDate, list);
       }
     }
     return m;
@@ -500,27 +562,88 @@ function MonthCalendar({ month, rows, todayYmd }: { month: string; rows: Invoice
         {cells.map((d, i) => {
           if (d === null) return <div key={`e${i}`} />;
           const ymd = `${month}-${String(d).padStart(2, "0")}`;
-          const e = dueByDay.get(ymd);
+          const list = byDay.get(ymd);
           const isToday = ymd === todayYmd;
           let tone = "border-zs-border bg-white";
-          if (e) {
-            if (e.overdue > 0) tone = "border-red-300 bg-red-50";
-            else if (e.pending > 0) tone = "border-amber-300 bg-amber-50";
+          if (list && list.length) {
+            if (list.some((x) => x.overdue)) tone = "border-red-300 bg-red-50";
+            else if (list.some((x) => !x.paid)) tone = "border-amber-300 bg-amber-50";
             else tone = "border-emerald-300 bg-emerald-50";
           }
-          const totalDay = e ? e.paid + e.pending + e.overdue : 0;
           return (
             <div
               key={`d${i}`}
-              className={`min-h-[52px] rounded-lg border p-1 ${tone} ${isToday ? "ring-2 ring-zs-blue-400" : ""}`}
-              title={e ? fmt(totalDay) : undefined}
+              className={`min-h-[68px] rounded-lg border p-1 ${tone} ${isToday ? "ring-2 ring-zs-blue-400" : ""}`}
             >
-              <div className="text-[11px] font-semibold text-zs-ink">{d}</div>
-              {e && <div className="mt-0.5 text-[10px] font-medium tabular-nums text-zs-ink/80">{fmt(totalDay)}</div>}
+              <div className={`text-[11px] font-semibold ${isToday ? "text-zs-blue-700" : "text-zs-ink"}`}>
+                {d}
+              </div>
+              <div className="mt-0.5 space-y-0.5">
+                {(list ?? []).slice(0, 3).map((x, j) => (
+                  <div
+                    key={j}
+                    className={`truncate rounded px-1 text-[9px] leading-tight ${
+                      x.paid
+                        ? "bg-emerald-100 text-emerald-800"
+                        : x.overdue
+                          ? "bg-red-100 text-red-800"
+                          : "bg-amber-100 text-amber-900"
+                    }`}
+                    title={`${x.supplier} · ${fmt(x.amount)}${x.paid ? " (pagado)" : x.overdue ? " (vencido)" : ""}`}
+                  >
+                    {fmt(x.amount)} · {x.supplier}
+                  </div>
+                ))}
+                {list && list.length > 3 && (
+                  <div className="px-1 text-[9px] text-zs-muted">+{list.length - 3} más</div>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function UpcomingPayments({ rows, todayYmd }: { rows: InvoiceDTO[]; todayYmd: string }) {
+  const items = React.useMemo(() => {
+    const out: { supplier: string; amount: number; dueDate: string; overdue: boolean }[] = [];
+    for (const inv of rows) {
+      for (const d of inv.dueDates) {
+        if (d.paid) continue;
+        out.push({
+          supplier: inv.supplier || "—",
+          amount: d.amount,
+          dueDate: d.dueDate,
+          overdue: d.dueDate < todayYmd,
+        });
+      }
+    }
+    out.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    return out.slice(0, 10);
+  }, [rows, todayYmd]);
+
+  if (items.length === 0) {
+    return <p className="text-sm text-zs-muted">No hay pagos pendientes.</p>;
+  }
+  return (
+    <ul className="space-y-2">
+      {items.map((it, i) => (
+        <li
+          key={i}
+          className="flex items-center justify-between gap-2 border-b border-zs-border/60 pb-2 text-sm last:border-0 last:pb-0"
+        >
+          <span className="min-w-0">
+            <span className="block truncate font-medium text-zs-ink">{it.supplier}</span>
+            <span className={`text-xs ${it.overdue ? "font-semibold text-red-600" : "text-zs-muted"}`}>
+              {formatDueDate(it.dueDate)}
+              {it.overdue ? " · vencido" : ""}
+            </span>
+          </span>
+          <span className="shrink-0 font-semibold tabular-nums text-zs-ink">{fmt(it.amount)}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
