@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,9 +29,16 @@ import {
   updateDueDateAction,
   setDueDatePaidAction,
   deleteDueDateAction,
+  createColumnAction,
+  renameColumnAction,
+  reorderColumnsAction,
+  resizeColumnAction,
+  deleteColumnAction,
+  setCustomValueAction,
 } from "./_actions";
 
 export type DueDTO = { id: string; dueDate: string; amount: number; paid: boolean };
+export type ColumnDTO = { id: string; name: string; position: number; width: number };
 export type InvoiceDTO = {
   id: string;
   supplier: string;
@@ -41,6 +48,7 @@ export type InvoiceDTO = {
   issueDate: string;
   notes: string | null;
   dueDates: DueDTO[];
+  customValues: Record<string, string>;
 };
 
 type EditableField = "supplier" | "brandLabel" | "invoiceNumber" | "concept" | "issueDate" | "notes";
@@ -85,8 +93,17 @@ async function safeAction<T extends { ok: boolean; error?: string }>(
   }
 }
 
-export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[]; todayYmd: string }) {
+export function FacturasClient({
+  invoices,
+  columns,
+  todayYmd,
+}: {
+  invoices: InvoiceDTO[];
+  columns: ColumnDTO[];
+  todayYmd: string;
+}) {
   const [rows, setRows] = React.useState<InvoiceDTO[]>(invoices);
+  const [cols, setCols] = React.useState<ColumnDTO[]>(columns);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | InvoiceStatus>("all");
   const [month, setMonth] = React.useState(todayYmd.slice(0, 7));
@@ -95,6 +112,9 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
   React.useEffect(() => {
     setRows(invoices);
   }, [invoices]);
+  React.useEffect(() => {
+    setCols(columns);
+  }, [columns]);
 
   // --- mutadores optimistas (rollback + toast si la acción falla) -----------
   const patchInvoice = (id: string, patch: Partial<InvoiceDTO>) =>
@@ -136,7 +156,10 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
       setRows((rs) =>
         rs.some((r) => r.id === id)
           ? rs
-          : [{ id, supplier: "", brandLabel: null, invoiceNumber: null, concept: null, issueDate: todayYmd, notes: null, dueDates: [] }, ...rs],
+          : [
+              { id, supplier: "", brandLabel: null, invoiceNumber: null, concept: null, issueDate: todayYmd, notes: null, dueDates: [], customValues: {} },
+              ...rs,
+            ],
       );
     } finally {
       setCreating(false);
@@ -198,6 +221,93 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
     const res = await safeAction(() => deleteDueDateAction(dueId));
     if (!res.ok) {
       setRows(snapshot);
+      toast.error(res.error);
+    }
+  }
+
+  // --- columnas personalizadas ----------------------------------------------
+  async function addColumn() {
+    const res = await safeAction(() => createColumnAction("Columna"));
+    if (!res.ok) {
+      toast.error(res.error);
+      return;
+    }
+    const id = res.id;
+    setCols((cs) =>
+      cs.some((c) => c.id === id) ? cs : [...cs, { id, name: "Columna", position: cs.length + 1, width: 160 }],
+    );
+  }
+
+  async function commitColumnName(id: string, name: string, prev: string) {
+    const n = name.trim() || prev;
+    setCols((cs) => cs.map((c) => (c.id === id ? { ...c, name: n } : c)));
+    const res = await safeAction(() => renameColumnAction(id, n));
+    if (!res.ok) {
+      setCols((cs) => cs.map((c) => (c.id === id ? { ...c, name: prev } : c)));
+      toast.error(res.error);
+    }
+  }
+
+  async function moveColumn(id: string, dir: -1 | 1) {
+    const idx = cols.findIndex((c) => c.id === id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= cols.length) return;
+    const snapshot = cols;
+    const next = cols.slice();
+    [next[idx], next[target]] = [next[target]!, next[idx]!];
+    setCols(next);
+    const res = await safeAction(() => reorderColumnsAction(next.map((c) => c.id)));
+    if (!res.ok) {
+      setCols(snapshot);
+      toast.error(res.error);
+    }
+  }
+
+  async function removeColumn(id: string) {
+    const snapshot = cols;
+    setCols((cs) => cs.filter((c) => c.id !== id));
+    const res = await safeAction(() => deleteColumnAction(id));
+    if (!res.ok) {
+      setCols(snapshot);
+      toast.error(res.error);
+    }
+  }
+
+  function startResize(e: React.MouseEvent, id: string, startWidth: number) {
+    e.preventDefault();
+    const startX = e.clientX;
+    let latest = startWidth;
+    const onMove = (ev: MouseEvent) => {
+      latest = Math.max(80, Math.min(600, startWidth + (ev.clientX - startX)));
+      setCols((cs) => cs.map((c) => (c.id === id ? { ...c, width: latest } : c)));
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      void safeAction(() => resizeColumnAction(id, latest)).then((r) => {
+        if (!r.ok) {
+          setCols((cs) => cs.map((c) => (c.id === id ? { ...c, width: startWidth } : c)));
+          toast.error(r.error);
+        }
+      });
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
+  async function commitCustomValue(invoiceId: string, columnId: string, value: string, prev: string) {
+    setRows((rs) =>
+      rs.map((r) =>
+        r.id === invoiceId ? { ...r, customValues: { ...r.customValues, [columnId]: value } } : r,
+      ),
+    );
+    const res = await safeAction(() => setCustomValueAction(invoiceId, columnId, value));
+    if (!res.ok) {
+      setRows((rs) =>
+        rs.map((r) =>
+          r.id === invoiceId ? { ...r, customValues: { ...r.customValues, [columnId]: prev } } : r,
+        ),
+      );
       toast.error(res.error);
     }
   }
@@ -277,6 +387,9 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
         <Button type="button" onClick={addInvoice} disabled={creating}>
           <Plus className="mr-1 h-4 w-4" /> Añadir factura
         </Button>
+        <Button type="button" variant="outline" onClick={addColumn}>
+          <Plus className="mr-1 h-4 w-4" /> Columna
+        </Button>
       </div>
 
       {/* Tabla tipo hoja */}
@@ -289,6 +402,48 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
               <th className="px-2 py-2 font-medium">Marca</th>
               <th className="px-2 py-2 font-medium">Nº factura</th>
               <th className="px-2 py-2 font-medium">Concepto</th>
+              {cols.map((col, idx) => (
+                <th
+                  key={col.id}
+                  style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                  className="relative px-1 py-1 font-medium"
+                >
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => moveColumn(col.id, -1)}
+                      disabled={idx === 0}
+                      aria-label="Mover columna a la izquierda"
+                      className="shrink-0 text-zs-muted hover:text-zs-ink disabled:opacity-30"
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
+                    <ColumnNameInput value={col.name} onCommit={(n) => commitColumnName(col.id, n, col.name)} />
+                    <button
+                      type="button"
+                      onClick={() => moveColumn(col.id, 1)}
+                      disabled={idx === cols.length - 1}
+                      aria-label="Mover columna a la derecha"
+                      className="shrink-0 text-zs-muted hover:text-zs-ink disabled:opacity-30"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeColumn(col.id)}
+                      aria-label={`Borrar columna ${col.name}`}
+                      className="shrink-0 text-zs-muted hover:text-red-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <span
+                    onMouseDown={(e) => startResize(e, col.id, col.width)}
+                    className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize bg-transparent hover:bg-zs-blue-300"
+                    aria-hidden
+                  />
+                </th>
+              ))}
               <th className="px-2 py-2 text-right font-medium">Total</th>
               <th className="px-2 py-2 text-right font-medium">Pendiente</th>
               <th className="px-2 py-2 font-medium">Estado</th>
@@ -299,7 +454,7 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-sm text-zs-muted">
+                <td colSpan={10 + cols.length} className="px-4 py-10 text-center text-sm text-zs-muted">
                   {rows.length === 0
                     ? "Aún no hay facturas. Pulsa «Añadir factura» para empezar."
                     : "Ninguna factura coincide con el filtro."}
@@ -346,6 +501,21 @@ export function FacturasClient({ invoices, todayYmd }: { invoices: InvoiceDTO[];
                         onCommit={(v) => commitField(inv.id, "concept", v, inv.concept ?? "")}
                       />
                     </td>
+                    {cols.map((col) => (
+                      <td
+                        key={col.id}
+                        style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                        className="px-1 py-1"
+                      >
+                        <EditableCell
+                          value={inv.customValues[col.id] ?? ""}
+                          placeholder="…"
+                          onCommit={(v) =>
+                            commitCustomValue(inv.id, col.id, v, inv.customValues[col.id] ?? "")
+                          }
+                        />
+                      </td>
+                    ))}
                     <td className="px-2 py-2 text-right font-medium tabular-nums">{fmt(invoiceTotal(inv.dueDates))}</td>
                     <td className="px-2 py-2 text-right font-medium tabular-nums">{fmt(invoiceOutstanding(inv.dueDates))}</td>
                     <td className="px-2 py-2">
@@ -521,6 +691,26 @@ function EditableCell({
         if (e.key === "Enter") e.currentTarget.blur();
       }}
       className={`bg-transparent px-2 py-1.5 text-sm outline-none focus:rounded focus:bg-white focus:ring-1 focus:ring-zs-blue-300 ${align === "right" ? "text-right tabular-nums" : "w-full"} ${className ?? ""}`}
+    />
+  );
+}
+
+function ColumnNameInput({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const [v, setV] = React.useState(value);
+  React.useEffect(() => setV(value), [value]);
+  return (
+    <input
+      value={v}
+      onChange={(e) => setV(e.target.value)}
+      onBlur={() => {
+        if (v !== value) onCommit(v);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
+      maxLength={40}
+      aria-label="Nombre de la columna"
+      className="w-full min-w-0 rounded bg-transparent px-1 text-xs font-semibold uppercase text-zs-ink outline-none focus:bg-white focus:ring-1 focus:ring-zs-blue-300"
     />
   );
 }

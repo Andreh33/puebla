@@ -167,3 +167,108 @@ export async function deleteDueDateAction(id: string): Promise<Ok | Err> {
     return { ok: false, error: e instanceof Error ? e.message : "Error al borrar el vencimiento" };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Columnas personalizadas (globales) + sus valores por factura
+// ---------------------------------------------------------------------------
+
+const COL_NAME_MAX = 40;
+
+export async function createColumnAction(name: string): Promise<Ok<{ id: string }> | Err> {
+  await requireSession();
+  const n = (name.trim() || "Columna").slice(0, COL_NAME_MAX);
+  try {
+    const max = await db.invoiceColumn.aggregate({ _max: { position: true } });
+    const col = await db.invoiceColumn.create({
+      data: { name: n, position: (max._max.position ?? 0) + 1, width: 160 },
+      select: { id: true },
+    });
+    revalidatePath("/admin/facturas");
+    return { ok: true, id: col.id };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al crear la columna" };
+  }
+}
+
+export async function renameColumnAction(id: string, name: string): Promise<Ok | Err> {
+  await requireSession();
+  const n = name.trim().slice(0, COL_NAME_MAX);
+  if (!n) return { ok: false, error: "El nombre de la columna no puede estar vacío" };
+  try {
+    await db.invoiceColumn.update({ where: { id }, data: { name: n } });
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al renombrar" };
+  }
+}
+
+export async function reorderColumnsAction(idsInOrder: string[]): Promise<Ok | Err> {
+  await requireSession();
+  if (!Array.isArray(idsInOrder) || idsInOrder.length === 0) return { ok: true };
+  try {
+    await db.$transaction(
+      idsInOrder.map((id, i) =>
+        db.invoiceColumn.update({ where: { id }, data: { position: i + 1 } }),
+      ),
+    );
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al reordenar" };
+  }
+}
+
+export async function resizeColumnAction(id: string, width: number): Promise<Ok | Err> {
+  await requireSession();
+  const w = Math.max(80, Math.min(600, Math.round(width)));
+  if (!Number.isFinite(w)) return { ok: false, error: "Ancho inválido" };
+  try {
+    await db.invoiceColumn.update({ where: { id }, data: { width: w } });
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al redimensionar" };
+  }
+}
+
+export async function deleteColumnAction(id: string): Promise<Ok | Err> {
+  await requireSession();
+  try {
+    await db.invoiceColumn.delete({ where: { id } });
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al borrar la columna" };
+  }
+}
+
+export async function setCustomValueAction(
+  invoiceId: string,
+  columnId: string,
+  value: string,
+): Promise<Ok | Err> {
+  await requireSession();
+  try {
+    const inv = await db.supplierInvoice.findUnique({
+      where: { id: invoiceId },
+      select: { customValues: true },
+    });
+    if (!inv) return { ok: false, error: "Factura no encontrada" };
+    const cv: Record<string, unknown> =
+      inv.customValues && typeof inv.customValues === "object" && !Array.isArray(inv.customValues)
+        ? { ...(inv.customValues as Record<string, unknown>) }
+        : {};
+    const v = value.trim();
+    if (v === "") delete cv[columnId];
+    else cv[columnId] = v;
+    await db.supplierInvoice.update({
+      where: { id: invoiceId },
+      data: { customValues: cv as Prisma.InputJsonValue },
+    });
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al guardar el valor" };
+  }
+}

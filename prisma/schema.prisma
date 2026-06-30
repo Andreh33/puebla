@@ -553,6 +553,8 @@ model SupplierInvoice {
   concept       String?                 // Concepto / productos (texto libre)
   issueDate     DateTime @db.Date       // Fecha de la factura
   notes         String?                 // Notas largas opcionales
+  // Valores de las columnas personalizadas (texto libre): { [columnId]: string }.
+  customValues  Json     @default("{}")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -575,4 +577,18 @@ model SupplierInvoiceDueDate {
 
   @@index([invoiceId])
   @@index([paid, dueDate])
+}
+
+// Columnas personalizadas ("a tu gusto") de la hoja de facturas. Globales:
+// las mismas para todas las facturas (como en Excel). El valor de cada columna
+// por factura vive en SupplierInvoice.customValues (JSON), no aquí.
+model InvoiceColumn {
+  id        String   @id @default(cuid())
+  name      String
+  position  Int      @default(0)
+  width     Int      @default(160) // ancho en px (lo ajusta el usuario)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([position])
 }
