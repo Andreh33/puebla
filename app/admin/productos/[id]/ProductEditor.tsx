@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
+import { useForm, useFieldArray, type SubmitHandler, type SubmitErrorHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -63,6 +63,8 @@ import {
 import { UploadDropzone, type UploadedImage } from "@/components/admin/UploadDropzone";
 import { CategoryTreePicker, type CategoryNode } from "./CategoryTreePicker";
 import { createCategoryAction } from "@/app/admin/categorias/_actions";
+import { FormErrorDialog, type FormErrorDialogData } from "@/components/admin/FormErrorDialog";
+import { collectProductFormErrors } from "@/lib/admin/product-form-errors";
 
 // Form schema: include sizes (array) and accept null/empty strings
 const FormSchema = ProductSchema.extend({
@@ -213,9 +215,21 @@ function deriveGenderValue(selectedIds: string[], allCats: CategoryNode[]): Form
   }
 }
 
+/** Devuelve el valor solo si pertenece a la lista controlada; si no (valor
+ *  legacy/obsoleto que ya no existe en la lista actual), null — así un enum
+ *  antiguo no bloquea la validación del formulario y el admin puede reasignarlo
+ *  desde el Select. */
+function sanitizeEnum<T extends string>(
+  v: string | null | undefined,
+  list: readonly T[],
+): T | null {
+  return v != null && (list as readonly string[]).includes(v) ? (v as T) : null;
+}
+
 export function ProductEditor({ mode, initial, brands: initialBrands, categories: initialCategories, userRole }: EditorProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = React.useState(false);
+  const [formError, setFormError] = React.useState<FormErrorDialogData | null>(null);
   const [tab, setTab] = React.useState("general");
   const [brands, setBrands] = React.useState(initialBrands);
   const [cats, setCats] = React.useState<CategoryNode[]>(initialCategories);
@@ -244,6 +258,18 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     initial?.primaryCategoryId ?? null
   );
 
+  // Sanea enums legacy (tipo de calzado/prenda/variante) cuyo valor guardado ya
+  // no existe en la lista actual: se cargan como null para no romper la
+  // validación del formulario. `legacyEnumCleaned` activa un aviso para que el
+  // admin reasigne y guarde (era una de las causas de "no me deja guardar").
+  const footwearTypeClean = sanitizeEnum(initial?.footwearType, FOOTWEAR_TYPES);
+  const garmentTypeClean = sanitizeEnum(initial?.garmentType, GARMENT_TYPES);
+  const garmentVariantClean = sanitizeEnum(initial?.garmentVariant, GARMENT_VARIANTS);
+  const legacyEnumCleaned =
+    (!!initial?.footwearType && !footwearTypeClean) ||
+    (!!initial?.garmentType && !garmentTypeClean) ||
+    (!!initial?.garmentVariant && !garmentVariantClean);
+
   const defaults: FormValues = {
     name: initial?.name ?? "",
     slug: initial?.slug ?? "",
@@ -261,9 +287,9 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     colorHex: initial?.colorHex ?? null,
     gender: (initial?.gender as FormValues["gender"]) ?? "NO_ESPECIFICADO",
     sportUse: initial?.sportUse ?? null,
-    footwearType: (initial?.footwearType as FormValues["footwearType"]) ?? null,
-    garmentType: (initial?.garmentType as FormValues["garmentType"]) ?? null,
-    garmentVariant: (initial?.garmentVariant as FormValues["garmentVariant"]) ?? null,
+    footwearType: footwearTypeClean,
+    garmentType: garmentTypeClean,
+    garmentVariant: garmentVariantClean,
     composition: initial?.composition ?? null,
     costPrice: initial?.costPrice ?? null,
     retailPrice: initial?.retailPrice ?? 0,
@@ -494,29 +520,60 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     };
   }
 
+  // Aviso CENTRADO cuando la validación de cliente (zodResolver) rechaza el
+  // submit: traduce los errores a mensajes claros por pestaña y salta a la
+  // primera. Sustituye al antiguo texto diminuto "Hay N errores" del pie.
+  const handleInvalid: SubmitErrorHandler<FormValues> = (errs) => {
+    const items = collectProductFormErrors(
+      errs as unknown as Record<string, unknown>,
+      watched as unknown as Record<string, unknown>,
+    );
+    if (items.length === 0) return;
+    setFormError({
+      title: items.length === 1 ? "Hay 1 campo por corregir" : `Hay ${items.length} campos por corregir`,
+      items,
+      hint: "Corrige lo indicado y vuelve a pulsar Guardar.",
+    });
+    setTab(items[0]!.tab);
+  };
+
+  // Muestra un único problema (validaciones manuales que zod no cubre) también
+  // en el aviso centrado, en vez de un toast abajo.
+  const showBlockingError = (
+    tab: string,
+    tabLabel: string,
+    label: string,
+    message: string,
+    title = "Falta un dato para guardar",
+  ) => {
+    setFormError({ title, items: [{ tab, tabLabel, field: label, label, message }] });
+    setTab(tab);
+  };
+
   // Submit
   const onSubmit = (publish: boolean): SubmitHandler<FormValues> => async (values) => {
     if (slugStatus === "taken") {
-      toast.error("El slug ya existe. Cambia el slug.");
-      setTab("general");
+      showBlockingError("general", "General", "Slug", "Ese slug ya está en uso por otro producto. Cámbialo por uno distinto.");
       return;
     }
     if (skuStatus === "taken") {
-      toast.error("El SKU ya existe en otro producto. Cámbialo o déjalo vacío.");
-      setTab("origen");
+      showBlockingError("origen", "Origen externo", "SKU", "Ese SKU ya existe en otro producto. Cámbialo o déjalo vacío.");
       return;
     }
 
     // Category validation
     if (selectedCategoryIds.length === 0) {
-      toast.error("Selecciona al menos una categoría");
-      setTab("general");
+      showBlockingError("general", "General", "Categorías", "Marca al menos una categoría en el árbol de categorías.");
       return;
     }
 
     if (publish && !mainImageUrl) {
-      toast.error("Para publicar es necesaria una imagen principal con alt.");
-      setTab("imagenes");
+      showBlockingError(
+        "imagenes",
+        "Imágenes",
+        "Imagen principal",
+        "Para publicar necesitas subir una imagen y marcarla como «Principal». Mientras tanto puedes guardar como borrador.",
+      );
       return;
     }
 
@@ -574,8 +631,17 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
         router.refresh();
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Error al guardar";
-      toast.error(msg);
+      const raw = err instanceof Error ? err.message : "";
+      // En producción Next censura el mensaje real de las Server Actions
+      // (texto genérico + digest). Damos una explicación útil y centrada.
+      const message =
+        raw && !/server components render|digest|unexpected response/i.test(raw)
+          ? raw
+          : "No se pudo guardar en el servidor. Revisa los datos e inténtalo de nuevo; si el problema persiste, recarga la página.";
+      setFormError({
+        title: "No se pudo guardar",
+        items: [{ tab: "general", tabLabel: "", field: "_server", label: "Error al guardar", message }],
+      });
     } finally {
       setSubmitting(false);
     }
@@ -583,7 +649,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit(false))}
+      onSubmit={handleSubmit(onSubmit(false), handleInvalid)}
       className="space-y-6"
       aria-label={mode === "create" ? "Nuevo producto" : "Editar producto"}
     >
@@ -599,6 +665,15 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
 
         {/* GENERAL */}
         <TabsContent value="general" className="space-y-4">
+          {legacyEnumCleaned && (
+            <Alert variant="warning">
+              <AlertDescription>
+                Este producto tenía una clasificación antigua (tipo de prenda/calzado) que ya
+                no existe en la lista actual. La he dejado en «(sin asignar)»: revísala más
+                abajo y guarda. Esto era lo que impedía guardarlo.
+              </AlertDescription>
+            </Alert>
+          )}
           <Card>
             <CardContent className="space-y-4 p-6">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -717,6 +792,20 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 <div>
                   <Label htmlFor="sportUse">Uso deportivo</Label>
                   <Input id="sportUse" {...register("sportUse")} placeholder="ej: Trekking" />
+                </div>
+                <div>
+                  <Label htmlFor="composition">
+                    Composición{" "}
+                    <span className="text-xs text-zs-muted">
+                      ({(watched.composition ?? "").length}/500)
+                    </span>
+                  </Label>
+                  <Input
+                    id="composition"
+                    {...register("composition")}
+                    maxLength={500}
+                    placeholder="ej: Poliéster 100%"
+                  />
                 </div>
 
                 {/* Tipo de calzado — aparece cuando la categoría principal termina en -calzado */}
@@ -1033,6 +1122,17 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   min={0}
                   max={50}
                   {...register("taxRate", { setValueAs: (v) => Number(v) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="weight">Peso (kg)</Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.001"
+                  min={0}
+                  {...register("weight", { setValueAs: parseNullableNumber })}
+                  placeholder="opcional"
                 />
               </div>
             </CardContent>
@@ -1393,13 +1493,19 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
           <Button
             type="button"
             disabled={submitting}
-            onClick={handleSubmit(onSubmit(true))}
+            onClick={handleSubmit(onSubmit(true), handleInvalid)}
           >
             {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             Publicar
           </Button>
         </div>
       </div>
+
+      <FormErrorDialog
+        data={formError}
+        onClose={() => setFormError(null)}
+        onGoToTab={setTab}
+      />
     </form>
   );
 }
