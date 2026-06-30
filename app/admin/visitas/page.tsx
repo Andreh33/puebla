@@ -89,7 +89,7 @@ export default async function VisitasPage() {
               {series.map((s) => (
                 <div
                   key={s.key}
-                  className="flex flex-1 flex-col items-center justify-end"
+                  className="flex h-full flex-1 flex-col items-center justify-end"
                   title={`${fmtDay(s.date)}: ${s.count} ${s.count === 1 ? "visita" : "visitas"}`}
                 >
                   <div
