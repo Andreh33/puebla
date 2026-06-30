@@ -536,3 +536,43 @@ model PageView {
   @@unique([path, day])
   @@index([day])
 }
+
+// ----------------------------------------------------------------------------
+// Facturas de proveedores (cuentas por pagar). Entrada 100% manual y libre:
+// proveedor, nº de factura, marca y concepto son texto libre (sin relación con
+// el catálogo). Cada factura tiene 1..N vencimientos, cada uno con su importe y
+// su propio estado de pago (pagos fraccionados 30/60/90…). Aditivo: tablas
+// nuevas, no toca nada existente.
+// Reversible con: DROP TABLE "SupplierInvoiceDueDate"; DROP TABLE "SupplierInvoice";
+// ----------------------------------------------------------------------------
+model SupplierInvoice {
+  id            String   @id @default(cuid())
+  supplier      String                  // Proveedor (texto libre)
+  brandLabel    String?                 // Marca/etiqueta libre (para filtrar)
+  invoiceNumber String?                 // Nº de factura del proveedor
+  concept       String?                 // Concepto / productos (texto libre)
+  issueDate     DateTime @db.Date       // Fecha de la factura
+  notes         String?                 // Notas largas opcionales
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dueDates      SupplierInvoiceDueDate[]
+
+  @@index([supplier])
+  @@index([issueDate])
+}
+
+model SupplierInvoiceDueDate {
+  id        String          @id @default(cuid())
+  invoiceId String
+  invoice   SupplierInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  dueDate   DateTime        @db.Date           // Fecha de vencimiento del pago
+  amount    Decimal         @db.Decimal(10, 2) // Importe de este vencimiento
+  paid      Boolean         @default(false)    // Pagado o pendiente
+  paidAt    DateTime?                          // Cuándo se marcó pagado
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([invoiceId])
+  @@index([paid, dueDate])
+}

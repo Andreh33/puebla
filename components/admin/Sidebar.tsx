@@ -15,6 +15,7 @@ import {
   Users,
   BarChart3,
   TrendingUp,
+  ReceiptText,
   Settings,
   ArrowLeftRight,
   ShieldCheck,
@@ -56,6 +57,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Leads", href: "/admin/leads", icon: Users },
   { label: "Visitas", href: "/admin/visitas", icon: BarChart3 },
   { label: "Balance", href: "/admin/balance", icon: TrendingUp, ownerOnly: true },
+  { label: "Facturas", href: "/admin/facturas", icon: ReceiptText },
   // OCULTO temporalmente a petición del cliente. Qué hace:
   // gestiona redirecciones 301/302 entre URLs antiguas y nuevas del sitio.
   // Útil cuando cambias el slug de un producto o categoría y quieres que
