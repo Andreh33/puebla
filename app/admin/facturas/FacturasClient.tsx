@@ -164,6 +164,8 @@ export function FacturasClient({
   const [maxAmount, setMaxAmount] = React.useState("");
   const [month, setMonth] = React.useState(todayYmd.slice(0, 7));
   const [creating, setCreating] = React.useState(false);
+  // Aviso de nº de factura duplicado pendiente de confirmar (null = ninguno).
+  const [dupInvoice, setDupInvoice] = React.useState<{ id: string; value: string; prev: string } | null>(null);
 
   // El estado local (rows/cols) es la fuente de verdad durante la sesión: NO lo
   // resincronizamos con las props en cada revalidación. Hacerlo pisaba ediciones
@@ -186,7 +188,25 @@ export function FacturasClient({
       ),
     );
 
+  /** ¿Otra factura (distinta de `id`) ya usa este nº de factura? (trim + case-ins.) */
+  const isDuplicateInvoiceNumber = (id: string, value: string) => {
+    const v = value.trim().toLowerCase();
+    if (!v) return false;
+    return rows.some((r) => r.id !== id && (r.invoiceNumber ?? "").trim().toLowerCase() === v);
+  };
+
   async function commitField(id: string, field: EditableField, value: string, prev: string) {
+    // Nº de factura duplicado: si otra factura ya tiene ese número, no guardamos
+    // aún; mostramos el valor de forma optimista y pedimos confirmación centrada.
+    if (field === "invoiceNumber" && isDuplicateInvoiceNumber(id, value)) {
+      patchInvoice(id, { invoiceNumber: value });
+      setDupInvoice({ id, value, prev });
+      return;
+    }
+    await doCommitField(id, field, value, prev);
+  }
+
+  async function doCommitField(id: string, field: EditableField, value: string, prev: string) {
     // Solo estos campos admiten null (vacío = null). supplier e issueDate son
     // NOT NULL: el vacío se queda como "" y lo rechaza el servidor (rollback).
     const nullable = field === "brandLabel" || field === "invoiceNumber" || field === "concept" || field === "notes";
@@ -196,6 +216,19 @@ export function FacturasClient({
     if (!res.ok) {
       patchInvoice(id, { [field]: prev } as Partial<InvoiceDTO>);
       toast.error(res.error);
+    }
+  }
+
+  /** Confirma guardar un nº de factura duplicado (o lo revierte al cancelar). */
+  async function resolveDupInvoice(confirm: boolean) {
+    const dup = dupInvoice;
+    setDupInvoice(null);
+    if (!dup) return;
+    if (confirm) {
+      await doCommitField(dup.id, "invoiceNumber", dup.value, dup.prev);
+    } else {
+      // Revertir la celda al valor anterior (vacío → null).
+      patchInvoice(dup.id, { invoiceNumber: dup.prev.trim() ? dup.prev : null });
     }
   }
 
@@ -905,6 +938,28 @@ export function FacturasClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Aviso centrado: nº de factura duplicado */}
+      <Dialog open={!!dupInvoice} onOpenChange={(o) => !o && resolveDupInvoice(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Número de factura duplicado</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-zs-ink">
+            Ya existe una factura con el número{" "}
+            <span className="font-semibold">«{dupInvoice?.value}»</span>. ¿Seguro que quieres
+            guardarla igualmente?
+          </p>
+          <div className="mt-2 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => resolveDupInvoice(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={() => resolveDupInvoice(true)}>
+              Sí, guardar igualmente
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
