@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Bell, X } from "lucide-react";
+import { broadcastNewOrders, playAlertBell, unlockAudio } from "./order-alert";
 
 const POLL_MS = 20_000;
 
@@ -10,35 +11,24 @@ const POLL_MS = 20_000;
  * Vigía de pedidos nuevos para el panel. Sondea /api/admin/orders/pending-count
  * cada 20 s con `since` = momento de montaje: así solo avisa de los pedidos ONLINE
  * que entran mientras el admin tiene el panel abierto. Al detectar uno:
- *   - suena una campana (WebAudio, a todo volumen del sistema), y
+ *   - suena una campana (WebAudio, si el permiso está activo), y
  *   - aparece una alerta roja parpadeante fija, muy visible, con acceso directo
- *     a /admin/pedidos.
+ *     a /admin/pedidos, y
+ *   - difunde el contador para que el menú "Pedidos" muestre el punto rojo.
  *
- * El sonido necesita un gesto previo del usuario (política de autoplay de los
- * navegadores): desbloqueamos el AudioContext en la primera interacción.
+ * El sonido necesita un gesto previo del usuario (autoplay): desbloqueamos el
+ * AudioContext en la primera interacción.
  */
 export function NewOrderWatcher() {
   const router = useRouter();
+  const pathname = usePathname();
   const [since, setSince] = React.useState(() => new Date().toISOString());
   const [count, setCount] = React.useState(0);
   const lastCount = React.useRef(0);
-  const audioRef = React.useRef<AudioContext | null>(null);
 
   // Desbloqueo del audio en el primer gesto (una sola vez).
   React.useEffect(() => {
-    const unlock = () => {
-      try {
-        if (!audioRef.current) {
-          const Ctor =
-            window.AudioContext ||
-            (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-          if (Ctor) audioRef.current = new Ctor();
-        }
-        void audioRef.current?.resume();
-      } catch {
-        /* sin audio disponible: la alerta visual sigue funcionando */
-      }
-    };
+    const unlock = () => unlockAudio();
     window.addEventListener("pointerdown", unlock, { once: true });
     window.addEventListener("keydown", unlock, { once: true });
     return () => {
@@ -47,46 +37,38 @@ export function NewOrderWatcher() {
     };
   }, []);
 
-  const playBell = React.useCallback(() => {
-    const ctx = audioRef.current;
-    if (!ctx) return;
-    void ctx.resume();
-    const t0 = ctx.currentTime;
-    // Tres "din" con dos armónicos cada uno y caída exponencial (campana).
-    [0, 0.38, 0.76].forEach((offset) => {
-      const t = t0 + offset;
-      [880, 1320].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(i === 0 ? 1 : 0.45, t + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(t);
-        osc.stop(t + 0.6);
-      });
-    });
+  const reset = React.useCallback(() => {
+    lastCount.current = 0;
+    setCount(0);
+    broadcastNewOrders(0);
+    setSince(new Date().toISOString());
   }, []);
+
+  // Al abrir la propia página de pedidos, damos por vistos los nuevos.
+  React.useEffect(() => {
+    if (pathname === "/admin/pedidos") reset();
+  }, [pathname, reset]);
 
   React.useEffect(() => {
     let alive = true;
     async function poll() {
       try {
-        const res = await fetch(`/api/admin/orders/pending-count?since=${encodeURIComponent(since)}`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/admin/orders/pending-count?since=${encodeURIComponent(since)}`,
+          { cache: "no-store" },
+        );
         if (!res.ok || !alive) return;
         const data = (await res.json()) as { count?: number };
         const c = typeof data.count === "number" ? data.count : 0;
         if (c > lastCount.current) {
-          playBell();
-          // Refresca en segundo plano el listado (por si está abierto en pedidos).
-          router.refresh();
+          playAlertBell();
+          router.refresh(); // refresca el listado si está abierto en pedidos
         }
         lastCount.current = c;
-        if (alive) setCount(c);
+        if (alive) {
+          setCount(c);
+          broadcastNewOrders(c);
+        }
       } catch {
         /* red intermitente: reintentamos en el siguiente tick */
       }
@@ -97,15 +79,7 @@ export function NewOrderWatcher() {
       alive = false;
       window.clearInterval(id);
     };
-  }, [since, playBell, router]);
-
-  function acknowledge(navigate: boolean) {
-    // Reiniciamos la ventana de detección a "ahora" y limpiamos el contador.
-    lastCount.current = 0;
-    setCount(0);
-    setSince(new Date().toISOString());
-    if (navigate) router.push("/admin/pedidos");
-  }
+  }, [since, router]);
 
   if (count <= 0) return null;
 
@@ -124,14 +98,14 @@ export function NewOrderWatcher() {
         </div>
         <button
           type="button"
-          onClick={() => acknowledge(true)}
+          onClick={() => router.push("/admin/pedidos")}
           className="ml-1 rounded-lg bg-white px-3 py-1.5 text-sm font-bold text-red-700 shadow hover:bg-red-50"
         >
           Ver pedidos
         </button>
         <button
           type="button"
-          onClick={() => acknowledge(false)}
+          onClick={reset}
           aria-label="Silenciar aviso"
           className="rounded-md p-1 text-red-100 hover:bg-red-500 hover:text-white"
         >

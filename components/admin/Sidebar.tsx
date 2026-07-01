@@ -19,6 +19,7 @@ import {
   Settings,
   ArrowLeftRight,
   ShieldCheck,
+  KeyRound,
   ShoppingCart,
   ScanLine,
   Menu,
@@ -27,6 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNewOrderCount } from "./order-alert";
 import {
   Sheet,
   SheetContent,
@@ -71,6 +73,7 @@ export const ADMIN_NAV: NavItem[] = [
   // 404). Reactivar esta línea cuando se cree la página de ajustes.
   // { label: "Ajustes", href: "/admin/ajustes", icon: Settings, ownerOnly: true },
   { label: "Usuarios admin", href: "/admin/usuarios", icon: ShieldCheck, ownerOnly: true },
+  { label: "Permisos", href: "/admin/permisos", icon: KeyRound },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
@@ -83,17 +86,21 @@ function NavList({
   pathname,
   onNavigate,
   collapsed = false,
+  newOrders = 0,
 }: {
   items: NavItem[];
   pathname: string;
   onNavigate?: () => void;
   /** Bloque 8.11: modo iconos-only (sidebar contraído en desktop). */
   collapsed?: boolean;
+  /** Nº de pedidos nuevos → punto rojo sobre "Pedidos". */
+  newOrders?: number;
 }) {
   return (
     <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto p-3">
       {items.map((it) => {
         const active = isActive(pathname, it);
+        const alert = it.href === "/admin/pedidos" && newOrders > 0;
         return (
           <Link
             key={it.href}
@@ -109,14 +116,24 @@ function NavList({
                 : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700",
             )}
           >
-            <it.icon
-              className={cn(
-                "h-4 w-4 shrink-0",
-                active ? "text-zs-blue-700" : "text-zs-muted",
+            <span className="relative inline-flex shrink-0">
+              <it.icon
+                className={cn("h-4 w-4", active ? "text-zs-blue-700" : "text-zs-muted")}
+                aria-hidden="true"
+              />
+              {alert && (
+                <span className="absolute -right-1.5 -top-1.5 flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 motion-safe:animate-ping" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-600" />
+                </span>
               )}
-              aria-hidden="true"
-            />
+            </span>
             {!collapsed && <span>{it.label}</span>}
+            {!collapsed && alert && (
+              <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                {newOrders}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -148,6 +165,7 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const isOwner = role === "OWNER";
+  const newOrders = useNewOrderCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -204,7 +222,7 @@ export function Sidebar({
           )}
         </button>
       </div>
-      <NavList items={items} pathname={pathname} collapsed={collapsed} />
+      <NavList items={items} pathname={pathname} collapsed={collapsed} newOrders={newOrders} />
       {footer && !collapsed && <div className="border-t border-zs-border p-3">{footer}</div>}
     </aside>
   );
@@ -220,6 +238,7 @@ export function MobileSidebarTrigger({
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false);
   const isOwner = role === "OWNER";
+  const newOrders = useNewOrderCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -244,7 +263,7 @@ export function MobileSidebarTrigger({
             <Brand />
           </SheetTitle>
         </SheetHeader>
-        <NavList items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
+        <NavList items={items} pathname={pathname} onNavigate={() => setOpen(false)} newOrders={newOrders} />
         {footer && <div className="border-t border-zs-border p-3">{footer}</div>}
       </SheetContent>
     </Sheet>
