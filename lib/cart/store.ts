@@ -19,6 +19,8 @@ export type CartItem = {
   imageUrl: string | null;
   colorName: string;
   size: string | null;
+  /** SKU/referencia del producto (para el mensaje de reserva por WhatsApp). */
+  sku?: string;
   /** Precio unitario congelado al añadir (final, IVA incluido). */
   price: number;
   /**
@@ -63,6 +65,7 @@ function sanitizeItems(value: unknown): CartItem[] {
         typeof v.maxStock === "number" && v.maxStock > 0
           ? Math.floor(v.maxStock)
           : undefined;
+      const sku = typeof v.sku === "string" ? v.sku : undefined;
       return {
         productId,
         slug: typeof v.slug === "string" ? v.slug : productId,
@@ -74,9 +77,11 @@ function sanitizeItems(value: unknown): CartItem[] {
         price,
         qty: maxStock ? Math.min(qty, maxStock) : qty,
         addedAt: typeof v.addedAt === "number" ? v.addedAt : Date.now(),
-        // Solo incluimos la clave si la conocemos: así el tipo inferido la deja
-        // opcional (igual que en CartItem) y el type-guard de abajo encaja.
+        // Solo incluimos las claves opcionales si las conocemos: así el tipo
+        // inferido las deja opcionales (igual que en CartItem) y el type-guard
+        // de abajo encaja.
         ...(maxStock !== undefined ? { maxStock } : {}),
+        ...(sku !== undefined ? { sku } : {}),
       } satisfies CartItem;
     })
     .filter((x): x is CartItem => x !== null);

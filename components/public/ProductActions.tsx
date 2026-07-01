@@ -8,6 +8,9 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
 type Props = {
   productName: string;
+  /** SKU del producto — se incluye en el mensaje de WhatsApp para que la tienda
+   *  identifique la referencia exacta al reservar. */
+  productSku?: string | null;
   /** Precio ya formateado (p. ej. "39,95 €") — se incluye en el mensaje de WhatsApp. */
   priceLabel?: string;
   sizes: SizeOption[];
@@ -22,6 +25,7 @@ type Props = {
 
 export function ProductActions({
   productName,
+  productSku,
   priceLabel,
   sizes,
   source,
@@ -71,6 +75,7 @@ export function ProductActions({
     WhatsAppMessages.reservation(productName, effectiveSize ?? undefined, {
       url: pageUrl || undefined,
       price: priceLabel,
+      sku: productSku,
     }),
   );
 
@@ -92,6 +97,7 @@ export function ProductActions({
             WhatsAppMessages.product(productName, undefined, {
               url: pageUrl || undefined,
               price: priceLabel,
+              sku: productSku,
             }),
           )}
           target="_blank"

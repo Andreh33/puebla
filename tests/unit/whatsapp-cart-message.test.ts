@@ -108,6 +108,18 @@ describe("buildCartWhatsAppMessage", () => {
     expect(msg).not.toContain("Único");
   });
 
+  it("incluye el SKU junto al nombre cuando el item lo trae", () => {
+    const msg = buildCartWhatsAppMessage([
+      item({ brand: "Joma", name: "Zapatilla", colorName: "Único", size: "42", sku: "JOM-123", price: 50 }),
+    ]);
+    expect(msg).toContain("Joma Zapatilla (SKU: JOM-123) · Talla 42");
+  });
+
+  it("no añade paréntesis de SKU si el item no lo trae", () => {
+    const msg = buildCartWhatsAppMessage([item({ brand: "Joma", name: "Zapatilla", size: "42", price: 50 })]);
+    expect(msg).not.toContain("SKU:");
+  });
+
   it("devuelve mensaje fallback si el carrito está vacío", () => {
     const msg = buildCartWhatsAppMessage([]);
     expect(msg.length).toBeGreaterThan(0);

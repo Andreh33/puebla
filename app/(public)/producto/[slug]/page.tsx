@@ -310,6 +310,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             <ProductActions
               descriptionSlot={descriptionSlot}
               productName={cleanProductName(product.name)}
+              productSku={resolveProductSku({
+                modelCode: product.modelCode,
+                externalId: product.externalId,
+                id: product.id,
+              })}
               priceLabel={formatPriceEUR(final.toNumber())}
               sizes={sizes}
               source={product.source}
@@ -322,6 +327,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 imageUrl: product.mainImageUrl ?? galleryImages[0]?.url ?? null,
                 colorName: product.colorName,
                 price: final.toNumber(),
+                sku: resolveProductSku({
+                  modelCode: product.modelCode,
+                  externalId: product.externalId,
+                  id: product.id,
+                }),
               }}
             />
 

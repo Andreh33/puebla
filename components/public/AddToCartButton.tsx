@@ -15,6 +15,8 @@ export type AddToCartProduct = {
   imageUrl: string | null;
   colorName: string;
   price: number;
+  /** SKU/referencia del producto — viaja al mensaje de WhatsApp de reserva. */
+  sku?: string | null;
 };
 
 type Props = {
@@ -76,6 +78,7 @@ export function AddToCartButton({
       colorName: product.colorName,
       size: selectedSize,
       price: product.price,
+      sku: product.sku ?? undefined,
       maxStock: maxStock ?? undefined,
       qty: 1,
       addedAt: Date.now(),

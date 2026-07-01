@@ -24,6 +24,7 @@ function describeItem(item: CartItem): string {
     item.colorName && item.colorName !== "Único"
       ? `${head} ${item.colorName}`.trim()
       : head;
+  const skuChunk = item.sku ? ` (SKU: ${item.sku})` : "";
 
   const sizeChunk =
     item.size && item.size.toUpperCase() !== "ÚNICA" && item.size.toUpperCase() !== "UNICA"
@@ -32,7 +33,7 @@ function describeItem(item: CartItem): string {
 
   const qtyChunk = ` · ${item.qty} ud`;
   const unitPrice = formatPriceEs(item.price);
-  return `${headWithColor}${sizeChunk}${qtyChunk} · ${unitPrice}`;
+  return `${headWithColor}${skuChunk}${sizeChunk}${qtyChunk} · ${unitPrice}`;
 }
 
 /**

@@ -17,23 +17,25 @@ export const WhatsAppMessages = {
   product: (
     productName: string,
     size?: string,
-    extra?: { url?: string; price?: string },
+    extra?: { url?: string; price?: string; sku?: string | null },
   ) => {
+    const skuChunk = extra?.sku ? ` (SKU: ${extra.sku})` : "";
     const sz = size ? ` (talla ${size})` : "";
     const pr = extra?.price ? ` — ${extra.price}` : "";
     const link = extra?.url ? `\n${extra.url}` : "";
-    return `Hola, me interesa "${productName}"${sz}${pr}. ¿Lo tenéis disponible?${link}`;
+    return `Hola, me interesa "${productName}"${skuChunk}${sz}${pr}. ¿Lo tenéis disponible?${link}`;
   },
 
   reservation: (
     productName: string,
     size?: string,
-    extra?: { url?: string; price?: string },
+    extra?: { url?: string; price?: string; sku?: string | null },
   ) => {
+    const skuChunk = extra?.sku ? ` (SKU: ${extra.sku})` : "";
     const sz = size ? ` (talla ${size})` : "";
     const pr = extra?.price ? ` — ${extra.price}` : "";
     const link = extra?.url ? `\n${extra.url}` : "";
-    return `Hola, quiero reservar "${productName}"${sz}${pr} para pasar a recogerlo por la tienda.${link}`;
+    return `Hola, quiero reservar "${productName}"${skuChunk}${sz}${pr} para pasar a recogerlo por la tienda.${link}`;
   },
 
   contactFromPage: (pageTitle: string) =>
