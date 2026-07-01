@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
-import { FacturasClient, type InvoiceDTO, type ColumnDTO } from "./FacturasClient";
+import { FacturasClient, type InvoiceDTO, type ColumnDTO, type SupplierDTO } from "./FacturasClient";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Facturas de proveedores · Admin" };
 
 export default async function FacturasPage() {
-  const [invoices, columns] = await Promise.all([
+  const [invoices, columns, suppliers] = await Promise.all([
     db.supplierInvoice
       .findMany({
         orderBy: [{ issueDate: "desc" }, { createdAt: "desc" }],
@@ -14,6 +14,7 @@ export default async function FacturasPage() {
       })
       .catch(() => []),
     db.invoiceColumn.findMany({ orderBy: { position: "asc" } }).catch(() => []),
+    db.supplier.findMany({ orderBy: { name: "asc" } }).catch(() => []),
   ]);
 
   const serialized: InvoiceDTO[] = invoices.map((inv) => ({
@@ -43,6 +44,8 @@ export default async function FacturasPage() {
     width: c.width,
   }));
 
+  const suppliersDTO: SupplierDTO[] = suppliers.map((s) => ({ id: s.id, name: s.name }));
+
   const todayYmd = new Date().toISOString().slice(0, 10);
 
   return (
@@ -52,7 +55,7 @@ export default async function FacturasPage() {
         description="Registro de facturas y vencimientos a pagar. Todo se rellena a mano."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Facturas" }]}
       />
-      <FacturasClient invoices={serialized} columns={cols} todayYmd={todayYmd} />
+      <FacturasClient invoices={serialized} columns={cols} suppliers={suppliersDTO} todayYmd={todayYmd} />
     </div>
   );
 }

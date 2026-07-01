@@ -2,7 +2,22 @@
 
 import * as React from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Search, ChevronLeft, ChevronRight, X, GripVertical } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  GripVertical,
+  SlidersHorizontal,
+  Users,
+  Pencil,
+  Check,
+  Receipt,
+  Wallet,
+  Clock,
+} from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -21,6 +36,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -32,9 +55,15 @@ import {
   invoiceTotal,
   invoiceOutstanding,
   invoiceStatus,
+  totalInvoiced,
+  totalPaid,
   totalOutstanding,
   outstandingInMonth,
+  spendByMonth,
+  spendBySupplier,
+  filterInvoices,
   type InvoiceStatus,
+  type InvoiceFilter,
 } from "@/lib/admin/supplier-invoices";
 import {
   createInvoiceAction,
@@ -50,10 +79,14 @@ import {
   resizeColumnAction,
   deleteColumnAction,
   setCustomValueAction,
+  createSupplierAction,
+  renameSupplierAction,
+  deleteSupplierAction,
 } from "./_actions";
 
 export type DueDTO = { id: string; dueDate: string; amount: number; paid: boolean };
 export type ColumnDTO = { id: string; name: string; position: number; width: number };
+export type SupplierDTO = { id: string; name: string };
 export type InvoiceDTO = {
   id: string;
   supplier: string;
@@ -111,16 +144,24 @@ async function safeAction<T extends { ok: boolean; error?: string }>(
 export function FacturasClient({
   invoices,
   columns,
+  suppliers,
   todayYmd,
 }: {
   invoices: InvoiceDTO[];
   columns: ColumnDTO[];
+  suppliers: SupplierDTO[];
   todayYmd: string;
 }) {
   const [rows, setRows] = React.useState<InvoiceDTO[]>(invoices);
   const [cols, setCols] = React.useState<ColumnDTO[]>(columns);
+  const [sups, setSups] = React.useState<SupplierDTO[]>(suppliers);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<"all" | InvoiceStatus>("all");
+  const [supplierFilter, setSupplierFilter] = React.useState<string>(""); // "" = todos
+  const [from, setFrom] = React.useState("");
+  const [to, setTo] = React.useState("");
+  const [minAmount, setMinAmount] = React.useState("");
+  const [maxAmount, setMaxAmount] = React.useState("");
   const [month, setMonth] = React.useState(todayYmd.slice(0, 7));
   const [creating, setCreating] = React.useState(false);
 
@@ -328,20 +369,92 @@ export function FacturasClient({
     }
   }
 
-  // --- derivados -------------------------------------------------------------
-  const filtered = React.useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return rows.filter((r) => {
-      if (statusFilter !== "all" && invoiceStatus(r.dueDates, todayYmd) !== statusFilter) return false;
-      if (!q) return true;
-      return [r.supplier, r.brandLabel, r.invoiceNumber, r.concept].some((v) =>
-        (v ?? "").toLowerCase().includes(q),
-      );
-    });
-  }, [rows, search, statusFilter, todayYmd]);
+  // --- registro de proveedores (lista guardada del desplegable) --------------
+  /** Inserta un proveedor en el registro (idempotente por nombre) y devuelve su
+   *  nombre canónico, o null si falló. Lo usa el combobox de la celda. */
+  async function createSupplier(name: string): Promise<string | null> {
+    const res = await safeAction(() => createSupplierAction(name));
+    if (!res.ok) {
+      toast.error(res.error);
+      return null;
+    }
+    setSups((ss) => (ss.some((s) => s.id === res.id) ? ss : [...ss, { id: res.id, name: res.name }].sort((a, b) => a.name.localeCompare(b.name))));
+    return res.name;
+  }
 
-  const totalDebt = totalOutstanding(rows);
-  const monthDebt = outstandingInMonth(rows, month);
+  async function renameSupplier(id: string, name: string, prev: string) {
+    const n = name.trim();
+    if (!n || n === prev) return;
+    setSups((ss) => ss.map((s) => (s.id === id ? { ...s, name: n } : s)).sort((a, b) => a.name.localeCompare(b.name)));
+    // Renombrar propaga a las facturas locales que usaban el nombre anterior.
+    setRows((rs) => rs.map((r) => (r.supplier === prev ? { ...r, supplier: n } : r)));
+    const res = await safeAction(() => renameSupplierAction(id, n));
+    if (!res.ok) {
+      setSups((ss) => ss.map((s) => (s.id === id ? { ...s, name: prev } : s)).sort((a, b) => a.name.localeCompare(b.name)));
+      setRows((rs) => rs.map((r) => (r.supplier === n ? { ...r, supplier: prev } : r)));
+      toast.error(res.error);
+    }
+  }
+
+  async function removeSupplier(id: string) {
+    const snapshot = sups;
+    setSups((ss) => ss.filter((s) => s.id !== id));
+    const res = await safeAction(() => deleteSupplierAction(id));
+    if (!res.ok) {
+      setSups(snapshot);
+      toast.error(res.error);
+    }
+  }
+
+  const supplierOptions = React.useMemo(
+    () => sups.map((s) => ({ value: s.name, label: s.name })),
+    [sups],
+  );
+
+  // --- filtros + derivados ---------------------------------------------------
+  const filter: InvoiceFilter = React.useMemo(
+    () => ({
+      supplier: supplierFilter,
+      from,
+      to,
+      min: minAmount.trim() === "" ? null : Number(minAmount.replace(",", ".")),
+      max: maxAmount.trim() === "" ? null : Number(maxAmount.replace(",", ".")),
+      status: statusFilter,
+      text: search,
+      today: todayYmd,
+    }),
+    [supplierFilter, from, to, minAmount, maxAmount, statusFilter, search, todayYmd],
+  );
+
+  const filtered = React.useMemo(() => filterInvoices(rows, filter), [rows, filter]);
+
+  const filtersActive =
+    supplierFilter !== "" ||
+    from !== "" ||
+    to !== "" ||
+    minAmount !== "" ||
+    maxAmount !== "" ||
+    statusFilter !== "all" ||
+    search.trim() !== "";
+
+  function clearFilters() {
+    setSupplierFilter("");
+    setFrom("");
+    setTo("");
+    setMinAmount("");
+    setMaxAmount("");
+    setStatusFilter("all");
+    setSearch("");
+  }
+
+  // KPIs y análisis se calculan sobre el subconjunto FILTRADO.
+  const kpiInvoiced = totalInvoiced(filtered);
+  const kpiPaid = totalPaid(filtered);
+  const kpiOutstanding = totalOutstanding(filtered);
+  const byMonth = React.useMemo(() => spendByMonth(filtered), [filtered]);
+  const bySupplier = React.useMemo(() => spendBySupplier(filtered), [filtered]);
+
+  const monthDebt = outstandingInMonth(filtered, month);
   const monthLabel = new Date(`${month}-01T00:00:00Z`).toLocaleDateString("es-ES", {
     month: "long",
     year: "numeric",
@@ -350,19 +463,64 @@ export function FacturasClient({
 
   return (
     <div className="space-y-5">
-      {/* Totales */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs uppercase tracking-wide text-zs-muted">Total que se debe</p>
-            <p className="mt-1 font-display text-2xl font-bold text-zs-ink">{fmt(totalDebt)}</p>
-            <p className="mt-1 text-xs text-zs-muted">Suma de todos los vencimientos pendientes.</p>
-          </CardContent>
-        </Card>
+      {/* Acciones */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-zs-muted">
+          {filtersActive ? (
+            <>
+              Mostrando <span className="font-semibold text-zs-ink">{filtered.length}</span> de {rows.length} facturas
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-zs-ink">{rows.length}</span> facturas registradas
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <SupplierManagerDialog
+            suppliers={sups}
+            onCreate={createSupplier}
+            onRename={renameSupplier}
+            onRemove={removeSupplier}
+          />
+          <Button type="button" variant="outline" onClick={addColumn}>
+            <Plus className="mr-1 h-4 w-4" /> Columna
+          </Button>
+          <Button type="button" onClick={addInvoice} disabled={creating}>
+            <Plus className="mr-1 h-4 w-4" /> Añadir factura
+          </Button>
+        </div>
+      </div>
+
+      {/* KPIs — se recalculan con los filtros activos */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          icon={<Receipt className="h-4 w-4" />}
+          tone="blue"
+          label="Facturado"
+          value={fmt(kpiInvoiced)}
+          hint={filtersActive ? "sobre lo filtrado" : "todo lo comprado"}
+        />
+        <KpiCard
+          icon={<Wallet className="h-4 w-4" />}
+          tone="emerald"
+          label="Pagado"
+          value={fmt(kpiPaid)}
+          hint="salida de caja real"
+        />
+        <KpiCard
+          icon={<Clock className="h-4 w-4" />}
+          tone="amber"
+          label="Pendiente"
+          value={fmt(kpiOutstanding)}
+          hint="lo que aún se debe"
+        />
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs uppercase tracking-wide text-zs-muted">A pagar en el mes</p>
+              <p className="flex items-center gap-1.5 text-xs uppercase tracking-wide text-zs-muted">
+                <ChevronRight className="h-4 w-4" /> A pagar en el mes
+              </p>
               <input
                 type="month"
                 value={month}
@@ -377,35 +535,127 @@ export function FacturasClient({
         </Card>
       </div>
 
-      {/* Filtros + alta */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[220px]">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zs-muted" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por proveedor, marca, nº factura o concepto…"
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | InvoiceStatus)}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="pending">Pendientes</SelectItem>
-            <SelectItem value="overdue">Vencidas</SelectItem>
-            <SelectItem value="paid">Pagadas</SelectItem>
-            <SelectItem value="empty">Sin vencimientos</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button type="button" onClick={addInvoice} disabled={creating}>
-          <Plus className="mr-1 h-4 w-4" /> Añadir factura
-        </Button>
-        <Button type="button" variant="outline" onClick={addColumn}>
-          <Plus className="mr-1 h-4 w-4" /> Columna
-        </Button>
+      {/* Panel de filtros combinables */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-sm font-semibold text-zs-ink">
+              <SlidersHorizontal className="h-4 w-4" /> Filtros
+            </p>
+            {filtersActive && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 text-xs font-medium text-zs-blue-700 hover:underline"
+              >
+                <X className="h-3.5 w-3.5" /> Limpiar
+              </button>
+            )}
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {/* Proveedor */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zs-muted">Proveedor</label>
+              <Combobox
+                options={supplierOptions}
+                value={supplierFilter || null}
+                onChange={(v) => setSupplierFilter(v ?? "")}
+                placeholder="Todos"
+                searchPlaceholder="Buscar proveedor…"
+                emptyText="Sin proveedores"
+                className="h-9"
+              />
+            </div>
+            {/* Estado */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zs-muted">Estado</label>
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as "all" | InvoiceStatus)}>
+                <SelectTrigger className="h-9 w-full">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="pending">Pendientes</SelectItem>
+                  <SelectItem value="overdue">Vencidas</SelectItem>
+                  <SelectItem value="paid">Pagadas</SelectItem>
+                  <SelectItem value="empty">Sin vencimientos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Rango de fechas (fecha de factura) */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zs-muted">Fecha de factura</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="date"
+                  value={from}
+                  max={to || undefined}
+                  onChange={(e) => setFrom(e.target.value)}
+                  aria-label="Desde"
+                  className="h-9 w-full rounded-md border border-zs-border bg-white px-2 text-sm outline-none focus:ring-1 focus:ring-zs-blue-300"
+                />
+                <span className="text-zs-muted">—</span>
+                <input
+                  type="date"
+                  value={to}
+                  min={from || undefined}
+                  onChange={(e) => setTo(e.target.value)}
+                  aria-label="Hasta"
+                  className="h-9 w-full rounded-md border border-zs-border bg-white px-2 text-sm outline-none focus:ring-1 focus:ring-zs-blue-300"
+                />
+              </div>
+            </div>
+            {/* Rango de importe (total de la factura) */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zs-muted">Importe total (€)</label>
+              <div className="flex items-center gap-1">
+                <Input
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="mín"
+                  aria-label="Importe mínimo"
+                  className="h-9"
+                />
+                <span className="text-zs-muted">—</span>
+                <Input
+                  value={maxAmount}
+                  onChange={(e) => setMaxAmount(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="máx"
+                  aria-label="Importe máximo"
+                  className="h-9"
+                />
+              </div>
+            </div>
+          </div>
+          {/* Búsqueda de texto */}
+          <div className="relative mt-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zs-muted" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por proveedor, nº factura o concepto…"
+              className="pl-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Análisis — gasto por mes y por proveedor (sobre lo filtrado) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="mb-3 text-sm font-semibold text-zs-ink">Gasto por mes</h2>
+            <MonthSpendBars data={byMonth} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="mb-3 text-sm font-semibold text-zs-ink">Gasto por proveedor</h2>
+            <SupplierSpendBars data={bySupplier} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabla tipo hoja — columnas personalizadas arrastrables */}
@@ -457,11 +707,20 @@ export function FacturasClient({
                         onCommit={(v) => commitField(inv.id, "issueDate", v, inv.issueDate)}
                       />
                     </td>
-                    <td className="px-1 py-1 min-w-[140px]">
-                      <EditableCell
-                        value={inv.supplier}
+                    <td className="px-1 py-1 min-w-[170px]">
+                      <Combobox
+                        options={supplierOptions}
+                        value={inv.supplier || null}
+                        onChange={(v) => commitField(inv.id, "supplier", v ?? "", inv.supplier)}
                         placeholder="Proveedor…"
-                        onCommit={(v) => commitField(inv.id, "supplier", v, inv.supplier)}
+                        searchPlaceholder="Buscar o crear…"
+                        emptyText="Escribe para crear"
+                        allowCreate
+                        onCreate={async (input) => {
+                          const name = await createSupplier(input);
+                          return name ? { value: name, label: name } : null;
+                        }}
+                        className="h-9 border-transparent bg-transparent hover:bg-white"
                       />
                     </td>
                     <td className="px-1 py-1 min-w-[110px]">
@@ -630,7 +889,7 @@ export function FacturasClient({
                 </Button>
               </div>
             </div>
-            <MonthCalendar month={month} rows={rows} todayYmd={todayYmd} />
+            <MonthCalendar month={month} rows={filtered} todayYmd={todayYmd} />
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-zs-muted">
               <Legend className="bg-emerald-200" label="Pagado" />
               <Legend className="bg-amber-200" label="Pendiente" />
@@ -642,7 +901,7 @@ export function FacturasClient({
         <Card>
           <CardContent className="p-4">
             <h2 className="mb-3 text-sm font-semibold text-zs-ink">Próximos pagos</h2>
-            <UpcomingPayments rows={rows} todayYmd={todayYmd} />
+            <UpcomingPayments rows={filtered} todayYmd={todayYmd} />
           </CardContent>
         </Card>
       </div>
@@ -656,6 +915,267 @@ function Legend({ className, label }: { className: string; label: string }) {
       <span className={`inline-block h-3 w-3 rounded ${className}`} />
       {label}
     </span>
+  );
+}
+
+const KPI_TONE: Record<"blue" | "emerald" | "amber", string> = {
+  blue: "bg-zs-blue-100 text-zs-blue-700",
+  emerald: "bg-emerald-100 text-emerald-700",
+  amber: "bg-amber-100 text-amber-800",
+};
+
+function KpiCard({
+  icon,
+  tone,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  tone: "blue" | "emerald" | "amber";
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${KPI_TONE[tone]}`}>
+            {icon}
+          </span>
+          <p className="text-xs uppercase tracking-wide text-zs-muted">{label}</p>
+        </div>
+        <p className="mt-2 font-display text-2xl font-bold text-zs-ink tabular-nums">{value}</p>
+        <p className="mt-0.5 text-xs text-zs-muted">{hint}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** "2026-07" → "jul 2026". */
+function formatYm(ym: string): string {
+  return new Date(`${ym}-01T00:00:00Z`)
+    .toLocaleDateString("es-ES", { month: "short", year: "numeric", timeZone: "UTC" })
+    .replace(".", "");
+}
+
+function MonthSpendBars({
+  data,
+}: {
+  data: { ym: string; facturado: number; pagado: number; pendiente: number }[];
+}) {
+  if (data.length === 0) {
+    return <p className="py-6 text-center text-sm text-zs-muted">Sin datos para el filtro actual.</p>;
+  }
+  const max = Math.max(...data.map((d) => d.facturado), 1);
+  // Más recientes arriba; limitamos a 12 meses para que no crezca sin fin.
+  const shown = [...data].reverse().slice(0, 12);
+  return (
+    <div className="space-y-2">
+      {shown.map((d) => {
+        const paidPct = d.facturado > 0 ? (d.pagado / d.facturado) * 100 : 0;
+        return (
+          <div key={d.ym} className="grid grid-cols-[64px_1fr_auto] items-center gap-2">
+            <span className="text-xs capitalize text-zs-muted">{formatYm(d.ym)}</span>
+            <div
+              className="h-5 rounded bg-zs-surface"
+              title={`Facturado ${fmt(d.facturado)} · Pagado ${fmt(d.pagado)} · Pendiente ${fmt(d.pendiente)}`}
+            >
+              <div
+                className="h-full rounded bg-zs-blue-200"
+                style={{ width: `${(d.facturado / max) * 100}%` }}
+              >
+                <div className="h-full rounded bg-emerald-400" style={{ width: `${paidPct}%` }} />
+              </div>
+            </div>
+            <span className="text-right text-xs font-semibold tabular-nums text-zs-ink">{fmt(d.facturado)}</span>
+          </div>
+        );
+      })}
+      <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-zs-muted">
+        <Legend className="bg-emerald-400" label="Pagado" />
+        <Legend className="bg-zs-blue-200" label="Facturado" />
+      </div>
+    </div>
+  );
+}
+
+function SupplierSpendBars({
+  data,
+}: {
+  data: { supplier: string; facturado: number; pagado: number; pendiente: number; count: number }[];
+}) {
+  if (data.length === 0) {
+    return <p className="py-6 text-center text-sm text-zs-muted">Sin datos para el filtro actual.</p>;
+  }
+  const max = Math.max(...data.map((d) => d.facturado), 1);
+  const shown = data.slice(0, 8);
+  return (
+    <div className="space-y-2.5">
+      {shown.map((d) => (
+        <div key={d.supplier}>
+          <div className="flex items-baseline justify-between gap-2 text-xs">
+            <span className="truncate font-medium text-zs-ink" title={d.supplier}>
+              {d.supplier}
+              <span className="ml-1 text-zs-muted">· {d.count}</span>
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums text-zs-ink">{fmt(d.facturado)}</span>
+          </div>
+          <div
+            className="mt-1 h-2.5 rounded-full bg-zs-surface"
+            title={`Pendiente ${fmt(d.pendiente)}`}
+          >
+            <div
+              className="h-full rounded-full bg-zs-blue-400"
+              style={{ width: `${(d.facturado / max) * 100}%` }}
+            />
+          </div>
+        </div>
+      ))}
+      {data.length > shown.length && (
+        <p className="pt-1 text-[11px] text-zs-muted">+{data.length - shown.length} proveedores más</p>
+      )}
+    </div>
+  );
+}
+
+/** Gestor de la lista guardada de proveedores: renombrar (propaga a facturas),
+ *  borrar (solo del listado) y añadir. */
+function SupplierManagerDialog({
+  suppliers,
+  onCreate,
+  onRename,
+  onRemove,
+}: {
+  suppliers: SupplierDTO[];
+  onCreate: (name: string) => Promise<string | null>;
+  onRename: (id: string, name: string, prev: string) => void;
+  onRemove: (id: string) => void;
+  }) {
+  const [newName, setNewName] = React.useState("");
+  const [adding, setAdding] = React.useState(false);
+
+  async function add() {
+    const n = newName.trim();
+    if (!n) return;
+    setAdding(true);
+    try {
+      const created = await onCreate(n);
+      if (created) setNewName("");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button type="button" variant="outline">
+          <Users className="mr-1 h-4 w-4" /> Proveedores
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Proveedores guardados</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center gap-2">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void add();
+              }
+            }}
+            placeholder="Nuevo proveedor…"
+          />
+          <Button type="button" onClick={add} disabled={adding || !newName.trim()}>
+            <Plus className="mr-1 h-4 w-4" /> Añadir
+          </Button>
+        </div>
+        <div className="max-h-72 space-y-1 overflow-auto">
+          {suppliers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-zs-muted">Aún no hay proveedores guardados.</p>
+          ) : (
+            suppliers.map((s) => (
+              <SupplierRow key={s.id} supplier={s} onRename={onRename} onRemove={onRemove} />
+            ))
+          )}
+        </div>
+        <p className="text-xs text-zs-muted">
+          Renombrar actualiza también las facturas de ese proveedor. Borrar solo lo quita del listado; las
+          facturas conservan su texto.
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SupplierRow({
+  supplier,
+  onRename,
+  onRemove,
+}: {
+  supplier: SupplierDTO;
+  onRename: (id: string, name: string, prev: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [editing, setEditing] = React.useState(false);
+  const [name, setName] = React.useState(supplier.name);
+  React.useEffect(() => setName(supplier.name), [supplier.name]);
+
+  function commit() {
+    setEditing(false);
+    if (name.trim() && name.trim() !== supplier.name) onRename(supplier.id, name.trim(), supplier.name);
+    else setName(supplier.name);
+  }
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zs-surface">
+      {editing ? (
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") {
+              setName(supplier.name);
+              setEditing(false);
+            }
+          }}
+          maxLength={120}
+          className="flex-1 rounded border border-zs-border bg-white px-2 py-1 text-sm outline-none focus:ring-1 focus:ring-zs-blue-300"
+        />
+      ) : (
+        <span className="flex-1 truncate text-sm text-zs-ink">{supplier.name}</span>
+      )}
+      {editing ? (
+        <button type="button" onClick={commit} aria-label="Guardar" className="text-emerald-600 hover:text-emerald-700">
+          <Check className="h-4 w-4" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          aria-label={`Renombrar ${supplier.name}`}
+          className="text-zs-muted hover:text-zs-ink"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => onRemove(supplier.id)}
+        aria-label={`Borrar ${supplier.name}`}
+        className="text-zs-muted hover:text-red-600"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 

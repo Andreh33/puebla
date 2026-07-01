@@ -46,6 +46,22 @@ export async function createInvoiceAction(): Promise<Ok<{ id: string }> | Err> {
   }
 }
 
+/** Inserta el proveedor en el registro si aún no existe (case-insensitive), para
+ *  que la lista del desplegable no pierda ninguno escrito a mano. No lanza. */
+async function ensureSupplier(name: string): Promise<void> {
+  const n = name.trim().slice(0, 120);
+  if (!n) return;
+  try {
+    const existing = await db.supplier.findFirst({
+      where: { name: { equals: n, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (!existing) await db.supplier.create({ data: { name: n } });
+  } catch {
+    /* el registro es best-effort; no bloquea el guardado de la factura */
+  }
+}
+
 /** Edita un campo de cabecera de la factura (texto libre o fecha de emisión). */
 export async function updateInvoiceFieldAction(
   id: string,
@@ -79,6 +95,7 @@ export async function updateInvoiceFieldAction(
   }
   try {
     await db.supplierInvoice.update({ where: { id }, data });
+    if (field === "supplier") await ensureSupplier(value);
     revalidatePath("/admin/facturas");
     return { ok: true };
   } catch (e) {
@@ -271,5 +288,69 @@ export async function setCustomValueAction(
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Error al guardar el valor" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Registro de proveedores (lista guardada del desplegable). El nombre es único
+// (case-insensitive). Renombrar propaga el cambio a las facturas.
+// ---------------------------------------------------------------------------
+
+const SUPPLIER_NAME_MAX = 120;
+
+export async function createSupplierAction(name: string): Promise<Ok<{ id: string; name: string }> | Err> {
+  await requireSession();
+  const n = name.trim().slice(0, SUPPLIER_NAME_MAX);
+  if (!n) return { ok: false, error: "El nombre del proveedor no puede estar vacío" };
+  try {
+    const existing = await db.supplier.findFirst({
+      where: { name: { equals: n, mode: "insensitive" } },
+      select: { id: true, name: true },
+    });
+    if (existing) return { ok: true, id: existing.id, name: existing.name };
+    const s = await db.supplier.create({ data: { name: n }, select: { id: true, name: true } });
+    revalidatePath("/admin/facturas");
+    return { ok: true, id: s.id, name: s.name };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al crear el proveedor" };
+  }
+}
+
+export async function renameSupplierAction(id: string, name: string): Promise<Ok | Err> {
+  await requireSession();
+  const n = name.trim().slice(0, SUPPLIER_NAME_MAX);
+  if (!n) return { ok: false, error: "El nombre del proveedor no puede estar vacío" };
+  try {
+    const current = await db.supplier.findUnique({ where: { id }, select: { name: true } });
+    if (!current) return { ok: false, error: "Proveedor no encontrado" };
+    if (current.name === n) return { ok: true };
+    const clash = await db.supplier.findFirst({
+      where: { name: { equals: n, mode: "insensitive" }, NOT: { id } },
+      select: { id: true },
+    });
+    if (clash) return { ok: false, error: "Ya existe un proveedor con ese nombre" };
+    // Renombrar propaga a las facturas que usaban el nombre anterior, así el
+    // filtro y las agregaciones por proveedor no se desincronizan.
+    await db.$transaction([
+      db.supplier.update({ where: { id }, data: { name: n } }),
+      db.supplierInvoice.updateMany({ where: { supplier: current.name }, data: { supplier: n } }),
+    ]);
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al renombrar el proveedor" };
+  }
+}
+
+/** Quita el proveedor de la lista guardada. NO toca las facturas existentes
+ *  (conservan su texto); solo deja de ofrecerse en el desplegable. */
+export async function deleteSupplierAction(id: string): Promise<Ok | Err> {
+  await requireSession();
+  try {
+    await db.supplier.delete({ where: { id } });
+    revalidatePath("/admin/facturas");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Error al borrar el proveedor" };
   }
 }
