@@ -16,7 +16,8 @@ type Err = { ok: false; error: string };
 
 function parseAmount(raw: string): number | null {
   const n = Number(String(raw).replace(",", ".").trim());
-  if (!Number.isFinite(n) || n < 0 || n > 9_999_999) return null;
+  // Se admiten negativos (p. ej. abonos/notas de crédito), acotando la magnitud.
+  if (!Number.isFinite(n) || Math.abs(n) > 9_999_999) return null;
   return Math.round(n * 100) / 100;
 }
 
@@ -105,7 +106,7 @@ export async function addDueDateAction(
   await requireSession();
   if (!isYmd(dueDate)) return { ok: false, error: "Fecha de vencimiento inválida" };
   const amount = parseAmount(amountRaw);
-  if (amount === null) return { ok: false, error: "Importe inválido (número ≥ 0)" };
+  if (amount === null) return { ok: false, error: "Importe inválido" };
   try {
     const d = await db.supplierInvoiceDueDate.create({
       data: { invoiceId, dueDate: dateOnly(dueDate), amount: amount.toFixed(2) },
@@ -130,7 +131,7 @@ export async function updateDueDateAction(
   }
   if (patch.amount !== undefined) {
     const amount = parseAmount(patch.amount);
-    if (amount === null) return { ok: false, error: "Importe inválido (número ≥ 0)" };
+    if (amount === null) return { ok: false, error: "Importe inválido" };
     data.amount = amount.toFixed(2);
   }
   try {
