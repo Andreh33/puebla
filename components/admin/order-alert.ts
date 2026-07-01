@@ -10,6 +10,7 @@ import * as React from "react";
 
 export const NEW_ORDERS_EVENT = "zs:new-orders";
 export const SOUND_KEY = "zs_admin_new_order_sound";
+export const SOUND_VARIANT_KEY = "zs_admin_new_order_sound_variant";
 
 /** Difunde el nº de pedidos nuevos a cualquier componente que escuche. */
 export function broadcastNewOrders(count: number): void {
@@ -49,6 +50,78 @@ export function setSoundEnabled(on: boolean): void {
   }
 }
 
+// --- Variantes de sonido (sintetizadas por WebAudio; sin ficheros) -----------
+
+type Note = { t: number; freq: number; dur: number; type?: OscillatorType; peak?: number };
+export type SoundVariant = { id: string; label: string; notes: Note[] };
+
+/** 6 sonidos a elegir. Cada uno es una "partitura" de tonos con caída suave. */
+export const SOUND_VARIANTS: SoundVariant[] = [
+  {
+    id: "campana",
+    label: "Campana",
+    notes: [0, 0.38, 0.76].flatMap((t) => [
+      { t, freq: 880, dur: 0.55, peak: 1 },
+      { t, freq: 1320, dur: 0.55, peak: 0.45 },
+    ]),
+  },
+  {
+    id: "timbre",
+    label: "Timbre (din-don)",
+    notes: [
+      { t: 0, freq: 660, dur: 0.5, peak: 0.9 },
+      { t: 0.5, freq: 523, dur: 0.75, peak: 0.9 },
+    ],
+  },
+  {
+    id: "ping",
+    label: "Ping",
+    notes: [{ t: 0, freq: 1568, dur: 0.35, peak: 0.9 }],
+  },
+  {
+    id: "alarma",
+    label: "Alarma (urgente)",
+    notes: [0, 0.18, 0.36, 0.54].map((t) => ({ t, freq: 1000, dur: 0.12, type: "square" as const, peak: 0.8 })),
+  },
+  {
+    id: "positivo",
+    label: "Positivo (ascendente)",
+    notes: [
+      { t: 0, freq: 523, dur: 0.25, type: "triangle", peak: 0.9 },
+      { t: 0.12, freq: 659, dur: 0.25, type: "triangle", peak: 0.9 },
+      { t: 0.24, freq: 784, dur: 0.35, type: "triangle", peak: 0.9 },
+    ],
+  },
+  {
+    id: "bipbip",
+    label: "Bip-bip",
+    notes: [
+      { t: 0, freq: 1200, dur: 0.1, type: "square", peak: 0.8 },
+      { t: 0.18, freq: 1200, dur: 0.1, type: "square", peak: 0.8 },
+    ],
+  },
+];
+
+const DEFAULT_VARIANT = "campana";
+
+export function getSoundVariant(): string {
+  if (typeof window === "undefined") return DEFAULT_VARIANT;
+  try {
+    const v = window.localStorage.getItem(SOUND_VARIANT_KEY);
+    return v && SOUND_VARIANTS.some((s) => s.id === v) ? v : DEFAULT_VARIANT;
+  } catch {
+    return DEFAULT_VARIANT;
+  }
+}
+
+export function setSoundVariant(id: string): void {
+  try {
+    window.localStorage.setItem(SOUND_VARIANT_KEY, id);
+  } catch {
+    /* localStorage no disponible */
+  }
+}
+
 let _ctx: AudioContext | null = null;
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -67,29 +140,31 @@ export function unlockAudio(): void {
 }
 
 /**
- * Toca una campana (tres "din" con dos armónicos y caída exponencial) al mayor
- * volumen posible por WebAudio. Respeta el permiso de sonido salvo `force`
- * (el botón "Probar" de /admin/permisos suena aunque esté desactivado).
+ * Reproduce el sonido de aviso elegido (o `variantId`) al mayor volumen posible
+ * por WebAudio. Respeta el permiso de sonido salvo `force` (el botón "Probar" de
+ * /admin/permisos suena aunque el aviso esté desactivado).
  */
-export function playAlertBell(force = false): void {
+export function playAlertBell(force = false, variantId?: string): void {
   if (!force && !isSoundEnabled()) return;
   const ctx = getCtx();
   if (!ctx) return;
   void ctx.resume();
+  const variant =
+    SOUND_VARIANTS.find((s) => s.id === (variantId ?? getSoundVariant())) ?? SOUND_VARIANTS[0]!;
   const t0 = ctx.currentTime;
-  [0, 0.38, 0.76].forEach((offset) => {
-    const t = t0 + offset;
-    [880, 1320].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(i === 0 ? 1 : 0.45, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.6);
-    });
-  });
+  for (const n of variant.notes) {
+    const t = t0 + n.t;
+    const dur = n.dur;
+    const peak = n.peak ?? 0.9;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = n.type ?? "sine";
+    osc.frequency.value = n.freq;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(peak, t + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  }
 }
