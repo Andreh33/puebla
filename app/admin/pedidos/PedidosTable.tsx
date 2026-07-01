@@ -621,7 +621,7 @@ export function PedidosTable({
 
       {/* Modal detalle */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-2xl overflow-y-auto sm:w-full">
           {selected && (
             <>
               <DialogHeader>
@@ -723,17 +723,26 @@ export function PedidosTable({
                           className="flex flex-col gap-1 border-b border-zs-border/40 py-1.5 first:pt-0 last:border-0 last:pb-0"
                         >
                           <div className="flex items-start justify-between gap-2">
-                            <span className={fullyReturned ? "text-zs-muted line-through" : ""}>
-                              {it.quantity}× {it.productName}
-                              {it.variantSize && (
-                                <span className="text-zs-muted"> · talla {it.variantSize}</span>
-                              )}
-                              {returned > 0 && (
-                                <span className="ml-1 text-xs font-semibold text-zs-red-600">
-                                  · devuelto: {returned}
+                            <div className="min-w-0">
+                              <span className={fullyReturned ? "text-zs-muted line-through" : ""}>
+                                {it.quantity}× {it.productName}
+                                {it.variantSize && (
+                                  <span className="text-zs-muted"> · talla {it.variantSize}</span>
+                                )}
+                                {returned > 0 && (
+                                  <span className="ml-1 text-xs font-semibold text-zs-red-600">
+                                    · devuelto: {returned}
+                                  </span>
+                                )}
+                              </span>
+                              {it.productSku ? (
+                                <span className="mt-0.5 block font-mono text-xs text-zs-muted">
+                                  SKU: {it.productSku}
                                 </span>
+                              ) : (
+                                <span className="mt-0.5 block text-xs italic text-zs-muted">Sin SKU</span>
                               )}
-                            </span>
+                            </div>
                             <span className="flex shrink-0 items-center gap-2">
                               <span
                                 className={`font-medium ${fullyReturned ? "text-zs-muted line-through" : ""}`}
