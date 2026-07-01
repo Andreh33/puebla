@@ -675,6 +675,60 @@ export function FacturasClient({
         </CardContent>
       </Card>
 
+      {/* Deslizable con TODOS los proveedores guardados (clic = filtra) */}
+      {sups.length > 0 && (
+        <Card>
+          <CardContent className="p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-zs-ink">
+                <Users className="h-4 w-4" /> Proveedores
+                <span className="font-normal text-zs-muted">({sups.length})</span>
+              </p>
+              {supplierFilter && (
+                <button
+                  type="button"
+                  onClick={() => setSupplierFilter("")}
+                  className="text-xs font-medium text-zs-blue-700 hover:underline"
+                >
+                  Quitar filtro
+                </button>
+              )}
+            </div>
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              <button
+                type="button"
+                onClick={() => setSupplierFilter("")}
+                className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm transition-colors ${
+                  supplierFilter === ""
+                    ? "border-zs-blue-600 bg-zs-blue-600 text-white"
+                    : "border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                }`}
+              >
+                Todos
+              </button>
+              {sups.map((s) => {
+                const activeChip = supplierFilter === s.name;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSupplierFilter(activeChip ? "" : s.name)}
+                    title={s.name}
+                    className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm transition-colors ${
+                      activeChip
+                        ? "border-zs-blue-600 bg-zs-blue-600 text-white"
+                        : "border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Análisis — gasto por mes y por proveedor (sobre lo filtrado) */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
