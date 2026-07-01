@@ -417,7 +417,6 @@ export function FacturasClient({
             <tr>
               <th className="px-2 py-2 font-medium">Fecha</th>
               <th className="px-2 py-2 font-medium">Proveedor</th>
-              <th className="px-2 py-2 font-medium">Marca</th>
               <th className="px-2 py-2 font-medium">Nº factura</th>
               <th className="px-2 py-2 font-medium">Concepto</th>
               {cols.map((col) => (
@@ -438,7 +437,7 @@ export function FacturasClient({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9 + cols.length} className="px-4 py-10 text-center text-sm text-zs-muted">
+                <td colSpan={8 + cols.length} className="px-4 py-10 text-center text-sm text-zs-muted">
                   {rows.length === 0
                     ? "Aún no hay facturas. Pulsa «Añadir factura» para empezar."
                     : "Ninguna factura coincide con el filtro."}
@@ -463,13 +462,6 @@ export function FacturasClient({
                         value={inv.supplier}
                         placeholder="Proveedor…"
                         onCommit={(v) => commitField(inv.id, "supplier", v, inv.supplier)}
-                      />
-                    </td>
-                    <td className="px-1 py-1 min-w-[110px]">
-                      <EditableCell
-                        value={inv.brandLabel ?? ""}
-                        placeholder="Marca…"
-                        onCommit={(v) => commitField(inv.id, "brandLabel", v, inv.brandLabel ?? "")}
                       />
                     </td>
                     <td className="px-1 py-1 min-w-[110px]">
@@ -520,7 +512,7 @@ export function FacturasClient({
                     </td>
                   </tr>
                   <tr className={meta.row}>
-                    <td colSpan={9 + cols.length} className="border-b border-zs-border px-3 pb-3 pt-0.5">
+                    <td colSpan={8 + cols.length} className="border-b border-zs-border px-3 pb-3 pt-0.5">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                         <span className="text-[11px] font-semibold uppercase tracking-wide text-zs-muted">
                           Vencimientos
