@@ -1119,10 +1119,9 @@ function SupplierSpendBars({
     return <p className="py-6 text-center text-sm text-zs-muted">Sin datos para el filtro actual.</p>;
   }
   const max = Math.max(...data.map((d) => d.facturado), 1);
-  const shown = data.slice(0, 8);
   return (
-    <div className="space-y-2.5">
-      {shown.map((d) => (
+    <div className="max-h-72 space-y-2.5 overflow-y-auto pr-1">
+      {data.map((d) => (
         <div key={d.supplier}>
           <div className="flex items-baseline justify-between gap-2 text-xs">
             <span className="truncate font-medium text-zs-ink" title={d.supplier}>
@@ -1142,8 +1141,8 @@ function SupplierSpendBars({
           </div>
         </div>
       ))}
-      {data.length > shown.length && (
-        <p className="pt-1 text-[11px] text-zs-muted">+{data.length - shown.length} proveedores más</p>
+      {data.length > 8 && (
+        <p className="pt-1 text-[11px] text-zs-muted">{data.length} proveedores · desliza para verlos todos</p>
       )}
     </div>
   );
