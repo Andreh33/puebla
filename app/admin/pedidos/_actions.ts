@@ -14,7 +14,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { syncProductsToStripe, type SyncResult } from "@/lib/stripe/sync-products";
-import { isStripeConfigured, missingStripeEnv } from "@/lib/stripe/client";
+import { getStripe, isStripeConfigured, missingStripeEnv } from "@/lib/stripe/client";
 import {
   toOrderDetail,
   restoreStockForOrder,
@@ -24,6 +24,8 @@ import type { OrderDetail } from "@/lib/stripe/types";
 import { issueInvoiceForOrder, type FiscalData } from "@/lib/holded/invoice";
 import { isHoldedConfigured } from "@/lib/holded/client";
 import { performItemReturn } from "@/lib/pos/return-order";
+import { performOnlineItemRefund } from "@/lib/pos/refund-online";
+import { computeItemReturn } from "@/lib/pos/returns";
 import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
@@ -185,6 +187,120 @@ export async function returnOrderItem(
       ok: true,
       data: { status: res.status, refundedAmount: res.refundedAmount, warning: res.warning },
     };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error" };
+  }
+}
+
+/** Suma de unidades ya reembolsadas de una línea (según metadata.returns), para
+ *  construir una idempotency-key determinista y no reembolsar de más. */
+function priorReturnedQty(metadata: unknown, itemId: string): number {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return 0;
+  const returns = (metadata as Record<string, unknown>).returns;
+  if (!Array.isArray(returns)) return 0;
+  return returns.reduce((sum, r) => {
+    if (r && typeof r === "object" && (r as Record<string, unknown>).itemId === itemId) {
+      const q = Number((r as Record<string, unknown>).qty);
+      return sum + (Number.isFinite(q) ? q : 0);
+    }
+    return sum;
+  }, 0);
+}
+
+/**
+ * Reembolsa por Stripe el importe de `qty` unidades de UNA línea de un pedido
+ * ONLINE y contabiliza la operación (baja de línea, reposición opcional de
+ * stock, reducción de totales, registro). Solo pedidos con pago Stripe y NO de
+ * TPV. El refund se crea con idempotency-key determinista (anti doble-clic).
+ *
+ * Orden: primero Stripe (fuente de la verdad del dinero); solo tras su OK se
+ * escribe en BD. Si la BD fallara tras el refund, se avisa con el id del refund
+ * para reconciliar a mano (el webhook charge.refunded parcial es no-op aposta).
+ */
+export async function refundOnlineItem(
+  orderId: string,
+  itemId: string,
+  qty: number,
+  restock: boolean,
+): Promise<ActionResult<{ status: OrderStatus; refundedAmount: number; warning?: string }>> {
+  try {
+    await requireSession();
+
+    const stripe = getStripe();
+    if (!stripe) {
+      return { ok: false, error: `Stripe no configurado. Faltan: ${missingStripeEnv().join(", ")}` };
+    }
+
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      select: {
+        id: true,
+        status: true,
+        deliveryMethod: true,
+        stripePaymentIntentId: true,
+        metadata: true,
+        items: { select: { id: true, quantity: true, subtotal: true, productName: true } },
+      },
+    });
+    if (!order) return { ok: false, error: "Pedido no encontrado." };
+    if (order.deliveryMethod === "in_store") {
+      return { ok: false, error: 'Este pedido es de tienda (TPV): usa «Devolver», no el reembolso online.' };
+    }
+    if (order.status === "CANCELLED" || order.status === "REFUNDED") {
+      return { ok: false, error: "El pedido ya está cancelado o reembolsado." };
+    }
+    if (!order.stripePaymentIntentId) {
+      return { ok: false, error: "Este pedido no tiene pago de Stripe asociado; no se puede reembolsar automáticamente." };
+    }
+
+    const item = order.items.find((i) => i.id === itemId);
+    if (!item) return { ok: false, error: "La línea no pertenece a este pedido." };
+    if (!Number.isInteger(qty) || qty < 1) return { ok: false, error: "Cantidad a reembolsar inválida." };
+    if (qty > item.quantity) {
+      return { ok: false, error: `Solo quedan ${item.quantity} unidad(es) por reembolsar de "${item.productName}".` };
+    }
+
+    const { returnedGross } = computeItemReturn(Number(item.subtotal), item.quantity, qty);
+    const amountCents = Math.round(returnedGross * 100);
+    if (amountCents <= 0) return { ok: false, error: "Importe a reembolsar inválido (0 €)." };
+
+    // Idempotency-key determinista por estado: dos clics con el mismo estado
+    // producen la misma clave → Stripe devuelve el MISMO refund (no cobra doble).
+    const idemKey = `zs_refund_${orderId}_${itemId}_${priorReturnedQty(order.metadata, itemId) + qty}`;
+
+    let refundId: string;
+    try {
+      const refund = await stripe.refunds.create(
+        {
+          payment_intent: order.stripePaymentIntentId,
+          amount: amountCents,
+          reason: "requested_by_customer",
+          metadata: { orderId, itemId, qty: String(qty) },
+        },
+        { idempotencyKey: idemKey },
+      );
+      refundId = refund.id;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "error desconocido";
+      return { ok: false, error: `Stripe no pudo procesar el reembolso: ${message}` };
+    }
+
+    // El dinero ya se devolvió: ahora la contabilidad en BD.
+    try {
+      const res = await db.$transaction((tx) =>
+        performOnlineItemRefund(tx, { orderId, itemId, qty, restock, stripeRefundId: refundId }),
+      );
+      revalidatePath("/admin/pedidos");
+      revalidatePath("/admin/productos");
+      revalidatePath("/admin/balance");
+      return { ok: true, data: { status: res.status, refundedAmount: res.refundedAmount, warning: res.warning } };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "error";
+      return {
+        ok: false,
+        error: `El dinero se reembolsó en Stripe (${refundId}), pero falló el registro en la web: ${message}. Anota el id y revisa el pedido.`,
+      };
+    }
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error" };
   }

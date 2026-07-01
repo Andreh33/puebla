@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -40,6 +41,7 @@ import {
   getOrderDetail,
   issueInvoiceAction,
   returnOrderItem,
+  refundOnlineItem,
   syncCatalogToStripe,
   updateOrderStatus,
 } from "./_actions";
@@ -147,12 +149,25 @@ export function PedidosTable({
   const [returningItemId, setReturningItemId] = React.useState<string | null>(null);
   const [returnQty, setReturnQty] = React.useState(1);
   const [returningBusy, setReturningBusy] = React.useState(false);
+  // Reembolso por línea (solo ONLINE/Stripe): línea, uds. y si repone stock.
+  const [refundingItemId, setRefundingItemId] = React.useState<string | null>(null);
+  const [refundQty, setRefundQty] = React.useState(1);
+  const [refundRestock, setRefundRestock] = React.useState(true);
+  const [refundingBusy, setRefundingBusy] = React.useState(false);
 
   // Un pedido admite devolución por línea solo si es venta de TPV y no está ya
   // cancelado/reembolsado. Las devoluciones se acumulan en selected.returns.
   const isTpv = selected?.deliveryMethod === "in_store";
   const orderReturnable =
     !!selected && isTpv && selected.status !== "CANCELLED" && selected.status !== "REFUNDED";
+  // Un pedido admite reembolso online por línea si es online (no TPV), tiene pago
+  // de Stripe y no está ya cancelado/reembolsado.
+  const orderRefundable =
+    !!selected &&
+    !isTpv &&
+    !!selected.stripePaymentIntentId &&
+    selected.status !== "CANCELLED" &&
+    selected.status !== "REFUNDED";
   const returnedByItem = React.useMemo(() => {
     const m = new Map<string, number>();
     for (const r of selected?.returns ?? []) m.set(r.itemId, (m.get(r.itemId) ?? 0) + r.qty);
@@ -347,6 +362,33 @@ export function PedidosTable({
       toast.error(err instanceof Error ? err.message : "Error");
     } finally {
       setReturningBusy(false);
+    }
+  }
+
+  // Reembolsa por Stripe `qty` unidades de una línea de un pedido ONLINE. Opción
+  // de reponer stock. Crea el refund en Stripe y contabiliza; si era la última
+  // unidad, el pedido queda REFUNDED.
+  async function handleRefundItem(itemId: string, qty: number, restock: boolean) {
+    if (!selected) return;
+    setRefundingBusy(true);
+    try {
+      const res = await refundOnlineItem(selected.id, itemId, qty, restock);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success(
+        `Reembolsado ${formatPriceEUR(res.data?.refundedAmount ?? 0)} en Stripe${restock ? " · stock repuesto" : ""}`,
+      );
+      if (res.data?.warning) toast(res.data.warning);
+      setRefundingItemId(null);
+      const fresh = await getOrderDetail(selected.id);
+      if (fresh.ok) setSelected(fresh.data!);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error");
+    } finally {
+      setRefundingBusy(false);
     }
   }
 
@@ -636,8 +678,10 @@ export function PedidosTable({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {statusBadge(selected.status)}
-                    {orderReturnable && selected.returns.length > 0 && (
-                      <Badge variant="warning">Devolución parcial</Badge>
+                    {(orderReturnable || orderRefundable) && selected.returns.length > 0 && (
+                      <Badge variant="warning">
+                        {isTpv ? "Devolución parcial" : "Reembolso parcial"}
+                      </Badge>
                     )}
                   </div>
                   <span className="text-lg font-bold">
@@ -717,6 +761,12 @@ export function PedidosTable({
                       const previewAmount = isReturning
                         ? computeItemReturn(it.subtotal, it.quantity, clampedQty).returnedGross
                         : 0;
+                      const canRefund = orderRefundable && it.quantity > 0;
+                      const isRefunding = refundingItemId === it.id;
+                      const clampedRefundQty = Math.min(Math.max(refundQty, 1), it.quantity || 1);
+                      const refundPreview = isRefunding
+                        ? computeItemReturn(it.subtotal, it.quantity, clampedRefundQty).returnedGross
+                        : 0;
                       return (
                         <li
                           key={it.id}
@@ -760,6 +810,20 @@ export function PedidosTable({
                                   title="Devolver este artículo: vuelve al inventario y se descuenta de la venta"
                                 >
                                   Devolver
+                                </button>
+                              )}
+                              {canRefund && !isRefunding && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRefundingItemId(it.id);
+                                    setRefundQty(it.quantity);
+                                    setRefundRestock(true);
+                                  }}
+                                  className="text-xs font-semibold text-zs-red-600 hover:underline"
+                                  title="Reembolsar el precio de este artículo por Stripe"
+                                >
+                                  Reembolsar
                                 </button>
                               )}
                             </span>
@@ -814,6 +878,63 @@ export function PedidosTable({
                               </span>
                             </div>
                           )}
+                          {isRefunding && (
+                            <div className="flex flex-col gap-2 rounded-md bg-zs-surface/60 p-2 text-xs">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                                {it.quantity > 1 ? (
+                                  <label className="flex items-center gap-1">
+                                    Unidades:
+                                    <Input
+                                      type="number"
+                                      min={1}
+                                      max={it.quantity}
+                                      value={clampedRefundQty}
+                                      onChange={(e) => {
+                                        const v = Math.round(Number(e.target.value));
+                                        setRefundQty(
+                                          Number.isFinite(v) ? Math.min(Math.max(v, 1), it.quantity) : 1,
+                                        );
+                                      }}
+                                      className="h-8 w-16"
+                                    />
+                                    <span className="text-zs-muted">de {it.quantity}</span>
+                                  </label>
+                                ) : (
+                                  <span>Reembolsar 1 unidad</span>
+                                )}
+                                <span className="font-semibold">
+                                  Devuelve {formatPriceEUR(refundPreview)} por Stripe
+                                </span>
+                              </div>
+                              <label className="flex items-center gap-2">
+                                <Checkbox
+                                  checked={refundRestock}
+                                  onCheckedChange={(c) => setRefundRestock(c === true)}
+                                />
+                                Reponer stock al inventario
+                              </label>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={refundingBusy}
+                                  onClick={() => handleRefundItem(it.id, clampedRefundQty, refundRestock)}
+                                >
+                                  {refundingBusy ? "Reembolsando…" : "Confirmar reembolso"}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={refundingBusy}
+                                  onClick={() => setRefundingItemId(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </li>
                       );
                     })}
@@ -823,6 +944,13 @@ export function PedidosTable({
                       Pulsa <span className="font-semibold text-zs-red-600">Devolver</span> en un
                       artículo para reponerlo al inventario y descontarlo de la venta (efectivo en
                       mano). Solo ventas de tienda (TPV).
+                    </p>
+                  )}
+                  {orderRefundable && (
+                    <p className="mt-1.5 text-xs text-zs-muted">
+                      Pulsa <span className="font-semibold text-zs-red-600">Reembolsar</span> en un
+                      artículo para devolver su importe por Stripe. Puedes elegir si repones el stock.
+                      Al reembolsar la última unidad, el pedido queda como reembolsado.
                     </p>
                   )}
                 </section>

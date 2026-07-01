@@ -360,7 +360,17 @@ export async function restoreStockForOrder(orderId: string): Promise<void> {
   });
 }
 
-/** Marca el Order como REFUNDED a partir de un charge.refunded de Stripe. */
+/**
+ * Marca el Order como REFUNDED a partir de un charge.refunded de Stripe.
+ *
+ * ⚠️ Stripe emite `charge.refunded` en CUALQUIER reembolso, también en los
+ * PARCIALES (devolver el importe de solo un artículo). Este handler solo trata
+ * el reembolso TOTAL del cargo (`amount_refunded >= amount`): marca REFUNDED y
+ * repone TODO el stock. Los reembolsos PARCIALES los contabiliza línea a línea
+ * la action `refundOnlineItem` (baja de línea, reposición selectiva de stock y
+ * registro en metadata.returns); aquí se ignoran para no anular el pedido
+ * entero ni reponer stock que el cliente conserva.
+ */
 export async function markOrderRefunded(charge: Stripe.Charge): Promise<Order | null> {
   const intentId =
     typeof charge.payment_intent === "string"
@@ -373,10 +383,18 @@ export async function markOrderRefunded(charge: Stripe.Charge): Promise<Order | 
   });
   if (!order) return null;
 
-  // Idempotente: si ya estaba REFUNDED, no re-restaurar ni re-marcar.
+  // Idempotente: si ya estaba REFUNDED (p. ej. la action ya cerró el pedido al
+  // reembolsar la última línea), no re-restaurar ni re-marcar.
   if (order.status === "REFUNDED") return order;
 
-  // Restaura stock SOLO si el pedido había descontado (estaba en un estado
+  // Reembolso PARCIAL → no tocamos estado ni stock: ya lo hizo refundOnlineItem.
+  const fullyRefunded =
+    typeof charge.amount === "number" &&
+    typeof charge.amount_refunded === "number" &&
+    charge.amount_refunded >= charge.amount;
+  if (!fullyRefunded) return order;
+
+  // Reembolso TOTAL: restaura stock SOLO si el pedido había descontado (estado
   // post-pago). La marca metadata.stockRestored evita restaurar dos veces.
   if (STOCK_DEDUCTED_STATUSES.has(order.status)) {
     await restoreStockForOrder(order.id);

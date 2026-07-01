@@ -72,8 +72,10 @@ vi.mock("@/lib/products/stock", () => ({
 // getStripe no se usa en markOrderRefunded, pero el módulo lo importa.
 vi.mock("@/lib/stripe/client", () => ({ getStripe: () => null }));
 
-function chargeFor(intentId: string): Stripe.Charge {
-  return { payment_intent: intentId } as unknown as Stripe.Charge;
+/** Charge de reembolso TOTAL por defecto (amount === amount_refunded). Para un
+ *  reembolso PARCIAL, pasa `amountRefunded < amount`. */
+function chargeFor(intentId: string, amount = 1000, amountRefunded = 1000): Stripe.Charge {
+  return { payment_intent: intentId, amount, amount_refunded: amountRefunded } as unknown as Stripe.Charge;
 }
 
 beforeEach(() => {
@@ -138,5 +140,15 @@ describe("markOrderRefunded — restaura stock", () => {
     // restoreStockForOrder entra pero el flag corta antes de incrementar.
     expect(sizeIncrements).toEqual([]);
     expect(productIncrements).toEqual([]);
+  });
+
+  it("reembolso PARCIAL (amount_refunded < amount): NO toca estado ni stock", async () => {
+    const { markOrderRefunded } = await import("@/lib/stripe/orders");
+    // 1500 cobrado, solo 500 reembolsado → parcial: lo contabiliza la action.
+    const res = await markOrderRefunded(chargeFor("pi_123", 1500, 500));
+    expect(res?.status).toBe("PAID"); // sin cambiar
+    expect(sizeIncrements).toEqual([]);
+    expect(productIncrements).toEqual([]);
+    expect(orderUpdate).not.toHaveBeenCalled();
   });
 });
