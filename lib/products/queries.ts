@@ -253,6 +253,7 @@ export async function getRelatedProducts(productId: string, limit = 8) {
   const where: Prisma.ProductWhereInput = {
     id: { not: productId },
     status: "ACTIVE",
+    stock: { gt: 0 },
     OR: [],
   };
   if (base.modelCode) where.OR?.push({ modelCode: base.modelCode });
@@ -268,7 +269,7 @@ export async function getRelatedProducts(productId: string, limit = 8) {
 
 export async function getFeaturedProducts(limit = 12) {
   return db.product.findMany({
-    where: { isFeatured: true, status: "ACTIVE" },
+    where: { isFeatured: true, status: "ACTIVE", stock: { gt: 0 } },
     orderBy: { updatedAt: "desc" },
     take: limit,
     include: { brand: { select: { name: true, slug: true } } },

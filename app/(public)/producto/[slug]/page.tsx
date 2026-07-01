@@ -147,6 +147,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             modelCode: product.modelCode,
             id: { not: product.id },
             status: "ACTIVE",
+            stock: { gt: 0 },
           },
           take: 8,
           select: {
@@ -163,6 +164,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         categoryId: product.categoryId,
         id: { not: product.id },
         status: "ACTIVE",
+        stock: { gt: 0 },
         ...(product.modelCode ? { NOT: { modelCode: product.modelCode } } : {}),
       },
       orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],

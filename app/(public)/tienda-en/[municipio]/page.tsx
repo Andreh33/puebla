@@ -78,6 +78,7 @@ async function getHighlightProducts(categorySlug: string) {
     const items = await db.product.findMany({
       where: {
         status: "ACTIVE",
+        stock: { gt: 0 },
         category: { slug: categorySlug },
       },
       orderBy: [{ isFeatured: "desc" }, { publishedAt: "desc" }, { updatedAt: "desc" }],

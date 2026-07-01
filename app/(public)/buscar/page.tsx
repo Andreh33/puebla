@@ -153,6 +153,7 @@ async function fetchProducts(q: string) {
     const real = await db.product.findMany({
       where: {
         status: "ACTIVE",
+        stock: { gt: 0 },
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { shortName: { contains: q, mode: "insensitive" } },

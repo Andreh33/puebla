@@ -145,7 +145,7 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardD
     // completar con productos ACTIVE recientes (sin duplicar). NUNCA caer a demo
     // en runtime: los slugs demo no existen en BD y daban 404 en la ficha (Bug A).
     const featured = await db.product.findMany({
-      where: { status: "ACTIVE", isFeatured: true },
+      where: { status: "ACTIVE", isFeatured: true, stock: { gt: 0 } },
       orderBy: [{ updatedAt: "desc" }],
       take: limit,
       select: productCardSelect,
@@ -154,7 +154,7 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardD
     if (featured.length < limit) {
       const excludeIds = featured.map((p) => p.id);
       const recent = await db.product.findMany({
-        where: { status: "ACTIVE", id: { notIn: excludeIds } },
+        where: { status: "ACTIVE", id: { notIn: excludeIds }, stock: { gt: 0 } },
         orderBy: [{ updatedAt: "desc" }],
         take: limit - featured.length,
         select: productCardSelect,
@@ -191,7 +191,7 @@ export async function getCategoryProducts(opts: {
   const take = opts.take ?? 12;
   const skip = opts.skip ?? 0;
   try {
-    const where: Prisma.ProductWhereInput = opts.where ?? { status: "ACTIVE" };
+    const where: Prisma.ProductWhereInput = opts.where ?? { status: "ACTIVE", stock: { gt: 0 } };
     const [products, total] = await Promise.all([
       db.product.findMany({
         where,
@@ -246,6 +246,7 @@ export async function getBrandProducts(opts: {
   try {
     const where: Prisma.ProductWhereInput = {
       status: "ACTIVE",
+      stock: { gt: 0 },
       brand: { is: { slug: opts.brandSlug } },
     };
     const [products, total] = await Promise.all([
@@ -309,6 +310,7 @@ export async function getProductsByGender(opts: {
       : { equals: opts.gender };
     const where: Prisma.ProductWhereInput = {
       status: "ACTIVE",
+      stock: { gt: 0 },
       gender: genderFilter as never,
     };
     const [products, total] = await Promise.all([
@@ -833,7 +835,11 @@ export function buildProductWhere(opts: {
   categorySlugContains?: string;
 }): Prisma.ProductWhereInput {
   const { categoryId, brandId, filters, isOutlet, categorySlugContains } = opts;
-  const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
+  // Regla del cliente: sin stock = fuera de la tienda. Filtramos por el agregado
+  // Product.stock (que recomputeProductStock mantiene = suma de tallas). Es un
+  // filtro de VISUALIZACIÓN: no toca el estado en BD, así que nunca manda a
+  // borrador un producto con stock, y reaparece solo al reponer.
+  const where: Prisma.ProductWhereInput = { status: "ACTIVE", stock: { gt: 0 } };
   if (isOutlet !== undefined) where.isOutlet = isOutlet;
   // Bloque 3 §12: filtrado por categoría vía pivote m2m del Bloque 2 (apariciones
   // públicas, incluye dup UNISEX/BEBE). El categoryId antiguo NO se reasignó al
@@ -965,7 +971,7 @@ export async function getCategoryFacets(categoryId: string | string[]) {
   // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
   // Bug B: acepta array (padre + descendientes) para categorías con hijas.
   const catIds = Array.isArray(categoryId) ? categoryId : [categoryId];
-  const baseWhere = { status: "ACTIVE" as const, categories: { some: { categoryId: { in: catIds } } } };
+  const baseWhere = { status: "ACTIVE" as const, stock: { gt: 0 }, categories: { some: { categoryId: { in: catIds } } } };
   return computeFacets(baseWhere);
 }
 
@@ -978,6 +984,7 @@ export async function getCategoryFacets(categoryId: string | string[]) {
 export async function getOutletFacets(familia: "textil" | "calzado") {
   const baseWhere = {
     status: "ACTIVE" as const,
+    stock: { gt: 0 },
     isOutlet: true,
     categories: { some: { category: { slug: { contains: `-${familia}` } } } },
   } satisfies Prisma.ProductWhereInput;
