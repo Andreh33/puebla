@@ -160,12 +160,13 @@ export function PedidosTable({
   const isTpv = selected?.deliveryMethod === "in_store";
   const orderReturnable =
     !!selected && isTpv && selected.status !== "CANCELLED" && selected.status !== "REFUNDED";
-  // Un pedido admite reembolso online por línea si es online (no TPV), tiene pago
-  // de Stripe y no está ya cancelado/reembolsado.
+  // Un pedido admite reembolso online por línea si es online (no TPV) y no está
+  // ya cancelado/reembolsado. NO exigimos aquí el paymentIntent para MOSTRAR el
+  // botón (si faltara, la propia action lo rechaza con un aviso claro); así el
+  // botón es siempre visible en pedidos web y no se "esconde" por un dato nulo.
   const orderRefundable =
     !!selected &&
     !isTpv &&
-    !!selected.stripePaymentIntentId &&
     selected.status !== "CANCELLED" &&
     selected.status !== "REFUNDED";
   const returnedByItem = React.useMemo(() => {
@@ -370,6 +371,18 @@ export function PedidosTable({
   // unidad, el pedido queda REFUNDED.
   async function handleRefundItem(itemId: string, qty: number, restock: boolean) {
     if (!selected) return;
+    const item = selected.items.find((i) => i.id === itemId);
+    const amount = item ? computeItemReturn(item.subtotal, item.quantity, qty).returnedGross : 0;
+    // Confirmación explícita: mueve dinero real por Stripe y no se puede deshacer.
+    if (
+      !confirm(
+        `¿Seguro que quieres reembolsar ${formatPriceEUR(amount)}${item ? ` de "${item.productName}"` : ""} por Stripe?\n\n` +
+          `${restock ? "Se repondrá el stock al inventario.\n" : "NO se repone stock.\n"}` +
+          "El dinero se devuelve al cliente y esta acción no se puede deshacer.",
+      )
+    ) {
+      return;
+    }
     setRefundingBusy(true);
     try {
       const res = await refundOnlineItem(selected.id, itemId, qty, restock);
