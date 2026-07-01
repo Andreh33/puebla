@@ -29,6 +29,8 @@ import {
   RefreshCw,
   Search,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SalesChart } from "@/components/admin/SalesChart";
@@ -83,24 +85,26 @@ function deliveryLabel(method: string | null): string {
   return "—";
 }
 
-/** YYYY-MM-DD de hace N días (horario local). */
-function isoDaysAgo(days: number): string {
+// --- Navegación por meses -----------------------------------------------------
+function currentYm(): string {
   const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toLocaleDateString("en-CA");
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
-
-type RangePreset = "30" | "60" | "90" | "todo" | "custom";
-
-/** Deduce qué preset corresponde a un from/to (best-effort, para resaltar el activo). */
-function inferPreset(from: string, to: string): RangePreset {
-  if (!from && !to) return "todo";
-  if (from && !to) {
-    for (const n of [30, 60, 90] as const) {
-      if (from === isoDaysAgo(n)) return String(n) as RangePreset;
-    }
-  }
-  return "custom";
+function firstDayOfMonth(ym: string): string {
+  return `${ym}-01`;
+}
+function lastDayOfMonth(ym: string): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y ?? 2026, m ?? 1, 0); // día 0 del mes siguiente = último de este
+  return `${ym}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function addMonthYm(ym: string, delta: number): string {
+  const [y, m] = ym.split("-").map(Number);
+  const d = new Date(y ?? 2026, (m ?? 1) - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+function monthLabel(ym: string): string {
+  return new Date(`${ym}-01T00:00:00`).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 }
 
 interface Props {
@@ -109,6 +113,8 @@ interface Props {
   page: number;
   pageSize: number;
   filters: { q: string; status: OrderStatus | "ALL"; from: string; to: string };
+  showAll: boolean;
+  periodRevenue: number;
   counts: Record<string, number>;
   role: "OWNER" | "EDITOR";
   chartData: SeriesPoint[];
@@ -120,6 +126,8 @@ export function PedidosTable({
   page,
   pageSize,
   filters,
+  showAll,
+  periodRevenue,
   counts,
   role,
   chartData,
@@ -130,9 +138,6 @@ export function PedidosTable({
   const [status, setStatus] = React.useState<OrderStatus | "ALL">(filters.status);
   const [from, setFrom] = React.useState(filters.from);
   const [to, setTo] = React.useState(filters.to);
-  const [activePreset, setActivePreset] = React.useState<RangePreset>(() =>
-    inferPreset(filters.from, filters.to),
-  );
   const [exporting, setExporting] = React.useState(false);
   const [syncing, setSyncing] = React.useState(false);
   const [selected, setSelected] = React.useState<OrderDetail | null>(null);
@@ -186,22 +191,26 @@ export function PedidosTable({
     router.push(`/admin/pedidos?${params.toString()}`);
   }
 
-  // Presets de rango: fijan `from`/`to` y filtran en el mismo tick (pasando el
-  // override para no depender del re-render del estado). `null` = todo el
-  // histórico (sin fechas → comportamiento por defecto del servidor).
-  function applyDatePreset(days: number | null) {
-    if (days === null) {
-      setActivePreset("todo");
-      setFrom("");
-      setTo("");
-      applyFilters({ from: "", to: "" });
-      return;
-    }
-    setActivePreset(String(days) as RangePreset);
-    const f = isoDaysAgo(days);
-    setFrom(f);
-    setTo("");
-    applyFilters({ from: f, to: "" });
+  // Mes activo (derivado del filtro; por defecto el mes en curso). El contador
+  // arranca el día 1 y se resetea solo al cambiar de mes; con los meses o "Todo
+  // el histórico" se revisa cualquier periodo.
+  const activeMonth = filters.from ? filters.from.slice(0, 7) : currentYm();
+
+  function applyMonth(ym: string) {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status && status !== "ALL") params.set("status", status);
+    params.set("from", firstDayOfMonth(ym));
+    params.set("to", lastDayOfMonth(ym));
+    router.push(`/admin/pedidos?${params.toString()}`);
+  }
+
+  function applyAllHistory() {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status && status !== "ALL") params.set("status", status);
+    params.set("all", "1");
+    router.push(`/admin/pedidos?${params.toString()}`);
   }
 
   function goToPage(p: number) {
@@ -472,38 +481,66 @@ export function PedidosTable({
         <Input
           type="date"
           value={from}
-          onChange={(e) => {
-            setFrom(e.target.value);
-            setActivePreset("custom");
-          }}
+          onChange={(e) => setFrom(e.target.value)}
           aria-label="Desde"
         />
         <Input
           type="date"
           value={to}
-          onChange={(e) => {
-            setTo(e.target.value);
-            setActivePreset("custom");
-          }}
+          onChange={(e) => setTo(e.target.value)}
           aria-label="Hasta"
         />
       </div>
 
-      {/* Rango rápido por fecha */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium text-zs-muted">Rango:</span>
-        <Button type="button" variant={activePreset === "30" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(30)}>
-          Últimos 30 días
-        </Button>
-        <Button type="button" variant={activePreset === "60" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(60)}>
-          Últimos 60 días
-        </Button>
-        <Button type="button" variant={activePreset === "90" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(90)}>
-          Últimos 90 días
-        </Button>
-        <Button type="button" variant={activePreset === "todo" ? "default" : "outline"} size="sm" onClick={() => applyDatePreset(null)}>
-          Todo el histórico
-        </Button>
+      {/* Navegación por meses + contabilidad del periodo */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1">
+          <span className="mr-1 text-xs font-medium text-zs-muted">Mes:</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => applyMonth(addMonthYm(activeMonth, -1))}
+            aria-label="Mes anterior"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="min-w-[130px] text-center text-sm font-semibold capitalize text-zs-ink">
+            {showAll ? "Todo el histórico" : monthLabel(activeMonth)}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => applyMonth(addMonthYm(activeMonth, 1))}
+            aria-label="Mes siguiente"
+            disabled={showAll}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button type="button" variant="ghost" size="sm" className="ml-1 h-8" onClick={() => applyMonth(currentYm())}>
+            Este mes
+          </Button>
+          <Button
+            type="button"
+            variant={showAll ? "default" : "outline"}
+            size="sm"
+            className="h-8"
+            onClick={applyAllHistory}
+          >
+            Todo el histórico
+          </Button>
+        </div>
+        <div className="rounded-xl border border-zs-border bg-white px-4 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-zs-muted">
+            Ingresos {showAll ? "(todo)" : monthLabel(activeMonth)}
+          </p>
+          <p className="font-display text-xl font-bold text-emerald-700 tabular-nums">
+            {formatPriceEUR(periodRevenue)}
+          </p>
+        </div>
       </div>
 
       {/* Evolución de pedidos — refleja el rango y los filtros activos */}
@@ -512,12 +549,8 @@ export function PedidosTable({
           <CardTitle className="flex items-center gap-2 text-base">
             <TrendingUp className="h-4 w-4 text-zs-blue-700" aria-hidden="true" /> Evolución de pedidos
           </CardTitle>
-          <span className="text-xs text-zs-muted">
-            {activePreset === "todo"
-              ? "Todo el histórico"
-              : activePreset === "custom"
-                ? "Rango seleccionado"
-                : `Últimos ${activePreset} días`}
+          <span className="text-xs capitalize text-zs-muted">
+            {showAll ? "Todo el histórico" : monthLabel(activeMonth)}
           </span>
         </CardHeader>
         <CardContent className="pt-0">

@@ -8,6 +8,7 @@ import type { OrderStatus, Prisma } from "@prisma/client";
 import { isStripeConfigured, missingStripeEnv } from "@/lib/stripe/client";
 import { STRIPE_ENV_VARS } from "@/lib/stripe/types";
 import { toOrderSummary } from "@/lib/stripe/orders";
+import { SOLD_STATUSES } from "@/lib/admin/sales-queries";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
 import { buildOrderSeries } from "@/lib/admin/order-series";
@@ -20,7 +21,13 @@ interface SearchParams {
   status?: OrderStatus | "ALL";
   from?: string;
   to?: string;
+  all?: string;
   page?: string;
+}
+
+/** "YYYY-MM-DD" de hoy y del día 1 del mes actual, en hora local. */
+function localYmd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function PedidosPage({
@@ -36,15 +43,27 @@ export default async function PedidosPage({
 
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "ALL";
-  const from = sp.from ?? "";
-  const to = sp.to ?? "";
+  const showAll = sp.all === "1";
+  const now = new Date();
+  const monthStartYmd = localYmd(new Date(now.getFullYear(), now.getMonth(), 1));
+  const todayLocalYmd = localYmd(now);
+  // Por defecto (sin filtro ni "todo el histórico") mostramos EL MES ACTUAL: el
+  // contador arranca el día 1 y se resetea solo al cambiar de mes. Con filtros o
+  // "Todo el histórico" se puede revisar cualquier periodo.
+  let from = sp.from ?? "";
+  let to = sp.to ?? "";
+  if (!showAll && !from && !to) {
+    from = monthStartYmd;
+    to = todayLocalYmd;
+  }
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const pageSize = 25;
 
-  const where: Prisma.OrderWhereInput = {};
-  if (status !== "ALL") where.status = status;
+  // Filtro base = fecha + búsqueda (SIN estado): lo usan los contadores por
+  // estado (para que cada estado muestre su nº en el periodo) y los ingresos.
+  const whereBase: Prisma.OrderWhereInput = {};
   if (q) {
-    where.OR = [
+    whereBase.OR = [
       { customerName: { contains: q, mode: "insensitive" } },
       { customerEmail: { contains: q, mode: "insensitive" } },
       { stripeSessionId: { contains: q } },
@@ -52,14 +71,16 @@ export default async function PedidosPage({
     ];
   }
   if (from || to) {
-    where.createdAt = {};
-    if (from) where.createdAt.gte = new Date(from);
-    // `to` inclusivo: hasta el final del día indicado (si no, new Date("YYYY-MM-DD")
-    // cae en medianoche UTC y excluye casi todo ese día).
-    if (to) where.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
+    whereBase.createdAt = {};
+    if (from) whereBase.createdAt.gte = new Date(from);
+    // `to` inclusivo: hasta el final del día indicado.
+    if (to) whereBase.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
   }
+  // Filtro de la tabla = base + estado.
+  const where: Prisma.OrderWhereInput = { ...whereBase };
+  if (status !== "ALL") where.status = status;
 
-  const [total, ordersRaw, counts, chartOrders] = await Promise.all([
+  const [total, ordersRaw, counts, chartOrders, revenueAgg] = await Promise.all([
     db.order.count({ where }).catch(() => 0),
     db.order
       .findMany({
@@ -70,12 +91,19 @@ export default async function PedidosPage({
         include: { _count: { select: { items: true } } },
       })
       .catch(() => []),
-    db.order.groupBy({ by: ["status"], _count: { _all: true } }).catch(() => []),
+    // Contadores por estado DEL PERIODO (respetan fecha + búsqueda, no el estado).
+    db.order.groupBy({ by: ["status"], where: whereBase, _count: { _all: true } }).catch(() => []),
     // Serie para la gráfica: MISMO filtro que la tabla, sin paginar.
     db.order
       .findMany({ where, select: { createdAt: true, total: true }, orderBy: { createdAt: "asc" } })
       .catch(() => []),
+    // Ingresos del periodo (ventas no canceladas/reembolsadas), según el filtro.
+    db.order
+      .aggregate({ where: { ...whereBase, status: { in: [...SOLD_STATUSES] } }, _sum: { total: true } })
+      .catch(() => ({ _sum: { total: null } })),
   ]);
+
+  const periodRevenue = Number(revenueAgg._sum.total ?? 0);
 
   const orders = ordersRaw.map(toOrderSummary);
 
@@ -138,6 +166,8 @@ export default async function PedidosPage({
         page={page}
         pageSize={pageSize}
         filters={{ q, status, from, to }}
+        showAll={showAll}
+        periodRevenue={periodRevenue}
         counts={countMap}
         role={role}
         chartData={chartData}

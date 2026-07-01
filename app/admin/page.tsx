@@ -34,6 +34,8 @@ import {
   getSalesKpis,
   getSalesByDay,
   getTopProductos,
+  startOfCurrentMonth,
+  daysThisMonth,
 } from "@/lib/admin/sales-queries";
 import { formatPriceEUR } from "@/lib/utils";
 import { auth } from "@/lib/auth";
@@ -87,9 +89,9 @@ export default async function AdminDashboard() {
       getRecentImports(5),
       getBlogStats(),
       getSettingsAlerts(),
-      getSalesKpis(30),
-      getSalesByDay(30),
-      getTopProductos(30, 8),
+      getSalesKpis(daysThisMonth(), startOfCurrentMonth()),
+      getSalesByDay(daysThisMonth(), startOfCurrentMonth()),
+      getTopProductos(daysThisMonth(), 8, startOfCurrentMonth()),
     ]);
 
   const activity: ActivityItem[] = [
@@ -145,14 +147,14 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* Ventas (últimos 30 días) */}
+      {/* Ventas (este mes) */}
       <section aria-labelledby="sales-heading" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2
             id="sales-heading"
             className="text-lg font-semibold text-zs-blue-900"
           >
-            Ventas (últimos 30 días)
+            Ventas (este mes)
           </h2>
           <Link
             href="/admin/pedidos"

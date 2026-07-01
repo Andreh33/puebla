@@ -47,6 +47,18 @@ function daysAgo(days: number): Date {
   return d;
 }
 
+/** Primer día del mes actual a las 00:00 (hora local). El "contador mensual"
+ *  arranca aquí y se resetea solo al cambiar de mes. */
+export function startOfCurrentMonth(): Date {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+}
+
+/** Nº de días transcurridos del mes actual (para la serie diaria del mes). */
+export function daysThisMonth(): number {
+  return new Date().getDate();
+}
+
 /** ISO yyyy-mm-dd en hora LOCAL (no UTC) para agrupar por día de calendario. */
 function localDay(d: Date): string {
   const y = d.getFullYear();
@@ -107,9 +119,9 @@ export function computeProfit(items: ProfitLine[]): number {
 // KPIs de ventas
 // ---------------------------------------------------------------------------
 
-export async function getSalesKpis(days = 30): Promise<SalesKpis> {
+export async function getSalesKpis(days = 30, since?: Date): Promise<SalesKpis> {
   try {
-    const gte = daysAgo(days);
+    const gte = since ?? daysAgo(days);
 
     const [agg, unitsAgg, rawItems, refundedAgg] = await Promise.all([
       // Ingresos y nº de pedidos.
@@ -204,9 +216,9 @@ export async function getSalesKpis(days = 30): Promise<SalesKpis> {
 // Serie diaria de ventas
 // ---------------------------------------------------------------------------
 
-export async function getSalesByDay(days = 30): Promise<SalesByDay> {
+export async function getSalesByDay(days = 30, sinceOverride?: Date): Promise<SalesByDay> {
   try {
-    const since = daysAgo(days - 1);
+    const since = sinceOverride ?? daysAgo(days - 1);
     const orders = await db.order.findMany({
       where: { status: { in: [...SOLD_STATUSES] }, createdAt: { gte: since } },
       select: { createdAt: true, total: true },
@@ -241,9 +253,9 @@ export async function getSalesByDay(days = 30): Promise<SalesByDay> {
 // Top productos vendidos
 // ---------------------------------------------------------------------------
 
-export async function getTopProductos(days = 30, limit = 8): Promise<TopProducto[]> {
+export async function getTopProductos(days = 30, limit = 8, since?: Date): Promise<TopProducto[]> {
   try {
-    const gte = daysAgo(days);
+    const gte = since ?? daysAgo(days);
     const rows = await db.orderItem.groupBy({
       by: ["productName"],
       where: { order: { status: { in: [...SOLD_STATUSES] }, createdAt: { gte } } },
