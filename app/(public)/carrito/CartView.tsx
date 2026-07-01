@@ -14,6 +14,7 @@ import { useCart } from "@/lib/cart/use-cart";
 import { itemKey } from "@/lib/cart/store";
 import { buildCartWhatsAppMessage } from "@/lib/cart/whatsapp-message";
 import { whatsappUrl } from "@/lib/whatsapp";
+import { logReservation } from "@/lib/whatsapp-reservation";
 import { formatPriceEUR } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { CheckoutButton } from "@/components/public/CheckoutButton";
@@ -158,6 +159,14 @@ export function CartView() {
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              logReservation({
+                kind: "cart",
+                itemsCount: count,
+                amount: total,
+                summary: buildCartWhatsAppMessage(items),
+              })
+            }
             className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"
           >
             <MessageCircle className="h-5 w-5" /> Reservar por WhatsApp

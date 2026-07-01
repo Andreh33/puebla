@@ -12,42 +12,76 @@ export const NEW_ORDERS_EVENT = "zs:new-orders";
 export const SOUND_KEY = "zs_admin_new_order_sound";
 export const SOUND_VARIANT_KEY = "zs_admin_new_order_sound_variant";
 
-/** Difunde el nº de pedidos nuevos a cualquier componente que escuche. */
-export function broadcastNewOrders(count: number): void {
+// Segundo canal: reservas por WhatsApp (aviso verde, sonido propio).
+export const NEW_RESERVATIONS_EVENT = "zs:new-reservations";
+export const RES_SOUND_KEY = "zs_admin_reservation_sound";
+export const RES_SOUND_VARIANT_KEY = "zs_admin_reservation_sound_variant";
+
+function broadcast(event: string, count: number): void {
   if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(NEW_ORDERS_EVENT, { detail: count }));
+  window.dispatchEvent(new CustomEvent(event, { detail: count }));
 }
 
-/** Suscribe al contador de pedidos nuevos difundido por NewOrderWatcher. */
-export function useNewOrderCount(): number {
+function useCountEvent(event: string): number {
   const [count, setCount] = React.useState(0);
   React.useEffect(() => {
     const handler = (e: Event) => {
       const c = (e as CustomEvent<number>).detail;
       setCount(typeof c === "number" && c > 0 ? c : 0);
     };
-    window.addEventListener(NEW_ORDERS_EVENT, handler);
-    return () => window.removeEventListener(NEW_ORDERS_EVENT, handler);
-  }, []);
+    window.addEventListener(event, handler);
+    return () => window.removeEventListener(event, handler);
+  }, [event]);
   return count;
 }
 
-/** ¿Está permitido que suene el aviso? (permiso guardado; por defecto sí). */
-export function isSoundEnabled(): boolean {
+/** Difunde el nº de pedidos nuevos a cualquier componente que escuche. */
+export function broadcastNewOrders(count: number): void {
+  broadcast(NEW_ORDERS_EVENT, count);
+}
+/** Suscribe al contador de pedidos nuevos difundido por NewOrderWatcher. */
+export function useNewOrderCount(): number {
+  return useCountEvent(NEW_ORDERS_EVENT);
+}
+
+/** Difunde el nº de reservas nuevas por WhatsApp. */
+export function broadcastNewReservations(count: number): void {
+  broadcast(NEW_RESERVATIONS_EVENT, count);
+}
+/** Suscribe al contador de reservas nuevas difundido por ReservationWatcher. */
+export function useReservationCount(): number {
+  return useCountEvent(NEW_RESERVATIONS_EVENT);
+}
+
+function readEnabled(key: string): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return window.localStorage.getItem(SOUND_KEY) !== "off";
+    return window.localStorage.getItem(key) !== "off";
   } catch {
     return true;
   }
 }
-
-export function setSoundEnabled(on: boolean): void {
+function writeEnabled(key: string, on: boolean): void {
   try {
-    window.localStorage.setItem(SOUND_KEY, on ? "on" : "off");
+    window.localStorage.setItem(key, on ? "on" : "off");
   } catch {
     /* localStorage no disponible */
   }
+}
+
+/** ¿Está permitido que suene el aviso de PEDIDOS? (por defecto sí). */
+export function isSoundEnabled(): boolean {
+  return readEnabled(SOUND_KEY);
+}
+export function setSoundEnabled(on: boolean): void {
+  writeEnabled(SOUND_KEY, on);
+}
+/** ¿Está permitido que suene el aviso de RESERVAS? (por defecto sí). */
+export function isResSoundEnabled(): boolean {
+  return readEnabled(RES_SOUND_KEY);
+}
+export function setResSoundEnabled(on: boolean): void {
+  writeEnabled(RES_SOUND_KEY, on);
 }
 
 // --- Variantes de sonido (sintetizadas por WebAudio; sin ficheros) -----------
@@ -102,24 +136,37 @@ export const SOUND_VARIANTS: SoundVariant[] = [
   },
 ];
 
-const DEFAULT_VARIANT = "campana";
+const DEFAULT_ORDER_VARIANT = "campana";
+const DEFAULT_RES_VARIANT = "timbre"; // reservas: sonido distinto por defecto
 
-export function getSoundVariant(): string {
-  if (typeof window === "undefined") return DEFAULT_VARIANT;
+function readVariant(key: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
   try {
-    const v = window.localStorage.getItem(SOUND_VARIANT_KEY);
-    return v && SOUND_VARIANTS.some((s) => s.id === v) ? v : DEFAULT_VARIANT;
+    const v = window.localStorage.getItem(key);
+    return v && SOUND_VARIANTS.some((s) => s.id === v) ? v : fallback;
   } catch {
-    return DEFAULT_VARIANT;
+    return fallback;
   }
 }
-
-export function setSoundVariant(id: string): void {
+function writeVariant(key: string, id: string): void {
   try {
-    window.localStorage.setItem(SOUND_VARIANT_KEY, id);
+    window.localStorage.setItem(key, id);
   } catch {
     /* localStorage no disponible */
   }
+}
+
+export function getSoundVariant(): string {
+  return readVariant(SOUND_VARIANT_KEY, DEFAULT_ORDER_VARIANT);
+}
+export function setSoundVariant(id: string): void {
+  writeVariant(SOUND_VARIANT_KEY, id);
+}
+export function getResSoundVariant(): string {
+  return readVariant(RES_SOUND_VARIANT_KEY, DEFAULT_RES_VARIANT);
+}
+export function setResSoundVariant(id: string): void {
+  writeVariant(RES_SOUND_VARIANT_KEY, id);
 }
 
 let _ctx: AudioContext | null = null;
@@ -139,18 +186,12 @@ export function unlockAudio(): void {
   void getCtx()?.resume();
 }
 
-/**
- * Reproduce el sonido de aviso elegido (o `variantId`) al mayor volumen posible
- * por WebAudio. Respeta el permiso de sonido salvo `force` (el botón "Probar" de
- * /admin/permisos suena aunque el aviso esté desactivado).
- */
-export function playAlertBell(force = false, variantId?: string): void {
-  if (!force && !isSoundEnabled()) return;
+/** Reproduce una variante de sonido concreta (sin comprobar permisos). */
+export function playVariant(variantId: string): void {
   const ctx = getCtx();
   if (!ctx) return;
   void ctx.resume();
-  const variant =
-    SOUND_VARIANTS.find((s) => s.id === (variantId ?? getSoundVariant())) ?? SOUND_VARIANTS[0]!;
+  const variant = SOUND_VARIANTS.find((s) => s.id === variantId) ?? SOUND_VARIANTS[0]!;
   const t0 = ctx.currentTime;
   for (const n of variant.notes) {
     const t = t0 + n.t;
@@ -167,4 +208,19 @@ export function playAlertBell(force = false, variantId?: string): void {
     osc.start(t);
     osc.stop(t + dur + 0.05);
   }
+}
+
+/**
+ * Aviso de PEDIDOS: suena la variante elegida salvo que el permiso esté off
+ * (o `force`, para la vista previa de /admin/permisos).
+ */
+export function playAlertBell(force = false, variantId?: string): void {
+  if (!force && !isSoundEnabled()) return;
+  playVariant(variantId ?? getSoundVariant());
+}
+
+/** Aviso de RESERVAS: como playAlertBell pero con su permiso y su variante. */
+export function playReservationBell(force = false, variantId?: string): void {
+  if (!force && !isResSoundEnabled()) return;
+  playVariant(variantId ?? getResSoundVariant());
 }

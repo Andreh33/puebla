@@ -605,3 +605,25 @@ model Supplier {
 
   @@index([name])
 }
+
+// Reserva por WhatsApp: se registra cuando el cliente pulsa "Reservar por
+// WhatsApp" (producto o carrito). Capta la intención (no confirma el envío del
+// mensaje, que ocurre ya en WhatsApp). Alimenta la sección /admin/reservas y su
+// aviso. Aditivo: tabla nueva.
+model WhatsappReservation {
+  id          String   @id @default(cuid())
+  kind        String   // "product" | "cart"
+  productName String?  // reserva de un producto concreto
+  sku         String?
+  size        String?
+  itemsCount  Int?     // reserva del carrito: nº de líneas
+  amount      Decimal? @db.Decimal(10, 2) // importe estimado (si se conoce)
+  summary     String   @db.Text // texto legible (mensaje/resumen de la reserva)
+  sourcePage  String?
+  status      String   @default("NEW") // NEW | CONTACTED | DONE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}

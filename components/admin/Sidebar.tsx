@@ -21,6 +21,7 @@ import {
   ShieldCheck,
   KeyRound,
   ShoppingCart,
+  MessageCircle,
   ScanLine,
   Menu,
   PanelLeftClose,
@@ -28,7 +29,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNewOrderCount } from "./order-alert";
+import { useNewOrderCount, useReservationCount } from "./order-alert";
 import {
   Sheet,
   SheetContent,
@@ -54,6 +55,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Importar", href: "/admin/importar/xlsx", icon: Upload },
   { label: "TPV · Caja", href: "/admin/tpv", icon: ScanLine },
   { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
+  { label: "Reservas", href: "/admin/reservas", icon: MessageCircle },
   { label: "Imágenes", href: "/admin/imagenes", icon: ImageIcon },
   { label: "Blog", href: "/admin/blog", icon: FileText },
   { label: "Leads", href: "/admin/leads", icon: Users },
@@ -87,6 +89,7 @@ function NavList({
   onNavigate,
   collapsed = false,
   newOrders = 0,
+  newReservations = 0,
 }: {
   items: NavItem[];
   pathname: string;
@@ -95,12 +98,21 @@ function NavList({
   collapsed?: boolean;
   /** Nº de pedidos nuevos → punto rojo sobre "Pedidos". */
   newOrders?: number;
+  /** Nº de reservas nuevas → punto verde sobre "Reservas". */
+  newReservations?: number;
 }) {
   return (
     <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto p-3">
       {items.map((it) => {
         const active = isActive(pathname, it);
-        const alert = it.href === "/admin/pedidos" && newOrders > 0;
+        const count =
+          it.href === "/admin/pedidos"
+            ? newOrders
+            : it.href === "/admin/reservas"
+              ? newReservations
+              : 0;
+        const alert = count > 0;
+        const dotColor = it.href === "/admin/reservas" ? "green" : "red";
         return (
           <Link
             key={it.href}
@@ -123,15 +135,30 @@ function NavList({
               />
               {alert && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 motion-safe:animate-ping" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-600" />
+                  <span
+                    className={cn(
+                      "absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping",
+                      dotColor === "green" ? "bg-emerald-400" : "bg-red-400",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "relative inline-flex h-2.5 w-2.5 rounded-full",
+                      dotColor === "green" ? "bg-emerald-600" : "bg-red-600",
+                    )}
+                  />
                 </span>
               )}
             </span>
             {!collapsed && <span>{it.label}</span>}
             {!collapsed && alert && (
-              <span className="ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                {newOrders}
+              <span
+                className={cn(
+                  "ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold text-white",
+                  dotColor === "green" ? "bg-emerald-600" : "bg-red-600",
+                )}
+              >
+                {count}
               </span>
             )}
           </Link>
@@ -166,6 +193,7 @@ export function Sidebar({
   const pathname = usePathname();
   const isOwner = role === "OWNER";
   const newOrders = useNewOrderCount();
+  const newReservations = useReservationCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -222,7 +250,13 @@ export function Sidebar({
           )}
         </button>
       </div>
-      <NavList items={items} pathname={pathname} collapsed={collapsed} newOrders={newOrders} />
+      <NavList
+        items={items}
+        pathname={pathname}
+        collapsed={collapsed}
+        newOrders={newOrders}
+        newReservations={newReservations}
+      />
       {footer && !collapsed && <div className="border-t border-zs-border p-3">{footer}</div>}
     </aside>
   );
@@ -239,6 +273,7 @@ export function MobileSidebarTrigger({
   const [open, setOpen] = React.useState(false);
   const isOwner = role === "OWNER";
   const newOrders = useNewOrderCount();
+  const newReservations = useReservationCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -263,7 +298,13 @@ export function MobileSidebarTrigger({
             <Brand />
           </SheetTitle>
         </SheetHeader>
-        <NavList items={items} pathname={pathname} onNavigate={() => setOpen(false)} newOrders={newOrders} />
+        <NavList
+          items={items}
+          pathname={pathname}
+          onNavigate={() => setOpen(false)}
+          newOrders={newOrders}
+          newReservations={newReservations}
+        />
         {footer && <div className="border-t border-zs-border p-3">{footer}</div>}
       </SheetContent>
     </Sheet>

@@ -5,6 +5,7 @@ import { MessageCircle, ExternalLink } from "lucide-react";
 import { SizeSelector, type SizeOption } from "./SizeSelector";
 import { AddToCartButton, type AddToCartProduct } from "./AddToCartButton";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
+import { logReservation } from "@/lib/whatsapp-reservation";
 
 type Props = {
   productName: string;
@@ -177,7 +178,16 @@ export function ProductActions({
           onClick={(e) => {
             if (!canCta) {
               e.preventDefault();
+              return;
             }
+            logReservation({
+              kind: "product",
+              productName,
+              sku: productSku ?? null,
+              size: effectiveSize,
+              amount: product?.price ?? null,
+              summary: `Reserva: ${productName}${effectiveSize ? ` (talla ${effectiveSize})` : ""}`,
+            });
           }}
           className={
             "inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border px-6 text-base font-semibold shadow-sm transition " +
