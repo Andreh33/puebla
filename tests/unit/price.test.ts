@@ -76,4 +76,17 @@ describe("effectivePrice", () => {
     expect(r.onSale).toBe(false);
     expect(r.final.toNumber()).toBe(40);
   });
+
+  it("sale=0 NO es oferta (no debe pintar 'gratis' / -100%)", () => {
+    const r = effectivePrice(40, 0);
+    expect(r.onSale).toBe(false);
+    expect(r.final.toNumber()).toBe(40);
+    expect(r.discountPct).toBe(0);
+  });
+
+  it("sale negativo NO es oferta", () => {
+    const r = effectivePrice(40, -5);
+    expect(r.onSale).toBe(false);
+    expect(r.final.toNumber()).toBe(40);
+  });
 });

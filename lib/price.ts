@@ -48,8 +48,11 @@ export function parsePriceEs(input: unknown): Decimal | null {
 export function effectivePrice(retail: Decimal | number, sale?: Decimal | number | null) {
   const r = retail instanceof Decimal ? retail : new Decimal(retail ?? 0);
   const s = sale == null ? null : sale instanceof Decimal ? sale : new Decimal(sale);
-  const final = s && s.lt(r) ? s : r;
-  const onSale = !!(s && s.lt(r));
+  // La oferta debe ser POSITIVA y menor que el PVP. Un salePrice de 0 (o negativo)
+  // NO es una oferta: antes se pintaba "gratis" (−100%). s es un Decimal, siempre
+  // truthy, así que hay que comprobar s.gt(0) explícitamente.
+  const onSale = !!(s && s.gt(0) && s.lt(r));
+  const final = onSale ? s! : r;
   // r.gt(0) evita division por cero (producto a 0 con "oferta" negativa
   // daria Infinity). Sin precio de referencia positivo no hay % de descuento.
   const discountPct =

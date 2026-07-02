@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { salePriceFromPercent, percentFromPrices } from "@/lib/products/discount";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,6 +232,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
   const [submitting, setSubmitting] = React.useState(false);
   const [formError, setFormError] = React.useState<FormErrorDialogData | null>(null);
   const [tab, setTab] = React.useState("general");
+  const [discountInput, setDiscountInput] = React.useState(""); // % descuento (helper de UI)
   const [brands, setBrands] = React.useState(initialBrands);
   const [cats, setCats] = React.useState<CategoryNode[]>(initialCategories);
   const [images, setImages] = React.useState<ImageState[]>(
@@ -326,6 +328,27 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
   const sizesArr = useFieldArray({ control, name: "sizes" });
 
   const watched = watch();
+
+  // --- Descuento por producto (helper): % → precio rebajado (salePrice) --------
+  const retailNum = Number(watched.retailPrice) || 0;
+  const appliedDiscountPct = percentFromPrices(retailNum, watched.salePrice ?? null);
+
+  /** Aplica un % de descuento sobre el PVP y rellena el precio rebajado. */
+  function applyDiscountPercent(pct: number) {
+    const sale = salePriceFromPercent(retailNum, pct);
+    if (sale == null) {
+      toast.error(retailNum <= 0 ? "Introduce primero el PVP." : "Descuento no válido (1–99 %).");
+      return;
+    }
+    setValue("salePrice", sale, { shouldDirty: true, shouldValidate: true });
+    setDiscountInput(String(pct));
+  }
+
+  /** Quita el descuento (deja el producto sin precio rebajado). */
+  function clearDiscount() {
+    setValue("salePrice", null, { shouldDirty: true, shouldValidate: true });
+    setDiscountInput("");
+  }
 
   // Auto-generate slug while creating
   React.useEffect(() => {
@@ -1104,7 +1127,12 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 {errors.retailPrice && <FieldError msg="Precio inválido" />}
               </div>
               <div>
-                <Label htmlFor="salePrice">Precio rebajado (€)</Label>
+                <Label htmlFor="salePrice">
+                  Precio rebajado (€)
+                  {appliedDiscountPct != null && (
+                    <span className="ml-1.5 font-semibold text-emerald-700">−{appliedDiscountPct}%</span>
+                  )}
+                </Label>
                 <Input
                   id="salePrice"
                   type="number"
@@ -1112,6 +1140,54 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   min={0}
                   {...register("salePrice", { setValueAs: parseNullableNumber })}
                 />
+                {/* Descuento directo: escribe un % y calcula el precio rebajado. */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-zs-muted">Descuento</span>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={99}
+                      step="1"
+                      value={discountInput}
+                      onChange={(e) => setDiscountInput(e.target.value)}
+                      onBlur={() => {
+                        const pct = Number(discountInput);
+                        if (discountInput.trim() && pct > 0) applyDiscountPercent(pct);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const pct = Number(discountInput);
+                          if (discountInput.trim() && pct > 0) applyDiscountPercent(pct);
+                        }
+                      }}
+                      placeholder="%"
+                      aria-label="Porcentaje de descuento"
+                      className="h-8 w-16"
+                    />
+                    <span className="ml-1 text-xs text-zs-muted">%</span>
+                  </div>
+                  {[10, 20, 30, 50].map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => applyDiscountPercent(p)}
+                      className="rounded-md border border-zs-border px-2 py-1 text-xs font-medium text-zs-ink hover:bg-zs-surface"
+                    >
+                      −{p}%
+                    </button>
+                  ))}
+                  {appliedDiscountPct != null && (
+                    <button
+                      type="button"
+                      onClick={clearDiscount}
+                      className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Quitar
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <Label htmlFor="taxRate">IVA (%)</Label>
