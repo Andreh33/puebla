@@ -103,6 +103,8 @@ export type CreateSaleInput = {
   lines: PosLineInput[];
   paymentMethod: PaymentMethod;
   totalDiscount?: number;
+  /** Código de promoción aplicado (se guarda en metadata para contar usos). */
+  promoCode?: string;
   customer?: { name?: string; phone?: string };
   /** Nota libre del pedido (se guarda en metadata, sale en el ticket). */
   note?: string;
@@ -212,6 +214,7 @@ export async function createInStoreSale(
           channel: "pos",
           paymentMethod: input.paymentMethod,
           ticketNumber,
+          ...(input.promoCode?.trim() ? { promoCode: input.promoCode.trim().toUpperCase() } : {}),
           ...(input.note?.trim() ? { note: input.note.trim() } : {}),
           ...(input.meta && input.meta.length
             ? { meta: input.meta.filter((m) => m.key.trim() || m.value.trim()) }

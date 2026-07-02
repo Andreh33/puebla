@@ -95,6 +95,7 @@ export function CheckoutDialog({
         })),
         paymentMethod: payment,
         totalDiscount: cart.totalDiscount,
+        promoCode: cart.promoCode,
         customer: { name: name || undefined, phone: phone || undefined },
         note: cart.note || undefined,
         meta: cart.meta.length ? cart.meta : undefined,

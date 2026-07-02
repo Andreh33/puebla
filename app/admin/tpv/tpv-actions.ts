@@ -4,12 +4,25 @@ import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { productFamily, skuOrFallback } from "@/lib/pos/sku";
+import { validatePromoCode } from "@/lib/promo/validate";
 import type { PosCatalogItem, PosCatalogParams, PosFilters } from "./pos-shared";
 
 async function requireSession() {
   const session = await auth();
   if (!session?.user) throw new Error("No autorizado");
   return session;
+}
+
+/** Valida un código promocional para el TPV y devuelve el descuento en € sobre
+ *  `subtotalGross` (bruto del ticket). Reutiliza el validador común. */
+export async function validatePromoForPos(
+  code: string,
+  subtotalGross: number,
+): Promise<{ ok: true; code: string; discount: number } | { ok: false; error: string }> {
+  await requireSession();
+  const res = await validatePromoCode(code, subtotalGross);
+  if (!res.ok) return { ok: false, error: res.error };
+  return { ok: true, code: res.code, discount: res.discount };
 }
 
 /**

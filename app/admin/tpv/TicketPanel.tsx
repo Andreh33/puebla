@@ -45,6 +45,7 @@ import {
   type CartMeta,
   type PaymentMethod,
 } from "./pos-shared";
+import { validatePromoForPos } from "./tpv-actions";
 
 const GRID = "grid grid-cols-[2.75rem_1fr_4.25rem_4.75rem_1.75rem] items-center gap-2";
 
@@ -57,6 +58,7 @@ export function TicketPanel({
   onSetNote,
   onSetMeta,
   onSetTotalDiscount,
+  onSetPromoCode,
   onSetPayment,
   onAnular,
   onNewCart,
@@ -71,6 +73,7 @@ export function TicketPanel({
   onSetNote: (note: string) => void;
   onSetMeta: (meta: CartMeta[]) => void;
   onSetTotalDiscount: (n: number) => void;
+  onSetPromoCode: (code: string | undefined) => void;
   onSetPayment: (m: PaymentMethod) => void;
   onAnular: () => void;
   onNewCart: () => void;
@@ -98,7 +101,12 @@ export function TicketPanel({
           >
             <Plus className="h-4 w-4" />
           </button>
-          <SettingsPopover cart={cart} onSetTotalDiscount={onSetTotalDiscount} onSetPayment={onSetPayment} />
+          <SettingsPopover
+            cart={cart}
+            onSetTotalDiscount={onSetTotalDiscount}
+            onSetPromoCode={onSetPromoCode}
+            onSetPayment={onSetPayment}
+          />
         </div>
       </div>
 
@@ -140,7 +148,7 @@ export function TicketPanel({
         </div>
         {cart.totalDiscount > 0 && (
           <div className="flex justify-between py-0.5 text-zs-red-600">
-            <span>Descuento</span>
+            <span>Descuento{cart.promoCode ? ` · ${cart.promoCode}` : ""}</span>
             <span className="tabular-nums">−{formatPriceEUR(cart.totalDiscount)}</span>
           </div>
         )}
@@ -533,13 +541,47 @@ function CustomerPill({
 function SettingsPopover({
   cart,
   onSetTotalDiscount,
+  onSetPromoCode,
   onSetPayment,
 }: {
   cart: Cart;
   onSetTotalDiscount: (n: number) => void;
+  onSetPromoCode: (code: string | undefined) => void;
   onSetPayment: (m: PaymentMethod) => void;
 }) {
   const methods: PaymentMethod[] = ["efectivo", "tarjeta", "bizum"];
+  const [codeInput, setCodeInput] = React.useState("");
+  const [applying, setApplying] = React.useState(false);
+
+  async function applyPromo() {
+    const gross = cartTotals(cart).gross;
+    if (gross <= 0) {
+      toast.error("Añade productos antes de aplicar un código.");
+      return;
+    }
+    setApplying(true);
+    try {
+      const res = await validatePromoForPos(codeInput, gross);
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
+      onSetTotalDiscount(res.discount);
+      onSetPromoCode(res.code);
+      setCodeInput("");
+      toast.success(`Código ${res.code} aplicado · −${formatPriceEUR(res.discount)}`);
+    } catch {
+      toast.error("No se pudo validar el código.");
+    } finally {
+      setApplying(false);
+    }
+  }
+
+  function clearPromo() {
+    onSetPromoCode(undefined);
+    onSetTotalDiscount(0);
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -557,6 +599,37 @@ function SettingsPopover({
       <PopoverContent align="end" className="w-64 space-y-3">
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zs-muted">
+            Código promocional
+          </label>
+          {cart.promoCode ? (
+            <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-sm">
+              <span className="font-mono font-semibold text-emerald-800">{cart.promoCode}</span>
+              <button type="button" onClick={clearPromo} className="text-xs font-medium text-red-600 hover:underline">
+                Quitar
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-1.5">
+              <input
+                value={codeInput}
+                onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void applyPromo();
+                  }
+                }}
+                placeholder="CÓDIGO"
+                className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-sm uppercase outline-none focus:border-zs-blue-700"
+              />
+              <Button type="button" size="sm" className="h-9" onClick={applyPromo} disabled={applying || !codeInput.trim()}>
+                {applying ? "…" : "Aplicar"}
+              </Button>
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zs-muted">
             Descuento total (€)
           </label>
           <input
@@ -564,7 +637,10 @@ function SettingsPopover({
             min={0}
             step="0.01"
             value={cart.totalDiscount}
-            onChange={(e) => onSetTotalDiscount(Math.max(0, Number(e.target.value) || 0))}
+            onChange={(e) => {
+              onSetTotalDiscount(Math.max(0, Number(e.target.value) || 0));
+              if (cart.promoCode) onSetPromoCode(undefined); // ajuste manual anula el código
+            }}
             className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-sm outline-none focus:border-zs-blue-700"
           />
         </div>

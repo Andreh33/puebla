@@ -156,6 +156,7 @@ export function PosTerminal({
   const setNote = (note: string) => updateActive((c) => ({ ...c, note }));
   const setMeta = (meta: CartMeta[]) => updateActive((c) => ({ ...c, meta }));
   const setTotalDiscount = (n: number) => updateActive((c) => ({ ...c, totalDiscount: n }));
+  const setPromoCode = (code: string | undefined) => updateActive((c) => ({ ...c, promoCode: code }));
   const setPayment = (m: PaymentMethod) => updateActive((c) => ({ ...c, payment: m }));
   const anular = () => updateActive((c) => emptyCart(c.id));
 
@@ -219,6 +220,7 @@ export function PosTerminal({
                 onSetNote={setNote}
                 onSetMeta={setMeta}
                 onSetTotalDiscount={setTotalDiscount}
+                onSetPromoCode={setPromoCode}
                 onSetPayment={setPayment}
                 onAnular={anular}
                 onNewCart={newCart}

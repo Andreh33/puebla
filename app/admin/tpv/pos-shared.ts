@@ -78,6 +78,8 @@ export type Cart = {
   customerPhone: string;
   payment: PaymentMethod;
   totalDiscount: number;
+  /** Código de promoción aplicado (si lo hay). El descuento va en totalDiscount. */
+  promoCode?: string;
   note: string;
   meta: CartMeta[];
   createdAt: number;
@@ -121,6 +123,7 @@ export function emptyCart(id: string): Cart {
     customerPhone: "",
     payment: "efectivo",
     totalDiscount: 0,
+    promoCode: undefined,
     note: "",
     meta: [],
     createdAt: Date.now(),
