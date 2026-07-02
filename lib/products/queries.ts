@@ -1,5 +1,6 @@
 import "server-only";
 import { db, type Prisma } from "@/lib/db";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 
 export type ProductSourceFilter = "LOCAL" | "MIRAVIA" | "AMAZON";
 export type ProductStatusFilter = "DRAFT" | "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK";
@@ -253,7 +254,7 @@ export async function getRelatedProducts(productId: string, limit = 8) {
   const where: Prisma.ProductWhereInput = {
     id: { not: productId },
     status: "ACTIVE",
-    stock: { gt: 0 },
+    AND: [IN_STOCK_WHERE],
     OR: [],
   };
   if (base.modelCode) where.OR?.push({ modelCode: base.modelCode });
@@ -269,7 +270,7 @@ export async function getRelatedProducts(productId: string, limit = 8) {
 
 export async function getFeaturedProducts(limit = 12) {
   return db.product.findMany({
-    where: { isFeatured: true, status: "ACTIVE", stock: { gt: 0 } },
+    where: { isFeatured: true, status: "ACTIVE", ...IN_STOCK_WHERE },
     orderBy: { updatedAt: "desc" },
     take: limit,
     include: { brand: { select: { name: true, slug: true } } },

@@ -55,9 +55,14 @@ describe("buildProductWhere — filtros combinados + Bloque 3", () => {
     expect(multi.categories).toEqual({ some: { categoryId: { in: ["cat_a", "cat_b"] } } });
   });
 
-  it("(e) sin filtros: where mínimo (status ACTIVE, sin AND)", () => {
+  it("(e) sin filtros: status ACTIVE, sin OR raíz, y AND solo con el filtro de stock", () => {
     const where = buildProductWhere({ filters: {} });
     expect(where.status).toBe("ACTIVE");
-    expect(where.AND).toBeUndefined();
+    expect((where as Record<string, unknown>).OR).toBeUndefined();
+    // El AND lleva siempre el filtro "con stock" (alguna talla con stock o simple>0).
+    const and = where.AND as Record<string, unknown>[];
+    expect(Array.isArray(and)).toBe(true);
+    expect(and).toHaveLength(1);
+    expect(has(and[0], '"sizes":{"some":{"stock":{"gt":0}}}')).toBe(true);
   });
 });

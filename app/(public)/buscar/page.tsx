@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { db } from "@/lib/db";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { EmptyState } from "@/components/public/EmptyState";
@@ -153,7 +154,7 @@ async function fetchProducts(q: string) {
     const real = await db.product.findMany({
       where: {
         status: "ACTIVE",
-        stock: { gt: 0 },
+        AND: [IN_STOCK_WHERE],
         OR: [
           { name: { contains: q, mode: "insensitive" } },
           { shortName: { contains: q, mode: "insensitive" } },

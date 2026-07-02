@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { cleanProductName } from "@/lib/utils/html";
 
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
       db.product.findMany({
         where: {
           status: "ACTIVE",
-          stock: { gt: 0 },
+          AND: [IN_STOCK_WHERE],
           OR: [
             { name: { contains: q, mode: "insensitive" } },
             { shortName: { contains: q, mode: "insensitive" } },

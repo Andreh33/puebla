@@ -6,6 +6,7 @@ import {
   type DemoGender,
 } from "@/lib/demo-products";
 import { VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 
 // ---------------------------------------------------------------------------
 // Alias de categorías "comerciales" â†’ subsets del catálogo demo
@@ -145,7 +146,7 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardD
     // completar con productos ACTIVE recientes (sin duplicar). NUNCA caer a demo
     // en runtime: los slugs demo no existen en BD y daban 404 en la ficha (Bug A).
     const featured = await db.product.findMany({
-      where: { status: "ACTIVE", isFeatured: true, stock: { gt: 0 } },
+      where: { status: "ACTIVE", isFeatured: true, ...IN_STOCK_WHERE },
       orderBy: [{ updatedAt: "desc" }],
       take: limit,
       select: productCardSelect,
@@ -154,7 +155,7 @@ export async function getFeaturedProducts(limit = 8): Promise<PublicProductCardD
     if (featured.length < limit) {
       const excludeIds = featured.map((p) => p.id);
       const recent = await db.product.findMany({
-        where: { status: "ACTIVE", id: { notIn: excludeIds }, stock: { gt: 0 } },
+        where: { status: "ACTIVE", id: { notIn: excludeIds }, ...IN_STOCK_WHERE },
         orderBy: [{ updatedAt: "desc" }],
         take: limit - featured.length,
         select: productCardSelect,
@@ -191,7 +192,7 @@ export async function getCategoryProducts(opts: {
   const take = opts.take ?? 12;
   const skip = opts.skip ?? 0;
   try {
-    const where: Prisma.ProductWhereInput = opts.where ?? { status: "ACTIVE", stock: { gt: 0 } };
+    const where: Prisma.ProductWhereInput = opts.where ?? { status: "ACTIVE", ...IN_STOCK_WHERE };
     const [products, total] = await Promise.all([
       db.product.findMany({
         where,
@@ -246,7 +247,7 @@ export async function getBrandProducts(opts: {
   try {
     const where: Prisma.ProductWhereInput = {
       status: "ACTIVE",
-      stock: { gt: 0 },
+      ...IN_STOCK_WHERE,
       brand: { is: { slug: opts.brandSlug } },
     };
     const [products, total] = await Promise.all([
@@ -310,7 +311,7 @@ export async function getProductsByGender(opts: {
       : { equals: opts.gender };
     const where: Prisma.ProductWhereInput = {
       status: "ACTIVE",
-      stock: { gt: 0 },
+      ...IN_STOCK_WHERE,
       gender: genderFilter as never,
     };
     const [products, total] = await Promise.all([
@@ -839,7 +840,7 @@ export function buildProductWhere(opts: {
   // Product.stock (que recomputeProductStock mantiene = suma de tallas). Es un
   // filtro de VISUALIZACIÓN: no toca el estado en BD, así que nunca manda a
   // borrador un producto con stock, y reaparece solo al reponer.
-  const where: Prisma.ProductWhereInput = { status: "ACTIVE", stock: { gt: 0 } };
+  const where: Prisma.ProductWhereInput = { status: "ACTIVE" };
   if (isOutlet !== undefined) where.isOutlet = isOutlet;
   // Bloque 3 §12: filtrado por categoría vía pivote m2m del Bloque 2 (apariciones
   // públicas, incluye dup UNISEX/BEBE). El categoryId antiguo NO se reasignó al
@@ -933,9 +934,11 @@ export function buildProductWhere(opts: {
   if (filters.variante && filters.variante.length > 0) {
     andClauses.push({ garmentVariant: { in: filters.variante } });
   }
-  if (andClauses.length > 0) {
-    where.AND = andClauses;
-  }
+  // "Con stock" robusto (alguna talla con stock, o simple con escalar>0): va en
+  // el AND (no como OR raíz, para no mezclarse con los filtros) y se aplica
+  // siempre. Se añade AL FINAL para no alterar el orden de las cláusulas de filtro.
+  andClauses.push(IN_STOCK_WHERE);
+  where.AND = andClauses;
   if (filters.min != null || filters.max != null) {
     where.retailPrice = {
       ...(filters.min != null ? { gte: filters.min } : {}),
@@ -971,7 +974,7 @@ export async function getCategoryFacets(categoryId: string | string[]) {
   // INDEPENDIENTES (no respetan otros filtros) — filter-aware es TODO post-B3 (§13).
   // Bug B: acepta array (padre + descendientes) para categorías con hijas.
   const catIds = Array.isArray(categoryId) ? categoryId : [categoryId];
-  const baseWhere = { status: "ACTIVE" as const, stock: { gt: 0 }, categories: { some: { categoryId: { in: catIds } } } };
+  const baseWhere = { status: "ACTIVE" as const, ...IN_STOCK_WHERE, categories: { some: { categoryId: { in: catIds } } } };
   return computeFacets(baseWhere);
 }
 
@@ -984,7 +987,7 @@ export async function getCategoryFacets(categoryId: string | string[]) {
 export async function getOutletFacets(familia: "textil" | "calzado") {
   const baseWhere = {
     status: "ACTIVE" as const,
-    stock: { gt: 0 },
+    ...IN_STOCK_WHERE,
     isOutlet: true,
     categories: { some: { category: { slug: { contains: `-${familia}` } } } },
   } satisfies Prisma.ProductWhereInput;

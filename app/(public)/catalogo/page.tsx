@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { ChevronRight } from "lucide-react";
 import { db } from "@/lib/db";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
@@ -89,26 +90,26 @@ export default async function CatalogoPage({
     }),
     db.product.groupBy({
       by: ["brandId"],
-      where: { status: "ACTIVE", stock: { gt: 0 } },
+      where: { status: "ACTIVE", ...IN_STOCK_WHERE },
       _count: { _all: true },
       orderBy: { _count: { brandId: "desc" } },
       take: 50,
     }),
     db.product.groupBy({
       by: ["gender"],
-      where: { status: "ACTIVE", stock: { gt: 0 } },
+      where: { status: "ACTIVE", ...IN_STOCK_WHERE },
       _count: { _all: true },
     }),
     db.product.groupBy({
       by: ["colorName"],
-      where: { status: "ACTIVE", stock: { gt: 0 } },
+      where: { status: "ACTIVE", ...IN_STOCK_WHERE },
       _count: { _all: true },
       orderBy: { _count: { colorName: "desc" } },
       take: 30,
     }),
     db.productSize.groupBy({
       by: ["size"],
-      where: { product: { status: "ACTIVE", stock: { gt: 0 } }, stock: { gt: 0 } },
+      where: { product: { status: "ACTIVE", ...IN_STOCK_WHERE }, stock: { gt: 0 } },
       _count: { _all: true },
       orderBy: { _count: { size: "desc" } },
       take: 30,

@@ -18,6 +18,7 @@ import { AmazonDisclosure } from "@/components/public/AmazonDisclosure";
 import { InfoAccordion } from "@/components/public/InfoAccordion";
 import { ProductSku } from "@/components/public/ProductSku";
 import { resolveProductSku } from "@/lib/products/sku";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 300;
@@ -147,7 +148,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             modelCode: product.modelCode,
             id: { not: product.id },
             status: "ACTIVE",
-            stock: { gt: 0 },
+            ...IN_STOCK_WHERE,
           },
           take: 8,
           select: {
@@ -164,7 +165,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         categoryId: product.categoryId,
         id: { not: product.id },
         status: "ACTIVE",
-        stock: { gt: 0 },
+        ...IN_STOCK_WHERE,
         ...(product.modelCode ? { NOT: { modelCode: product.modelCode } } : {}),
       },
       orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],

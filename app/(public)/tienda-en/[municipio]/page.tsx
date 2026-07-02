@@ -29,6 +29,7 @@ import {
 } from "@/lib/landings/contents";
 import { whatsappUrl, WhatsAppMessages, telHref } from "@/lib/whatsapp";
 import { db } from "@/lib/db";
+import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import {
   Accordion,
   AccordionContent,
@@ -78,7 +79,7 @@ async function getHighlightProducts(categorySlug: string) {
     const items = await db.product.findMany({
       where: {
         status: "ACTIVE",
-        stock: { gt: 0 },
+        ...IN_STOCK_WHERE,
         category: { slug: categorySlug },
       },
       orderBy: [{ isFeatured: "desc" }, { publishedAt: "desc" }, { updatedAt: "desc" }],
