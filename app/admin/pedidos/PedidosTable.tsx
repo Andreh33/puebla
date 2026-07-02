@@ -478,18 +478,30 @@ export function PedidosTable({
             <SelectItem value="REFUNDED">Reembolsados ({counts.REFUNDED ?? 0})</SelectItem>
           </SelectContent>
         </Select>
-        <Input
-          type="date"
-          value={from}
-          onChange={(e) => setFrom(e.target.value)}
-          aria-label="Desde"
-        />
-        <Input
-          type="date"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          aria-label="Hasta"
-        />
+        <div className="flex items-center gap-1.5">
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applyFilters();
+            }}
+            aria-label="Desde"
+          />
+          <span className="text-zs-muted">—</span>
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applyFilters();
+            }}
+            aria-label="Hasta"
+          />
+          <Button type="button" onClick={() => applyFilters()} className="shrink-0">
+            Ver
+          </Button>
+        </div>
       </div>
 
       {/* Navegación por meses + contabilidad del periodo */}
