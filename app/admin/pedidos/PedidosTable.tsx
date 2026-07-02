@@ -528,7 +528,7 @@ export function PedidosTable({
             className="h-8 w-8"
             onClick={() => applyMonth(addMonthYm(activeMonth, 1))}
             aria-label="Mes siguiente"
-            disabled={showAll}
+            disabled={showAll || addMonthYm(activeMonth, 1) > currentYm()}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

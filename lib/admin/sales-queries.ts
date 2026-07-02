@@ -1,6 +1,7 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { SHOP_TZ, madridDayStart, madridMonthStartYmd, madridTodayYmd } from "@/lib/dates";
 
 // ---------------------------------------------------------------------------
 // Estados que cuentan como VENTA (excluye PENDING/CANCELLED/REFUNDED).
@@ -47,24 +48,22 @@ function daysAgo(days: number): Date {
   return d;
 }
 
-/** Primer día del mes actual a las 00:00 (hora local). El "contador mensual"
- *  arranca aquí y se resetea solo al cambiar de mes. */
+/** Instante (UTC) del día 1 del mes actual a las 00:00 en hora de la tienda
+ *  (Madrid). El "contador mensual" arranca aquí y se resetea al cambiar de mes. */
 export function startOfCurrentMonth(): Date {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+  return madridDayStart(madridMonthStartYmd());
 }
 
-/** Nº de días transcurridos del mes actual (para la serie diaria del mes). */
+/** Nº de días transcurridos del mes actual en Madrid (serie diaria del mes). */
 export function daysThisMonth(): number {
-  return new Date().getDate();
+  return Number(madridTodayYmd().slice(8, 10));
 }
 
 /** ISO yyyy-mm-dd en hora LOCAL (no UTC) para agrupar por día de calendario. */
+/** Día "YYYY-MM-DD" de `d` en hora de la tienda (Madrid), no del server (UTC).
+ *  Así la serie diaria agrupa cada venta en su día español real. */
 function localDay(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return d.toLocaleDateString("en-CA", { timeZone: SHOP_TZ });
 }
 
 /**

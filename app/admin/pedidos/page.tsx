@@ -12,6 +12,7 @@ import { SOLD_STATUSES } from "@/lib/admin/sales-queries";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
 import { buildOrderSeries } from "@/lib/admin/order-series";
+import { madridDayStart, madridDayEnd, madridTodayYmd, madridMonthStartYmd } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Pedidos" };
 export const dynamic = "force-dynamic";
@@ -23,11 +24,6 @@ interface SearchParams {
   to?: string;
   all?: string;
   page?: string;
-}
-
-/** "YYYY-MM-DD" de hoy y del día 1 del mes actual, en hora local. */
-function localYmd(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export default async function PedidosPage({
@@ -44,17 +40,14 @@ export default async function PedidosPage({
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "ALL";
   const showAll = sp.all === "1";
-  const now = new Date();
-  const monthStartYmd = localYmd(new Date(now.getFullYear(), now.getMonth(), 1));
-  const todayLocalYmd = localYmd(now);
-  // Por defecto (sin filtro ni "todo el histórico") mostramos EL MES ACTUAL: el
-  // contador arranca el día 1 y se resetea solo al cambiar de mes. Con filtros o
-  // "Todo el histórico" se puede revisar cualquier periodo.
+  // Por defecto (sin filtro ni "todo el histórico") mostramos EL MES ACTUAL (hora
+  // de la tienda, Europe/Madrid): el contador arranca el día 1 y se resetea solo
+  // al cambiar de mes. Con filtros o "Todo el histórico" se revisa cualquier periodo.
   let from = sp.from ?? "";
   let to = sp.to ?? "";
   if (!showAll && !from && !to) {
-    from = monthStartYmd;
-    to = todayLocalYmd;
+    from = madridMonthStartYmd();
+    to = madridTodayYmd();
   }
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const pageSize = 25;
@@ -72,9 +65,9 @@ export default async function PedidosPage({
   }
   if (from || to) {
     whereBase.createdAt = {};
-    if (from) whereBase.createdAt.gte = new Date(from);
-    // `to` inclusivo: hasta el final del día indicado.
-    if (to) whereBase.createdAt.lte = new Date(`${to}T23:59:59.999Z`);
+    // Límites en hora de la tienda (Madrid) → instante UTC real (el server es UTC).
+    if (from) whereBase.createdAt.gte = madridDayStart(from);
+    if (to) whereBase.createdAt.lte = madridDayEnd(to);
   }
   // Filtro de la tabla = base + estado.
   const where: Prisma.OrderWhereInput = { ...whereBase };
@@ -107,11 +100,11 @@ export default async function PedidosPage({
 
   const orders = ordersRaw.map(toOrderSummary);
 
-  // Evolución de pedidos para la gráfica (rango efectivo: from/to o, si "todo",
-  // desde el pedido más antiguo del conjunto hasta hoy).
-  const todayYmd = new Date().toISOString().slice(0, 10);
+  // Evolución de pedidos para la gráfica: agrupamos por día en hora de la tienda
+  // (Madrid), coherente con el rango from/to y con la analítica de /admin/visitas.
+  const todayYmd = madridTodayYmd();
   const points = chartOrders.map((o) => ({
-    day: o.createdAt.toISOString().slice(0, 10),
+    day: o.createdAt.toLocaleDateString("en-CA", { timeZone: "Europe/Madrid" }),
     total: Number(o.total),
   }));
   const chartData = buildOrderSeries(points, from || points[0]?.day || todayYmd, to || todayYmd);

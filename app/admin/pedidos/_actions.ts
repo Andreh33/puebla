@@ -26,6 +26,7 @@ import { isHoldedConfigured } from "@/lib/holded/client";
 import { performItemReturn } from "@/lib/pos/return-order";
 import { performOnlineItemRefund } from "@/lib/pos/refund-online";
 import { computeItemReturn } from "@/lib/pos/returns";
+import { madridDayStart, madridDayEnd } from "@/lib/dates";
 import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
@@ -350,9 +351,9 @@ export async function exportOrdersCsv(
     }
     if (filters.from || filters.to) {
       where.createdAt = {};
-      if (filters.from) where.createdAt.gte = new Date(filters.from);
-      // `to` inclusivo hasta el final del día (coherente con el listado).
-      if (filters.to) where.createdAt.lte = new Date(`${filters.to}T23:59:59.999Z`);
+      // Límites en hora de la tienda (Madrid), coherente con el listado.
+      if (filters.from) where.createdAt.gte = madridDayStart(filters.from);
+      if (filters.to) where.createdAt.lte = madridDayEnd(filters.to);
     }
 
     const rows = await db.order.findMany({
