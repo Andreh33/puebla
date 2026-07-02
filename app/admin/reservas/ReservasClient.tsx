@@ -139,9 +139,15 @@ export function ReservasClient({ reservations }: { reservations: ReservationDTO[
                     </td>
                     <td className="px-3 py-2">
                       {r.kind === "cart" ? (
-                        <span className="text-zs-ink">
-                          {r.itemsCount ?? "?"} {r.itemsCount === 1 ? "artículo" : "artículos"}
-                        </span>
+                        <details className="text-zs-ink">
+                          <summary className="cursor-pointer">
+                            {r.itemsCount ?? "?"} {r.itemsCount === 1 ? "artículo" : "artículos"}{" "}
+                            <span className="text-xs text-zs-blue-700">· ver</span>
+                          </summary>
+                          <pre className="mt-1 max-w-[380px] whitespace-pre-wrap break-words rounded-lg bg-zs-surface p-2 text-[11px] leading-snug text-zs-ink">
+                            {r.summary}
+                          </pre>
+                        </details>
                       ) : (
                         <span className="text-zs-ink">
                           {r.productName ?? "—"}

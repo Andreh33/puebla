@@ -21,6 +21,14 @@ function str(v: unknown, max = 300): string | null {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate-limit ANTES de parsear, y rechazo de bodies grandes (no gastamos CPU en
+  // parsear si la IP ya está limitada o el payload es abusivo).
+  const ip = getClientIp(req);
+  const rl = rateLimit(`reservation:${ip}`, { limit: 20, windowMs: 60 * 60 * 1000 });
+  if (!rl.ok) return NextResponse.json({ ok: true }); // silencioso ante abuso
+  const len = Number(req.headers.get("content-length") ?? 0);
+  if (Number.isFinite(len) && len > 8_000) return NextResponse.json({ ok: true });
+
   let json: unknown;
   try {
     json = await req.json();
@@ -28,10 +36,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true }); // silencioso
   }
   const b = (json ?? {}) as Record<string, unknown>;
-
-  const ip = getClientIp(req);
-  const rl = rateLimit(`reservation:${ip}`, { limit: 20, windowMs: 60 * 60 * 1000 });
-  if (!rl.ok) return NextResponse.json({ ok: true }); // silencioso ante abuso
 
   const kind = str(b.kind) === "cart" ? "cart" : "product";
   const summary = str(b.summary, 2000) ?? (kind === "cart" ? "Reserva de carrito" : "Reserva de producto");

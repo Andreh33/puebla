@@ -23,8 +23,8 @@ export async function updateReservationStatus(id: string, status: string): Promi
     await db.whatsappReservation.update({ where: { id }, data: { status } });
     revalidatePath("/admin/reservas");
     return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+  } catch {
+    return { ok: false, error: "No se pudo actualizar la reserva." };
   }
 }
 
@@ -35,7 +35,7 @@ export async function deleteReservation(id: string): Promise<Ok | Err> {
     await db.whatsappReservation.delete({ where: { id } });
     revalidatePath("/admin/reservas");
     return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Error" };
+  } catch {
+    return { ok: false, error: "No se pudo borrar la reserva." };
   }
 }

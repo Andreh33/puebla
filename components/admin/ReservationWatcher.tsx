@@ -16,7 +16,9 @@ const POLL_MS = 20_000;
 export function ReservationWatcher() {
   const router = useRouter();
   const pathname = usePathname();
-  const [since, setSince] = React.useState(() => new Date().toISOString());
+  // `since` se siembra con el reloj del SERVIDOR en el primer sondeo (evita el
+  // desfase del reloj del PC de la tienda).
+  const [since, setSince] = React.useState<string | null>(null);
   const [count, setCount] = React.useState(0);
   const lastCount = React.useRef(0);
 
@@ -34,7 +36,7 @@ export function ReservationWatcher() {
     lastCount.current = 0;
     setCount(0);
     broadcastNewReservations(0);
-    setSince(new Date().toISOString());
+    setSince(null); // se vuelve a sembrar desde el servidor
   }, []);
 
   React.useEffect(() => {
@@ -45,16 +47,21 @@ export function ReservationWatcher() {
     let alive = true;
     async function poll() {
       try {
-        const res = await fetch(
-          `/api/admin/reservations/pending-count?since=${encodeURIComponent(since)}`,
-          { cache: "no-store" },
-        );
+        const url = since
+          ? `/api/admin/reservations/pending-count?since=${encodeURIComponent(since)}`
+          : `/api/admin/reservations/pending-count`;
+        const res = await fetch(url, { cache: "no-store" });
         if (!res.ok || !alive) return;
-        const data = (await res.json()) as { count?: number };
+        const data = (await res.json()) as { count?: number; now?: string };
+        if (since === null) {
+          lastCount.current = 0;
+          if (data.now) setSince(data.now);
+          return;
+        }
         const c = typeof data.count === "number" ? data.count : 0;
         if (c > lastCount.current) {
           playReservationBell();
-          router.refresh();
+          if (window.location.pathname === "/admin/reservas") router.refresh();
         }
         lastCount.current = c;
         if (alive) {

@@ -37,11 +37,12 @@ export async function GET(req: NextRequest) {
     ]);
     return NextResponse.json({
       count,
+      now: new Date().toISOString(), // reloj del SERVIDOR (evita desfase del cliente)
       latestId: latest?.id ?? null,
       latestAt: latest?.createdAt?.toISOString() ?? null,
     });
   } catch {
     // Nunca romper el poll del navegador: devolvemos 0 en caso de fallo de BD.
-    return NextResponse.json({ count: 0, latestId: null, latestAt: null });
+    return NextResponse.json({ count: 0, now: new Date().toISOString(), latestId: null, latestAt: null });
   }
 }

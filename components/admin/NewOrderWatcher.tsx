@@ -22,7 +22,10 @@ const POLL_MS = 20_000;
 export function NewOrderWatcher() {
   const router = useRouter();
   const pathname = usePathname();
-  const [since, setSince] = React.useState(() => new Date().toISOString());
+  // `since` se SIEMBRA con el reloj del SERVIDOR en el primer sondeo (null =
+  // pendiente de sembrar). Evita que un reloj del PC adelantado/atrasado haga
+  // perder avisos (createdAt es hora de servidor).
+  const [since, setSince] = React.useState<string | null>(null);
   const [count, setCount] = React.useState(0);
   const lastCount = React.useRef(0);
 
@@ -41,7 +44,7 @@ export function NewOrderWatcher() {
     lastCount.current = 0;
     setCount(0);
     broadcastNewOrders(0);
-    setSince(new Date().toISOString());
+    setSince(null); // se vuelve a sembrar desde el servidor
   }, []);
 
   // Al abrir la propia página de pedidos, damos por vistos los nuevos.
@@ -53,16 +56,23 @@ export function NewOrderWatcher() {
     let alive = true;
     async function poll() {
       try {
-        const res = await fetch(
-          `/api/admin/orders/pending-count?since=${encodeURIComponent(since)}`,
-          { cache: "no-store" },
-        );
+        const url = since
+          ? `/api/admin/orders/pending-count?since=${encodeURIComponent(since)}`
+          : `/api/admin/orders/pending-count`;
+        const res = await fetch(url, { cache: "no-store" });
         if (!res.ok || !alive) return;
-        const data = (await res.json()) as { count?: number };
+        const data = (await res.json()) as { count?: number; now?: string };
+        // Semilla: fijamos la ventana desde el reloj del servidor; sin avisar.
+        if (since === null) {
+          lastCount.current = 0;
+          if (data.now) setSince(data.now);
+          return;
+        }
         const c = typeof data.count === "number" ? data.count : 0;
         if (c > lastCount.current) {
           playAlertBell();
-          router.refresh(); // refresca el listado si está abierto en pedidos
+          // Refresca el listado SOLO si lo estás mirando (no en otras páginas).
+          if (window.location.pathname === "/admin/pedidos") router.refresh();
         }
         lastCount.current = c;
         if (alive) {

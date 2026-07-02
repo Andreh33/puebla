@@ -21,8 +21,8 @@ export async function GET(req: NextRequest) {
     const count = await db.whatsappReservation.count({
       where: hasSince ? { createdAt: { gt: since } } : {},
     });
-    return NextResponse.json({ count });
+    return NextResponse.json({ count, now: new Date().toISOString() });
   } catch {
-    return NextResponse.json({ count: 0 });
+    return NextResponse.json({ count: 0, now: new Date().toISOString() });
   }
 }
