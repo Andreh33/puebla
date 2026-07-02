@@ -22,6 +22,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  BadgePercent,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -81,8 +82,10 @@ import {
   updateProductSkuAction,
   updateProductStatusAction,
   updateProductStockAction,
+  setProductDiscountAction,
   type BulkActionType,
 } from "./_actions";
+import { percentFromPrices } from "@/lib/products/discount";
 
 type Row = ProductListResult["rows"][number];
 
@@ -337,9 +340,13 @@ function EditablePriceCell({
 }) {
   const [value, setValue] = React.useState(initialRetailPrice);
   const [saved, setSaved] = React.useState(initialRetailPrice);
+  const [sale, setSale] = React.useState<string | null>(initialSalePrice);
   const [editing, setEditing] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [customPct, setCustomPct] = React.useState("");
   const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const currentPct = percentFromPrices(Number(saved), sale != null ? Number(sale) : null);
 
   const commit = React.useCallback(async () => {
     if (value === saved) {
@@ -360,27 +367,120 @@ function EditablePriceCell({
     }
   }, [id, value, saved]);
 
+  /** Descuento rápido: fija (o quita, pct=null) el precio rebajado en el servidor. */
+  const applyDiscount = React.useCallback(
+    async (pct: number | null) => {
+      const res = await setProductDiscountAction(id, pct);
+      if (res.ok) {
+        setSale(res.salePrice);
+        setCustomPct("");
+        toast.success(pct === null ? "Descuento quitado" : `Descuento −${res.discountPct}% aplicado`);
+      } else {
+        toast.error(res.error);
+      }
+    },
+    [id],
+  );
+
   if (!editing) {
     return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setEditing(true);
-          requestAnimationFrame(() => inputRef.current?.focus());
-        }}
-        className="block w-full rounded-md px-1 py-1 text-right font-mono text-sm transition-colors hover:bg-zs-blue-50"
-        title="Click para editar PVP"
-      >
-        {initialSalePrice ? (
-          <span>
-            <span className="text-zs-red-600">{formatPriceEUR(initialSalePrice)}</span>{" "}
-            <span className="text-xs text-zs-muted line-through">{formatPriceEUR(saved)}</span>
-          </span>
-        ) : (
-          formatPriceEUR(saved)
-        )}
-      </button>
+      <div className="flex items-center justify-end gap-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditing(true);
+            requestAnimationFrame(() => inputRef.current?.focus());
+          }}
+          className="rounded-md px-1 py-1 text-right font-mono text-sm transition-colors hover:bg-zs-blue-50"
+          title="Click para editar PVP"
+        >
+          {sale ? (
+            <span>
+              <span className="text-zs-red-600">{formatPriceEUR(sale)}</span>{" "}
+              <span className="text-xs text-zs-muted line-through">{formatPriceEUR(saved)}</span>
+            </span>
+          ) : (
+            formatPriceEUR(saved)
+          )}
+        </button>
+        {/* Selector rápido de descuento (%) */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              onClick={(e) => e.stopPropagation()}
+              title="Descuento rápido"
+              className={
+                "inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md border px-1.5 text-[11px] font-semibold transition-colors " +
+                (currentPct != null
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-zs-border text-zs-muted hover:bg-zs-surface")
+              }
+            >
+              {currentPct != null ? `−${currentPct}%` : <BadgePercent className="h-3.5 w-3.5" />}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-56 space-y-2 p-2" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs font-medium text-zs-muted">Descuento sobre el PVP</p>
+            <div className="flex flex-wrap gap-1">
+              {[10, 20, 30, 40, 50, 60, 70].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => applyDiscount(p)}
+                  className={
+                    "rounded-md border px-2 py-1 text-xs font-medium transition-colors " +
+                    (currentPct === p
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-zs-border text-zs-ink hover:bg-zs-surface")
+                  }
+                >
+                  −{p}%
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={customPct}
+                onChange={(e) => setCustomPct(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const p = Number(customPct);
+                    if (customPct.trim() && p > 0) applyDiscount(p);
+                  }
+                }}
+                placeholder="otro %"
+                className="h-8 w-20 rounded-md border border-zs-border px-2 text-sm outline-none focus:border-zs-blue-700"
+              />
+              <span className="text-xs text-zs-muted">%</span>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = Number(customPct);
+                  if (customPct.trim() && p > 0) applyDiscount(p);
+                }}
+                className="ml-auto rounded-md bg-zs-blue-900 px-2 py-1 text-xs font-semibold text-white hover:bg-zs-blue-800"
+              >
+                Aplicar
+              </button>
+            </div>
+            {currentPct != null && (
+              <button
+                type="button"
+                onClick={() => applyDiscount(null)}
+                className="w-full rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+              >
+                Quitar descuento
+              </button>
+            )}
+          </PopoverContent>
+        </Popover>
+      </div>
     );
   }
 

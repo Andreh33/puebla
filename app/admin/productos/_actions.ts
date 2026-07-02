@@ -25,6 +25,7 @@ import {
 } from "@/lib/products/mutations";
 import type { FootwearType } from "@/lib/categories/footwear";
 import type { GarmentType, GarmentVariant } from "@/lib/categories/garment";
+import { salePriceFromPercent, percentFromPrices } from "@/lib/products/discount";
 
 async function requireSession() {
   const session = await auth();
@@ -228,6 +229,44 @@ export async function updateProductPriceAction(
     return { ok: true, retailPrice: updated.retailPrice.toString() };
   } catch (err) {
     return { ok: false, error: (err as Error).message ?? "Error guardando PVP" };
+  }
+}
+
+/**
+ * Descuento rápido desde la tabla: fija el precio rebajado (salePrice) a partir
+ * de un % sobre el PVP, o lo quita (`pct === null`). Calcula en servidor con el
+ * PVP real; nunca deja un rebajado 0/negativo (salePriceFromPercent lo garantiza).
+ */
+export async function setProductDiscountAction(
+  id: string,
+  pct: number | null,
+): Promise<{ ok: true; salePrice: string | null; discountPct: number | null } | { ok: false; error: string }> {
+  await requireSession();
+  const { db } = await import("@/lib/db");
+  try {
+    if (pct === null) {
+      await db.product.update({ where: { id }, data: { salePrice: null } });
+      revalidatePath("/admin/productos");
+      return { ok: true, salePrice: null, discountPct: null };
+    }
+    const prod = await db.product.findUnique({ where: { id }, select: { retailPrice: true } });
+    if (!prod) return { ok: false, error: "Producto no encontrado" };
+    const retail = Number(prod.retailPrice);
+    const sale = salePriceFromPercent(retail, pct);
+    if (sale == null) return { ok: false, error: "Descuento no válido (1–99 %) o sin PVP." };
+    const updated = await db.product.update({
+      where: { id },
+      data: { salePrice: sale.toFixed(2) },
+      select: { salePrice: true },
+    });
+    revalidatePath("/admin/productos");
+    return {
+      ok: true,
+      salePrice: updated.salePrice?.toString() ?? null,
+      discountPct: percentFromPrices(retail, sale),
+    };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message ?? "Error guardando el descuento" };
   }
 }
 
