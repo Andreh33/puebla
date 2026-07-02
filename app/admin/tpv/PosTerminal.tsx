@@ -115,13 +115,17 @@ export function PosTerminal({
     const s = size ?? null;
     const existing = active.lines.find((l) => l.productId === item.id && l.size === s);
     const key = existing ? existing.key : `${item.id}-${s ?? "u"}-${Date.now()}`;
+    const hadPromo = !!active.promoCode; // añadir género invalida un código % ya aplicado
     setCarts((cs) =>
       cs.map((c) => {
         if (c.id !== activeId) return c;
+        // Al cambiar líneas con un código aplicado, lo quitamos (su € quedaría obsoleto).
+        const promoReset = c.promoCode ? { promoCode: undefined, totalDiscount: 0 } : {};
         const idx = c.lines.findIndex((l) => l.productId === item.id && l.size === s);
         if (idx >= 0) {
           return {
             ...c,
+            ...promoReset,
             lines: c.lines.map((l, i) => (i === idx ? { ...l, quantity: l.quantity + 1 } : l)),
           };
         }
@@ -140,17 +144,33 @@ export function PosTerminal({
           unitPrice: item.unitPrice,
           lineDiscount: 0,
         };
-        return { ...c, lines: [...c.lines, line] };
+        return { ...c, ...promoReset, lines: [...c.lines, line] };
       }),
     );
     setFlash(key);
     toast.success(`${item.name}${s ? ` · talla ${s}` : ""} añadido al carrito`);
+    if (hadPromo) toast.info("Código quitado al cambiar el ticket. Vuelve a aplicarlo si procede.");
   }
 
-  const patchLine = (key: string, data: Partial<CartLine>) =>
-    updateActive((c) => ({ ...c, lines: c.lines.map((l) => (l.key === key ? { ...l, ...data } : l)) }));
-  const removeLine = (key: string) =>
-    updateActive((c) => ({ ...c, lines: c.lines.filter((l) => l.key !== key) }));
+  // Un código de promoción calcula un descuento en € sobre el bruto DE ESE
+  // momento; si el ticket cambia (líneas/uds/precio) el € quedaría obsoleto (p.
+  // ej. un 50% congelado en 100 € sobre un ticket que baja a 40 € vendería a 0).
+  // Por eso, al tocar líneas con un código aplicado, lo quitamos para forzar a
+  // re-aplicarlo (recalculado). Un descuento manual sin código NO se toca.
+  function withLinesChanged(c: Cart, lines: CartLine[]): Cart {
+    return c.promoCode ? { ...c, lines, promoCode: undefined, totalDiscount: 0 } : { ...c, lines };
+  }
+  const notifyPromoCleared = () => {
+    if (active.promoCode) toast.info("Código quitado al cambiar el ticket. Vuelve a aplicarlo si procede.");
+  };
+  const patchLine = (key: string, data: Partial<CartLine>) => {
+    notifyPromoCleared();
+    updateActive((c) => withLinesChanged(c, c.lines.map((l) => (l.key === key ? { ...l, ...data } : l))));
+  };
+  const removeLine = (key: string) => {
+    notifyPromoCleared();
+    updateActive((c) => withLinesChanged(c, c.lines.filter((l) => l.key !== key)));
+  };
   const setCustomer = (name: string, phone: string) =>
     updateActive((c) => ({ ...c, customerName: name, customerPhone: phone }));
   const setNote = (note: string) => updateActive((c) => ({ ...c, note }));

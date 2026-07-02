@@ -798,7 +798,11 @@ export function FacturasClient({
                       <Combobox
                         options={supplierOptions}
                         value={inv.supplier || null}
-                        onChange={(v) => commitField(inv.id, "supplier", v ?? "", inv.supplier)}
+                        onChange={(v) => {
+                          // Ignoramos null (reelegir el mismo en el combobox) para NO
+                          // borrar el proveedor sin querer.
+                          if (v) commitField(inv.id, "supplier", v, inv.supplier);
+                        }}
                         placeholder="Proveedor…"
                         searchPlaceholder="Buscar o crear…"
                         emptyText="Escribe para crear"

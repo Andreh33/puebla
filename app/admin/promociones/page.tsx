@@ -11,7 +11,14 @@ export default async function PromocionesPage() {
   // Nº de usos por código = pedidos que lo llevan en metadata.promoCode.
   const usage = await Promise.all(
     rows.map((r) =>
-      db.order.count({ where: { metadata: { path: ["promoCode"], equals: r.code } } }).catch(() => 0),
+      db.order
+        .count({
+          where: {
+            metadata: { path: ["promoCode"], equals: r.code },
+            status: { notIn: ["REFUNDED", "CANCELLED"] },
+          },
+        })
+        .catch(() => 0),
     ),
   );
 

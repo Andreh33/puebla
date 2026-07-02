@@ -62,12 +62,10 @@ export function useCartPromo(subtotal: number): { code: string | null; discount:
         });
         const data = (await res.json()) as { ok?: boolean; discount?: number };
         if (!alive) return;
-        if (data.ok && typeof data.discount === "number") {
-          setDiscount(data.discount);
-        } else {
-          setDiscount(0);
-          setStoredPromo(null); // el código ya no aplica → lo quitamos
-        }
+        // Solo actualizamos el descuento mostrado. NO borramos el código aquí
+        // (un 429 o bajar del mínimo un instante son transitorios); si de verdad
+        // ya no vale, lo quita create-checkout al pagar (CheckoutButton).
+        setDiscount(data.ok && typeof data.discount === "number" ? data.discount : 0);
       } catch {
         if (alive) setDiscount(0);
       }

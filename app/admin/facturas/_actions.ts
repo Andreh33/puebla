@@ -71,9 +71,14 @@ export async function updateInvoiceFieldAction(
   await requireSession();
   let data: Prisma.SupplierInvoiceUpdateInput;
   switch (field) {
-    case "supplier":
-      data = { supplier: value.trim() };
+    case "supplier": {
+      // supplier es NOT NULL y no debe quedar vacío: rechazamos el vacío para que
+      // el cliente haga rollback (antes se guardaba "" y se perdía el proveedor).
+      const s = value.trim();
+      if (!s) return { ok: false, error: "El proveedor no puede quedar vacío." };
+      data = { supplier: s };
       break;
+    }
     case "brandLabel":
       data = { brandLabel: value.trim() || null };
       break;

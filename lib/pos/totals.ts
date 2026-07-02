@@ -17,7 +17,8 @@ export function planTotals(opts: {
 }): { subtotal: number; tax: number; total: number } {
   const ivaRate = opts.ivaRate ?? IVA_RATE;
   const gross = opts.lineSubtotals.reduce((a, b) => a + b, 0);
-  const total = Math.max(0, round2(gross - (opts.totalDiscount ?? 0)));
+  // El descuento total nunca supera el bruto (defensa: no vender por debajo de 0).
+  const total = Math.max(0, round2(gross - Math.min(opts.totalDiscount ?? 0, gross)));
   const base = round2(total / (1 + ivaRate / 100));
   const tax = round2(total - base);
   return { subtotal: base, tax, total };

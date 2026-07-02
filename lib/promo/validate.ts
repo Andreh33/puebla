@@ -36,7 +36,10 @@ export async function validatePromoCode(
 
     if (promo.maxRedemptions != null) {
       const used = await db.order.count({
-        where: { metadata: { path: ["promoCode"], equals: code } },
+        where: {
+          metadata: { path: ["promoCode"], equals: code },
+          status: { notIn: ["REFUNDED", "CANCELLED"] },
+        },
       });
       if (used >= promo.maxRedemptions) return { ok: false, error: "Este código ya no tiene usos disponibles." };
     }

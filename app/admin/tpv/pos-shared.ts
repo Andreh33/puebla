@@ -108,7 +108,9 @@ export function cartTotals(cart: Cart): {
   units: number;
 } {
   const gross = cart.lines.reduce((a, l) => a + lineSubtotal(l), 0);
-  const total = Math.max(0, round2(gross - cart.totalDiscount));
+  // El descuento nunca supera el bruto (evita "vender a 0 €" si el descuento
+  // quedó por encima del importe tras cambiar el ticket).
+  const total = Math.max(0, round2(gross - Math.min(cart.totalDiscount, gross)));
   const base = round2(total / (1 + IVA_RATE));
   const tax = round2(total - base);
   const units = cart.lines.reduce((a, l) => a + l.quantity, 0);

@@ -223,6 +223,12 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
   let appliedPromo: string | null = null;
   if (promoCode && promoCode.trim()) {
     const grossCents = lineItems.reduce((a, li) => a + li.price_data.unit_amount * li.quantity, 0);
+    if (grossCents <= 0) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        { ok: false, error: "promo_invalid", message: "El carrito no permite aplicar el código." },
+        { status: 409 },
+      );
+    }
     const promo = await validatePromoCode(promoCode, grossCents / 100);
     if (!promo.ok) {
       return NextResponse.json<CreateCheckoutResponse>(
@@ -230,8 +236,18 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
         { status: 409 },
       );
     }
-    const targetCents = grossCents - Math.round(promo.discount * 100);
-    if (targetCents < 50) {
+    const discountCents = Math.min(Math.round(promo.discount * 100), grossCents);
+    const targetCents = grossCents - discountCents;
+    // Rebaja proporcional por unidad (el total real es la suma de las líneas
+    // rebajadas; puede diferir unos céntimos del ideal por el redondeo por unidad).
+    const factor = targetCents / grossCents;
+    for (const li of lineItems) {
+      li.price_data.unit_amount = Math.max(0, Math.round(li.price_data.unit_amount * factor));
+    }
+    // Comprobamos el total REAL (no el ideal) contra el mínimo de Stripe (0,50 €),
+    // para que sessions.create no falle con un error genérico.
+    const realCents = lineItems.reduce((a, li) => a + li.price_data.unit_amount * li.quantity, 0);
+    if (realCents < 50) {
       return NextResponse.json<CreateCheckoutResponse>(
         {
           ok: false,
@@ -240,12 +256,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
         },
         { status: 409 },
       );
-    }
-    // Rebaja proporcional por unidad (diferencia máx. de unos céntimos por el
-    // redondeo; el total real es la suma de las líneas rebajadas).
-    const factor = targetCents / grossCents;
-    for (const li of lineItems) {
-      li.price_data.unit_amount = Math.max(0, Math.round(li.price_data.unit_amount * factor));
     }
     appliedPromo = promo.code;
   }
