@@ -627,3 +627,25 @@ model WhatsappReservation {
   @@index([status, createdAt])
   @@index([createdAt])
 }
+
+// Códigos de promoción (descuento por código), aplicables en web y TPV. El
+// descuento se aplica SIEMPRE rebajando el importe del pedido (no con cupones de
+// Stripe), así la factura Holded y los reembolsos siguen cuadrando. El nº de
+// usos se cuenta desde los pedidos (Order.metadata.promoCode), no hay contador
+// aquí. Aditivo: tabla nueva.
+model PromoCode {
+  id             String    @id @default(cuid())
+  code           String    @unique // normalizado a MAYÚSCULAS
+  description    String?
+  discountType   String    @default("PERCENT") // "PERCENT" | "FIXED"
+  value          Decimal   @db.Decimal(10, 2) // % (0-100) o € según discountType
+  active         Boolean   @default(true)
+  startsAt       DateTime?
+  endsAt         DateTime?
+  minSubtotal    Decimal?  @db.Decimal(10, 2) // compra mínima para aplicar
+  maxRedemptions Int? // límite de usos (null = ilimitado)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([active])
+}

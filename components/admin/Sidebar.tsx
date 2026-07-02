@@ -22,6 +22,7 @@ import {
   KeyRound,
   ShoppingCart,
   MessageCircle,
+  BadgePercent,
   ScanLine,
   Menu,
   PanelLeftClose,
@@ -62,6 +63,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Visitas", href: "/admin/visitas", icon: BarChart3 },
   { label: "Balance", href: "/admin/balance", icon: TrendingUp, ownerOnly: true },
   { label: "Facturas", href: "/admin/facturas", icon: ReceiptText },
+  { label: "Promociones", href: "/admin/promociones", icon: BadgePercent },
   // OCULTO temporalmente a petición del cliente. Qué hace:
   // gestiona redirecciones 301/302 entre URLs antiguas y nuevas del sitio.
   // Útil cuando cambias el slug de un producto o categoría y quieres que
