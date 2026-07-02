@@ -26,6 +26,7 @@ import { effectivePrice } from "@/lib/price";
 import { cleanProductName } from "@/lib/utils/html";
 import { assertStockAvailable } from "@/lib/stripe/stock-check";
 import { validatePromoCode } from "@/lib/promo/validate";
+import { resolveProductSku } from "@/lib/products/sku";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -113,6 +114,8 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       name: true,
       slug: true,
       sku: true,
+      modelCode: true,
+      externalId: true,
       retailPrice: true,
       salePrice: true,
       mainImageUrl: true,
@@ -206,7 +209,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
           metadata: {
             zs_product_id: p.id,
             zs_slug: p.slug,
-            zs_sku: p.sku ?? "",
+            zs_sku: resolveProductSku({ modelCode: p.modelCode, externalId: p.externalId, id: p.id }),
             zs_size: it.size ?? "",
             zs_color: it.colorName,
           },

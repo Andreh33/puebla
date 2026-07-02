@@ -174,9 +174,11 @@ export async function performOnlineItemRefund(
       : undefined;
 
   if (fullyRefunded) {
-    // Todo reembolsado → pedido REFUNDED y totales a 0. Solo marcamos
-    // stockRestored del pedido entero si de verdad repusimos todo (restock);
-    // así un evento posterior no intenta reponer lo que el cliente conserva.
+    // Todo reembolsado → pedido REFUNDED y totales a 0. Marcamos SIEMPRE
+    // stockRestored: la reposición ya la decidió esta action línea a línea (según
+    // `restock`), así que el webhook charge.refunded (que ante un reembolso TOTAL
+    // repondría TODO) queda bloqueado y NO repone lo que el cliente conserva
+    // cuando se eligió "no reponer".
     await tx.order.update({
       where: { id: orderId },
       data: {
@@ -189,7 +191,7 @@ export async function performOnlineItemRefund(
         metadata: {
           ...meta,
           returns: [...prevReturns, returnEntry],
-          ...(restock ? { stockRestored: true } : {}),
+          stockRestored: true,
         } as Prisma.InputJsonValue,
       },
     });
