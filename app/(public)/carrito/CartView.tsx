@@ -18,10 +18,14 @@ import { logReservation } from "@/lib/whatsapp-reservation";
 import { formatPriceEUR } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { CheckoutButton } from "@/components/public/CheckoutButton";
+import { PromoCodeField } from "@/components/public/PromoCodeField";
+import { useCartPromo } from "@/lib/cart/promo-code";
 
 export function CartView() {
   const { items, count, total, updateQty, removeItem, clear, ready } =
     useCart();
+  const { code: promoCode, discount } = useCartPromo(total);
+  const finalTotal = Math.max(0, Math.round((total - discount) * 100) / 100);
 
   if (!ready) {
     return (
@@ -141,12 +145,23 @@ export function CartView() {
               <dt className="text-zs-muted">Recogida en tienda</dt>
               <dd className="text-emerald-600">gratis</dd>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <dt>Descuento{promoCode ? ` · ${promoCode}` : ""}</dt>
+                <dd className="font-semibold tabular-nums">−{formatPriceEUR(discount)}</dd>
+              </div>
+            )}
           </dl>
+
+          <div className="mt-4">
+            <PromoCodeField subtotal={total} appliedCode={promoCode} discount={discount} />
+          </div>
+
           <div className="my-4 border-t border-zs-border" />
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-semibold text-zs-ink">Total</span>
             <span className="text-2xl font-extrabold tabular-nums text-zs-blue-900">
-              {formatPriceEUR(total)}
+              {formatPriceEUR(finalTotal)}
             </span>
           </div>
 

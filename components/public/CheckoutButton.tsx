@@ -5,6 +5,7 @@ import { CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { CartItem } from "@/lib/cart/store";
 import type { CheckoutCartItem, CreateCheckoutResponse } from "@/lib/stripe/types";
+import { getStoredPromo, setStoredPromo } from "@/lib/cart/promo-code";
 
 interface Props {
   items: CartItem[];
@@ -39,10 +40,11 @@ export function CheckoutButton({ items, className }: Props) {
         qty: it.qty,
       }));
 
+      const promoCode = getStoredPromo() || undefined;
       const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: checkoutItems, deliveryMethod: "shipping" }),
+        body: JSON.stringify({ items: checkoutItems, deliveryMethod: "shipping", promoCode }),
       });
 
       const data: CreateCheckoutResponse = await res.json();
@@ -53,6 +55,11 @@ export function CheckoutButton({ items, className }: Props) {
         return;
       }
 
+      // Si el código ya no vale (caducó entre el carrito y el pago), lo quitamos
+      // para que el cliente pueda pagar sin él.
+      if (!data.ok && (data.error === "promo_invalid" || data.error === "promo_too_big")) {
+        setStoredPromo(null);
+      }
       // Error devuelto por el servidor
       toast.error(data.message ?? "No se pudo iniciar el pago. Inténtalo de nuevo.");
     } catch {

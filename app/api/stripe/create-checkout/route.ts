@@ -25,6 +25,7 @@ import { db } from "@/lib/db";
 import { effectivePrice } from "@/lib/price";
 import { cleanProductName } from "@/lib/utils/html";
 import { assertStockAvailable } from "@/lib/stripe/stock-check";
+import { validatePromoCode } from "@/lib/promo/validate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,7 @@ const RequestSchema = z.object({
   customerEmail: z.string().email().optional(),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
+  promoCode: z.string().max(40).optional(),
 });
 
 function siteUrl(req: NextRequest): string {
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
     );
   }
 
-  const { items, deliveryMethod = "shipping", customerEmail, successUrl, cancelUrl } =
+  const { items, deliveryMethod = "shipping", customerEmail, successUrl, cancelUrl, promoCode } =
     parsed.data;
 
   const base = siteUrl(req);
@@ -213,6 +215,41 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
     });
   }
 
+  // Código de promoción: el descuento se aplica REBAJANDO los unit_amounts (no
+  // con cupones de Stripe). Así `amount_subtotal == amount_total`, y el pedido, la
+  // factura de Holded y los reembolsos ven un pedido normal más barato — nada
+  // downstream cambia. La validación aquí (contra los precios reales de BD) es la
+  // autoritativa; la del carrito es solo para mostrar.
+  let appliedPromo: string | null = null;
+  if (promoCode && promoCode.trim()) {
+    const grossCents = lineItems.reduce((a, li) => a + li.price_data.unit_amount * li.quantity, 0);
+    const promo = await validatePromoCode(promoCode, grossCents / 100);
+    if (!promo.ok) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        { ok: false, error: "promo_invalid", message: promo.error },
+        { status: 409 },
+      );
+    }
+    const targetCents = grossCents - Math.round(promo.discount * 100);
+    if (targetCents < 50) {
+      return NextResponse.json<CreateCheckoutResponse>(
+        {
+          ok: false,
+          error: "promo_too_big",
+          message: "El descuento deja el total por debajo del mínimo para pagar online.",
+        },
+        { status: 409 },
+      );
+    }
+    // Rebaja proporcional por unidad (diferencia máx. de unos céntimos por el
+    // redondeo; el total real es la suma de las líneas rebajadas).
+    const factor = targetCents / grossCents;
+    for (const li of lineItems) {
+      li.price_data.unit_amount = Math.max(0, Math.round(li.price_data.unit_amount * factor));
+    }
+    appliedPromo = promo.code;
+  }
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -235,6 +272,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       metadata: {
         deliveryMethod,
         source: "zonasport-web",
+        ...(appliedPromo ? { promoCode: appliedPromo } : {}),
       },
     });
 

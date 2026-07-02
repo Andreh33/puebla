@@ -14,6 +14,8 @@ import { useCart } from "@/lib/cart/use-cart";
 import { buildCartWhatsAppMessage } from "@/lib/cart/whatsapp-message";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { logReservation } from "@/lib/whatsapp-reservation";
+import { PromoCodeField } from "@/components/public/PromoCodeField";
+import { useCartPromo } from "@/lib/cart/promo-code";
 import { formatPriceEUR } from "@/lib/utils";
 import { itemKey } from "@/lib/cart/store";
 import { CheckoutButton } from "@/components/public/CheckoutButton";
@@ -25,6 +27,8 @@ type Props = {
 
 export function CartDrawer({ open, onOpenChange }: Props) {
   const { items, count, total, updateQty, removeItem, ready } = useCart();
+  const { code: promoCode, discount } = useCartPromo(total);
+  const finalTotal = Math.max(0, Math.round((total - discount) * 100) / 100);
 
   const whatsappHref = whatsappUrl(buildCartWhatsAppMessage(items));
 
@@ -132,10 +136,19 @@ export function CartDrawer({ open, onOpenChange }: Props) {
         {/* Footer fijo con total y CTAs */}
         {items.length > 0 && (
           <div className="border-t border-zs-border bg-zs-surface px-5 py-4">
+            <div className="mb-3">
+              <PromoCodeField subtotal={total} appliedCode={promoCode} discount={discount} />
+            </div>
+            {discount > 0 && (
+              <div className="mb-1 flex items-baseline justify-between gap-2 text-sm text-emerald-700">
+                <span>Descuento{promoCode ? ` · ${promoCode}` : ""}</span>
+                <span className="font-semibold tabular-nums">−{formatPriceEUR(discount)}</span>
+              </div>
+            )}
             <div className="mb-3 flex items-baseline justify-between gap-2">
               <span className="text-sm text-zs-muted">Total</span>
               <span className="text-xl font-extrabold tabular-nums text-zs-blue-900">
-                {formatPriceEUR(total)}
+                {formatPriceEUR(finalTotal)}
               </span>
             </div>
             <p className="mb-3 text-[11px] leading-snug text-zs-muted">
