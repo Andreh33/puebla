@@ -411,12 +411,7 @@ function EditablePriceCell({
               type="button"
               onClick={(e) => e.stopPropagation()}
               title="Descuento rápido"
-              className={
-                "inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md border px-1.5 text-[11px] font-semibold transition-colors " +
-                (currentPct != null
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                  : "border-zs-border text-zs-muted hover:bg-zs-surface")
-              }
+              className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md border border-orange-500 bg-orange-500 px-1.5 text-[11px] font-bold text-white shadow-sm transition-colors hover:bg-orange-600"
             >
               {currentPct != null ? `−${currentPct}%` : <BadgePercent className="h-3.5 w-3.5" />}
             </button>
