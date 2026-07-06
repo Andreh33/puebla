@@ -5,6 +5,9 @@
  * al bundle del navegador.
  */
 
+import type { PaymentMethodRow } from "./payment-breakdown";
+export type { PaymentMethodRow } from "./payment-breakdown";
+
 export type FamilyKey = "textil" | "calzado" | "complemento";
 export type GenderKey = "HOMBRE" | "MUJER" | "NINO" | "NINA" | "BEBE" | "OTROS";
 export type Period = "mes" | "ano" | "todo";
@@ -26,6 +29,8 @@ export type BalanceData = {
   byGender: GenderRow[];
   grandTotal: Metrics;
   profitByMonth: Array<{ month: string; label: string; beneficio: number; ventas: number }>;
+  /** Desglose de ventas por método de pago (Bizum/PayPal/Tarjeta/TPV/Online). */
+  paymentMethods: PaymentMethodRow[];
 };
 
 export const FAMILY_LABELS: Record<FamilyKey, string> = {

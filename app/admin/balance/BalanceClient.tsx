@@ -18,10 +18,11 @@ import {
   type FamilyTable,
   type GenderRow,
   type Metrics,
+  type PaymentMethodRow,
   type Period,
 } from "@/lib/admin/balance-types";
 
-const WIDGET_IDS = ["textil", "calzado", "complemento", "general", "mensual"] as const;
+const WIDGET_IDS = ["textil", "calzado", "complemento", "general", "metodos", "mensual"] as const;
 type WidgetId = (typeof WIDGET_IDS)[number];
 const STORAGE_KEY = "zs:balance:layout:v1";
 
@@ -132,6 +133,22 @@ export function BalanceClient({ data }: { data: BalanceData }) {
         </Card>
       );
     }
+    if (id === "metodos") {
+      return (
+        <Card
+          id={id}
+          title="Ventas por método de pago"
+          subtitle="Dinero cobrado por método en el periodo"
+          onHide={hide}
+          onUp={() => move(id, -1)}
+          onDown={() => move(id, 1)}
+          onDragStart={() => (dragId.current = id)}
+          onDrop={() => reorderTo(id)}
+        >
+          <PaymentMethodTable rows={data.paymentMethods} />
+        </Card>
+      );
+    }
     const fam = familyById(id);
     if (!fam) return null;
     return (
@@ -221,6 +238,7 @@ const WIDGET_TITLE: Record<WidgetId, string> = {
   calzado: "Calzado",
   complemento: "Complementos",
   general: "Resumen por género",
+  metodos: "Ventas por método de pago",
   mensual: "Beneficio por mes",
 };
 
@@ -423,6 +441,59 @@ function MonthlyTable({
           <td className="px-3 py-2 text-right tabular-nums text-emerald-700">
             {formatPriceEUR(totalBen)}
           </td>
+          <td className="px-3 py-2">&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tabla de ventas por método de pago (con barra de importe relativa)
+// ---------------------------------------------------------------------------
+
+function PaymentMethodTable({ rows }: { rows: PaymentMethodRow[] }) {
+  if (rows.length === 0) {
+    return <p className="px-3 py-4 text-sm text-zs-muted">Sin datos en este periodo.</p>;
+  }
+  const totalImporte = Math.round(rows.reduce((a, r) => a + r.importe, 0) * 100) / 100;
+  const totalPedidos = rows.reduce((a, r) => a + r.pedidos, 0);
+  const max = Math.max(1, ...rows.map((r) => r.importe));
+  return (
+    <table className="min-w-full text-sm">
+      <thead>
+        <tr className="text-left text-[11px] uppercase tracking-wide text-zs-muted">
+          <th className="px-3 py-2">Método</th>
+          <th className="px-3 py-2 text-right">Pedidos</th>
+          <th className="px-3 py-2 text-right">Importe</th>
+          <th className="px-3 py-2 text-right">%</th>
+          <th className="px-3 py-2">&nbsp;</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.label} className="border-t border-zs-border hover:bg-zs-surface/40">
+            <td className="px-3 py-2">{r.label}</td>
+            <td className="px-3 py-2 text-right tabular-nums">{nf.format(r.pedidos)}</td>
+            <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(r.importe)}</td>
+            <td className="px-3 py-2 text-right tabular-nums">
+              {r.pct.toLocaleString("es-ES")}%
+            </td>
+            <td className="px-3 py-2">
+              <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-full bg-zs-surface">
+                <div
+                  className="h-full rounded-full bg-zs-blue-700"
+                  style={{ width: `${(r.importe / max) * 100}%` }}
+                />
+              </div>
+            </td>
+          </tr>
+        ))}
+        <tr className="border-t border-zs-border bg-zs-surface/70 font-bold">
+          <td className="px-3 py-2">TOTAL</td>
+          <td className="px-3 py-2 text-right tabular-nums">{nf.format(totalPedidos)}</td>
+          <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(totalImporte)}</td>
+          <td className="px-3 py-2 text-right tabular-nums">100%</td>
           <td className="px-3 py-2">&nbsp;</td>
         </tr>
       </tbody>

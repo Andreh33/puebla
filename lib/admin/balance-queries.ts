@@ -39,8 +39,10 @@ export type {
   GenderRow,
   FamilyTable,
   BalanceData,
+  PaymentMethodRow,
 } from "./balance-types";
 export { FAMILY_LABELS, GENDER_LABELS } from "./balance-types";
+import { buildPaymentBreakdown, type PaymentMethodRow } from "./payment-breakdown";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -185,9 +187,43 @@ export async function getBalance(period: Period): Promise<BalanceData> {
 
   const grandTotal = roundMetrics(sumMetrics([...cells.values()]));
 
-  const profitByMonth = await getProfitByMonth(12);
+  const [profitByMonth, paymentMethods] = await Promise.all([
+    getProfitByMonth(12),
+    getPaymentMethodBreakdown(period),
+  ]);
 
-  return { period, families, byGender, grandTotal, profitByMonth };
+  return { period, families, byGender, grandTotal, profitByMonth, paymentMethods };
+}
+
+// ---------------------------------------------------------------------------
+// Desglose por método de pago
+// ---------------------------------------------------------------------------
+
+/** Lee `metadata.paymentMethod` de forma tolerante (null si ausente/no-string). */
+function readMetaPaymentMethod(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
+  const m = (metadata as Record<string, unknown>).paymentMethod;
+  return typeof m === "string" ? m : null;
+}
+
+/**
+ * Desglose de ventas por método de pago del periodo: consulta los pedidos
+ * vendidos (mismo `SOLD_STATUSES` + periodo que el resto del balance) y delega
+ * la agregación en `buildPaymentBreakdown` (puro). Importe = Σ `order.total`.
+ */
+export async function getPaymentMethodBreakdown(period: Period): Promise<PaymentMethodRow[]> {
+  const gte = periodStart(period);
+  const orders = await db.order.findMany({
+    where: { status: { in: [...SOLD_STATUSES] }, ...(gte ? { createdAt: { gte } } : {}) },
+    select: { total: true, metadata: true, deliveryMethod: true },
+  });
+  return buildPaymentBreakdown(
+    orders.map((o) => ({
+      total: toNum(o.total),
+      paymentMethod: readMetaPaymentMethod(o.metadata),
+      deliveryMethod: o.deliveryMethod,
+    })),
+  );
 }
 
 function sumMetrics(list: Metrics[]): Metrics {
