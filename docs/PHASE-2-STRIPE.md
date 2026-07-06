@@ -186,6 +186,9 @@ Para activar:
 El método usado se captura en el webhook
 (`payment_intent.latest_charge.payment_method_details.type`), se guarda en
 `Order.metadata.paymentMethod` y se muestra como chip en `/admin/pedidos`.
+Los pedidos creados **antes** de existir esta captura no tienen
+`metadata.paymentMethod`, así que no muestran chip de método: solo los pedidos
+realizados tras la activación pintan Bizum/PayPal/Tarjeta.
 Reembolsos: agnósticos al método (mismo flujo de Stripe), con la ventana
 temporal que imponga Stripe para PayPal/Bizum.
 

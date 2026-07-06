@@ -18,6 +18,9 @@ export function paymentMethodLabel(
     case "card":
       return "Tarjeta";
   }
+  // Fallbacks para llamadas sin método concreto (tests / futuros consumidores):
+  // el chip de /admin/pedidos solo invoca este helper cuando hay método
+  // capturado, así que "TPV"/"Online" no se pintan ahí — no son código muerto.
   if (deliveryMethod === "in_store") return "TPV";
   return "Online";
 }
