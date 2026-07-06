@@ -48,6 +48,7 @@ import {
   updateOrderStatus,
 } from "./_actions";
 import { computeItemReturn } from "@/lib/pos/returns";
+import { paymentMethodLabel } from "@/lib/stripe/payment-method";
 import { FULFILLMENT_STATUSES } from "./constants";
 
 const FULFILLMENT_LABELS: Record<(typeof FULFILLMENT_STATUSES)[number], string> = {
@@ -633,6 +634,11 @@ export function PedidosTable({
                           Revisar stock
                         </Badge>
                       )}
+                      {o.paymentMethod && (
+                        <Badge variant="outline">
+                          {paymentMethodLabel(o.paymentMethod, o.deliveryMethod)}
+                        </Badge>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-2 align-top">
@@ -736,6 +742,11 @@ export function PedidosTable({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {statusBadge(selected.status)}
+                    {selected.paymentMethod && (
+                      <Badge variant="outline">
+                        {paymentMethodLabel(selected.paymentMethod, selected.deliveryMethod)}
+                      </Badge>
+                    )}
                     {(orderReturnable || orderRefundable) && selected.returns.length > 0 && (
                       <Badge variant="warning">
                         {isTpv ? "Devolución parcial" : "Reembolso parcial"}
