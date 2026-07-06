@@ -458,6 +458,7 @@ export function toOrderSummary(o: OrderWithCount): OrderSummary {
     status: o.status,
     paymentStatus: o.paymentStatus,
     deliveryMethod: o.deliveryMethod,
+    paymentMethod: readPaymentMethod(o.metadata),
     itemCount: o._count.items,
     oversold: hasOversold(o.metadata),
     createdAt: o.createdAt,
@@ -471,6 +472,13 @@ function hasOversold(metadata: Prisma.JsonValue | null): boolean {
   }
   const o = (metadata as Record<string, unknown>).oversold;
   return Array.isArray(o) && o.length > 0;
+}
+
+/** Lee `metadata.paymentMethod` (método de pago de Stripe). null si ausente. */
+function readPaymentMethod(metadata: Prisma.JsonValue | null): string | null {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) return null;
+  const m = (metadata as Record<string, unknown>).paymentMethod;
+  return typeof m === "string" ? m : null;
 }
 
 /** Lee y normaliza `metadata.returns` (devoluciones de línea TPV). Tolerante. */
@@ -512,6 +520,7 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
     status: o.status,
     paymentStatus: o.paymentStatus,
     deliveryMethod: o.deliveryMethod,
+    paymentMethod: readPaymentMethod(o.metadata),
     itemCount: o.items.length,
     oversold: hasOversold(o.metadata),
     createdAt: o.createdAt,

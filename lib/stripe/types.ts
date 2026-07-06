@@ -83,6 +83,8 @@ export interface OrderSummary {
   status: OrderStatus;
   paymentStatus: string | null;
   deliveryMethod: string | null;
+  /** Método de pago usado (de Stripe): "card" | "paypal" | "bizum". null si TPV o no capturado. */
+  paymentMethod: string | null;
   itemCount: number;
   /** true si metadata.oversold tiene líneas (venta sin stock por carrera). */
   oversold: boolean;
