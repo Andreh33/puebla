@@ -493,7 +493,7 @@ function PaymentMethodTable({ rows }: { rows: PaymentMethodRow[] }) {
           <td className="px-3 py-2">TOTAL</td>
           <td className="px-3 py-2 text-right tabular-nums">{nf.format(totalPedidos)}</td>
           <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(totalImporte)}</td>
-          <td className="px-3 py-2 text-right tabular-nums">100%</td>
+          <td className="px-3 py-2 text-right tabular-nums">{totalImporte > 0 ? "100%" : "0%"}</td>
           <td className="px-3 py-2">&nbsp;</td>
         </tr>
       </tbody>
