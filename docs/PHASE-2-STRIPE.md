@@ -165,3 +165,29 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 - [Webhooks signing](https://stripe.com/docs/webhooks/signatures)
 - [Tax in Spain](https://stripe.com/docs/tax/spain)
 - Skill local: `stripe-best-practices` (invocar `/stripe-best-practices` en Claude Code).
+
+## Métodos de pago: PayPal y Bizum (métodos dinámicos)
+
+El checkout (`app/api/stripe/create-checkout/route.ts`) **no fija
+`payment_method_types`** → usa **métodos dinámicos**: lo que se active en
+**Stripe → Configuración → Métodos de pago** aparece solo en el checkout, sin
+desplegar código.
+
+Para activar:
+1. **Bizum:** activar el toggle (España, EUR; se liquida directo en Stripe).
+   Bizum tiene límite de importe por operación; Stripe lo oculta solo si el
+   carrito lo supera.
+2. **PayPal:** conectar la cuenta **PayPal Business** desde el conector de Stripe.
+3. Verificar que el webhook sigue en `https://zonasport.vercel.app/api/stripe/webhook`
+   (⚠️ NO `zonasport.es`) con los eventos `checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `charge.refunded`,
+   `payment_intent.payment_failed`.
+
+El método usado se captura en el webhook
+(`payment_intent.latest_charge.payment_method_details.type`), se guarda en
+`Order.metadata.paymentMethod` y se muestra como chip en `/admin/pedidos`.
+Reembolsos: agnósticos al método (mismo flujo de Stripe), con la ventana
+temporal que imponga Stripe para PayPal/Bizum.
+
+> Si en el futuro se fijara `payment_method_types` en el checkout, habría que
+> incluir explícitamente `"paypal"` y `"bizum"`.
