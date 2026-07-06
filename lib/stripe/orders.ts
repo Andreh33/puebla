@@ -94,6 +94,20 @@ function extractShippingAddress(
 }
 
 /**
+ * Extrae el método de pago realmente usado desde una Checkout Session con el
+ * `payment_intent.latest_charge` expandido: `payment_method_details.type`
+ * ("card" | "paypal" | "bizum" | …). Devuelve null si no se puede resolver
+ * (PI/charge no expandidos). Best-effort: nunca lanza.
+ */
+export function extractPaymentMethod(session: Stripe.Checkout.Session): string | null {
+  const pi = session.payment_intent;
+  if (!pi || typeof pi === "string") return null;
+  const charge = pi.latest_charge;
+  if (!charge || typeof charge === "string") return null;
+  return charge.payment_method_details?.type ?? null;
+}
+
+/**
  * Crea un Order a partir de una Checkout Session completada. Si ya existe
  * un Order con ese stripeSessionId, no hace nada (idempotente).
  */
@@ -108,7 +122,7 @@ export async function createOrderFromCheckout(
   let expandedSession = session;
   if (!session.line_items) {
     expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
-      expand: ["line_items.data.price.product", "payment_intent"],
+      expand: ["line_items.data.price.product", "payment_intent.latest_charge"],
     });
   }
 
@@ -164,7 +178,11 @@ export async function createOrderFromCheckout(
     (expandedSession.metadata?.deliveryMethod as string | undefined) ??
     (shippingDetails ? "shipping" : "pickup");
 
-  const baseMetadata = (expandedSession.metadata ?? {}) as Record<string, unknown>;
+  const paymentMethod = extractPaymentMethod(expandedSession);
+  const baseMetadata = {
+    ...((expandedSession.metadata ?? {}) as Record<string, unknown>),
+    ...(paymentMethod ? { paymentMethod } : {}),
+  } as Record<string, unknown>;
 
   // Order + descuento de stock en UNA transacción atómica. El descuento usa una
   // guarda condicional (`stock >= qty`) para no permitir sobreventa bajo carrera.
