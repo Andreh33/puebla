@@ -14,19 +14,20 @@ describe("buildPaymentBreakdown", () => {
       order(20, "paypal", "pickup"),
       order(100, null, "in_store"), // TPV
       order(40, null, "shipping"), // online sin método
-      order(60, "klarna", "shipping"), // método desconocido → Online
+      order(60, "klarna", "shipping"), // Klarna: método conocido, cubo propio
     ]);
     // total importe = 400
     const byLabel = Object.fromEntries(rows.map((r) => [r.label, r]));
     expect(byLabel["Tarjeta"]).toMatchObject({ pedidos: 2, importe: 150, pct: 37.5 });
     expect(byLabel["Bizum"]).toMatchObject({ pedidos: 1, importe: 30, pct: 7.5 });
     expect(byLabel["PayPal"]).toMatchObject({ pedidos: 1, importe: 20, pct: 5 });
+    expect(byLabel["Klarna"]).toMatchObject({ pedidos: 1, importe: 60, pct: 15 });
     expect(byLabel["TPV"]).toMatchObject({ pedidos: 1, importe: 100, pct: 25 });
-    // online sin método (40) + klarna desconocido (60) → mismo cubo
+    // Solo el online SIN método capturado cae en el cubo residual.
     expect(byLabel["Online (sin especificar)"]).toMatchObject({
-      pedidos: 2,
-      importe: 100,
-      pct: 25,
+      pedidos: 1,
+      importe: 40,
+      pct: 10,
     });
     // los % suman ~100
     expect(Math.round(rows.reduce((a, r) => a + r.pct, 0))).toBe(100);
