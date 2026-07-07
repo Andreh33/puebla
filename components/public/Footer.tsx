@@ -107,7 +107,15 @@ export function Footer() {
 
         <div className="flex flex-col-reverse items-start justify-between gap-4 sm:flex-row sm:items-center">
           <p className="text-xs text-zs-muted">
-            © {new Date().getFullYear()} Zona Sport · Hecho con cariño en Puebla de la Calzada
+            © {new Date().getFullYear()} Zona Sport · Hecho con cariño en Puebla de la Calzada · Diseño web por{" "}
+            <a
+              href="https://serviciosonlineweb.com"
+              target="_blank"
+              rel="noopener"
+              className="transition-colors hover:text-zs-blue-700"
+            >
+              Latech
+            </a>
           </p>
           <div className="flex items-center gap-3">
             <a
