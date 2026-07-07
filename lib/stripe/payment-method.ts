@@ -17,6 +17,14 @@ export function paymentMethodLabel(
       return "PayPal";
     case "card":
       return "Tarjeta";
+    case "klarna":
+      return "Klarna";
+    case "link":
+      return "Link";
+    case "amazon_pay":
+      return "Amazon Pay";
+    case "mb_way":
+      return "MB WAY";
   }
   // Fallbacks para llamadas sin método concreto (tests / futuros consumidores):
   // el chip de /admin/pedidos solo invoca este helper cuando hay método

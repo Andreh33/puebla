@@ -27,6 +27,7 @@ import { performItemReturn } from "@/lib/pos/return-order";
 import { performOnlineItemRefund } from "@/lib/pos/refund-online";
 import { computeItemReturn } from "@/lib/pos/returns";
 import { madridDayStart, madridDayEnd } from "@/lib/dates";
+import { methodWhere } from "@/lib/admin/order-method-filter";
 import { FULFILLMENT_STATUSES, type FulfillmentStatus } from "./constants";
 
 type ActionResult<T = unknown> =
@@ -327,6 +328,8 @@ export async function syncCatalogToStripe(): Promise<ActionResult<SyncResult>> {
 export interface ExportOrdersFilters {
   q?: string;
   status?: OrderStatus | "ALL";
+  /** Filtro por método de pago (valores de PAYMENT_METHOD_FILTER_OPTIONS). */
+  method?: string;
   from?: string;
   to?: string;
 }
@@ -355,6 +358,9 @@ export async function exportOrdersCsv(
       if (filters.from) where.createdAt.gte = madridDayStart(filters.from);
       if (filters.to) where.createdAt.lte = madridDayEnd(filters.to);
     }
+    // Método de pago: en AND para no pisar el OR de la búsqueda por texto.
+    const mw = filters.method ? methodWhere(filters.method) : null;
+    if (mw) where.AND = [mw];
 
     const rows = await db.order.findMany({
       where,

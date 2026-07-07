@@ -12,6 +12,7 @@ import { SOLD_STATUSES } from "@/lib/admin/sales-queries";
 import { StripeNotConfigured } from "./StripeNotConfigured";
 import { PedidosTable } from "./PedidosTable";
 import { buildOrderSeries } from "@/lib/admin/order-series";
+import { isPaymentMethodFilter, methodWhere, type PaymentMethodFilter } from "@/lib/admin/order-method-filter";
 import { madridDayStart, madridDayEnd, madridTodayYmd, madridMonthStartYmd } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Pedidos" };
@@ -20,6 +21,7 @@ export const dynamic = "force-dynamic";
 interface SearchParams {
   q?: string;
   status?: OrderStatus | "ALL";
+  method?: string;
   from?: string;
   to?: string;
   all?: string;
@@ -39,6 +41,7 @@ export default async function PedidosPage({
 
   const q = sp.q?.trim() ?? "";
   const status = sp.status ?? "ALL";
+  const method: PaymentMethodFilter = isPaymentMethodFilter(sp.method) ? sp.method : "ALL";
   const showAll = sp.all === "1";
   // Por defecto (sin filtro ni "todo el histórico") mostramos EL MES ACTUAL (hora
   // de la tienda, Europe/Madrid): el contador arranca el día 1 y se resetea solo
@@ -69,9 +72,13 @@ export default async function PedidosPage({
     if (from) whereBase.createdAt.gte = madridDayStart(from);
     if (to) whereBase.createdAt.lte = madridDayEnd(to);
   }
-  // Filtro de la tabla = base + estado.
+  // Filtro de la tabla = base + estado + método de pago. El método se combina
+  // vía AND para no pisar el OR de la búsqueda (methodWhere puede traer su
+  // propio OR en "online").
   const where: Prisma.OrderWhereInput = { ...whereBase };
   if (status !== "ALL") where.status = status;
+  const mw = methodWhere(method);
+  if (mw) where.AND = [...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []), mw];
 
   const [total, ordersRaw, counts, chartOrders, revenueAgg] = await Promise.all([
     db.order.count({ where }).catch(() => 0),
@@ -158,7 +165,7 @@ export default async function PedidosPage({
         total={total}
         page={page}
         pageSize={pageSize}
-        filters={{ q, status, from, to }}
+        filters={{ q, status, method, from, to }}
         showAll={showAll}
         periodRevenue={periodRevenue}
         counts={countMap}

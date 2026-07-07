@@ -49,6 +49,10 @@ import {
 } from "./_actions";
 import { computeItemReturn } from "@/lib/pos/returns";
 import { paymentMethodLabel } from "@/lib/stripe/payment-method";
+import {
+  PAYMENT_METHOD_FILTER_OPTIONS,
+  type PaymentMethodFilter,
+} from "@/lib/admin/order-method-filter";
 import { FULFILLMENT_STATUSES } from "./constants";
 
 const FULFILLMENT_LABELS: Record<(typeof FULFILLMENT_STATUSES)[number], string> = {
@@ -113,7 +117,13 @@ interface Props {
   total: number;
   page: number;
   pageSize: number;
-  filters: { q: string; status: OrderStatus | "ALL"; from: string; to: string };
+  filters: {
+    q: string;
+    status: OrderStatus | "ALL";
+    method: PaymentMethodFilter;
+    from: string;
+    to: string;
+  };
   showAll: boolean;
   periodRevenue: number;
   counts: Record<string, number>;
@@ -137,6 +147,7 @@ export function PedidosTable({
   const searchParams = useSearchParams();
   const [q, setQ] = React.useState(filters.q);
   const [status, setStatus] = React.useState<OrderStatus | "ALL">(filters.status);
+  const [method, setMethod] = React.useState<PaymentMethodFilter>(filters.method);
   const [from, setFrom] = React.useState(filters.from);
   const [to, setTo] = React.useState(filters.to);
   const [exporting, setExporting] = React.useState(false);
@@ -187,6 +198,7 @@ export function PedidosTable({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status && status !== "ALL") params.set("status", status);
+    if (method && method !== "ALL") params.set("method", method);
     if (f) params.set("from", f);
     if (t) params.set("to", t);
     router.push(`/admin/pedidos?${params.toString()}`);
@@ -201,6 +213,7 @@ export function PedidosTable({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status && status !== "ALL") params.set("status", status);
+    if (method && method !== "ALL") params.set("method", method);
     params.set("from", firstDayOfMonth(ym));
     params.set("to", lastDayOfMonth(ym));
     router.push(`/admin/pedidos?${params.toString()}`);
@@ -210,6 +223,7 @@ export function PedidosTable({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (status && status !== "ALL") params.set("status", status);
+    if (method && method !== "ALL") params.set("method", method);
     params.set("all", "1");
     router.push(`/admin/pedidos?${params.toString()}`);
   }
@@ -223,7 +237,7 @@ export function PedidosTable({
   async function handleExport() {
     setExporting(true);
     try {
-      const res = await exportOrdersCsv({ q, status, from, to });
+      const res = await exportOrdersCsv({ q, status, method, from, to });
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -450,7 +464,7 @@ export function PedidosTable({
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-2">
           <Input
             placeholder="Buscar (email, nombre, session_id)..."
@@ -477,6 +491,21 @@ export function PedidosTable({
             <SelectItem value="DELIVERED">Entregados ({counts.DELIVERED ?? 0})</SelectItem>
             <SelectItem value="CANCELLED">Cancelados ({counts.CANCELLED ?? 0})</SelectItem>
             <SelectItem value="REFUNDED">Reembolsados ({counts.REFUNDED ?? 0})</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={method}
+          onValueChange={(v) => setMethod(v as PaymentMethodFilter)}
+        >
+          <SelectTrigger aria-label="Método de pago">
+            <SelectValue placeholder="Método de pago" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAYMENT_METHOD_FILTER_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1.5">

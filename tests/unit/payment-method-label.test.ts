@@ -6,6 +6,10 @@ describe("paymentMethodLabel", () => {
     expect(paymentMethodLabel("bizum", "shipping")).toBe("Bizum");
     expect(paymentMethodLabel("paypal", "shipping")).toBe("PayPal");
     expect(paymentMethodLabel("card", "shipping")).toBe("Tarjeta");
+    expect(paymentMethodLabel("klarna", "shipping")).toBe("Klarna");
+    expect(paymentMethodLabel("link", "shipping")).toBe("Link");
+    expect(paymentMethodLabel("amazon_pay", "shipping")).toBe("Amazon Pay");
+    expect(paymentMethodLabel("mb_way", "shipping")).toBe("MB WAY");
   });
 
   it("sin método: TPV para in_store, Online para el resto", () => {
@@ -15,6 +19,6 @@ describe("paymentMethodLabel", () => {
   });
 
   it("método desconocido cae a Online", () => {
-    expect(paymentMethodLabel("klarna", "shipping")).toBe("Online");
+    expect(paymentMethodLabel("eps", "shipping")).toBe("Online");
   });
 });
