@@ -149,7 +149,7 @@ export function ProductShowcase({
             {
               Icon: ShieldCheck,
               title: "Pago seguro",
-              caption: "Tarjeta, Bizum o contra reembolso",
+              caption: "Tarjeta, Bizum o a plazos con Klarna",
             },
           ].map(({ Icon, title, caption }) => (
             <li

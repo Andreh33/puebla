@@ -94,17 +94,18 @@ export default function CondicionesPage() {
               plazos. La reserva se mantiene hasta 48 horas sin compromiso.
             </li>
             <li>
-              <strong>Compra:</strong> paga online con tarjeta desde la web y recoge en
-              tienda o recibe el pedido por envío; o pasa por la tienda física a pagar y
-              recoger.
+              <strong>Compra:</strong> paga online desde la web (tarjeta, Bizum o a
+              plazos con Klarna) y recoge en tienda o recibe el pedido por envío; o pasa
+              por la tienda física a pagar y recoger.
             </li>
           </ol>
 
           <h2>4. Formas de pago</h2>
           <ul>
             <li>
-              <strong>Online:</strong> pago con tarjeta (Visa, Mastercard) de forma segura
-              a través de Stripe, directamente desde la web.
+              <strong>Online:</strong> pago seguro a través de Stripe, directamente desde
+              la web: tarjeta (Visa, Mastercard, American Express), Bizum, y pago a
+              plazos con Klarna.
             </li>
             <li>
               <strong>En tienda:</strong> efectivo, tarjeta bancaria (Visa, Mastercard) o

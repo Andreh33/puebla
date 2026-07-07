@@ -203,8 +203,8 @@ export function ProductActions({
         <p className="text-xs text-zs-muted">Selecciona una talla para continuar.</p>
       )}
       <p className="text-[11px] leading-snug text-zs-muted">
-        Paga online con tarjeta de forma segura, o resérvalo por WhatsApp para
-        recogerlo en tienda.
+        Paga online de forma segura con tarjeta, Bizum o a plazos con Klarna; o
+        resérvalo por WhatsApp para recogerlo en tienda.
       </p>
     </div>
   );

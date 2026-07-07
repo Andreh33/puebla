@@ -18,7 +18,8 @@ export default function CartPage() {
           Tu carrito
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-zs-muted">
-          Paga con tarjeta de forma segura o confirma tu reserva por WhatsApp.
+          Paga de forma segura con tarjeta, Bizum o a plazos con Klarna — o confirma
+          tu reserva por WhatsApp.
         </p>
       </header>
       <CartView />

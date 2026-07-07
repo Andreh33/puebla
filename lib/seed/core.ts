@@ -187,7 +187,7 @@ export async function runSeed(db: PrismaClient, opts: SeedOptions = {}): Promise
       key: "site.banner",
       value: {
         enabled: true,
-        text: "Compra online con tarjeta · o resérvalo por WhatsApp",
+        text: "Compra online con tarjeta, Bizum o Klarna · o resérvalo por WhatsApp",
         link: "",
       },
     },

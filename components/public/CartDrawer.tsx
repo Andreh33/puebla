@@ -152,7 +152,7 @@ export function CartDrawer({ open, onOpenChange }: Props) {
               </span>
             </div>
             <p className="mb-3 text-[11px] leading-snug text-zs-muted">
-              IVA incluido. Paga con tarjeta o confirma por WhatsApp.
+              IVA incluido. Paga con tarjeta, Bizum o Klarna — o confirma por WhatsApp.
             </p>
             <div className="flex flex-col gap-2">
               <CheckoutButton items={items} />
