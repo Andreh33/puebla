@@ -13,8 +13,9 @@ interface Props {
 }
 
 /**
- * Botón reutilizable "Pagar con tarjeta" que envía los items del carrito al
- * endpoint /api/stripe/create-checkout y redirige a la URL de Stripe.
+ * Botón reutilizable "Realizar pago" que envía los items del carrito al
+ * endpoint /api/stripe/create-checkout y redirige a la URL de Stripe (donde el
+ * cliente elige método: tarjeta, Bizum, etc. — métodos dinámicos).
  *
  * Se desactiva automáticamente cuando el carrito está vacío o durante la
  * petición. El servidor re-valida precios; el cliente solo manda los items.
@@ -78,14 +79,14 @@ export function CheckoutButton({ items, className }: Props) {
         className ??
         "inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-zs-blue-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zs-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
       }
-      aria-label="Pagar con tarjeta"
+      aria-label="Realizar pago"
     >
       {loading ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
       ) : (
         <CreditCard className="h-4 w-4" aria-hidden />
       )}
-      {loading ? "Redirigiendo…" : "Pagar con tarjeta"}
+      {loading ? "Redirigiendo…" : "Realizar pago"}
     </button>
   );
 }
