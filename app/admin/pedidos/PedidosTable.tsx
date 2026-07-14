@@ -48,6 +48,7 @@ import {
   updateOrderStatus,
 } from "./_actions";
 import { computeItemReturn } from "@/lib/pos/returns";
+import { getPosOpenItem } from "@/lib/pos/open-items";
 import { paymentMethodLabel } from "@/lib/stripe/payment-method";
 import {
   PAYMENT_METHOD_FILTER_OPTIONS,
@@ -335,9 +336,15 @@ export function PedidosTable({
   // pedidos online se cancelan/reembolsan desde Stripe, que es quien repone su
   // stock (así no se descuadra el dinero con el inventario).
   async function cancelOrder(orderId: string) {
+    const openItemKind =
+      selected?.id === orderId
+        ? selected.posOpenItemKind
+        : (orders.find((order) => order.id === orderId)?.posOpenItemKind ?? null);
     if (
       !confirm(
-        "¿Cancelar esta venta del TPV? Se devolverá al inventario el stock que descontó.",
+        openItemKind
+          ? "¿Cancelar este cobro del TPV? Se corregirán la venta y sus totales; no hay stock asociado."
+          : "¿Cancelar esta venta del TPV? Se devolverá al inventario el stock que descontó.",
       )
     ) {
       return;
@@ -349,7 +356,11 @@ export function PedidosTable({
         toast.error(res.error);
         return;
       }
-      toast.success("Venta cancelada · stock devuelto al inventario");
+      toast.success(
+        openItemKind
+          ? "Cobro cancelado · totales corregidos"
+          : "Venta cancelada · stock devuelto al inventario",
+      );
       // Si el modal está abierto sobre este mismo pedido, refresca su detalle.
       if (selected?.id === orderId) {
         const fresh = await getOrderDetail(orderId);
@@ -368,6 +379,7 @@ export function PedidosTable({
   // unidad del pedido, este queda cancelado.
   async function handleReturnItem(itemId: string, qty: number) {
     if (!selected) return;
+    const openItem = selected.items.find((item) => item.id === itemId)?.posOpenItemKind != null;
     setReturningBusy(true);
     try {
       const res = await returnOrderItem(selected.id, itemId, qty);
@@ -376,7 +388,7 @@ export function PedidosTable({
         return;
       }
       toast.success(
-        `Devuelto · ${formatPriceEUR(res.data?.refundedAmount ?? 0)} · stock repuesto`,
+        `Devuelto · ${formatPriceEUR(res.data?.refundedAmount ?? 0)}${openItem ? "" : " · stock repuesto"}`,
       );
       if (res.data?.warning) toast(res.data.warning);
       setReturningItemId(null);
@@ -668,6 +680,11 @@ export function PedidosTable({
                           {paymentMethodLabel(o.paymentMethod, o.deliveryMethod)}
                         </Badge>
                       )}
+                      {o.posOpenItemKind && (
+                        <Badge variant="outline">
+                          {getPosOpenItem(o.posOpenItemKind).label} · SKU {getPosOpenItem(o.posOpenItemKind).sku}
+                        </Badge>
+                      )}
                     </div>
                   </td>
                   <td className="px-3 py-2 align-top">
@@ -712,7 +729,11 @@ export function PedidosTable({
                             className="text-xs font-semibold text-zs-red-600 hover:underline disabled:opacity-50"
                             disabled={cancellingId === o.id}
                             type="button"
-                            title="Cancela la venta del TPV y devuelve el stock al inventario"
+                            title={
+                              o.posOpenItemKind
+                                ? "Cancela el cobro y corrige sus totales"
+                                : "Cancela la venta del TPV y devuelve el stock al inventario"
+                            }
                           >
                             {cancellingId === o.id ? "Cancelando…" : "Cancelar"}
                           </button>
@@ -774,6 +795,11 @@ export function PedidosTable({
                     {selected.paymentMethod && (
                       <Badge variant="outline">
                         {paymentMethodLabel(selected.paymentMethod, selected.deliveryMethod)}
+                      </Badge>
+                    )}
+                    {selected.posOpenItemKind && (
+                      <Badge variant="outline">
+                        {getPosOpenItem(selected.posOpenItemKind).label} · SKU {getPosOpenItem(selected.posOpenItemKind).sku}
                       </Badge>
                     )}
                     {(orderReturnable || orderRefundable) && selected.returns.length > 0 && (
@@ -890,6 +916,11 @@ export function PedidosTable({
                               ) : (
                                 <span className="mt-0.5 block text-xs italic text-zs-muted">Sin SKU</span>
                               )}
+                              {it.description && (
+                                <span className="mt-1 block whitespace-pre-wrap text-xs text-zs-muted">
+                                  {it.description}
+                                </span>
+                              )}
                             </div>
                             <span className="flex shrink-0 items-center gap-2">
                               <span
@@ -905,7 +936,11 @@ export function PedidosTable({
                                     setReturnQty(it.quantity);
                                   }}
                                   className="text-xs font-semibold text-zs-red-600 hover:underline"
-                                  title="Devolver este artículo: vuelve al inventario y se descuenta de la venta"
+                                  title={
+                                    it.posOpenItemKind
+                                      ? "Devolver este cobro y descontarlo de la venta"
+                                      : "Devolver este artículo: vuelve al inventario y se descuenta de la venta"
+                                  }
                                 >
                                   Devolver
                                 </button>
@@ -954,6 +989,9 @@ export function PedidosTable({
                               <span className="font-semibold">
                                 Devuelve {formatPriceEUR(previewAmount)} al cliente
                               </span>
+                              {it.posOpenItemKind && (
+                                <span className="text-zs-muted">Sin movimiento de stock</span>
+                              )}
                               <span className="ml-auto flex gap-2">
                                 <Button
                                   type="button"
@@ -1040,8 +1078,8 @@ export function PedidosTable({
                   {orderReturnable && (
                     <p className="mt-1.5 text-xs text-zs-muted">
                       Pulsa <span className="font-semibold text-zs-red-600">Devolver</span> en un
-                      artículo para reponerlo al inventario y descontarlo de la venta (efectivo en
-                      mano). Solo ventas de tienda (TPV).
+                      artículo para {selected.posOpenItemKind ? "descontarlo de la venta sin tocar inventario" : "reponerlo al inventario y descontarlo de la venta"} (efectivo en mano).
+                      Solo ventas de tienda (TPV).
                     </p>
                   )}
                   {orderRefundable && (
@@ -1076,7 +1114,11 @@ export function PedidosTable({
                   <h3 className="mb-2 text-xs font-semibold uppercase text-zs-muted">
                     Factura (Holded · VeriFactu)
                   </h3>
-                  {selected.holdedInvoiceNumber ? (
+                  {selected.posOpenItemKind ? (
+                    <div className="rounded-lg border border-zs-border bg-zs-surface p-3 text-xs text-zs-muted">
+                      Este ticket libre es exclusivo del TPV y no se envía a Holded.
+                    </div>
+                  ) : selected.holdedInvoiceNumber ? (
                     <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                       <p className="text-sm font-semibold text-emerald-900">
                         ✓ Factura emitida: {selected.holdedInvoiceNumber}
@@ -1181,11 +1223,15 @@ export function PedidosTable({
                         >
                           {cancellingId === selected.id
                             ? "Cancelando…"
-                            : "Cancelar venta y devolver stock"}
+                            : selected.posOpenItemKind
+                              ? "Cancelar cobro"
+                              : "Cancelar venta y devolver stock"}
                         </Button>
                         <p className="mt-1.5 text-xs text-zs-muted">
                           Solo para ventas del TPV. Marca la venta como cancelada y
-                          devuelve al inventario el stock que descontó.
+                          {selected.posOpenItemKind
+                            ? " corrige sus totales sin tocar inventario."
+                            : " devuelve al inventario el stock que descontó."}
                         </p>
                       </div>
                     )}

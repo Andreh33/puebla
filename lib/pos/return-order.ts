@@ -1,6 +1,7 @@
 import "server-only";
 import type { OrderStatus, Prisma } from "@prisma/client";
 import { recomputeProductStock } from "@/lib/products/stock";
+import { readPosOpenItemKind } from "@/lib/pos/open-items";
 import { computeItemReturn } from "./returns";
 
 /** Convierte Prisma.Decimal | string | number a number (tolerante a null/NaN). */
@@ -66,6 +67,7 @@ export async function performItemReturn(
           id: true,
           productId: true,
           productName: true,
+          metadata: true,
           variantSize: true,
           quantity: true,
           subtotal: true,
@@ -94,6 +96,7 @@ export async function performItemReturn(
       `Solo queda${item.quantity === 1 ? "" : "n"} ${item.quantity} unidad${item.quantity === 1 ? "" : "es"} por devolver de "${item.productName}".`,
     );
   }
+  const isOpenItem = readPosOpenItemKind(item.metadata) != null;
 
   const { returnedGross, retBase, retTax } = computeItemReturn(
     toNum(item.subtotal),
@@ -128,7 +131,7 @@ export async function performItemReturn(
       if (r.count === 0) stockRestored = false;
     }
     if (stockRestored) await recomputeProductStock(tx, item.productId);
-  } else {
+  } else if (!isOpenItem) {
     stockRestored = false; // sin productId no hay inventario que reponer (no esperado en TPV)
   }
 

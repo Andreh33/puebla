@@ -15,6 +15,10 @@ import type Stripe from "stripe";
 import { Prisma, type Order } from "@prisma/client";
 import { db } from "@/lib/db";
 import { recomputeProductStock } from "@/lib/products/stock";
+import {
+  readPosOpenItemDescription,
+  readPosOpenItemKind,
+} from "@/lib/pos/open-items";
 import { getStripe } from "./client";
 import type { OrderDetail, OrderItemReturn, OrderSummary, ShippingAddress } from "./types";
 
@@ -479,6 +483,7 @@ export function toOrderSummary(o: OrderWithCount): OrderSummary {
     paymentMethod: readPaymentMethod(o.metadata),
     itemCount: o._count.items,
     oversold: hasOversold(o.metadata),
+    posOpenItemKind: readPosOpenItemKind(o.metadata),
     createdAt: o.createdAt,
   };
 }
@@ -541,6 +546,7 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
     paymentMethod: readPaymentMethod(o.metadata),
     itemCount: o.items.length,
     oversold: hasOversold(o.metadata),
+    posOpenItemKind: readPosOpenItemKind(o.metadata),
     createdAt: o.createdAt,
     shippingAddress: (o.shippingAddress as ShippingAddress | null) ?? null,
     notes: o.notes,
@@ -554,6 +560,8 @@ export function toOrderDetail(o: OrderWithItems): OrderDetail {
       productSlug: it.productSlug,
       productName: it.productName,
       productSku: it.productSku,
+      description: readPosOpenItemDescription(it.metadata),
+      posOpenItemKind: readPosOpenItemKind(it.metadata),
       variantSize: it.variantSize,
       unitPrice: decToNumber(it.unitPrice),
       quantity: it.quantity,

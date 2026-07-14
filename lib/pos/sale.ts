@@ -2,15 +2,34 @@ import "server-only";
 import { db, type Prisma } from "@/lib/db";
 import { buildVariantSku, productFamily, skuOrFallback } from "@/lib/pos/sku";
 import { planTotals, round2 } from "@/lib/pos/totals";
+import {
+  getPosOpenItem,
+  isPosOpenItemKind,
+  type PosOpenItemKind,
+} from "@/lib/pos/open-items";
 import { recomputeProductStock } from "@/lib/products/stock";
 
-export type PosLineInput = {
+export type CatalogPosLineInput = {
+  /** Opcional para mantener compatibles llamadas internas anteriores. */
+  kind?: "catalog";
   productId: string;
   size: string | null;
   quantity: number;
   unitPrice: number;
   lineDiscount?: number;
 };
+
+export type OpenPosLineInput = {
+  kind: PosOpenItemKind;
+  productId: null;
+  name: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineDiscount?: number;
+};
+
+export type PosLineInput = CatalogPosLineInput | OpenPosLineInput;
 
 export type PosProduct = {
   id: string;
@@ -27,10 +46,12 @@ export type PosProduct = {
 };
 
 export type PlannedItem = {
-  productId: string;
+  productId: string | null;
   productName: string;
   productSku: string;
   variantSize: string | null;
+  description: string | null;
+  openItemKind: PosOpenItemKind | null;
   unitPrice: number;
   /** Coste unitario congelado (margen histórico). null si el producto no tiene. */
   unitCost: number | null;
@@ -46,6 +67,10 @@ export type PlannedSale = {
   totals: { subtotal: number; tax: number; total: number };
 };
 
+function isOpenPosLine(line: PosLineInput): line is OpenPosLineInput {
+  return isPosOpenItemKind(line.kind);
+}
+
 /** Valida stock y compone líneas/totales/deltas. Lanza Error con mensaje claro. */
 export function planSale(
   lines: PosLineInput[],
@@ -53,16 +78,72 @@ export function planSale(
   totalDiscount = 0,
 ): PlannedSale {
   if (!lines.length) throw new Error("El carrito está vacío.");
+  if (!Number.isFinite(totalDiscount) || totalDiscount < 0) {
+    throw new Error("Descuento total inválido.");
+  }
+  for (const line of lines) {
+    const kind = (line as { kind?: unknown }).kind;
+    if (kind !== undefined && kind !== "catalog" && !isPosOpenItemKind(kind)) {
+      throw new Error("Tipo de línea del TPV no válido.");
+    }
+  }
   const byId = new Map(products.map((p) => [p.id, p]));
   const items: PlannedItem[] = [];
   const stockDeltas: StockDelta[] = [];
+  const openLines = lines.filter(isOpenPosLine);
+  if (openLines.length > 0 && (openLines.length !== 1 || lines.length !== 1)) {
+    throw new Error("La factura o producto en tienda debe ocupar un ticket exclusivo.");
+  }
   for (const line of lines) {
+    if (isOpenPosLine(line)) {
+      const definition = getPosOpenItem(line.kind);
+      const name = typeof line.name === "string" ? line.name.trim() : "";
+      const description =
+        typeof line.description === "string" ? line.description.trim() : "";
+      if (!name) throw new Error(`Indica el nombre para el SKU ${definition.sku}.`);
+      if (name.length > 160) throw new Error("El nombre no puede superar 160 caracteres.");
+      if (!description) throw new Error(`Indica la descripción para el SKU ${definition.sku}.`);
+      if (description.length > 1000) {
+        throw new Error("La descripción no puede superar 1000 caracteres.");
+      }
+      if (!Number.isInteger(line.quantity) || line.quantity <= 0) {
+        throw new Error(`Cantidad inválida para "${name}".`);
+      }
+      const unitPrice = round2(line.unitPrice);
+      if (!Number.isFinite(unitPrice) || unitPrice < 0.01) {
+        throw new Error(`Precio inválido para "${name}".`);
+      }
+      const lineDiscount = line.lineDiscount ?? 0;
+      if (!Number.isFinite(lineDiscount) || lineDiscount < 0) {
+        throw new Error(`Descuento inválido para "${name}".`);
+      }
+      items.push({
+        productId: null,
+        productName: name,
+        productSku: definition.sku,
+        variantSize: null,
+        description,
+        openItemKind: line.kind,
+        unitPrice,
+        unitCost: null,
+        quantity: line.quantity,
+        subtotal: Math.max(0, round2(unitPrice * line.quantity - lineDiscount)),
+      });
+      continue;
+    }
+
     const p = byId.get(line.productId);
     if (!p) throw new Error(`Producto no encontrado: ${line.productId}`);
     if (!Number.isInteger(line.quantity) || line.quantity <= 0) {
       throw new Error(`Cantidad inválida para "${p.name}".`);
     }
-    if (line.unitPrice < 0) throw new Error(`Precio inválido para "${p.name}".`);
+    if (!Number.isFinite(line.unitPrice) || line.unitPrice < 0) {
+      throw new Error(`Precio inválido para "${p.name}".`);
+    }
+    const lineDiscount = line.lineDiscount ?? 0;
+    if (!Number.isFinite(lineDiscount) || lineDiscount < 0) {
+      throw new Error(`Descuento inválido para "${p.name}".`);
+    }
 
     // TPV físico: NO se valida el stock. En la caja vendes lo que tienes en la
     // mano aunque el sistema marque 0, así que el stock puede quedar NEGATIVO
@@ -74,7 +155,7 @@ export function planSale(
 
     const family = productFamily(p.primaryCategorySlug);
     const baseSku = skuOrFallback(p);
-    const subtotal = Math.max(0, round2(line.unitPrice * line.quantity - (line.lineDiscount ?? 0)));
+    const subtotal = Math.max(0, round2(line.unitPrice * line.quantity - lineDiscount));
     // Coste unitario: el de la talla si lo trae, si no el del producto.
     const sizeCost = line.size
       ? p.sizes.find((s) => s.size === line.size)?.costPrice
@@ -85,6 +166,8 @@ export function planSale(
       productName: p.name,
       productSku: buildVariantSku({ baseSku, size: line.size, family }),
       variantSize: line.size,
+      description: null,
+      openItemKind: null,
       unitPrice: round2(line.unitPrice),
       unitCost: unitCost != null ? round2(unitCost) : null,
       quantity: line.quantity,
@@ -142,7 +225,14 @@ export async function createInStoreSale(
   input: CreateSaleInput,
   userId?: string,
 ): Promise<CreatedSale> {
-  const productIds = [...new Set(input.lines.map((l) => l.productId))];
+  const productIds = [
+    ...new Set(
+      input.lines.flatMap((line): string[] => {
+        if (isOpenPosLine(line)) return [];
+        return typeof line.productId === "string" && line.productId ? [line.productId] : [];
+      }),
+    ),
+  ];
 
   return db.$transaction(async (tx) => {
     const rows = await tx.product.findMany({
@@ -166,6 +256,7 @@ export async function createInStoreSale(
     }));
 
     const planned = planSale(input.lines, products, input.totalDiscount ?? 0);
+    const openItemKind = planned.items.find((item) => item.openItemKind)?.openItemKind ?? null;
 
     for (const delta of planned.stockDeltas) {
       // Descuento SIN guarda de stock: la caja física vende lo que hay en la
@@ -214,6 +305,7 @@ export async function createInStoreSale(
           channel: "pos",
           paymentMethod: input.paymentMethod,
           ticketNumber,
+          ...(openItemKind ? { posOpenItemKind: openItemKind, holdedBlocked: true } : {}),
           ...(input.promoCode?.trim() ? { promoCode: input.promoCode.trim().toUpperCase() } : {}),
           ...(input.note?.trim() ? { note: input.note.trim() } : {}),
           ...(input.meta && input.meta.length
@@ -230,15 +322,23 @@ export async function createInStoreSale(
             unitCost: it.unitCost != null ? it.unitCost.toFixed(2) : null,
             quantity: it.quantity,
             subtotal: it.subtotal.toFixed(2),
+            metadata: it.openItemKind
+              ? ({
+                  posOpenItemKind: it.openItemKind,
+                  description: it.description,
+                } as Prisma.InputJsonValue)
+              : undefined,
           })),
         },
       },
       select: { id: true },
     });
 
-    await tx.productAudit.createMany({
-      data: productIds.map((productId) => ({ productId, userId, action: "pos_sale" })),
-    });
+    if (productIds.length > 0) {
+      await tx.productAudit.createMany({
+        data: productIds.map((productId) => ({ productId, userId, action: "pos_sale" })),
+      });
+    }
 
     return { orderId: order.id, ticketNumber, totals: planned.totals };
   });

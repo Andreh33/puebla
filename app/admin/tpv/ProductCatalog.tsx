@@ -18,17 +18,25 @@ import {
   PackageSearch,
   Loader2,
   ChevronDown,
+  FileText,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatPriceEUR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { getPosOpenItemBySku, type PosOpenItemDefinition } from "@/lib/pos/open-items";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { searchPosCatalog } from "./tpv-actions";
-import { stockFor, type PosCatalogItem, type PosFilters } from "./pos-shared";
+import {
+  stockFor,
+  type PosCatalogItem,
+  type PosFilters,
+  type PosOpenLineDraft,
+} from "./pos-shared";
 
 type Filters = {
   inStock: boolean;
@@ -55,11 +63,13 @@ export function ProductCatalog({
   initialProducts,
   filters: lists,
   onAdd,
+  onAddOpenItem,
   onFocusSearchRef,
 }: {
   initialProducts: PosCatalogItem[];
   filters: PosFilters;
   onAdd: (item: PosCatalogItem, size: string | null) => void;
+  onAddOpenItem: (item: PosOpenLineDraft) => boolean;
   /** PosTerminal guarda aquí un focuser para el atajo "Buscar" del rail. */
   onFocusSearchRef?: React.MutableRefObject<(() => void) | null>;
 }) {
@@ -70,6 +80,7 @@ export function ProductCatalog({
   const [loading, setLoading] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const reqId = React.useRef(0);
+  const openItem = React.useMemo(() => getPosOpenItemBySku(q), [q]);
 
   React.useEffect(() => {
     if (onFocusSearchRef) onFocusSearchRef.current = () => inputRef.current?.focus();
@@ -79,6 +90,11 @@ export function ProductCatalog({
   // obsoletas si llegan desordenadas.
   React.useEffect(() => {
     const id = ++reqId.current;
+    if (openItem) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
     const t = setTimeout(async () => {
       setLoading(true);
       try {
@@ -100,7 +116,7 @@ export function ProductCatalog({
       }
     }, 280);
     return () => clearTimeout(t);
-  }, [q, filters]);
+  }, [q, filters, openItem]);
 
   const activeCount =
     (filters.featured ? 1 : 0) +
@@ -239,7 +255,13 @@ export function ProductCatalog({
           </div>
         )}
 
-        {products.length === 0 ? (
+        {openItem ? (
+          <OpenItemEditor
+            key={openItem.kind}
+            definition={openItem}
+            onAdd={onAddOpenItem}
+          />
+        ) : products.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-zs-muted">
             <PackageSearch className="h-10 w-10 opacity-40" />
             <p className="text-sm font-medium">
@@ -267,12 +289,131 @@ export function ProductCatalog({
         <span>
           IVA incluido · Caja basada en <strong className="text-zs-ink">tienda física</strong>
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          Mostrando {products.length}
-          {products.length >= 60 ? "+" : ""} artículos
-          <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
-        </span>
+        {openItem ? (
+          <span>SKU especial {openItem.sku} · exclusivo de este ticket</span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5">
+            Mostrando {products.length}
+            {products.length >= 60 ? "+" : ""} artículos
+            <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+          </span>
+        )}
       </div>
+    </div>
+  );
+}
+
+function OpenItemEditor({
+  definition,
+  onAdd,
+}: {
+  definition: PosOpenItemDefinition;
+  onAdd: (item: PosOpenLineDraft) => boolean;
+}) {
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [price, setPrice] = React.useState("");
+
+  function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const parsedPrice = Number(price.replace(",", "."));
+    const normalizedPrice = Math.round((parsedPrice + Number.EPSILON) * 100) / 100;
+    if (!name.trim() || !description.trim() || !price.trim()) {
+      toast.error("Rellena el nombre, la descripción y el precio");
+      return;
+    }
+    if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0.01) {
+      toast.error("Indica un precio válido de al menos 0,01 €");
+      return;
+    }
+    const added = onAdd({
+      kind: definition.kind,
+      name: name.trim(),
+      description: description.trim(),
+      unitPrice: normalizedPrice,
+    });
+    if (added) {
+      setName("");
+      setDescription("");
+      setPrice("");
+    }
+  }
+
+  const Icon = definition.kind === "invoice" ? FileText : Store;
+
+  return (
+    <div className="mx-auto min-h-full w-full max-w-xl py-6">
+      <form
+        onSubmit={submit}
+        className="w-full space-y-4 rounded-2xl border border-zs-border bg-white p-5 shadow-sm"
+      >
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-zs-blue-50 text-zs-blue-800">
+            <Icon className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-display text-lg font-bold text-zs-ink">{definition.label}</p>
+            <p className="text-xs text-zs-muted">SKU {definition.sku} · solo TPV físico</p>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor={`open-name-${definition.kind}`} className="text-xs font-semibold text-zs-ink">
+            Nombre
+          </label>
+          <input
+            id={`open-name-${definition.kind}`}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={160}
+            required
+            placeholder="Escribe el nombre"
+            className="h-11 w-full rounded-xl border border-zs-border px-3 text-sm outline-none focus:border-zs-blue-700 focus:ring-2 focus:ring-zs-blue-700/20"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor={`open-description-${definition.kind}`} className="text-xs font-semibold text-zs-ink">
+            Descripción
+          </label>
+          <textarea
+            id={`open-description-${definition.kind}`}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            maxLength={1000}
+            required
+            rows={3}
+            placeholder="Escribe la descripción"
+            className="w-full resize-none rounded-xl border border-zs-border px-3 py-2.5 text-sm outline-none focus:border-zs-blue-700 focus:ring-2 focus:ring-zs-blue-700/20"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label htmlFor={`open-price-${definition.kind}`} className="text-xs font-semibold text-zs-ink">
+            Precio
+          </label>
+          <div className="relative">
+            <input
+              id={`open-price-${definition.kind}`}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              type="text"
+              inputMode="decimal"
+              required
+              placeholder="0,00"
+              className="h-11 w-full rounded-xl border border-zs-border px-3 pr-9 text-right text-sm tabular-nums outline-none focus:border-zs-blue-700 focus:ring-2 focus:ring-zs-blue-700/20"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zs-muted">€</span>
+          </div>
+        </div>
+
+        <Button type="submit" className="h-11 w-full">
+          Añadir {definition.label.toLowerCase()} al ticket
+        </Button>
+        <p className="text-center text-xs text-zs-muted">
+          Se guardará como línea del pedido, no como producto del catálogo.
+        </p>
+      </form>
     </div>
   );
 }

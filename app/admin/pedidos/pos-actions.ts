@@ -8,6 +8,7 @@ import { createInStoreSale, type CreateSaleInput } from "@/lib/pos/sale";
 import { productFamily, skuOrFallback } from "@/lib/pos/sku";
 import { renderReceiptPdf } from "@/lib/pos/receipt";
 import { buildReceiptText, type ReceiptData } from "@/lib/pos/receipt-text";
+import { readPosOpenItemDescription } from "@/lib/pos/open-items";
 
 async function requireSession() {
   const session = await auth();
@@ -80,6 +81,8 @@ export async function createInStoreSaleAction(input: CreateSaleInput): Promise<
     }
     revalidatePath("/admin/pedidos");
     revalidatePath("/admin/productos");
+    revalidatePath("/admin");
+    revalidatePath("/admin/balance");
     return { ok: true, orderId: res.orderId, ticketNumber: res.ticketNumber };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error al registrar la venta" };
@@ -106,6 +109,7 @@ export async function generateTicketAction(orderId: string): Promise<
       createdAt: order.createdAt,
       items: order.items.map((it) => ({
         productName: it.productName,
+        description: readPosOpenItemDescription(it.metadata),
         variantSize: it.variantSize,
         productSku: it.productSku ?? "",
         quantity: it.quantity,

@@ -18,18 +18,21 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn, formatPriceEUR } from "@/lib/utils";
+import { getPosOpenItem } from "@/lib/pos/open-items";
 import { ProductCatalog } from "./ProductCatalog";
 import { TicketPanel } from "./TicketPanel";
 import { CheckoutDialog } from "./CheckoutDialog";
 import {
   cartTotals,
   emptyCart,
+  isOpenCartLine,
   type Cart,
   type CartLine,
   type CartMeta,
   type PaymentMethod,
   type PosCatalogItem,
   type PosFilters,
+  type PosOpenLineDraft,
 } from "./pos-shared";
 
 const STORAGE_KEY = "zs:tpv:state:v1";
@@ -112,6 +115,10 @@ export function PosTerminal({
   );
 
   function addToCart(item: PosCatalogItem, size: string | null) {
+    if (active.lines.some(isOpenCartLine)) {
+      toast.error("La factura o producto en tienda debe ir en un ticket exclusivo");
+      return;
+    }
     const s = size ?? null;
     const existing = active.lines.find((l) => l.productId === item.id && l.size === s);
     const key = existing ? existing.key : `${item.id}-${s ?? "u"}-${Date.now()}`;
@@ -131,6 +138,7 @@ export function PosTerminal({
         }
         const line: CartLine = {
           key,
+          kind: "catalog",
           productId: item.id,
           name: item.name,
           baseSku: item.baseSku,
@@ -150,6 +158,42 @@ export function PosTerminal({
     setFlash(key);
     toast.success(`${item.name}${s ? ` · talla ${s}` : ""} añadido al carrito`);
     if (hadPromo) toast.info("Código quitado al cambiar el ticket. Vuelve a aplicarlo si procede.");
+  }
+
+  function addOpenItem(item: PosOpenLineDraft): boolean {
+    if (active.lines.length > 0) {
+      toast.error("Este artículo debe añadirse a un ticket vacío y exclusivo");
+      return false;
+    }
+    const definition = getPosOpenItem(item.kind);
+    const key = `open-${item.kind}-${Date.now()}`;
+    const line: CartLine = {
+      key,
+      kind: item.kind,
+      productId: null,
+      name: item.name,
+      description: item.description,
+      baseSku: definition.sku,
+      colorName: "Único",
+      mainImageUrl: null,
+      family: "accesorio",
+      size: null,
+      sizes: [],
+      productStock: 0,
+      quantity: 1,
+      unitPrice: item.unitPrice,
+      lineDiscount: 0,
+    };
+    setCarts((cs) =>
+      cs.map((c) =>
+        c.id === activeId
+          ? { ...c, lines: [line], promoCode: undefined, totalDiscount: 0 }
+          : c,
+      ),
+    );
+    setFlash(key);
+    toast.success(`Ticket exclusivo preparado: ${definition.label}`);
+    return true;
   }
 
   // Un código de promoción calcula un descuento en € sobre el bruto DE ESE
@@ -224,6 +268,7 @@ export function PosTerminal({
             initialProducts={initialProducts}
             filters={filters}
             onAdd={addToCart}
+            onAddOpenItem={addOpenItem}
             onFocusSearchRef={focusSearch}
           />
 

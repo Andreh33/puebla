@@ -6,6 +6,7 @@
  */
 
 import type { OrderStatus } from "@prisma/client";
+import type { PosOpenItemKind } from "@/lib/pos/open-items";
 
 /**
  * Item del carrito (CartItem en lib/cart/store.ts) tal y como llega al endpoint
@@ -88,6 +89,8 @@ export interface OrderSummary {
   itemCount: number;
   /** true si metadata.oversold tiene líneas (venta sin stock por carrera). */
   oversold: boolean;
+  /** Artículo libre exclusivo del TPV; null para pedidos normales. */
+  posOpenItemKind: PosOpenItemKind | null;
   createdAt: Date;
 }
 
@@ -121,6 +124,8 @@ export interface OrderItemDetail {
   productSlug: string | null;
   productName: string;
   productSku: string | null;
+  description: string | null;
+  posOpenItemKind: PosOpenItemKind | null;
   variantSize: string | null;
   unitPrice: number;
   quantity: number;

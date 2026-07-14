@@ -5,6 +5,7 @@ export type ReceiptData = {
   createdAt: Date;
   items: Array<{
     productName: string;
+    description?: string | null;
     variantSize: string | null;
     productSku: string;
     quantity: number;
@@ -29,7 +30,8 @@ export function buildReceiptText(r: ReceiptData): string {
   });
   const lines = r.items.map((it) => {
     const size = it.variantSize ? ` (talla ${it.variantSize})` : "";
-    return `• ${it.quantity}× ${it.productName}${size} — ${it.productSku} — ${eur(it.subtotal)}`;
+    const description = it.description ? `\n  ${it.description}` : "";
+    return `• ${it.quantity}× ${it.productName}${size} — ${it.productSku} — ${eur(it.subtotal)}${description}`;
   });
   const out = [
     `*Zona Sport* — Comprobante ${r.ticketNumber}`,

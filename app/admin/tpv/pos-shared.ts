@@ -6,6 +6,8 @@
  * ProductCatalog, TicketPanel) y por las server actions (tpv-actions).
  */
 
+import type { PosOpenItemKind } from "@/lib/pos/open-items";
+
 export type ProductFamily = "calzado" | "textil" | "accesorio";
 
 /** Ficha de producto tal y como la consume el grid del TPV. */
@@ -54,8 +56,11 @@ export type PaymentMethod = "efectivo" | "tarjeta" | "bizum";
 /** Una línea del ticket (carrito). */
 export type CartLine = {
   key: string;
-  productId: string;
+  /** Ausente en carritos v1 guardados antes de añadir los artículos libres. */
+  kind?: "catalog" | PosOpenItemKind;
+  productId: string | null;
   name: string;
+  description?: string;
   baseSku: string;
   colorName: string;
   mainImageUrl: string | null;
@@ -67,6 +72,19 @@ export type CartLine = {
   unitPrice: number;
   lineDiscount: number;
 };
+
+export type PosOpenLineDraft = {
+  kind: PosOpenItemKind;
+  name: string;
+  description: string;
+  unitPrice: number;
+};
+
+export function isOpenCartLine(
+  line: CartLine,
+): line is CartLine & { kind: PosOpenItemKind } {
+  return line.kind === "invoice" || line.kind === "store_product";
+}
 
 export type CartMeta = { key: string; value: string };
 

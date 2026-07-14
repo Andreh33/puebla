@@ -24,6 +24,7 @@ import type { OrderDetail } from "@/lib/stripe/types";
 import { issueInvoiceForOrder, type FiscalData } from "@/lib/holded/invoice";
 import { isHoldedConfigured } from "@/lib/holded/client";
 import { performItemReturn } from "@/lib/pos/return-order";
+import { readPosOpenItemKind } from "@/lib/pos/open-items";
 import { performOnlineItemRefund } from "@/lib/pos/refund-online";
 import { computeItemReturn } from "@/lib/pos/returns";
 import { madridDayStart, madridDayEnd } from "@/lib/dates";
@@ -76,6 +77,17 @@ export async function issueInvoiceAction(
 ): Promise<ActionResult<{ invoiceNumber: string | null; warning?: string }>> {
   try {
     await requireSession();
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      select: { metadata: true },
+    });
+    if (!order) return { ok: false, error: "Pedido no encontrado" };
+    if (readPosOpenItemKind(order.metadata)) {
+      return {
+        ok: false,
+        error: "Este ticket libre es exclusivo del TPV y no se envía a Holded.",
+      };
+    }
     if (!isHoldedConfigured()) {
       return { ok: false, error: "Holded no configurado: falta HOLDED_API_KEY en Vercel." };
     }
@@ -158,6 +170,8 @@ export async function updateOrderStatus(
     });
 
     revalidatePath("/admin/pedidos");
+    revalidatePath("/admin");
+    revalidatePath("/admin/balance");
     return { ok: true, data: { status } };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Error" };
@@ -185,6 +199,7 @@ export async function returnOrderItem(
     revalidatePath("/admin/pedidos");
     revalidatePath("/admin/productos");
     revalidatePath("/admin/balance");
+    revalidatePath("/admin");
     return {
       ok: true,
       data: { status: res.status, refundedAmount: res.refundedAmount, warning: res.warning },

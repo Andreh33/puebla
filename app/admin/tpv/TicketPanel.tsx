@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   cartTotals,
+  isOpenCartLine,
   lineSubtotal,
   type Cart,
   type CartLine,
@@ -208,6 +209,7 @@ function TicketLine({
   onPatch: (key: string, data: Partial<CartLine>) => void;
   onRemove: (key: string) => void;
 }) {
+  const openItem = isOpenCartLine(line);
   return (
     <div
       className={cn(
@@ -234,16 +236,25 @@ function TicketLine({
           </p>
           <LineMenu line={line} onPatch={onPatch} onRemove={onRemove} />
         </div>
-        <p className="text-xs text-zs-muted">
-          {line.colorName && line.colorName !== "Único" && (
-            <span className="font-medium text-zs-blue-700">{line.colorName} · </span>
-          )}
-          {line.size ? (
+        <p className="truncate text-xs text-zs-muted" title={line.description}>
+          {openItem ? (
             <>
-              Talla <span className="font-semibold text-zs-red-600">{line.size}</span>
+              <span className="font-semibold text-zs-blue-700">SKU {line.baseSku}</span>
+              {line.description ? ` · ${line.description}` : ""}
             </>
           ) : (
-            "Sin tallas"
+            <>
+              {line.colorName && line.colorName !== "Único" && (
+                <span className="font-medium text-zs-blue-700">{line.colorName} · </span>
+              )}
+              {line.size ? (
+                <>
+                  Talla <span className="font-semibold text-zs-red-600">{line.size}</span>
+                </>
+              ) : (
+                "Sin tallas"
+              )}
+            </>
           )}
           {line.lineDiscount > 0 && (
             <span className="ml-1.5 text-zs-red-600">· −{formatPriceEUR(line.lineDiscount)}</span>
@@ -254,7 +265,7 @@ function TicketLine({
       {/* Precio */}
       <input
         type="number"
-        min={0}
+        min={openItem ? 0.01 : 0}
         step="0.01"
         value={line.unitPrice}
         aria-label="Precio por unidad"
@@ -291,6 +302,7 @@ function LineMenu({
 }) {
   const [open, setOpen] = React.useState(false);
   const hasSizes = line.sizes.length > 0;
+  const openItem = isOpenCartLine(line);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -303,7 +315,34 @@ function LineMenu({
           <MoreVertical className="h-4 w-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-56 space-y-3">
+      <PopoverContent align="end" className={cn("space-y-3", openItem ? "w-72" : "w-56")}>
+        {openItem && (
+          <>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zs-muted">
+                Nombre
+              </label>
+              <input
+                value={line.name}
+                maxLength={160}
+                onChange={(e) => onPatch(line.key, { name: e.target.value })}
+                className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-sm outline-none focus:border-zs-blue-700"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zs-muted">
+                Descripción
+              </label>
+              <textarea
+                value={line.description ?? ""}
+                maxLength={1000}
+                rows={3}
+                onChange={(e) => onPatch(line.key, { description: e.target.value })}
+                className="w-full resize-none rounded-lg border border-zs-border px-2.5 py-2 text-sm outline-none focus:border-zs-blue-700"
+              />
+            </div>
+          </>
+        )}
         {hasSizes && (
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-zs-muted">

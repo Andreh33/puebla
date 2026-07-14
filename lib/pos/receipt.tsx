@@ -41,11 +41,14 @@ export async function renderReceiptPdf(r: ReceiptData): Promise<Buffer> {
         <View style={s.hr} />
         {r.items.map((it, i) => (
           <View key={i} style={s.itemRow}>
-            <Text style={s.grow}>
-              {it.quantity}x {it.productName}
-              {it.variantSize ? ` (talla ${it.variantSize})` : ""}
-              {it.productSku ? ` · ${it.productSku}` : ""}
-            </Text>
+            <View style={s.grow}>
+              <Text>
+                {it.quantity}x {it.productName}
+                {it.variantSize ? ` (talla ${it.variantSize})` : ""}
+                {it.productSku ? ` · ${it.productSku}` : ""}
+              </Text>
+              {it.description ? <Text style={s.muted}>{it.description}</Text> : null}
+            </View>
             <Text style={s.amount}>{eur(it.subtotal)}</Text>
           </View>
         ))}

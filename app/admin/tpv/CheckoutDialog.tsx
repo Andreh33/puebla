@@ -29,7 +29,7 @@ import {
   generateTicketAction,
 } from "@/app/admin/pedidos/pos-actions";
 import { issueInvoiceAction } from "@/app/admin/pedidos/_actions";
-import { cartTotals, type Cart, type PaymentMethod } from "./pos-shared";
+import { cartTotals, isOpenCartLine, type Cart, type PaymentMethod } from "./pos-shared";
 
 const METHODS: Array<{ value: PaymentMethod; label: string; icon: React.ReactNode }> = [
   { value: "efectivo", label: "Efectivo", icon: <Banknote className="h-4 w-4" /> },
@@ -51,6 +51,7 @@ export function CheckoutDialog({
   onCompleted: () => void;
 }) {
   const totals = cartTotals(cart);
+  const hasOpenItem = cart.lines.some(isOpenCartLine);
   const [payment, setPayment] = React.useState<PaymentMethod>(cart.payment);
   const [name, setName] = React.useState(cart.customerName);
   const [phone, setPhone] = React.useState(cart.customerPhone);
@@ -86,13 +87,26 @@ export function CheckoutDialog({
     setSaving(withTicket ? "ticket" : "plain");
     try {
       const res = await createInStoreSaleAction({
-        lines: cart.lines.map((l) => ({
-          productId: l.productId,
-          size: l.size,
-          quantity: l.quantity,
-          unitPrice: l.unitPrice,
-          lineDiscount: l.lineDiscount,
-        })),
+        lines: cart.lines.map((l) =>
+          isOpenCartLine(l)
+            ? {
+                kind: l.kind,
+                productId: null,
+                name: l.name,
+                description: l.description ?? "",
+                quantity: l.quantity,
+                unitPrice: l.unitPrice,
+                lineDiscount: l.lineDiscount,
+              }
+            : {
+                kind: "catalog" as const,
+                productId: l.productId ?? "",
+                size: l.size,
+                quantity: l.quantity,
+                unitPrice: l.unitPrice,
+                lineDiscount: l.lineDiscount,
+              },
+        ),
         paymentMethod: payment,
         totalDiscount: cart.totalDiscount,
         promoCode: cart.promoCode,
@@ -104,7 +118,9 @@ export function CheckoutDialog({
         toast.error(res.error);
         return;
       }
-      toast.success(`Venta registrada · ${res.ticketNumber} · stock descontado`);
+      toast.success(
+        `Venta registrada · ${res.ticketNumber}${hasOpenItem ? "" : " · stock descontado"}`,
+      );
       let ticket: Done["ticket"] = null;
       if (withTicket) {
         const t = await generateTicketAction(res.orderId);
@@ -179,8 +195,8 @@ export function CheckoutDialog({
                 Venta registrada
               </DialogTitle>
               <DialogDescription>
-                Ticket <strong className="text-zs-ink">{done.ticketNumber}</strong> · stock
-                descontado.
+                Ticket <strong className="text-zs-ink">{done.ticketNumber}</strong>
+                {hasOpenItem ? " · sin producto ni movimiento de stock." : " · stock descontado."}
               </DialogDescription>
             </DialogHeader>
 
@@ -239,8 +255,12 @@ export function CheckoutDialog({
                   <Receipt className="h-4 w-4" /> Generar ticket
                 </Button>
               )}
-              {/* Factura fiscal (Holded) sobre la venta ya registrada. */}
-              {invoiceNumber ? (
+              {/* Los artículos libres nunca se envían a Holded. */}
+              {hasOpenItem ? (
+                <div className="rounded-xl border border-zs-border bg-zs-surface p-2.5 text-center text-xs text-zs-muted">
+                  Este ticket es exclusivo del TPV y no se envía a Holded.
+                </div>
+              ) : invoiceNumber ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-center text-sm font-semibold text-emerald-900">
                   ✓ Factura emitida{invoiceNumber !== "emitida" ? `: ${invoiceNumber}` : ""}
                 </div>
@@ -382,7 +402,7 @@ export function CheckoutDialog({
                 ) : (
                   <Banknote className="h-5 w-5" />
                 )}
-                Registrar venta y descontar stock
+                {hasOpenItem ? "Registrar cobro" : "Registrar venta y descontar stock"}
               </Button>
               <Button
                 type="button"
