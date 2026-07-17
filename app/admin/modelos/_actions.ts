@@ -31,6 +31,8 @@ export type ModelColor = {
   colorHex: string | null;
   mainImageUrl: string | null;
   status: string;
+  /** Stock total editable directamente cuando el producto no tiene tallas. */
+  stock: number;
   retailPrice: number;
   costPrice: number | null;
   sizes: ModelSize[];
@@ -74,6 +76,7 @@ export async function searchModelsAction(term: string): Promise<ActionResult<Mod
         mainImageUrl: true,
         status: true,
         modelCode: true,
+        stock: true,
         retailPrice: true,
         costPrice: true,
         sizes: {
@@ -98,6 +101,7 @@ export async function searchModelsAction(term: string): Promise<ActionResult<Mod
         colorHex: p.colorHex,
         mainImageUrl: p.mainImageUrl,
         status: p.status,
+        stock: p.stock,
         retailPrice: toNum(p.retailPrice),
         costPrice: p.costPrice == null ? null : toNum(p.costPrice),
         sizes: p.sizes.map((s) => ({ id: s.id, size: s.size, stock: s.stock })),
@@ -130,9 +134,20 @@ export async function searchModelsAction(term: string): Promise<ActionResult<Mod
 export type ModelGridChanges = {
   /** Stock por talla (ProductSize.id → nuevas unidades). */
   stock?: Array<{ sizeId: string; value: number }>;
+  /** Stock total de productos sin tallas (Product.id → nuevas unidades). */
+  productStock?: Array<{ productId: string; value: number }>;
   /** Precio/coste por producto (color). */
   prices?: Array<{ productId: string; retailPrice?: number; costPrice?: number | null }>;
 };
+
+function parseStock(value: number): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error("Stock inválido (entero ≥ 0)");
+  }
+  if (parsed > 1_000_000) throw new Error("Stock máximo 1 000 000");
+  return parsed;
+}
 
 /**
  * Guarda los cambios de la rejilla de un modelo: stock por talla + precio/coste
@@ -145,22 +160,41 @@ export async function saveModelGridAction(
   try {
     await requireSession();
     const stock = changes.stock ?? [];
+    const productStock = changes.productStock ?? [];
     const prices = changes.prices ?? [];
-    if (!stock.length && !prices.length) return { ok: true, data: { updated: 0 } };
+    if (!stock.length && !productStock.length && !prices.length) {
+      return { ok: true, data: { updated: 0 } };
+    }
 
     const affected = new Set<string>();
 
     await db.$transaction(async (tx) => {
       // Stock por talla. Validar entero >= 0.
       for (const s of stock) {
-        const v = Math.trunc(Number(s.value));
-        if (!Number.isFinite(v) || v < 0) continue;
+        const v = parseStock(s.value);
         const updated = await tx.productSize.update({
           where: { id: s.sizeId },
           data: { stock: v },
           select: { productId: true },
         });
         affected.add(updated.productId);
+      }
+
+      // Stock total: solo puede escribirse si el producto sigue sin tallas.
+      // El filtro relacional evita desincronizar Product.stock si se añadió una
+      // talla entre la búsqueda y el guardado.
+      for (const p of productStock) {
+        const v = parseStock(p.value);
+        const updated = await tx.product.updateMany({
+          where: { id: p.productId, sizes: { none: {} } },
+          data: { stock: v },
+        });
+        if (updated.count !== 1) {
+          throw new Error(
+            "No se pudo actualizar el stock: el producto no existe o ya tiene tallas. Vuelve a buscarlo.",
+          );
+        }
+        affected.add(p.productId);
       }
 
       // Precio/coste por color (producto).

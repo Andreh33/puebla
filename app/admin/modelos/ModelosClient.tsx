@@ -83,10 +83,18 @@ export function ModelosClient() {
 // ---------------------------------------------------------------------------
 
 function ModelGrid({ model }: { model: ModelGroup }) {
-  // Estado editable: stock por sizeId, y precio/coste por productId.
+  // Estado editable: stock por sizeId, stock total de productos simples y
+  // precio/coste por productId.
   const [stock, setStock] = React.useState<Record<string, string>>(() => {
     const o: Record<string, string> = {};
     for (const c of model.colors) for (const s of c.sizes) o[s.id] = String(s.stock);
+    return o;
+  });
+  const [productStock, setProductStock] = React.useState<Record<string, string>>(() => {
+    const o: Record<string, string> = {};
+    for (const c of model.colors) {
+      if (c.sizes.length === 0) o[c.productId] = String(c.stock);
+    }
     return o;
   });
   const [prices, setPrices] = React.useState<Record<string, { retail: string; cost: string }>>(
@@ -103,9 +111,14 @@ function ModelGrid({ model }: { model: ModelGroup }) {
   );
   const [saving, setSaving] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
+  const hasProductsWithoutSizes = model.colors.some((c) => c.sizes.length === 0);
 
   function setStockVal(sizeId: string, v: string) {
     setStock((s) => ({ ...s, [sizeId]: v.replace(/[^\d]/g, "") }));
+    setDirty(true);
+  }
+  function setProductStockVal(productId: string, v: string) {
+    setProductStock((s) => ({ ...s, [productId]: v.replace(/[^\d]/g, "") }));
     setDirty(true);
   }
   function setPriceVal(productId: string, field: "retail" | "cost", v: string) {
@@ -120,6 +133,10 @@ function ModelGrid({ model }: { model: ModelGroup }) {
         sizeId,
         value: Number(value || 0),
       }));
+      const productStockChanges = Object.entries(productStock).map(([productId, value]) => ({
+        productId,
+        value: Number(value || 0),
+      }));
       const priceChanges = model.colors.map((c) => {
         const e = prices[c.productId]!;
         return {
@@ -128,7 +145,11 @@ function ModelGrid({ model }: { model: ModelGroup }) {
           costPrice: e.cost === "" ? null : Number(e.cost),
         };
       });
-      const res = await saveModelGridAction({ stock: stockChanges, prices: priceChanges });
+      const res = await saveModelGridAction({
+        stock: stockChanges,
+        productStock: productStockChanges,
+        prices: priceChanges,
+      });
       if (!res.ok) {
         toast.error(res.error);
         return;
@@ -181,6 +202,7 @@ function ModelGrid({ model }: { model: ModelGroup }) {
                   {s}
                 </th>
               ))}
+              {hasProductsWithoutSizes && <th className="px-2 py-2 text-center">Stock</th>}
               <th className="px-2 py-2 text-right">Precio €</th>
               <th className="px-2 py-2 text-right">Coste €</th>
               <th className="px-2 py-2" />
@@ -234,6 +256,21 @@ function ModelGrid({ model }: { model: ModelGroup }) {
                       </td>
                     );
                   })}
+                  {hasProductsWithoutSizes && (
+                    <td className="px-1 py-1.5 text-center">
+                      {c.sizes.length === 0 ? (
+                        <input
+                          inputMode="numeric"
+                          value={productStock[c.productId] ?? ""}
+                          onChange={(e) => setProductStockVal(c.productId, e.target.value)}
+                          aria-label={`Stock total de ${c.colorName}`}
+                          className="h-8 w-12 rounded-md border border-zs-border text-center text-sm outline-none focus:border-zs-blue-700"
+                        />
+                      ) : (
+                        <span className="text-zs-muted">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="px-1 py-1.5 text-right">
                     <input
                       inputMode="decimal"
