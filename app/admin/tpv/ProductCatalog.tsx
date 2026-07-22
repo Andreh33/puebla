@@ -290,7 +290,7 @@ export function ProductCatalog({
           IVA incluido · Caja basada en <strong className="text-zs-ink">tienda física</strong>
         </span>
         {openItem ? (
-          <span>SKU especial {openItem.sku} · exclusivo de este ticket</span>
+          <span>SKU especial {openItem.sku} · combinable con otros productos</span>
         ) : (
           <span className="inline-flex items-center gap-1.5">
             Mostrando {products.length}

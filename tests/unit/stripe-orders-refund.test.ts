@@ -90,6 +90,8 @@ beforeEach(() => {
     items: [
       { productId: "p1", variantSize: "40", quantity: 2 },
       { productId: "p2", variantSize: null, quantity: 1 },
+      // Línea libre de un ticket mixto: no tiene inventario que restaurar.
+      { productId: null, variantSize: null, quantity: 1 },
     ],
   };
 });

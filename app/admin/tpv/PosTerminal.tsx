@@ -25,7 +25,6 @@ import { CheckoutDialog } from "./CheckoutDialog";
 import {
   cartTotals,
   emptyCart,
-  isOpenCartLine,
   type Cart,
   type CartLine,
   type CartMeta,
@@ -115,10 +114,6 @@ export function PosTerminal({
   );
 
   function addToCart(item: PosCatalogItem, size: string | null) {
-    if (active.lines.some(isOpenCartLine)) {
-      toast.error("La factura o producto en tienda debe ir en un ticket exclusivo");
-      return;
-    }
     const s = size ?? null;
     const existing = active.lines.find((l) => l.productId === item.id && l.size === s);
     const key = existing ? existing.key : `${item.id}-${s ?? "u"}-${Date.now()}`;
@@ -161,12 +156,9 @@ export function PosTerminal({
   }
 
   function addOpenItem(item: PosOpenLineDraft): boolean {
-    if (active.lines.length > 0) {
-      toast.error("Este artículo debe añadirse a un ticket vacío y exclusivo");
-      return false;
-    }
     const definition = getPosOpenItem(item.kind);
     const key = `open-${item.kind}-${Date.now()}`;
+    const hadPromo = !!active.promoCode;
     const line: CartLine = {
       key,
       kind: item.kind,
@@ -187,12 +179,18 @@ export function PosTerminal({
     setCarts((cs) =>
       cs.map((c) =>
         c.id === activeId
-          ? { ...c, lines: [line], promoCode: undefined, totalDiscount: 0 }
+          ? {
+              ...c,
+              lines: [...c.lines, line],
+              promoCode: undefined,
+              ...(c.promoCode ? { totalDiscount: 0 } : {}),
+            }
           : c,
       ),
     );
     setFlash(key);
-    toast.success(`Ticket exclusivo preparado: ${definition.label}`);
+    toast.success(`Línea añadida al ticket: ${definition.label}`);
+    if (hadPromo) toast.info("Código quitado al cambiar el ticket. Vuelve a aplicarlo si procede.");
     return true;
   }
 

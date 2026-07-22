@@ -89,7 +89,7 @@ export interface OrderSummary {
   itemCount: number;
   /** true si metadata.oversold tiene líneas (venta sin stock por carrera). */
   oversold: boolean;
-  /** Artículo libre exclusivo del TPV; null para pedidos normales. */
+  /** Primer tipo de línea libre del TPV presente; null si no contiene ninguna. */
   posOpenItemKind: PosOpenItemKind | null;
   createdAt: Date;
 }

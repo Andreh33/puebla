@@ -90,10 +90,10 @@ export function planSale(
   const byId = new Map(products.map((p) => [p.id, p]));
   const items: PlannedItem[] = [];
   const stockDeltas: StockDelta[] = [];
-  const openLines = lines.filter(isOpenPosLine);
-  if (openLines.length > 0 && (openLines.length !== 1 || lines.length !== 1)) {
-    throw new Error("La factura o producto en tienda debe ocupar un ticket exclusivo.");
-  }
+  // Las líneas libres pueden convivir con productos de catálogo. Cada línea se
+  // valida y persiste por separado; solo las de catálogo generan movimientos de
+  // stock, por lo que una venta mixta nunca descuenta inventario por los SKU
+  // especiales 1111/2222.
   for (const line of lines) {
     if (isOpenPosLine(line)) {
       const definition = getPosOpenItem(line.kind);

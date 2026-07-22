@@ -52,6 +52,7 @@ export function CheckoutDialog({
 }) {
   const totals = cartTotals(cart);
   const hasOpenItem = cart.lines.some(isOpenCartLine);
+  const hasCatalogItem = cart.lines.some((line) => !isOpenCartLine(line));
   const [payment, setPayment] = React.useState<PaymentMethod>(cart.payment);
   const [name, setName] = React.useState(cart.customerName);
   const [phone, setPhone] = React.useState(cart.customerPhone);
@@ -119,7 +120,7 @@ export function CheckoutDialog({
         return;
       }
       toast.success(
-        `Venta registrada · ${res.ticketNumber}${hasOpenItem ? "" : " · stock descontado"}`,
+        `Venta registrada · ${res.ticketNumber}${hasCatalogItem ? " · stock descontado de productos del catálogo" : " · sin movimiento de stock"}`,
       );
       let ticket: Done["ticket"] = null;
       if (withTicket) {
@@ -196,7 +197,11 @@ export function CheckoutDialog({
               </DialogTitle>
               <DialogDescription>
                 Ticket <strong className="text-zs-ink">{done.ticketNumber}</strong>
-                {hasOpenItem ? " · sin producto ni movimiento de stock." : " · stock descontado."}
+                {hasCatalogItem
+                  ? hasOpenItem
+                    ? " · stock descontado solo de los productos del catálogo."
+                    : " · stock descontado."
+                  : " · sin movimiento de stock."}
               </DialogDescription>
             </DialogHeader>
 
@@ -258,7 +263,7 @@ export function CheckoutDialog({
               {/* Los artículos libres nunca se envían a Holded. */}
               {hasOpenItem ? (
                 <div className="rounded-xl border border-zs-border bg-zs-surface p-2.5 text-center text-xs text-zs-muted">
-                  Este ticket es exclusivo del TPV y no se envía a Holded.
+                  Este ticket contiene líneas libres y no se envía a Holded.
                 </div>
               ) : invoiceNumber ? (
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-center text-sm font-semibold text-emerald-900">
@@ -402,7 +407,7 @@ export function CheckoutDialog({
                 ) : (
                   <Banknote className="h-5 w-5" />
                 )}
-                {hasOpenItem ? "Registrar cobro" : "Registrar venta y descontar stock"}
+                {hasCatalogItem ? "Registrar venta y descontar stock" : "Registrar cobro sin stock"}
               </Button>
               <Button
                 type="button"

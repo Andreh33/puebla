@@ -19,6 +19,7 @@ type Item = {
   id: string;
   productId: string | null;
   productName: string;
+  metadata?: Record<string, unknown> | null;
   variantSize: string | null;
   quantity: number;
   subtotal: number;
@@ -199,5 +200,47 @@ describe("performItemReturn — devolución de una línea de TPV", () => {
     await performItemReturn(tx as never, { orderId: "o1", itemId: "i1", qty: 1 });
     expect(productIncrements).toEqual([{ productId: "p9", qty: 1 }]);
     expect(sizeIncrements).toEqual([]);
+  });
+
+  it("ticket mixto: devolver la línea 2222 corrige el total sin tocar stock del catálogo", async () => {
+    items = [
+      {
+        id: "catalog",
+        productId: "p9",
+        productName: "Balón",
+        metadata: null,
+        variantSize: null,
+        quantity: 1,
+        subtotal: 20,
+      },
+      {
+        id: "open",
+        productId: null,
+        productName: "Cordones",
+        metadata: { posOpenItemKind: "store_product" },
+        variantSize: null,
+        quantity: 1,
+        subtotal: 10,
+      },
+    ];
+    order.total = 30;
+    order.subtotal = 24.79;
+    order.tax = 5.21;
+
+    const { performItemReturn } = await import("@/lib/pos/return-order");
+    const res = await performItemReturn(tx as never, {
+      orderId: "o1",
+      itemId: "open",
+      qty: 1,
+    });
+
+    expect(res.status).toBe("PAID");
+    expect(res.refundedAmount).toBe(10);
+    expect(res.stockRestored).toBe(true);
+    expect(productIncrements).toEqual([]);
+    expect(sizeIncrements).toEqual([]);
+    expect(recompute).not.toHaveBeenCalled();
+    expect(items.find((item) => item.id === "catalog")?.quantity).toBe(1);
+    expect(order.total).toBe(20);
   });
 });

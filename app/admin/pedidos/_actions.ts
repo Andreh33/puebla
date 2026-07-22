@@ -85,7 +85,7 @@ export async function issueInvoiceAction(
     if (readPosOpenItemKind(order.metadata)) {
       return {
         ok: false,
-        error: "Este ticket libre es exclusivo del TPV y no se envía a Holded.",
+        error: "Este ticket contiene líneas libres del TPV y no se envía a Holded.",
       };
     }
     if (!isHoldedConfigured()) {

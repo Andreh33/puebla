@@ -32,6 +32,39 @@ describe("planSale", () => {
     expect(r.stockDeltas).toEqual([{ productId: "p2", size: null, quantity: 1 }]);
   });
 
+  it("permite mezclar catálogo con los SKU libres 1111 y 2222 sin tocar stock por ellos", () => {
+    const lines: PosLineInput[] = [
+      { kind: "catalog", productId: "p2", size: null, quantity: 1, unitPrice: 12 },
+      {
+        kind: "invoice",
+        productId: null,
+        name: "Factura reparación",
+        description: "Servicio facturado en mostrador",
+        quantity: 1,
+        unitPrice: 25,
+      },
+      {
+        kind: "store_product",
+        productId: null,
+        name: "Cordones",
+        description: "Producto disponible solo en tienda",
+        quantity: 2,
+        unitPrice: 7.5,
+      },
+    ];
+
+    const r = planSale(lines, [BALL]);
+
+    expect(r.items.map((item) => item.productSku)).toEqual(["BAL1", "1111", "2222"]);
+    expect(r.items.map((item) => item.openItemKind)).toEqual([
+      null,
+      "invoice",
+      "store_product",
+    ]);
+    expect(r.stockDeltas).toEqual([{ productId: "p2", size: null, quantity: 1 }]);
+    expect(r.totals.total).toBe(52);
+  });
+
   it("TPV: permite vender una talla sin stock (el stock puede ir negativo)", () => {
     // SHOE talla 41 tiene stock 0 → en la caja física se vende igual.
     const r = planSale([{ productId: "p1", size: "41", quantity: 1, unitPrice: 30, lineDiscount: 0 }], [SHOE]);
