@@ -23,6 +23,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { RecentActivity, type ActivityItem } from "@/components/admin/RecentActivity";
 import { LeadsChart } from "@/components/admin/LeadsChart";
 import { SalesChart } from "@/components/admin/SalesChart";
+import { MonthlyOperatingBalanceCard } from "@/components/admin/MonthlyOperatingBalanceCard";
 import {
   getProductCounts,
   getRecentLeads,
@@ -37,6 +38,7 @@ import {
   startOfCurrentMonth,
   daysThisMonth,
 } from "@/lib/admin/sales-queries";
+import { getCurrentMonthOperatingSnapshot } from "@/lib/admin/dashboard-finance";
 import { formatPriceEUR } from "@/lib/utils";
 import { auth } from "@/lib/auth";
 
@@ -82,17 +84,27 @@ const SEVERITY_STYLES = {
 
 export default async function AdminDashboard() {
   const session = await auth();
-  const [products, leads, imports, blog, alerts, salesKpis, salesByDay, topProductos] =
-    await Promise.all([
-      getProductCounts(),
-      getRecentLeads(7),
-      getRecentImports(5),
-      getBlogStats(),
-      getSettingsAlerts(),
-      getSalesKpis(daysThisMonth(), startOfCurrentMonth()),
-      getSalesByDay(daysThisMonth(), startOfCurrentMonth()),
-      getTopProductos(daysThisMonth(), 8, startOfCurrentMonth()),
-    ]);
+  const [
+    products,
+    leads,
+    imports,
+    blog,
+    alerts,
+    salesKpis,
+    salesByDay,
+    topProductos,
+    operatingSnapshot,
+  ] = await Promise.all([
+    getProductCounts(),
+    getRecentLeads(7),
+    getRecentImports(5),
+    getBlogStats(),
+    getSettingsAlerts(),
+    getSalesKpis(daysThisMonth(), startOfCurrentMonth()),
+    getSalesByDay(daysThisMonth(), startOfCurrentMonth()),
+    getTopProductos(daysThisMonth(), 8, startOfCurrentMonth()),
+    getCurrentMonthOperatingSnapshot(),
+  ]);
 
   const activity: ActivityItem[] = [
     ...imports.map(
@@ -204,6 +216,8 @@ export default async function AdminDashboard() {
             tone={salesKpis.devueltos > 0 ? "warning" : "default"}
           />
         </div>
+
+        <MonthlyOperatingBalanceCard snapshot={operatingSnapshot} />
 
         <div className="grid gap-4 lg:grid-cols-3">
           <Card className="lg:col-span-2">
