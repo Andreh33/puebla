@@ -135,6 +135,8 @@ interface EditorProps {
     isFeatured: boolean;
     isOutlet: boolean;
     isCustomized: boolean;
+    isOnMiravia: boolean;
+    isOnAmazon: boolean;
     metaTitle: string | null;
     metaDescription: string | null;
     mainImageUrl: string | null;
@@ -304,6 +306,8 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
     isFeatured: initial?.isFeatured ?? false,
     isOutlet: initial?.isOutlet ?? false,
     isCustomized: initial?.isCustomized ?? false,
+    isOnMiravia: initial?.isOnMiravia ?? false,
+    isOnAmazon: initial?.isOnAmazon ?? false,
     metaTitle: initial?.metaTitle ?? null,
     metaDescription: initial?.metaDescription ?? null,
     sizes: initial?.sizes?.map((s) => ({
@@ -1004,7 +1008,7 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                 </div>
               </div>
 
-              <div className="flex items-center gap-6 border-t border-zs-border pt-4">
+              <div className="flex flex-wrap items-center gap-6 border-t border-zs-border pt-4">
                 <label className="flex items-center gap-2 text-sm">
                   <Switch
                     checked={watched.isFeatured}
@@ -1028,6 +1032,43 @@ export function ProductEditor({ mode, initial, brands: initialBrands, categories
                   />
                   Publicado
                 </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {(
+                  [
+                    { field: "isOnMiravia", marketplace: "Miravia" },
+                    { field: "isOnAmazon", marketplace: "Amazon" },
+                  ] as const
+                ).map(({ field, marketplace }) => (
+                  <div
+                    key={field}
+                    className="flex flex-col gap-4 rounded-xl border border-amber-200 bg-amber-50/70 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <Label htmlFor={field} className="text-sm font-semibold text-amber-950">
+                        ¿Este producto está actualmente en {marketplace}?
+                      </Label>
+                      <p className="mt-1 max-w-2xl text-xs leading-relaxed text-amber-900/75">
+                        Si marcas «Sí», cuando se venda por la web o por el TPV aparecerá un aviso
+                        persistente para que recuerdes retirarlo de {marketplace}.
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <span className="min-w-6 text-sm font-bold text-amber-950">
+                        {watched[field] ? "Sí" : "No"}
+                      </span>
+                      <Switch
+                        id={field}
+                        checked={watched[field]}
+                        onCheckedChange={(value) =>
+                          setValue(field, value, { shouldDirty: true })
+                        }
+                        aria-label={`Este producto está en ${marketplace}`}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

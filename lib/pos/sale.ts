@@ -8,6 +8,7 @@ import {
   type PosOpenItemKind,
 } from "@/lib/pos/open-items";
 import { recomputeProductStock } from "@/lib/products/stock";
+import { recordMarketplaceRemovalNotifications } from "@/lib/marketplaces/removal-notifications";
 
 export type CatalogPosLineInput = {
   /** Opcional para mantener compatibles llamadas internas anteriores. */
@@ -332,6 +333,14 @@ export async function createInStoreSale(
         },
       },
       select: { id: true },
+    });
+
+    await recordMarketplaceRemovalNotifications(tx, {
+      orderId: order.id,
+      items: planned.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
     });
 
     if (productIds.length > 0) {

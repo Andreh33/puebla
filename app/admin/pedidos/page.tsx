@@ -60,6 +60,7 @@ export default async function PedidosPage({
   const whereBase: Prisma.OrderWhereInput = {};
   if (q) {
     whereBase.OR = [
+      { id: { equals: q } },
       { customerName: { contains: q, mode: "insensitive" } },
       { customerEmail: { contains: q, mode: "insensitive" } },
       { stripeSessionId: { contains: q } },

@@ -368,6 +368,8 @@ export async function updateProduct(
         brandId: existing.brandId,
         categoryId: existing.categoryId,
         colorName: existing.colorName,
+        isOnMiravia: existing.isOnMiravia,
+        isOnAmazon: existing.isOnAmazon,
       },
       {
         name: product.name,
@@ -377,6 +379,8 @@ export async function updateProduct(
         brandId: product.brandId,
         categoryId: product.categoryId,
         colorName: product.colorName,
+        isOnMiravia: product.isOnMiravia,
+        isOnAmazon: product.isOnAmazon,
       },
     );
 

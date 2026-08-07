@@ -22,6 +22,7 @@ import {
   KeyRound,
   ShoppingCart,
   MessageCircle,
+  BellRing,
   BadgePercent,
   ScanLine,
   Menu,
@@ -31,6 +32,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNewOrderCount, useReservationCount } from "./order-alert";
+import { useMarketplaceNotificationCount } from "./marketplace-alert";
 import {
   Sheet,
   SheetContent,
@@ -57,6 +59,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "TPV · Caja", href: "/admin/tpv", icon: ScanLine },
   { label: "Pedidos", href: "/admin/pedidos", icon: ShoppingCart },
   { label: "Reservas", href: "/admin/reservas", icon: MessageCircle },
+  { label: "Notificaciones", href: "/admin/notificaciones", icon: BellRing },
   { label: "Imágenes", href: "/admin/imagenes", icon: ImageIcon },
   { label: "Blog", href: "/admin/blog", icon: FileText },
   { label: "Leads", href: "/admin/leads", icon: Users },
@@ -92,6 +95,7 @@ function NavList({
   collapsed = false,
   newOrders = 0,
   newReservations = 0,
+  marketplaceNotifications = 0,
 }: {
   items: NavItem[];
   pathname: string;
@@ -102,6 +106,8 @@ function NavList({
   newOrders?: number;
   /** Nº de reservas nuevas → punto verde sobre "Reservas". */
   newReservations?: number;
+  /** Avisos persistentes de productos que deben retirarse de marketplaces. */
+  marketplaceNotifications?: number;
 }) {
   return (
     <nav aria-label="Navegación principal" className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -112,9 +118,16 @@ function NavList({
             ? newOrders
             : it.href === "/admin/reservas"
               ? newReservations
+              : it.href === "/admin/notificaciones"
+                ? marketplaceNotifications
               : 0;
         const alert = count > 0;
-        const dotColor = it.href === "/admin/reservas" ? "green" : "red";
+        const dotColor =
+          it.href === "/admin/reservas"
+            ? "green"
+            : it.href === "/admin/notificaciones"
+              ? "amber"
+              : "red";
         return (
           <Link
             key={it.href}
@@ -140,13 +153,21 @@ function NavList({
                   <span
                     className={cn(
                       "absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping",
-                      dotColor === "green" ? "bg-emerald-400" : "bg-red-400",
+                      dotColor === "green"
+                        ? "bg-emerald-400"
+                        : dotColor === "amber"
+                          ? "bg-amber-400"
+                          : "bg-red-400",
                     )}
                   />
                   <span
                     className={cn(
                       "relative inline-flex h-2.5 w-2.5 rounded-full",
-                      dotColor === "green" ? "bg-emerald-600" : "bg-red-600",
+                      dotColor === "green"
+                        ? "bg-emerald-600"
+                        : dotColor === "amber"
+                          ? "bg-amber-600"
+                          : "bg-red-600",
                     )}
                   />
                 </span>
@@ -157,7 +178,11 @@ function NavList({
               <span
                 className={cn(
                   "ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-bold text-white",
-                  dotColor === "green" ? "bg-emerald-600" : "bg-red-600",
+                  dotColor === "green"
+                    ? "bg-emerald-600"
+                    : dotColor === "amber"
+                      ? "bg-amber-600"
+                      : "bg-red-600",
                 )}
               >
                 {count}
@@ -196,6 +221,7 @@ export function Sidebar({
   const isOwner = role === "OWNER";
   const newOrders = useNewOrderCount();
   const newReservations = useReservationCount();
+  const marketplaceNotifications = useMarketplaceNotificationCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -258,6 +284,7 @@ export function Sidebar({
         collapsed={collapsed}
         newOrders={newOrders}
         newReservations={newReservations}
+        marketplaceNotifications={marketplaceNotifications}
       />
       {footer && !collapsed && <div className="border-t border-zs-border p-3">{footer}</div>}
     </aside>
@@ -276,6 +303,7 @@ export function MobileSidebarTrigger({
   const isOwner = role === "OWNER";
   const newOrders = useNewOrderCount();
   const newReservations = useReservationCount();
+  const marketplaceNotifications = useMarketplaceNotificationCount();
   const items = React.useMemo(
     () => ADMIN_NAV.filter((it) => !it.ownerOnly || isOwner),
     [isOwner],
@@ -306,6 +334,7 @@ export function MobileSidebarTrigger({
           onNavigate={() => setOpen(false)}
           newOrders={newOrders}
           newReservations={newReservations}
+          marketplaceNotifications={marketplaceNotifications}
         />
         {footer && <div className="border-t border-zs-border p-3">{footer}</div>}
       </SheetContent>

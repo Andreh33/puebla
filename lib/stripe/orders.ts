@@ -15,6 +15,7 @@ import type Stripe from "stripe";
 import { Prisma, type Order } from "@prisma/client";
 import { db } from "@/lib/db";
 import { recomputeProductStock } from "@/lib/products/stock";
+import { recordMarketplaceRemovalNotifications } from "@/lib/marketplaces/removal-notifications";
 import {
   readPosOpenItemDescription,
   readPosOpenItemKind,
@@ -274,6 +275,16 @@ export async function createOrderFromCheckout(
           },
         });
       }
+
+      // El aviso de marketplace forma parte de la misma transacción que el
+      // pedido y el stock: nunca queda una venta confirmada sin su recordatorio.
+      await recordMarketplaceRemovalNotifications(tx, {
+        orderId: created.id,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+      });
 
       return created;
     });

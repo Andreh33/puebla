@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/admin/Sidebar";
 import { Topbar } from "@/components/admin/Topbar";
 import { NewOrderWatcher } from "@/components/admin/NewOrderWatcher";
 import { ReservationWatcher } from "@/components/admin/ReservationWatcher";
+import { MarketplaceNotificationWatcher } from "@/components/admin/MarketplaceNotificationWatcher";
 
 export const metadata: Metadata = {
   title: { default: "Admin · Zona Sport", template: "%s · Admin Zona Sport" },
@@ -58,6 +59,7 @@ export default async function AdminLayout({
     <div className="flex min-h-screen bg-zs-surface">
       <NewOrderWatcher />
       <ReservationWatcher />
+      <MarketplaceNotificationWatcher />
       <Sidebar role={user.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar user={user} signOutAction={signOutAction} />

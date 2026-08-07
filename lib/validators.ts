@@ -101,6 +101,8 @@ export const ProductSchema = z.object({
   isFeatured: z.boolean().default(false),
   isOutlet: z.boolean().default(false),
   isCustomized: z.boolean().default(false),
+  isOnMiravia: z.boolean().default(false),
+  isOnAmazon: z.boolean().default(false),
   metaTitle: z.string().max(70).optional().nullable(),
   metaDescription: z.string().max(170).optional().nullable(),
 });

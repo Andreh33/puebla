@@ -146,6 +146,8 @@ model Product {
   isFeatured   Boolean       @default(false)
   isOutlet     Boolean       @default(false) // si true, aparece ADEMÁS en /outlet (no se quita de su categoría)
   isCustomized Boolean       @default(false) // si true, no sobrescribir desde feed
+  isOnMiravia  Boolean       @default(false) // publicado manualmente en Miravia; genera aviso al venderse
+  isOnAmazon   Boolean       @default(false) // publicado manualmente en Amazon; genera aviso al venderse
 
   metaTitle       String?
   metaDescription String?
@@ -155,6 +157,7 @@ model Product {
   updatedAt    DateTime      @updatedAt
 
   audits       ProductAudit[]
+  marketplaceRemovalNotifications MarketplaceRemovalNotification[]
 
   @@unique([source, externalId])
   @@index([brandId, status])
@@ -214,6 +217,31 @@ model ProductAudit {
   createdAt DateTime @default(now())
 
   @@index([productId, createdAt])
+}
+
+// Avisos persistentes para retirar de un marketplace un producto ya vendido.
+// Se conserva una fila por producto/canal y se reabre si el producto vuelve a
+// publicarse y venderse. productId es nullable para conservar el aviso aunque
+// el producto se elimine después del catálogo.
+model MarketplaceRemovalNotification {
+  id           String    @id @default(cuid())
+  productId    String?
+  product      Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  marketplace  String
+  productName  String
+  productSku   String?
+  quantitySold Int       @default(1)
+  saleCount    Int       @default(1)
+  lastOrderId  String?
+  firstSoldAt  DateTime  @default(now())
+  lastSoldAt   DateTime  @default(now())
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([productId, marketplace])
+  @@index([resolvedAt, lastSoldAt])
+  @@index([marketplace, resolvedAt])
 }
 
 // ----------------------------------------------------------------------------

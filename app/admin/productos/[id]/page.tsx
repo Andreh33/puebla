@@ -77,6 +77,8 @@ export default async function EditProductPage({
     isFeatured: product.isFeatured,
     isOutlet: product.isOutlet,
     isCustomized: product.isCustomized,
+    isOnMiravia: product.isOnMiravia,
+    isOnAmazon: product.isOnAmazon,
     metaTitle: product.metaTitle,
     metaDescription: product.metaDescription,
     mainImageUrl: product.mainImageUrl,
