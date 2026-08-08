@@ -180,6 +180,10 @@ export function CartView() {
                 itemsCount: count,
                 amount: total,
                 summary: buildCartWhatsAppMessage(items),
+                items: items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.qty,
+                })),
               })
             }
             className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"

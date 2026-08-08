@@ -27,6 +27,7 @@ export default async function NotificationsPage() {
     quantitySold: row.quantitySold,
     saleCount: row.saleCount,
     lastOrderId: row.lastOrderId,
+    lastReservationId: row.lastReservationId,
     firstSoldAt: row.firstSoldAt.toISOString(),
     lastSoldAt: row.lastSoldAt.toISOString(),
   }));
@@ -35,7 +36,7 @@ export default async function NotificationsPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Notificaciones"
-        description="Avisos persistentes de productos vendidos que siguen publicados en marketplaces. Solo desaparecen cuando confirmas que ya los has retirado."
+        description="Avisos persistentes de productos vendidos o reservados por WhatsApp que siguen publicados en marketplaces. Solo desaparecen cuando confirmas que ya los has retirado."
         breadcrumbs={[{ label: "Admin", href: "/admin" }, { label: "Notificaciones" }]}
       />
       <NotificationsClient

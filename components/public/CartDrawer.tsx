@@ -166,6 +166,10 @@ export function CartDrawer({ open, onOpenChange }: Props) {
                     itemsCount: count,
                     amount: total,
                     summary: buildCartWhatsAppMessage(items),
+                    items: items.map((item) => ({
+                      productId: item.productId,
+                      quantity: item.qty,
+                    })),
                   });
                   onOpenChange(false);
                 }}

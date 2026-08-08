@@ -9,7 +9,9 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { recordMarketplaceRemovalNotifications } from "@/lib/marketplaces/removal-notifications";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { sanitizeReservationItems } from "@/lib/whatsapp-reservation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,23 +40,35 @@ export async function POST(req: NextRequest) {
   const b = (json ?? {}) as Record<string, unknown>;
 
   const kind = str(b.kind) === "cart" ? "cart" : "product";
-  const summary = str(b.summary, 2000) ?? (kind === "cart" ? "Reserva de carrito" : "Reserva de producto");
+  const summary =
+    str(b.summary, 2000) ?? (kind === "cart" ? "Reserva de carrito" : "Reserva de producto");
   const amountNum = typeof b.amount === "number" && Number.isFinite(b.amount) ? b.amount : null;
   const itemsCount =
-    typeof b.itemsCount === "number" && Number.isFinite(b.itemsCount) ? Math.trunc(b.itemsCount) : null;
+    typeof b.itemsCount === "number" && Number.isFinite(b.itemsCount)
+      ? Math.trunc(b.itemsCount)
+      : null;
+  const marketplaceItems = sanitizeReservationItems(b.items);
 
   try {
-    await db.whatsappReservation.create({
-      data: {
-        kind,
-        productName: str(b.productName),
-        sku: str(b.sku, 120),
-        size: str(b.size, 40),
-        itemsCount,
-        amount: amountNum != null ? amountNum.toFixed(2) : null,
-        summary,
-        sourcePage: str(b.sourcePage, 500),
-      },
+    await db.$transaction(async (tx) => {
+      const reservation = await tx.whatsappReservation.create({
+        data: {
+          kind,
+          productName: str(b.productName),
+          sku: str(b.sku, 120),
+          size: str(b.size, 40),
+          itemsCount,
+          amount: amountNum != null ? amountNum.toFixed(2) : null,
+          summary,
+          sourcePage: str(b.sourcePage, 500),
+        },
+        select: { id: true },
+      });
+
+      await recordMarketplaceRemovalNotifications(tx, {
+        reservationId: reservation.id,
+        items: marketplaceItems,
+      });
     });
   } catch (err) {
     console.warn("[api/reservations] no se pudo registrar:", (err as Error).message);

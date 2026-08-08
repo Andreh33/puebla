@@ -109,6 +109,37 @@ describe("recordMarketplaceRemovalNotifications", () => {
     ]);
   });
 
+  it("guarda la reserva de WhatsApp como origen y no la confunde con un pedido", async () => {
+    productFindMany.mockResolvedValue([
+      {
+        id: "p1",
+        name: "Mochila",
+        sku: "MOCH-1",
+        isOnMiravia: false,
+        isOnAmazon: true,
+      },
+    ]);
+
+    await recordMarketplaceRemovalNotifications(tx as never, {
+      reservationId: "reservation-1",
+      items: [{ productId: "p1", quantity: 2 }],
+    });
+
+    expect(notificationUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          marketplace: "AMAZON",
+          lastOrderId: null,
+          lastReservationId: "reservation-1",
+        }),
+        update: expect.objectContaining({
+          lastOrderId: null,
+          lastReservationId: "reservation-1",
+        }),
+      }),
+    );
+  });
+
   it("acumula otra venta sobre el aviso activo con incrementos atómicos", async () => {
     productFindMany.mockResolvedValue([
       {

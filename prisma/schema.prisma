@@ -233,6 +233,7 @@ model MarketplaceRemovalNotification {
   quantitySold Int       @default(1)
   saleCount    Int       @default(1)
   lastOrderId  String?
+  lastReservationId String?
   firstSoldAt  DateTime  @default(now())
   lastSoldAt   DateTime  @default(now())
   resolvedAt   DateTime?

@@ -35,6 +35,7 @@ const notification: MarketplaceNotificationDTO = {
   quantitySold: 2,
   saleCount: 1,
   lastOrderId: "order-1",
+  lastReservationId: null,
   firstSoldAt: "2026-08-07T10:00:00.000Z",
   lastSoldAt: "2026-08-07T10:00:00.000Z",
 };
@@ -65,6 +66,24 @@ describe("NotificationsClient", () => {
     );
 
     expect(screen.getByText("Amazon")).toBeTruthy();
+  });
+
+  it("enlaza el aviso con la reserva de WhatsApp que lo originó", () => {
+    render(
+      <NotificationsClient
+        notifications={[
+          {
+            ...notification,
+            lastOrderId: null,
+            lastReservationId: "reservation-1",
+          },
+        ]}
+        totalCount={1}
+      />,
+    );
+
+    const link = screen.getByRole("link", { name: /Ver reserva WhatsApp/i });
+    expect(link.getAttribute("href")).toBe("/admin/reservas");
   });
 
   it("no retira el aviso sin confirmación y lo quita solo tras resolverlo", async () => {

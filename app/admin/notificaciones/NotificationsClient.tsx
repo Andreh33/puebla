@@ -19,6 +19,7 @@ export type MarketplaceNotificationDTO = {
   quantitySold: number;
   saleCount: number;
   lastOrderId: string | null;
+  lastReservationId: string | null;
   firstSoldAt: string;
   lastSoldAt: string;
 };
@@ -127,7 +128,7 @@ export function NotificationsClient({
           <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" aria-hidden="true" />
           <h2 className="text-zs-blue-900 mt-4 text-lg font-bold">Todo al día</h2>
           <p className="text-zs-muted mt-1 text-sm">
-            No hay productos vendidos pendientes de retirar de marketplaces.
+            No hay productos vendidos o reservados pendientes de retirar de marketplaces.
           </p>
         </div>
       ) : (
@@ -143,9 +144,9 @@ export function NotificationsClient({
               <thead className="bg-zs-surface text-zs-muted text-left text-xs tracking-wide uppercase">
                 <tr>
                   <th className="px-4 py-3 font-medium">Marketplace</th>
-                  <th className="px-4 py-3 font-medium">Producto vendido</th>
-                  <th className="px-4 py-3 font-medium">Ventas</th>
-                  <th className="px-4 py-3 font-medium">Última venta</th>
+                  <th className="px-4 py-3 font-medium">Producto</th>
+                  <th className="px-4 py-3 font-medium">Movimientos</th>
+                  <th className="px-4 py-3 font-medium">Último movimiento</th>
                   <th className="px-4 py-3 font-medium">Referencia</th>
                   <th className="px-4 py-3 text-right font-medium">Acción</th>
                 </tr>
@@ -167,7 +168,7 @@ export function NotificationsClient({
                     <td className="text-zs-ink px-4 py-3 whitespace-nowrap">
                       <strong>{row.quantitySold}</strong> ud.
                       <span className="text-zs-muted ml-1 text-xs">
-                        en {row.saleCount} {row.saleCount === 1 ? "venta" : "ventas"}
+                        en {row.saleCount} {row.saleCount === 1 ? "movimiento" : "movimientos"}
                       </span>
                     </td>
                     <td className="text-zs-muted px-4 py-3 whitespace-nowrap">
@@ -188,7 +189,15 @@ export function NotificationsClient({
                             href={`/admin/pedidos?all=1&q=${encodeURIComponent(row.lastOrderId)}`}
                             className="text-zs-muted hover:text-zs-blue-700 inline-flex items-center gap-1 text-xs hover:underline"
                           >
-                            Ver última venta
+                            Ver último pedido
+                          </Link>
+                        )}
+                        {row.lastReservationId && (
+                          <Link
+                            href="/admin/reservas"
+                            className="text-zs-muted hover:text-zs-blue-700 inline-flex items-center gap-1 text-xs hover:underline"
+                          >
+                            Ver reserva WhatsApp
                           </Link>
                         )}
                       </div>

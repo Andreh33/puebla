@@ -14,8 +14,11 @@ export type MarketplaceSaleItem = {
   quantity: number;
 };
 
-type RecordMarketplaceSaleInput = {
-  orderId: string;
+type MarketplaceSaleReference =
+  | { orderId: string; reservationId?: never }
+  | { reservationId: string; orderId?: never };
+
+type RecordMarketplaceSaleInput = MarketplaceSaleReference & {
   items: MarketplaceSaleItem[];
   soldAt?: Date;
 };
@@ -50,6 +53,8 @@ export async function recordMarketplaceRemovalNotifications(
   if (products.length === 0) return 0;
 
   const soldAt = input.soldAt ?? new Date();
+  const lastOrderId = "orderId" in input ? (input.orderId ?? null) : null;
+  const lastReservationId = "reservationId" in input ? (input.reservationId ?? null) : null;
   let notificationsRecorded = 0;
   for (const product of products) {
     const quantitySold = quantityByProduct.get(product.id) ?? 0;
@@ -73,7 +78,8 @@ export async function recordMarketplaceRemovalNotifications(
           productSku: product.sku,
           quantitySold,
           saleCount: 1,
-          lastOrderId: input.orderId,
+          lastOrderId,
+          lastReservationId,
           firstSoldAt: soldAt,
           lastSoldAt: soldAt,
           resolvedAt: null,
@@ -95,7 +101,8 @@ export async function recordMarketplaceRemovalNotifications(
           productSku: product.sku,
           quantitySold,
           saleCount: 1,
-          lastOrderId: input.orderId,
+          lastOrderId,
+          lastReservationId,
           firstSoldAt: soldAt,
           lastSoldAt: soldAt,
         },
@@ -104,7 +111,8 @@ export async function recordMarketplaceRemovalNotifications(
           productSku: product.sku,
           quantitySold: { increment: quantitySold },
           saleCount: { increment: 1 },
-          lastOrderId: input.orderId,
+          lastOrderId,
+          lastReservationId,
           lastSoldAt: soldAt,
           resolvedAt: null,
         },

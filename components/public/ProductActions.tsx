@@ -187,6 +187,7 @@ export function ProductActions({
               size: effectiveSize,
               amount: product?.price ?? null,
               summary: `Reserva: ${productName}${effectiveSize ? ` (talla ${effectiveSize})` : ""}`,
+              items: product ? [{ productId: product.id, quantity: 1 }] : [],
             });
           }}
           className={
