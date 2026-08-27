@@ -33,15 +33,15 @@ function dateColumnStart(period: string): Date {
  * Foto del mes actual para el bloque financiero del dashboard.
  *
  * - Ventas: pedidos vendidos por `createdAt`, respetando el mes de Madrid.
- * - Facturas: facturas de proveedor por `issueDate` (columna DATE de Postgres).
- * - Pagado/pendiente: estado actual de los vencimientos de esas facturas.
+ * - Proveedores: cuotas cuyo `dueDate` cae en el mes (columna DATE de Postgres).
+ * - Pagado/pendiente: estado actual de esas cuotas concretas.
  */
 export async function getCurrentMonthOperatingSnapshot(): Promise<MonthlyOperatingSnapshot> {
   const period = madridMonthStartYmd().slice(0, 7);
   const nextPeriod = nextMonthPeriod(period);
 
   try {
-    const [salesAggregate, invoices] = await Promise.all([
+    const [salesAggregate, dueDates] = await Promise.all([
       db.order.aggregate({
         where: {
           status: { in: [...SOLD_STATUSES] },
@@ -52,20 +52,17 @@ export async function getCurrentMonthOperatingSnapshot(): Promise<MonthlyOperati
         },
         _sum: { total: true },
       }),
-      db.supplierInvoice.findMany({
+      db.supplierInvoiceDueDate.findMany({
         where: {
-          issueDate: {
+          dueDate: {
             gte: dateColumnStart(period),
             lt: dateColumnStart(nextPeriod),
           },
         },
-        select: {
-          dueDates: { select: { amount: true, paid: true } },
-        },
+        select: { invoiceId: true, amount: true, paid: true },
       }),
     ]);
 
-    const dueDates = invoices.flatMap((invoice) => invoice.dueDates);
     const supplierInvoices = roundMoney(
       dueDates.reduce((sum, due) => sum + asNumber(due.amount), 0),
     );
@@ -83,7 +80,7 @@ export async function getCurrentMonthOperatingSnapshot(): Promise<MonthlyOperati
       supplierInvoices,
       paidSupplierInvoices,
       outstandingSupplierInvoices,
-      invoiceCount: invoices.length,
+      invoiceCount: new Set(dueDates.map((due) => due.invoiceId)).size,
     };
   } catch {
     return {

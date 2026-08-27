@@ -29,25 +29,25 @@ type StatusMeta = {
 const STATUS_META: Record<MonthlyOperatingBalanceState, StatusMeta> = {
   positive: {
     label: "En positivo",
-    description: "Las ventas superan las facturas de proveedores del mes.",
+    description: "Las ventas superan los vencimientos de proveedores del mes.",
     Icon: ArrowUpRight,
     badge: "success",
   },
   negative: {
     label: "En negativo",
-    description: "Las facturas de proveedores superan las ventas del mes.",
+    description: "Los vencimientos de proveedores superan las ventas del mes.",
     Icon: ArrowDownRight,
     badge: "sale",
   },
   balanced: {
     label: "En equilibrio",
-    description: "Las ventas y las facturas del mes tienen el mismo importe.",
+    description: "Las ventas y los vencimientos del mes tienen el mismo importe.",
     Icon: Equal,
     badge: "outline",
   },
   empty: {
     label: "Sin movimiento",
-    description: "Aún no hay ventas ni facturas de proveedores este mes.",
+    description: "Aún no hay ventas ni vencimientos de proveedores este mes.",
     Icon: Equal,
     badge: "secondary",
   },
@@ -172,22 +172,22 @@ export function MonthlyOperatingBalanceCard({ snapshot }: { snapshot: MonthlyOpe
               detail="Pedidos pagados y en curso del mes"
             />
             <ComparisonBar
-              label="Facturas de proveedores"
+              label="Vencimientos de proveedores"
               value={balance.supplierInvoices}
               max={max}
               barClassName="bg-zs-blue-700"
-              detail={`${snapshot.invoiceCount} ${snapshot.invoiceCount === 1 ? "factura emitida" : "facturas emitidas"} este mes`}
+              detail={`${snapshot.invoiceCount} ${snapshot.invoiceCount === 1 ? "factura con cuotas" : "facturas con cuotas"} este mes`}
             />
 
             <dl className="border-zs-border grid gap-3 border-t pt-4 sm:grid-cols-2">
               <div>
-                <dt className="text-zs-muted text-xs">Pagado de estas facturas</dt>
+                <dt className="text-zs-muted text-xs">Pagado de estas cuotas</dt>
                 <dd className="mt-0.5 font-semibold text-emerald-700 tabular-nums">
                   {formatPriceEUR(snapshot.paidSupplierInvoices)}
                 </dd>
               </div>
               <div>
-                <dt className="text-zs-muted text-xs">Pendiente de estas facturas</dt>
+                <dt className="text-zs-muted text-xs">Pendiente de estas cuotas</dt>
                 <dd className="mt-0.5 font-semibold text-amber-700 tabular-nums">
                   {formatPriceEUR(snapshot.outstandingSupplierInvoices)}
                 </dd>
@@ -198,8 +198,8 @@ export function MonthlyOperatingBalanceCard({ snapshot }: { snapshot: MonthlyOpe
 
         <div className="border-zs-border text-zs-muted flex flex-col gap-2 border-t pt-4 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-3xl">
-            Estimación operativa: ventas registradas menos facturas de proveedores por fecha de
-            emisión. No es beneficio contable y no incluye nóminas, impuestos ni otros gastos.
+            Estimación operativa: ventas registradas menos cuotas de proveedores por fecha de
+            vencimiento. No es beneficio contable y no incluye nóminas, impuestos ni otros gastos.
           </p>
           <Link
             href="/admin/facturas"

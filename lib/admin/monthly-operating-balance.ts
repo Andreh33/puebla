@@ -19,8 +19,9 @@ function money(value: number): number {
 }
 
 /**
- * Saldo orientativo del mes: ventas registradas menos facturas de proveedores
- * emitidas en el mismo mes. No representa beneficio contable ni flujo de caja.
+ * Saldo orientativo del mes: ventas registradas menos cuotas de proveedores
+ * con vencimiento en el mismo mes. No representa beneficio contable ni flujo
+ * de caja real porque una cuota puede pagarse antes o después de su vencimiento.
  */
 export function calculateMonthlyOperatingBalance(
   salesInput: number,

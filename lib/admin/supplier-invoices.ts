@@ -87,16 +87,18 @@ export type FilterableInvoice = {
 export type MonthSpend = { ym: string; facturado: number; pagado: number; pendiente: number };
 export type SupplierSpend = { supplier: string; facturado: number; pagado: number; pendiente: number; count: number };
 
-/** Gasto agrupado por mes de EMISIÓN (YYYY-MM), orden cronológico ascendente. */
+/** Gasto agrupado por mes de VENCIMIENTO (YYYY-MM), orden cronológico ascendente. */
 export function spendByMonth(invoices: FilterableInvoice[]): MonthSpend[] {
   const m = new Map<string, { facturado: number; pagado: number; pendiente: number }>();
   for (const inv of invoices) {
-    const ym = inv.issueDate.slice(0, 7);
-    const acc = m.get(ym) ?? { facturado: 0, pagado: 0, pendiente: 0 };
-    acc.facturado += invoiceTotal(inv.dueDates);
-    acc.pagado += invoicePaid(inv.dueDates);
-    acc.pendiente += invoiceOutstanding(inv.dueDates);
-    m.set(ym, acc);
+    for (const due of inv.dueDates) {
+      const ym = due.dueDate.slice(0, 7);
+      const acc = m.get(ym) ?? { facturado: 0, pagado: 0, pendiente: 0 };
+      acc.facturado += due.amount;
+      if (due.paid) acc.pagado += due.amount;
+      else acc.pendiente += due.amount;
+      m.set(ym, acc);
+    }
   }
   return [...m.entries()]
     .map(([ym, v]) => ({ ym, facturado: round2(v.facturado), pagado: round2(v.pagado), pendiente: round2(v.pendiente) }))

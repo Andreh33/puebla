@@ -729,11 +729,13 @@ export function FacturasClient({
         </Card>
       )}
 
-      {/* Análisis — gasto por mes y por proveedor (sobre lo filtrado) */}
+      {/* Análisis — cuotas por mes de vencimiento y gasto por proveedor. */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardContent className="p-4">
-            <h2 className="mb-3 text-sm font-semibold text-zs-ink">Gasto por mes</h2>
+            <h2 className="mb-3 text-sm font-semibold text-zs-ink">
+              Gasto por mes de vencimiento
+            </h2>
             <MonthSpendBars data={byMonth} />
           </CardContent>
         </Card>
@@ -1093,7 +1095,7 @@ function MonthSpendBars({
             <span className="text-xs capitalize text-zs-muted">{formatYm(d.ym)}</span>
             <div
               className="h-5 rounded bg-zs-surface"
-              title={`Facturado ${fmt(d.facturado)} · Pagado ${fmt(d.pagado)} · Pendiente ${fmt(d.pendiente)}`}
+              title={`Cuotas ${fmt(d.facturado)} · Pagado ${fmt(d.pagado)} · Pendiente ${fmt(d.pendiente)}`}
             >
               <div
                 className="h-full rounded bg-zs-blue-200"
@@ -1108,7 +1110,7 @@ function MonthSpendBars({
       })}
       <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-zs-muted">
         <Legend className="bg-emerald-400" label="Pagado" />
-        <Legend className="bg-zs-blue-200" label="Facturado" />
+        <Legend className="bg-zs-blue-200" label="Cuotas" />
       </div>
     </div>
   );

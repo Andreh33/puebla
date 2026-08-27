@@ -29,7 +29,7 @@ describe("MonthlyOperatingBalanceCard", () => {
     expect(screen.getByText("En negativo")).toBeTruthy();
     expect(screen.getByText(/325,50/)).toBeTruthy();
     expect(screen.getByText("Ventas registradas")).toBeTruthy();
-    expect(screen.getByText("Facturas de proveedores", { selector: "span" })).toBeTruthy();
+    expect(screen.getByText("Vencimientos de proveedores", { selector: "span" })).toBeTruthy();
     expect(screen.getByText(/No es beneficio contable/)).toBeTruthy();
   });
 

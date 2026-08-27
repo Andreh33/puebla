@@ -112,15 +112,16 @@ describe("totalInvoiced / totalPaid", () => {
 });
 
 describe("spendByMonth", () => {
-  it("agrupa por mes de emisión y ordena cronológicamente", () => {
+  it("reparte cada cuota en su mes de vencimiento y ordena cronológicamente", () => {
     const rows = [
       inv({ issueDate: "2026-07-05", dueDates: [due(100, true, "2026-08-01"), due(100, false, "2026-09-01")] }),
       inv({ issueDate: "2026-07-20", dueDates: [due(50, false, "2026-08-01")] }),
       inv({ issueDate: "2026-06-10", dueDates: [due(300, true, "2026-07-01")] }),
     ];
     expect(spendByMonth(rows)).toEqual([
-      { ym: "2026-06", facturado: 300, pagado: 300, pendiente: 0 },
-      { ym: "2026-07", facturado: 250, pagado: 100, pendiente: 150 },
+      { ym: "2026-07", facturado: 300, pagado: 300, pendiente: 0 },
+      { ym: "2026-08", facturado: 150, pagado: 100, pendiente: 50 },
+      { ym: "2026-09", facturado: 100, pagado: 0, pendiente: 100 },
     ]);
   });
 });
