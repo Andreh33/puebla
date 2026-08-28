@@ -23,12 +23,23 @@ export type Metrics = {
 export type GenderRow = { gender: GenderKey; metrics: Metrics };
 export type FamilyTable = { family: FamilyKey; rows: GenderRow[]; total: Metrics };
 
+export type MonthlyProfitRow = {
+  month: string;
+  label: string;
+  ventas: number;
+  beneficio: number;
+  /** Cuotas de proveedor con vencimiento en el mes, pagadas o pendientes. */
+  pagos: number;
+  /** Margen de ventas menos las cuotas de proveedor del mes. */
+  diferencia: number;
+};
+
 export type BalanceData = {
   period: Period;
   families: FamilyTable[];
   byGender: GenderRow[];
   grandTotal: Metrics;
-  profitByMonth: Array<{ month: string; label: string; beneficio: number; ventas: number }>;
+  profitByMonth: MonthlyProfitRow[];
   /** Desglose de ventas por método de pago (Bizum/PayPal/Tarjeta/TPV/Online). */
   paymentMethods: PaymentMethodRow[];
 };

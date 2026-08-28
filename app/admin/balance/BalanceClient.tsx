@@ -18,6 +18,7 @@ import {
   type FamilyTable,
   type GenderRow,
   type Metrics,
+  type MonthlyProfitRow,
   type PaymentMethodRow,
   type Period,
 } from "@/lib/admin/balance-types";
@@ -33,6 +34,7 @@ const PERIODS: Array<{ value: Period; label: string }> = [
 ];
 
 const nf = new Intl.NumberFormat("es-ES");
+const formatSignedEUR = (value: number) => `${value > 0 ? "+" : ""}${formatPriceEUR(value)}`;
 
 export function BalanceClient({ data }: { data: BalanceData }) {
   const router = useRouter();
@@ -122,7 +124,7 @@ export function BalanceClient({ data }: { data: BalanceData }) {
         <Card
           id={id}
           title="Beneficio por mes"
-          subtitle="Últimos 12 meses"
+          subtitle="Últimos 12 meses · pagos según vencimiento"
           onHide={hide}
           onUp={() => move(id, -1)}
           onDown={() => move(id, 1)}
@@ -389,14 +391,12 @@ function MetricsRow({ label, m, total }: { label: string; m: Metrics; total?: bo
 // Tabla de beneficio por mes (con mini-barras)
 // ---------------------------------------------------------------------------
 
-function MonthlyTable({
-  rows,
-}: {
-  rows: Array<{ month: string; label: string; beneficio: number; ventas: number }>;
-}) {
-  const max = Math.max(1, ...rows.map((r) => Math.abs(r.beneficio)));
+function MonthlyTable({ rows }: { rows: MonthlyProfitRow[] }) {
+  const maxDifference = Math.max(1, ...rows.map((r) => Math.abs(r.diferencia)));
   const totalBen = Math.round(rows.reduce((a, r) => a + r.beneficio, 0) * 100) / 100;
   const totalVen = Math.round(rows.reduce((a, r) => a + r.ventas, 0) * 100) / 100;
+  const totalPag = Math.round(rows.reduce((a, r) => a + r.pagos, 0) * 100) / 100;
+  const totalDif = Math.round((totalBen - totalPag) * 100) / 100;
   return (
     <table className="min-w-full text-sm">
       <thead>
@@ -404,7 +404,18 @@ function MonthlyTable({
           <th className="px-3 py-2">Mes</th>
           <th className="px-3 py-2 text-right">Ventas</th>
           <th className="px-3 py-2 text-right">Beneficio</th>
-          <th className="px-3 py-2">&nbsp;</th>
+          <th
+            className="px-3 py-2 text-right"
+            title="Cuotas de proveedor con vencimiento en el mes"
+          >
+            Pagos
+          </th>
+          <th className="px-3 py-2 text-right" title="Beneficio menos pagos de proveedores">
+            Diferencia
+          </th>
+          <th className="px-3 py-2">
+            <span className="sr-only">Diferencia visual</span>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -420,14 +431,31 @@ function MonthlyTable({
             >
               {formatPriceEUR(r.beneficio)}
             </td>
+            <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(r.pagos)}</td>
+            <td
+              className={cn(
+                "px-3 py-2 text-right font-semibold tabular-nums",
+                r.diferencia < 0
+                  ? "text-zs-red-600"
+                  : r.diferencia > 0
+                    ? "text-emerald-700"
+                    : "text-zs-muted",
+              )}
+            >
+              {formatSignedEUR(r.diferencia)}
+            </td>
             <td className="px-3 py-2">
               <div className="h-2 w-full min-w-[80px] overflow-hidden rounded-full bg-zs-surface">
                 <div
                   className={cn(
                     "h-full rounded-full",
-                    r.beneficio < 0 ? "bg-zs-red-600" : "bg-emerald-600",
+                    r.diferencia < 0
+                      ? "bg-zs-red-600"
+                      : r.diferencia > 0
+                        ? "bg-emerald-600"
+                        : "bg-zs-muted",
                   )}
-                  style={{ width: `${(Math.abs(r.beneficio) / max) * 100}%` }}
+                  style={{ width: `${(Math.abs(r.diferencia) / maxDifference) * 100}%` }}
                 />
               </div>
             </td>
@@ -435,11 +463,39 @@ function MonthlyTable({
         ))}
         <tr className="border-t border-zs-border bg-zs-surface/70 font-bold">
           <td className="px-3 py-2 inline-flex items-center gap-1">
-            <TrendingUp className="h-4 w-4 text-emerald-700" /> TOTAL
+            <TrendingUp
+              className={cn(
+                "h-4 w-4",
+                totalDif < 0
+                  ? "text-zs-red-600"
+                  : totalDif > 0
+                    ? "text-emerald-700"
+                    : "text-zs-muted",
+              )}
+            />{" "}
+            TOTAL
           </td>
           <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(totalVen)}</td>
-          <td className="px-3 py-2 text-right tabular-nums text-emerald-700">
+          <td
+            className={cn(
+              "px-3 py-2 text-right tabular-nums",
+              totalBen < 0 ? "text-zs-red-600" : "text-emerald-700",
+            )}
+          >
             {formatPriceEUR(totalBen)}
+          </td>
+          <td className="px-3 py-2 text-right tabular-nums">{formatPriceEUR(totalPag)}</td>
+          <td
+            className={cn(
+              "px-3 py-2 text-right tabular-nums",
+              totalDif < 0
+                ? "text-zs-red-600"
+                : totalDif > 0
+                  ? "text-emerald-700"
+                  : "text-zs-muted",
+            )}
+          >
+            {formatSignedEUR(totalDif)}
           </td>
           <td className="px-3 py-2">&nbsp;</td>
         </tr>

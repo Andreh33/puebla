@@ -1,7 +1,9 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import { SHOP_TZ, madridDayStart, madridMonthStartYmd } from "@/lib/dates";
 import { SOLD_STATUSES } from "./sales-queries";
+import { nextMonthPeriod } from "./monthly-operating-balance";
 
 /**
  * Cuadro de mando de negocio (/admin/balance): por FAMILIA (textil/calzado/
@@ -29,6 +31,7 @@ import {
   type GenderRow,
   type FamilyTable,
   type BalanceData,
+  type MonthlyProfitRow,
 } from "./balance-types";
 
 export type {
@@ -39,6 +42,7 @@ export type {
   GenderRow,
   FamilyTable,
   BalanceData,
+  MonthlyProfitRow,
   PaymentMethodRow,
 } from "./balance-types";
 export { FAMILY_LABELS, GENDER_LABELS } from "./balance-types";
@@ -258,21 +262,37 @@ function isEmpty(m: Metrics): boolean {
 
 export async function getProfitByMonth(
   months = 12,
-): Promise<Array<{ month: string; label: string; beneficio: number; ventas: number }>> {
-  const now = new Date();
-  const since = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+): Promise<MonthlyProfitRow[]> {
+  const currentMonth = madridMonthStartYmd().slice(0, 7);
+  const firstMonth = shiftMonthPeriod(currentMonth, -(months - 1));
+  const nextMonth = nextMonthPeriod(currentMonth);
+  const since = madridDayStart(`${firstMonth}-01`);
+  const until = madridDayStart(`${nextMonth}-01`);
 
-  const items = await db.orderItem.findMany({
-    where: { order: { status: { in: [...SOLD_STATUSES] }, createdAt: { gte: since } } },
-    select: {
-      quantity: true,
-      unitPrice: true,
-      unitCost: true,
-      subtotal: true,
-      productId: true,
-      order: { select: { createdAt: true } },
-    },
-  });
+  const [items, supplierDueDates] = await Promise.all([
+    db.orderItem.findMany({
+      where: {
+        order: { status: { in: [...SOLD_STATUSES] }, createdAt: { gte: since, lt: until } },
+      },
+      select: {
+        quantity: true,
+        unitPrice: true,
+        unitCost: true,
+        subtotal: true,
+        productId: true,
+        order: { select: { createdAt: true } },
+      },
+    }),
+    db.supplierInvoiceDueDate.findMany({
+      where: {
+        dueDate: {
+          gte: dateColumnStart(firstMonth),
+          lt: dateColumnStart(nextMonth),
+        },
+      },
+      select: { dueDate: true, amount: true },
+    }),
+  ]);
 
   // Fallback de coste (unitCost null) → costPrice actual del producto.
   const ids = [
@@ -287,13 +307,12 @@ export async function getProfitByMonth(
     for (const p of rows) costMap.set(p.id, p.costPrice);
   }
 
-  const bucket = new Map<string, { beneficio: number; ventas: number }>();
+  const bucket = new Map<string, { beneficio: number; ventas: number; pagos: number }>();
   for (let i = 0; i < months; i++) {
-    const d = new Date(since.getFullYear(), since.getMonth() + i, 1);
-    bucket.set(monthKey(d), { beneficio: 0, ventas: 0 });
+    bucket.set(shiftMonthPeriod(firstMonth, i), { beneficio: 0, ventas: 0, pagos: 0 });
   }
   for (const it of items) {
-    const k = monthKey(it.order.createdAt);
+    const k = madridMonthKey(it.order.createdAt);
     const b = bucket.get(k);
     if (!b) continue;
     const price = toNum(it.unitPrice);
@@ -303,16 +322,36 @@ export async function getProfitByMonth(
     b.ventas += toNum(it.subtotal);
   }
 
+  // Cada cuota se imputa al mes de su vencimiento. Se incluyen las pagadas y
+  // las pendientes: la columna representa los pagos comprometidos de ese mes.
+  for (const due of supplierDueDates) {
+    const b = bucket.get(due.dueDate.toISOString().slice(0, 7));
+    if (b) b.pagos += toNum(due.amount);
+  }
+
   return Array.from(bucket.entries()).map(([month, v]) => ({
     month,
     label: monthLabel(month),
     beneficio: r2(v.beneficio),
     ventas: r2(v.ventas),
+    pagos: r2(v.pagos),
+    diferencia: r2(v.beneficio - v.pagos),
   }));
 }
 
-function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+function dateColumnStart(month: string): Date {
+  return new Date(`${month}-01T00:00:00.000Z`);
+}
+
+function shiftMonthPeriod(month: string, offset: number): string {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return new Date(Date.UTC(year ?? 1970, (monthNumber ?? 1) - 1 + offset, 1))
+    .toISOString()
+    .slice(0, 7);
+}
+
+function madridMonthKey(date: Date): string {
+  return date.toLocaleDateString("en-CA", { timeZone: SHOP_TZ }).slice(0, 7);
 }
 
 const MESES_ES = [
