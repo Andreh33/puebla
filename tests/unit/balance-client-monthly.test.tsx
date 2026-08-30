@@ -35,15 +35,15 @@ function balanceData(): BalanceData {
         label: "jul 26",
         ventas: 500,
         beneficio: 200,
-        pagos: 75,
-        diferencia: 125,
+        pagos: 80,
+        diferencia: 420,
       },
       {
         month: "2026-08",
         label: "ago 26",
         ventas: 300,
         beneficio: 100,
-        pagos: 150,
+        pagos: 350,
         diferencia: -50,
       },
     ],
@@ -61,9 +61,9 @@ describe("BalanceClient · beneficio por mes", () => {
 
     expect(table.getByRole("columnheader", { name: "Pagos" })).toBeTruthy();
     expect(table.getByRole("columnheader", { name: "Diferencia" })).toBeTruthy();
-    expect(table.getByText(/\+125,00/)).toBeTruthy();
+    expect(table.getByText(/\+420,00/)).toBeTruthy();
     expect(table.getByText(/-50,00/)).toBeTruthy();
-    expect(table.getByText(/225,00/)).toBeTruthy();
-    expect(table.getByText(/\+75,00/)).toBeTruthy();
+    expect(table.getByText(/430,00/)).toBeTruthy();
+    expect(table.getByText(/\+370,00/)).toBeTruthy();
   });
 });

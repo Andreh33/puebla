@@ -335,7 +335,7 @@ export async function getProfitByMonth(
     beneficio: r2(v.beneficio),
     ventas: r2(v.ventas),
     pagos: r2(v.pagos),
-    diferencia: r2(v.beneficio - v.pagos),
+    diferencia: r2(v.ventas - v.pagos),
   }));
 }
 

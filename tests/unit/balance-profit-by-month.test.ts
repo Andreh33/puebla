@@ -56,10 +56,10 @@ afterEach(() => {
 });
 
 describe("getProfitByMonth", () => {
-  it("resta en cada mes las cuotas que vencen en ese mes", async () => {
+  it("resta de las ventas las cuotas que vencen en cada mes", async () => {
     await expect(getProfitByMonth(3)).resolves.toEqual([
-      { month: "2026-06", label: "jun 26", ventas: 100, beneficio: 60, pagos: 30, diferencia: 30 },
-      { month: "2026-07", label: "jul 26", ventas: 100, beneficio: 60, pagos: 75, diferencia: -15 },
+      { month: "2026-06", label: "jun 26", ventas: 100, beneficio: 60, pagos: 30, diferencia: 70 },
+      { month: "2026-07", label: "jul 26", ventas: 100, beneficio: 60, pagos: 75, diferencia: 25 },
       { month: "2026-08", label: "ago 26", ventas: 0, beneficio: 0, pagos: 90, diferencia: -90 },
     ]);
 

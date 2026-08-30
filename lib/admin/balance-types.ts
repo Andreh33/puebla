@@ -30,7 +30,7 @@ export type MonthlyProfitRow = {
   beneficio: number;
   /** Cuotas de proveedor con vencimiento en el mes, pagadas o pendientes. */
   pagos: number;
-  /** Margen de ventas menos las cuotas de proveedor del mes. */
+  /** Ventas del mes menos las cuotas de proveedor del mes. */
   diferencia: number;
 };
 

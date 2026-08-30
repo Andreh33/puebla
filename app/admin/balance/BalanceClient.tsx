@@ -396,7 +396,7 @@ function MonthlyTable({ rows }: { rows: MonthlyProfitRow[] }) {
   const totalBen = Math.round(rows.reduce((a, r) => a + r.beneficio, 0) * 100) / 100;
   const totalVen = Math.round(rows.reduce((a, r) => a + r.ventas, 0) * 100) / 100;
   const totalPag = Math.round(rows.reduce((a, r) => a + r.pagos, 0) * 100) / 100;
-  const totalDif = Math.round((totalBen - totalPag) * 100) / 100;
+  const totalDif = Math.round((totalVen - totalPag) * 100) / 100;
   return (
     <table className="min-w-full text-sm">
       <thead>
@@ -410,7 +410,7 @@ function MonthlyTable({ rows }: { rows: MonthlyProfitRow[] }) {
           >
             Pagos
           </th>
-          <th className="px-3 py-2 text-right" title="Beneficio menos pagos de proveedores">
+          <th className="px-3 py-2 text-right" title="Ventas menos pagos de proveedores">
             Diferencia
           </th>
           <th className="px-3 py-2">
