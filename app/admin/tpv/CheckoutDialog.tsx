@@ -85,6 +85,17 @@ export function CheckoutDialog({
       toast.error("El carrito está vacío");
       return;
     }
+    const openLineWithoutCost = cart.lines.find(
+      (line) =>
+        isOpenCartLine(line) &&
+        (typeof line.unitCost !== "number" || !Number.isFinite(line.unitCost) || line.unitCost < 0),
+    );
+    if (openLineWithoutCost) {
+      toast.error(
+        `Falta configurar el coste o la ganancia del SKU ${openLineWithoutCost.baseSku}. Abre sus opciones o vuelve a añadirlo.`,
+      );
+      return;
+    }
     setSaving(withTicket ? "ticket" : "plain");
     try {
       const res = await createInStoreSaleAction({
@@ -97,6 +108,7 @@ export function CheckoutDialog({
                 description: l.description ?? "",
                 quantity: l.quantity,
                 unitPrice: l.unitPrice,
+                unitCost: l.unitCost!,
                 lineDiscount: l.lineDiscount,
               }
             : {

@@ -24,7 +24,12 @@ import {
 import { toast } from "sonner";
 import { cn, formatPriceEUR } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getPosOpenItemBySku, type PosOpenItemDefinition } from "@/lib/pos/open-items";
+import {
+  calculateInvoiceMargin,
+  getPosOpenItemBySku,
+  type InvoiceProfitMode,
+  type PosOpenItemDefinition,
+} from "@/lib/pos/open-items";
 import {
   Popover,
   PopoverContent,
@@ -313,10 +318,28 @@ function OpenItemEditor({
   const [name, setName] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [price, setPrice] = React.useState("");
+  const [cost, setCost] = React.useState("");
+  const [profitMode, setProfitMode] = React.useState<InvoiceProfitMode>("percentage");
+  const [profitValue, setProfitValue] = React.useState("");
+
+  const parsedPrice = Number(price.replace(",", "."));
+  const parsedCost = Number(cost.replace(",", "."));
+  const parsedProfitValue = Number(profitValue.replace(",", "."));
+  const invoiceMargin =
+    definition.kind === "invoice" && profitValue.trim()
+      ? calculateInvoiceMargin(parsedPrice, profitMode, parsedProfitValue)
+      : null;
+  const storeProfit =
+    definition.kind === "store_product" &&
+    Number.isFinite(parsedPrice) &&
+    Number.isFinite(parsedCost) &&
+    price.trim() &&
+    cost.trim()
+      ? Math.round((parsedPrice - parsedCost + Number.EPSILON) * 100) / 100
+      : null;
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const parsedPrice = Number(price.replace(",", "."));
     const normalizedPrice = Math.round((parsedPrice + Number.EPSILON) * 100) / 100;
     if (!name.trim() || !description.trim() || !price.trim()) {
       toast.error("Rellena el nombre, la descripción y el precio");
@@ -326,16 +349,45 @@ function OpenItemEditor({
       toast.error("Indica un precio válido de al menos 0,01 €");
       return;
     }
+    let unitCost: number;
+    if (definition.kind === "invoice") {
+      if (!profitValue.trim()) {
+        toast.error("Indica el porcentaje o el importe de ganancia");
+        return;
+      }
+      const margin = calculateInvoiceMargin(normalizedPrice, profitMode, parsedProfitValue);
+      if (!margin) {
+        toast.error(
+          profitMode === "percentage"
+            ? "La ganancia debe estar entre el 0 % y el 100 %"
+            : "La ganancia no puede ser negativa ni superar el precio de la factura",
+        );
+        return;
+      }
+      unitCost = margin.unitCost;
+    } else {
+      if (!cost.trim() || !Number.isFinite(parsedCost) || parsedCost < 0) {
+        toast.error("Indica un precio de coste válido, igual o mayor que 0 €");
+        return;
+      }
+      unitCost = Math.round((parsedCost + Number.EPSILON) * 100) / 100;
+    }
     const added = onAdd({
       kind: definition.kind,
       name: name.trim(),
       description: description.trim(),
       unitPrice: normalizedPrice,
+      unitCost,
+      ...(definition.kind === "invoice"
+        ? { invoiceProfitMode: profitMode, invoiceProfitValue: parsedProfitValue }
+        : {}),
     });
     if (added) {
       setName("");
       setDescription("");
       setPrice("");
+      setCost("");
+      setProfitValue("");
     }
   }
 
@@ -390,7 +442,7 @@ function OpenItemEditor({
 
         <div className="space-y-1.5">
           <label htmlFor={`open-price-${definition.kind}`} className="text-xs font-semibold text-zs-ink">
-            Precio
+            Precio de venta
           </label>
           <div className="relative">
             <input
@@ -406,6 +458,111 @@ function OpenItemEditor({
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zs-muted">€</span>
           </div>
         </div>
+
+        {definition.kind === "invoice" ? (
+          <fieldset className="space-y-2 rounded-xl border border-zs-border bg-zs-surface/40 p-3">
+            <legend className="px-1 text-xs font-semibold text-zs-ink">
+              Ganancia de la factura
+            </legend>
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-white p-1 ring-1 ring-zs-border">
+              {([
+                ["percentage", "Porcentaje"],
+                ["amount", "Importe exacto"],
+              ] as const).map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={profitMode === mode}
+                  onClick={() => setProfitMode(mode)}
+                  className={cn(
+                    "h-9 rounded-md px-2 text-xs font-semibold transition-colors",
+                    profitMode === mode
+                      ? "bg-zs-blue-900 text-white"
+                      : "text-zs-muted hover:bg-zs-surface hover:text-zs-ink",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label
+              htmlFor="open-invoice-profit"
+              className="block text-xs font-semibold text-zs-ink"
+            >
+              {profitMode === "percentage" ? "Porcentaje de ganancia" : "Ganancia exacta"}
+            </label>
+            <div className="relative">
+              <input
+                id="open-invoice-profit"
+                value={profitValue}
+                onChange={(e) => setProfitValue(e.target.value)}
+                type="text"
+                inputMode="decimal"
+                required
+                aria-describedby="open-invoice-profit-help"
+                placeholder="0,00"
+                className="h-11 w-full rounded-xl border border-zs-border px-3 pr-9 text-right text-sm tabular-nums outline-none focus:border-zs-blue-700 focus:ring-2 focus:ring-zs-blue-700/20"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zs-muted">
+                {profitMode === "percentage" ? "%" : "€"}
+              </span>
+            </div>
+            <p id="open-invoice-profit-help" className="text-xs leading-relaxed text-zs-muted">
+              Se calculará el coste atribuido para que los resúmenes muestren solo vuestra ganancia.
+            </p>
+            {invoiceMargin && (
+              <div
+                aria-live="polite"
+                className="grid grid-cols-2 gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-xs"
+              >
+                <span className="text-emerald-700">
+                  Ganancia <strong>{formatPriceEUR(invoiceMargin.profitAmount)}</strong>
+                </span>
+                <span className="text-right text-emerald-700">
+                  Coste atribuido <strong>{formatPriceEUR(invoiceMargin.unitCost)}</strong>
+                </span>
+              </div>
+            )}
+          </fieldset>
+        ) : (
+          <div className="space-y-1.5 rounded-xl border border-zs-border bg-zs-surface/40 p-3">
+            <label htmlFor="open-store-cost" className="text-xs font-semibold text-zs-ink">
+              Precio de coste
+            </label>
+            <div className="relative">
+              <input
+                id="open-store-cost"
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+                type="text"
+                inputMode="decimal"
+                required
+                aria-describedby="open-store-cost-help"
+                placeholder="0,00"
+                className="h-11 w-full rounded-xl border border-zs-border px-3 pr-9 text-right text-sm tabular-nums outline-none focus:border-zs-blue-700 focus:ring-2 focus:ring-zs-blue-700/20"
+              />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zs-muted">
+                €
+              </span>
+            </div>
+            <p id="open-store-cost-help" className="text-xs leading-relaxed text-zs-muted">
+              Se guardará solo en esta venta y no creará ni modificará productos del catálogo.
+            </p>
+            {storeProfit != null && (
+              <p
+                aria-live="polite"
+                className={cn(
+                  "rounded-lg border p-2.5 text-xs font-semibold",
+                  storeProfit < 0
+                    ? "border-red-200 bg-red-50 text-zs-red-600"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700",
+                )}
+              >
+                Beneficio estimado por unidad: {formatPriceEUR(storeProfit)}
+              </p>
+            )}
+          </div>
+        )}
 
         <Button type="submit" className="h-11 w-full">
           Añadir {definition.label.toLowerCase()} al ticket

@@ -174,6 +174,9 @@ export function PosTerminal({
       productStock: 0,
       quantity: 1,
       unitPrice: item.unitPrice,
+      unitCost: item.unitCost,
+      invoiceProfitMode: item.invoiceProfitMode,
+      invoiceProfitValue: item.invoiceProfitValue,
       lineDiscount: 0,
     };
     setCarts((cs) =>

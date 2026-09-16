@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
+import { sortSizeFacets } from "@/lib/products/size-order";
 import {
   GARMENT_TYPE_LABELS,
   GARMENT_VARIANT_LABELS,
@@ -127,6 +128,7 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
   const activeNew = searchParams.get("nuevo") === "1";
   const priceMin = searchParams.get("min");
   const priceMax = searchParams.get("max");
+  const orderedSizes = useMemo(() => sortSizeFacets(data.sizes), [data.sizes]);
 
   const totalActive = useMemo(
     () =>
@@ -335,10 +337,10 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
         </FilterGroup>
       )}
 
-      {data.sizes.length > 0 && (
+      {orderedSizes.length > 0 && (
         <FilterGroup title="Talla" defaultOpen={groupOpen} className={compact ? "order-3" : undefined}>
           <div className="flex flex-wrap gap-1.5">
-            {data.sizes.map((s) => {
+            {orderedSizes.map((s) => {
               const on = activeSizes.includes(s.value);
               return (
                 <button

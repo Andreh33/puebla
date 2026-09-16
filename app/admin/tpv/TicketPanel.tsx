@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn, formatPriceEUR } from "@/lib/utils";
+import { calculateInvoiceMargin } from "@/lib/pos/open-items";
 import { Button } from "@/components/ui/button";
 import {
   searchCustomersAction,
@@ -269,7 +270,23 @@ function TicketLine({
         step="0.01"
         value={line.unitPrice}
         aria-label="Precio por unidad"
-        onChange={(e) => onPatch(line.key, { unitPrice: Math.max(0, Number(e.target.value) || 0) })}
+        onChange={(e) => {
+          const unitPrice = Math.max(0, Number(e.target.value) || 0);
+          const patch: Partial<CartLine> = { unitPrice };
+          if (
+            line.kind === "invoice" &&
+            line.invoiceProfitMode &&
+            typeof line.invoiceProfitValue === "number"
+          ) {
+            const margin = calculateInvoiceMargin(
+              unitPrice,
+              line.invoiceProfitMode,
+              line.invoiceProfitValue,
+            );
+            patch.unitCost = margin?.unitCost;
+          }
+          onPatch(line.key, patch);
+        }}
         className="h-9 w-full rounded-lg border border-zs-border px-1.5 text-right text-sm tabular-nums outline-none focus:border-zs-blue-700"
       />
 
@@ -340,6 +357,39 @@ function LineMenu({
                 onChange={(e) => onPatch(line.key, { description: e.target.value })}
                 className="w-full resize-none rounded-lg border border-zs-border px-2.5 py-2 text-sm outline-none focus:border-zs-blue-700"
               />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-zs-muted">
+                {line.kind === "invoice" ? "Coste atribuido (€)" : "Coste unitario (€)"}
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                value={line.unitCost ?? ""}
+                aria-describedby={`open-cost-help-${line.key}`}
+                onChange={(e) => {
+                  const unitCost =
+                    e.target.value === ""
+                      ? undefined
+                      : Math.max(0, Number(e.target.value) || 0);
+                  onPatch(line.key, {
+                    unitCost,
+                    ...(line.kind === "invoice"
+                      ? { invoiceProfitMode: undefined, invoiceProfitValue: undefined }
+                      : {}),
+                  });
+                }}
+                className="h-9 w-full rounded-lg border border-zs-border px-2.5 text-right text-sm tabular-nums outline-none focus:border-zs-blue-700"
+              />
+              <p id={`open-cost-help-${line.key}`} className="mt-1 text-[11px] leading-relaxed text-zs-muted">
+                {typeof line.unitCost === "number" && Number.isFinite(line.unitCost)
+                  ? `Beneficio actual: ${formatPriceEUR(line.unitPrice - line.unitCost)} por unidad.`
+                  : "Obligatorio para calcular correctamente el beneficio."}
+                {line.kind === "invoice" && line.invoiceProfitMode
+                  ? " Se recalcula automáticamente si cambias el precio."
+                  : ""}
+              </p>
             </div>
           </>
         )}

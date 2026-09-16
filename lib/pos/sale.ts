@@ -27,6 +27,8 @@ export type OpenPosLineInput = {
   description: string;
   quantity: number;
   unitPrice: number;
+  /** Coste unitario indicado en caja o derivado de la ganancia del SKU 1111. */
+  unitCost: number;
   lineDiscount?: number;
 };
 
@@ -114,6 +116,10 @@ export function planSale(
       if (!Number.isFinite(unitPrice) || unitPrice < 0.01) {
         throw new Error(`Precio inválido para "${name}".`);
       }
+      if (!Number.isFinite(line.unitCost) || line.unitCost < 0) {
+        throw new Error(`Indica el coste o la ganancia para el SKU ${definition.sku}.`);
+      }
+      const unitCost = round2(line.unitCost);
       const lineDiscount = line.lineDiscount ?? 0;
       if (!Number.isFinite(lineDiscount) || lineDiscount < 0) {
         throw new Error(`Descuento inválido para "${name}".`);
@@ -126,7 +132,7 @@ export function planSale(
         description,
         openItemKind: line.kind,
         unitPrice,
-        unitCost: null,
+        unitCost,
         quantity: line.quantity,
         subtotal: Math.max(0, round2(unitPrice * line.quantity - lineDiscount)),
       });

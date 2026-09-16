@@ -42,6 +42,7 @@ describe("planSale", () => {
         description: "Servicio facturado en mostrador",
         quantity: 1,
         unitPrice: 25,
+        unitCost: 20,
       },
       {
         kind: "store_product",
@@ -50,6 +51,7 @@ describe("planSale", () => {
         description: "Producto disponible solo en tienda",
         quantity: 2,
         unitPrice: 7.5,
+        unitCost: 3,
       },
     ];
 
@@ -61,8 +63,22 @@ describe("planSale", () => {
       "invoice",
       "store_product",
     ]);
+    expect(r.items.map((item) => item.unitCost)).toEqual([6, 20, 3]);
     expect(r.stockDeltas).toEqual([{ productId: "p2", size: null, quantity: 1 }]);
     expect(r.totals.total).toBe(52);
+  });
+
+  it("rechaza una línea 1111/2222 sin coste para no inflar el beneficio", () => {
+    const line = {
+      kind: "invoice",
+      productId: null,
+      name: "Factura",
+      description: "Sin coste configurado",
+      quantity: 1,
+      unitPrice: 900,
+    } as unknown as PosLineInput;
+
+    expect(() => planSale([line], [])).toThrow("Indica el coste o la ganancia para el SKU 1111");
   });
 
   it("TPV: permite vender una talla sin stock (el stock puede ir negativo)", () => {

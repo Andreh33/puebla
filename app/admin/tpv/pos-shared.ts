@@ -6,7 +6,7 @@
  * ProductCatalog, TicketPanel) y por las server actions (tpv-actions).
  */
 
-import type { PosOpenItemKind } from "@/lib/pos/open-items";
+import type { InvoiceProfitMode, PosOpenItemKind } from "@/lib/pos/open-items";
 
 export type ProductFamily = "calzado" | "textil" | "accesorio";
 
@@ -70,6 +70,11 @@ export type CartLine = {
   productStock: number;
   quantity: number;
   unitPrice: number;
+  /** Coste congelado de las líneas 1111/2222. Ausente en carritos antiguos. */
+  unitCost?: number;
+  /** Regla elegida para recalcular el coste del SKU 1111 si cambia el precio. */
+  invoiceProfitMode?: InvoiceProfitMode;
+  invoiceProfitValue?: number;
   lineDiscount: number;
 };
 
@@ -78,6 +83,9 @@ export type PosOpenLineDraft = {
   name: string;
   description: string;
   unitPrice: number;
+  unitCost: number;
+  invoiceProfitMode?: InvoiceProfitMode;
+  invoiceProfitValue?: number;
 };
 
 export function isOpenCartLine(
