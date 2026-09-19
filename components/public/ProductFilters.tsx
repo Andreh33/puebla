@@ -16,6 +16,10 @@ import {
   type PublicStoreSection,
 } from "@/lib/products/public-size-visibility";
 import {
+  parseSizeFilterParam,
+  serializeSizeFilterParam,
+} from "@/lib/products/size-filter-query";
+import {
   GARMENT_TYPE_LABELS,
   GARMENT_VARIANT_LABELS,
   VARIANT_TO_TYPE,
@@ -135,6 +139,7 @@ export function ProductFilters({
 
   const get = (k: string): string[] => {
     const v = searchParams.get(k);
+    if (k === "talla") return parseSizeFilterParam(v ?? undefined);
     return v ? v.split(",").filter(Boolean) : [];
   };
 
@@ -188,14 +193,15 @@ export function ProductFilters({
       // Al interactuar con cualquier filtro, limpiamos además tallas ocultas
       // que pudieran seguir en una URL guardada antes de aplicar esta regla.
       if (publicStoreSection && publicProductFamily) {
-        const visibleSizes = (sp.get("talla") || "")
-          .split(",")
-          .filter(Boolean)
+        const visibleSizes = parseSizeFilterParam(sp.get("talla") ?? undefined)
           .filter((size) =>
             isPublicSizeVisible(publicStoreSection, publicProductFamily, size),
           );
-        if (visibleSizes.length > 0) sp.set("talla", visibleSizes.join(","));
-        else sp.delete("talla");
+        if (visibleSizes.length > 0) {
+          sp.set("talla", serializeSizeFilterParam(visibleSizes));
+        } else {
+          sp.delete("talla");
+        }
       }
       sp.delete("page");
       startTransition(() => {
@@ -208,10 +214,15 @@ export function ProductFilters({
 
   const toggleMulti = (key: string, value: string) =>
     pushParams((sp) => {
-      const cur = (sp.get(key) || "").split(",").filter(Boolean);
+      const cur =
+        key === "talla"
+          ? parseSizeFilterParam(sp.get(key) ?? undefined)
+          : (sp.get(key) || "").split(",").filter(Boolean);
       const next = cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value];
       if (next.length === 0) sp.delete(key);
-      else sp.set(key, next.join(","));
+      else {
+        sp.set(key, key === "talla" ? serializeSizeFilterParam(next) : next.join(","));
+      }
     });
 
   const removeMulti = (key: string, value: string) => toggleMulti(key, value);

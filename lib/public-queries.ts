@@ -7,6 +7,7 @@ import {
 } from "@/lib/demo-products";
 import { VARIANT_TO_TYPE, type GarmentVariant } from "@/lib/categories/garment";
 import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
+import { parseSizeFilterParam } from "@/lib/products/size-filter-query";
 
 // ---------------------------------------------------------------------------
 // Alias de categorías "comerciales" â†’ subsets del catálogo demo
@@ -788,7 +789,7 @@ export function parseCategoryParams(searchParams: Record<string, string | string
     marca: arr(searchParams.marca),
     genero: arr(searchParams.genero),
     color: arr(searchParams.color),
-    talla: arr(searchParams.talla),
+    talla: parseSizeFilterParam(searchParams.talla),
     tipo: arr(searchParams.tipo),
     prenda,
     variante,

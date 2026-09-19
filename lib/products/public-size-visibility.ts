@@ -1,17 +1,11 @@
 export type PublicStoreSection = "hombre" | "mujer" | "nino" | "nina" | "bebe";
 export type PublicProductFamily = "calzado" | "textil";
 
-const HIDDEN_FOOTWEAR_SIZES: Readonly<Record<PublicStoreSection, ReadonlySet<string>>> = {
-  hombre: new Set(["42.5", "43\\", "44.5", "48\\"]),
-  mujer: new Set(["37\\", "38\\"]),
-  nino: new Set(["37\\", "38\\"]),
-  nina: new Set(["37\\"]),
-  bebe: new Set(),
-};
-
-function normalizeMalformedSeparator(size: string): string {
+function hasMalformedFootwearFormat(size: string): boolean {
   const normalized = size.trim();
-  return normalized.endsWith("/") ? `${normalized.slice(0, -1)}\\` : normalized;
+  const usesDecimalPoint = /^\d+\.\d+$/.test(normalized);
+  const endsWithSlash = /[\\/]$/.test(normalized);
+  return usesDecimalPoint || endsWithSlash;
 }
 
 /**
@@ -19,12 +13,12 @@ function normalizeMalformedSeparator(size: string): string {
  * stock en base de datos y deja intactas todas las tallas de textil.
  */
 export function isPublicSizeVisible(
-  section: PublicStoreSection,
+  _section: PublicStoreSection | null,
   family: PublicProductFamily,
   size: string,
 ): boolean {
   if (family !== "calzado") return true;
-  return !HIDDEN_FOOTWEAR_SIZES[section].has(normalizeMalformedSeparator(size));
+  return !hasMalformedFootwearFormat(size);
 }
 
 export function publicSizeStock(
@@ -33,7 +27,7 @@ export function publicSizeStock(
   size: string,
   stock: number,
 ): number {
-  return section == null || isPublicSizeVisible(section, family, size) ? stock : 0;
+  return isPublicSizeVisible(section, family, size) ? stock : 0;
 }
 
 export function publicStoreSectionFromGender(gender: string): PublicStoreSection | null {
