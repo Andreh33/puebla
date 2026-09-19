@@ -19,6 +19,10 @@ import { InfoAccordion } from "@/components/public/InfoAccordion";
 import { ProductSku } from "@/components/public/ProductSku";
 import { resolveProductSku } from "@/lib/products/sku";
 import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
+import {
+  publicSizeStock,
+  publicStoreSectionFromGender,
+} from "@/lib/products/public-size-visibility";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 300;
@@ -112,9 +116,21 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     product.salePrice != null ? Number(product.salePrice) : null,
   );
 
+  const publicSection = publicStoreSectionFromGender(product.gender);
+  const productFamily =
+    product.footwearType != null || product.category.slug.includes("calzado")
+      ? "calzado"
+      : "textil";
+  const sizes = product.sizes.map((size) => ({
+    id: size.id,
+    size: size.size,
+    // ProductActions solo ofrece tallas con stock. Forzamos a 0 las variantes
+    // ocultas para conservar el estado "producto con tallas" si todas quedan fuera.
+    stock: publicSizeStock(publicSection, productFamily, size.size, size.stock),
+  }));
   const totalStock =
-    product.sizes.length > 0
-      ? product.sizes.reduce((acc, s) => acc + s.stock, 0)
+    sizes.length > 0
+      ? sizes.reduce((acc, size) => acc + size.stock, 0)
       : product.stock;
   const inStock = totalStock > 0 || product.source === "AMAZON";
 
@@ -221,8 +237,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     inStock,
     slug: product.slug,
   });
-
-  const sizes = product.sizes.map((s) => ({ id: s.id, size: s.size, stock: s.stock }));
 
   return (
     <>

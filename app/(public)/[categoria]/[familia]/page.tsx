@@ -7,6 +7,7 @@ import { buildMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, jsonLd } from "@/lib/seo/schema-org";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
 import { selectAnimatedBorderIds } from "@/lib/products/visual";
+import { isPublicSizeVisible } from "@/lib/products/public-size-visibility";
 import { ProductFilters } from "@/components/public/ProductFilters";
 import { EmptyState } from "@/components/public/EmptyState";
 import {
@@ -114,6 +115,14 @@ export default async function SeccionFamiliaPage({
 
   const filters = parseCategoryParams(sp);
 
+  // Estas variantes defectuosas se conservan en administración, pero no deben
+  // poder reactivarse en la tienda mediante una URL antigua con ?talla=.
+  if (familia === "calzado" && filters.talla?.length) {
+    filters.talla = filters.talla.filter((size) =>
+      isPublicSizeVisible(seccion, familia, size),
+    );
+  }
+
   // Coherencia con la exclusión de facetas: ignorar ?prenda=bermuda en mujer.
   if (seccion === "mujer" && filters.prenda?.length) {
     filters.prenda = filters.prenda.filter((p) => p !== "bermuda");
@@ -170,20 +179,30 @@ export default async function SeccionFamiliaPage({
         }),
       ]);
       total = count;
-      products = list.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        shortName: p.shortName,
-        colorName: p.colorName,
-        mainImageUrl: p.mainImageUrl,
-        retailPrice: Number(p.retailPrice),
-        salePrice: p.salePrice != null ? Number(p.salePrice) : null,
-        source: p.source,
-        brand: p.brand,
-        totalStock: p.sizes.length > 0 ? p.sizes.reduce((acc, s) => acc + s.stock, 0) : p.stock,
-        availableSizes: p.sizes.filter((s) => s.stock > 0).map((s) => s.size),
-      }));
+      products = list.map((p) => {
+        const publicSizes = p.sizes.filter((size) =>
+          isPublicSizeVisible(seccion, familia, size.size),
+        );
+        return {
+          id: p.id,
+          slug: p.slug,
+          name: p.name,
+          shortName: p.shortName,
+          colorName: p.colorName,
+          mainImageUrl: p.mainImageUrl,
+          retailPrice: Number(p.retailPrice),
+          salePrice: p.salePrice != null ? Number(p.salePrice) : null,
+          source: p.source,
+          brand: p.brand,
+          totalStock:
+            p.sizes.length > 0
+              ? publicSizes.reduce((acc, size) => acc + size.stock, 0)
+              : p.stock,
+          availableSizes: publicSizes
+            .filter((size) => size.stock > 0)
+            .map((size) => size.size),
+        };
+      });
     } catch (err) {
       console.warn(
         `[seccion/familia] product query falló para ${slug}:`,
@@ -206,6 +225,9 @@ export default async function SeccionFamiliaPage({
     const hiddenGarment = seccion === "mujer" ? ["bermuda", "calentador"] : ["calentador"];
     facets = {
       ...facets,
+      sizes: facets.sizes.filter((size) =>
+        isPublicSizeVisible(seccion, familia, size.value),
+      ),
       garmentTypes: facets.garmentTypes.filter((g) => !hiddenGarment.includes(g.value)),
     };
   }
