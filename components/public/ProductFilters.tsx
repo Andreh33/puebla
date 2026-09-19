@@ -11,6 +11,11 @@ import { cn } from "@/lib/utils";
 import { FOOTWEAR_TYPE_LABELS } from "@/lib/categories/footwear";
 import { sortSizeFacets } from "@/lib/products/size-order";
 import {
+  isPublicSizeVisible,
+  type PublicProductFamily,
+  type PublicStoreSection,
+} from "@/lib/products/public-size-visibility";
+import {
   GARMENT_TYPE_LABELS,
   GARMENT_VARIANT_LABELS,
   VARIANT_TO_TYPE,
@@ -47,6 +52,10 @@ type Props = {
   /** Bloque 7: muestra el filtro "Género". Default true; false en páginas ya
    * scopeadas por género (p.ej. /[seccion]/textil), donde el género es redundante. */
   showGenderFilter?: boolean;
+  /** Contexto de tienda para excluir también en el panel cliente las variantes
+   * de talla que no deben ser visibles públicamente. */
+  publicStoreSection?: PublicStoreSection;
+  publicProductFamily?: PublicProductFamily;
   /**
    * Si true, en pantallas < lg (móvil/tablet, donde los filtros viven tras el
    * botón "Filtrar") abre el panel automáticamente la PRIMERA vez de la sesión.
@@ -86,7 +95,19 @@ const GENDER_LABELS: Record<string, string> = {
 
 type ActiveChip = { id: string; label: string; onRemove: () => void };
 
-export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFootwearFilter, showGarmentFilter, showGenderFilter = true, compact = false, startCollapsed = false, hideDestacar = false }: Props) {
+export function ProductFilters({
+  data,
+  resultsCount,
+  autoOpenFirstVisit,
+  showFootwearFilter,
+  showGarmentFilter,
+  showGenderFilter = true,
+  publicStoreSection,
+  publicProductFamily,
+  compact = false,
+  startCollapsed = false,
+  hideDestacar = false,
+}: Props) {
   // Estado por defecto (abierto/cerrado) de los FilterGroup colapsables: cerrados
   // en modo compacto (textil/calzado) o cuando se pide startCollapsed (accesorios).
   const groupOpen = !compact && !startCollapsed;
@@ -120,7 +141,13 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
   const activeBrands = get("marca");
   const activeGenders = get("genero");
   const activeColors = get("color");
-  const activeSizes = get("talla");
+  const rawActiveSizes = get("talla");
+  const activeSizes =
+    publicStoreSection && publicProductFamily
+      ? rawActiveSizes.filter((size) =>
+          isPublicSizeVisible(publicStoreSection, publicProductFamily, size),
+        )
+      : rawActiveSizes;
   const activeTipo = get("tipo");
   const activePrenda = get("prenda");
   const activeVariante = get("variante");
@@ -128,7 +155,15 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
   const activeNew = searchParams.get("nuevo") === "1";
   const priceMin = searchParams.get("min");
   const priceMax = searchParams.get("max");
-  const orderedSizes = useMemo(() => sortSizeFacets(data.sizes), [data.sizes]);
+  const orderedSizes = useMemo(() => {
+    const visibleSizes =
+      publicStoreSection && publicProductFamily
+        ? data.sizes.filter((size) =>
+            isPublicSizeVisible(publicStoreSection, publicProductFamily, size.value),
+          )
+        : data.sizes;
+    return sortSizeFacets(visibleSizes);
+  }, [data.sizes, publicProductFamily, publicStoreSection]);
 
   const totalActive = useMemo(
     () =>
@@ -150,13 +185,25 @@ export function ProductFilters({ data, resultsCount, autoOpenFirstVisit, showFoo
     (mut: (sp: URLSearchParams) => void) => {
       const sp = new URLSearchParams(Array.from(searchParams.entries()));
       mut(sp);
+      // Al interactuar con cualquier filtro, limpiamos además tallas ocultas
+      // que pudieran seguir en una URL guardada antes de aplicar esta regla.
+      if (publicStoreSection && publicProductFamily) {
+        const visibleSizes = (sp.get("talla") || "")
+          .split(",")
+          .filter(Boolean)
+          .filter((size) =>
+            isPublicSizeVisible(publicStoreSection, publicProductFamily, size),
+          );
+        if (visibleSizes.length > 0) sp.set("talla", visibleSizes.join(","));
+        else sp.delete("talla");
+      }
       sp.delete("page");
       startTransition(() => {
         const qs = sp.toString();
         router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [pathname, router, searchParams],
+    [pathname, publicProductFamily, publicStoreSection, router, searchParams],
   );
 
   const toggleMulti = (key: string, value: string) =>

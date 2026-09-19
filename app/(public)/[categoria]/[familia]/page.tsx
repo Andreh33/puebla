@@ -354,6 +354,8 @@ export default async function SeccionFamiliaPage({
               showFootwearFilter={familia === "calzado"}
               showGarmentFilter={familia === "textil"}
               showGenderFilter={false}
+              publicStoreSection={seccion}
+              publicProductFamily={familia}
               compact={familia === "textil" || familia === "calzado"}
             />
           </div>
