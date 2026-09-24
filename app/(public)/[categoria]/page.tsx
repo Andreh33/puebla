@@ -11,6 +11,13 @@ import { ProductFilters } from "@/components/public/ProductFilters";
 import { GenderChips } from "@/components/public/GenderChips";
 import { EmptyState } from "@/components/public/EmptyState";
 import {
+  ACCESSORY_PRODUCT_VIEW_PARAM,
+  PADEL_ACCESSORIES_SUBCATEGORY_SLUG,
+  buildAccessoryProductViewWhere,
+  parseAccessoryProductView,
+  type AccessoryProductView,
+} from "@/lib/products/accessory-product-view";
+import {
   buildProductWhere,
   getCategoryBySlug,
   getCategoryFacets,
@@ -129,6 +136,11 @@ export default async function CategoryPage({
     });
   }
   const activeSub = subCats.find((c) => c.slug === subParam) ?? null;
+  const activeAccessoryProductView = parseAccessoryProductView(
+    category.slug,
+    activeSub?.slug ?? null,
+    sp[ACCESSORY_PRODUCT_VIEW_PARAM],
+  );
 
   if (category.isDemo) {
     // Sin BD operativa: enseñamos los productos del catálogo demo asociados a
@@ -147,7 +159,10 @@ export default async function CategoryPage({
     const categoryIds = activeSub
       ? [activeSub.id]
       : await resolveCategoryIdsWithDescendants(category.id);
-    const where = buildProductWhere({ categoryId: categoryIds, filters });
+    const where = {
+      ...buildProductWhere({ categoryId: categoryIds, filters }),
+      ...buildAccessoryProductViewWhere(activeAccessoryProductView),
+    };
     try {
       const [count, list] = await Promise.all([
         db.product.count({ where }),
@@ -246,10 +261,22 @@ export default async function CategoryPage({
   // excluye `page`; pasar `null` como slug equivale al chip "Todos".
   const subUrl = (slug: string | null) => {
     const q = new URLSearchParams(baseQs);
+    q.delete(ACCESSORY_PRODUCT_VIEW_PARAM);
     if (slug) q.set("sub", slug);
     else q.delete("sub");
     const qs = q.toString();
     return qs ? `/${category.slug}?${qs}` : `/${category.slug}`;
+  };
+
+  // Segundo nivel de Complementos → Pádel/Pickleball. Conserva el resto de
+  // filtros, pero nunca permite que `articulo=palas` se aplique fuera de Pádel.
+  const accessoryProductViewUrl = (view: AccessoryProductView | null) => {
+    const q = new URLSearchParams(baseQs);
+    q.set("sub", PADEL_ACCESSORIES_SUBCATEGORY_SLUG);
+    if (view) q.set(ACCESSORY_PRODUCT_VIEW_PARAM, view);
+    else q.delete(ACCESSORY_PRODUCT_VIEW_PARAM);
+    const qs = q.toString();
+    return `/${category.slug}?${qs}`;
   };
 
   // Borde pastel animado en ~20% del listado actual (no del catálogo total).
@@ -328,9 +355,10 @@ export default async function CategoryPage({
             {/* Bloque 8.9: chips de sub-categoría (hijas). Solo si la categoría
                 tiene hijas (p.ej. accesorios). "Todos" + cada hija; ?sub= filtra. */}
             {subCats.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <nav aria-label={`Subcategorías de ${category.name}`} className="flex flex-wrap gap-2">
                 <Link
                   href={subUrl(null)}
+                  aria-current={!activeSub ? "page" : undefined}
                   className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
                     !activeSub
                       ? "bg-zs-red-600 text-white"
@@ -343,6 +371,7 @@ export default async function CategoryPage({
                   <Link
                     key={c.id}
                     href={subUrl(c.slug)}
+                    aria-current={activeSub?.id === c.id ? "page" : undefined}
                     className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
                       activeSub?.id === c.id
                         ? "bg-zs-red-600 text-white"
@@ -352,7 +381,40 @@ export default async function CategoryPage({
                     {c.name}
                   </Link>
                 ))}
-              </div>
+              </nav>
+            )}
+
+            {activeSub?.slug === PADEL_ACCESSORIES_SUBCATEGORY_SLUG && (
+              <nav
+                aria-label="Productos de Pádel/Pickleball"
+                className="flex flex-wrap items-center gap-2 border-l-2 border-zs-red-600 pl-3"
+              >
+                <span className="mr-1 text-xs font-bold uppercase tracking-wide text-zs-muted">
+                  Pádel/Pickleball
+                </span>
+                <Link
+                  href={accessoryProductViewUrl(null)}
+                  aria-current={!activeAccessoryProductView ? "page" : undefined}
+                  className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                    !activeAccessoryProductView
+                      ? "bg-zs-red-600 text-white"
+                      : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                  }`}
+                >
+                  Todo
+                </Link>
+                <Link
+                  href={accessoryProductViewUrl("palas")}
+                  aria-current={activeAccessoryProductView === "palas" ? "page" : undefined}
+                  className={`inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
+                    activeAccessoryProductView === "palas"
+                      ? "bg-zs-red-600 text-white"
+                      : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface"
+                  }`}
+                >
+                  Palas
+                </Link>
+              </nav>
             )}
 
             {/* Chips de género — más prominentes que el filtro en sidebar.

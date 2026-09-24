@@ -66,7 +66,11 @@ const SECCION_BY_GENDER: Record<MegaMenuGender, "mujer" | "hombre" | "nino" | "n
  * GARMENT_TYPES del Bloque 6. Las que admiten variante fina (camiseta,
  * pantalon, mallas) generan sub-items indentados por género (ver buildRopa).
  */
-const ROPA_PRENDAS: Array<{ label: string; prenda: string }> = [
+const ROPA_PRENDAS: Array<{
+  label: string;
+  prenda: string;
+  soloGeneros?: MegaMenuGender[];
+}> = [
   { label: "Camisetas", prenda: "camiseta" },
   { label: "Polos", prenda: "polo" },
   { label: "Sudaderas", prenda: "sudadera" },
@@ -78,6 +82,7 @@ const ROPA_PRENDAS: Array<{ label: string; prenda: string }> = [
   { label: "Abrigos", prenda: "abrigo" },
   { label: "Cortavientos", prenda: "cortavientos" },
   { label: "Conjuntos", prenda: "conjunto" },
+  { label: "Faldas", prenda: "falda", soloGeneros: ["MUJER"] },
   { label: "Pantalones", prenda: "pantalon" },
   { label: "Mallas y leggins", prenda: "mallas" },
   { label: "Bañadores", prenda: "banador" },
@@ -120,7 +125,10 @@ function buildRopa(gender: MegaMenuGender): MegaMenuGroup {
   // "Ver toda la ropa" SIEMPRE primero; el resto de prendas alfabético, y dentro
   // de cada prenda sus variantes también alfabéticas.
   const items: MegaMenuItem[] = [{ label: "Ver toda la ropa", familia: "textil" }];
-  for (const { label, prenda } of [...ROPA_PRENDAS].sort(byLabelEs)) {
+  const prendasDisponibles = ROPA_PRENDAS.filter(
+    (prenda) => !prenda.soloGeneros || prenda.soloGeneros.includes(gender),
+  ).sort(byLabelEs);
+  for (const { label, prenda } of prendasDisponibles) {
     items.push({ label, familia: "textil", prenda });
     const variantes = PRENDA_VARIANTES[prenda];
     if (!variantes) continue;
@@ -148,7 +156,9 @@ const ROPA_BEBE: MegaMenuGroup = {
   title: "Ropa",
   items: [
     { label: "Ver toda la ropa", familia: "textil" },
-    ...[...ROPA_PRENDAS]
+    ...ROPA_PRENDAS.filter(
+      (prenda) => !prenda.soloGeneros || prenda.soloGeneros.includes("BEBE"),
+    )
       .sort(byLabelEs)
       .map((p) => ({ label: p.label, familia: "textil" as const, prenda: p.prenda })),
   ],
