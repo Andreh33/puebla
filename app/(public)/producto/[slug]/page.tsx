@@ -86,7 +86,7 @@ export async function generateMetadata({
       (stripHtml(p.metaDescription || p.description) ||
         `Compra ${cleanProductName(p.name)} en Zona Sport. Recoge en tienda o consulta por WhatsApp.`).slice(0, 160),
     path,
-    ogImage: new URL(`${path}/opengraph-image`, SITE.url).toString(),
+    ogImage: new URL(`${path}/share-image`, SITE.url).toString(),
     ogType: "product",
     tags: p.tags,
   });

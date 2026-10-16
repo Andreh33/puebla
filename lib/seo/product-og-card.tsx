@@ -5,11 +5,7 @@ import { effectivePrice } from "@/lib/price";
 import { cleanProductName, stripHtml } from "@/lib/utils/html";
 import { productOgPhoto } from "@/lib/seo/product-og-image";
 
-export const runtime = "nodejs";
-export const alt = "Zona Sport — Producto";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
-export const revalidate = 300;
+const size = { width: 1200, height: 630 };
 
 /**
  * Imagen Open Graph del producto (1200×630). Lo que ve quien comparte el enlace

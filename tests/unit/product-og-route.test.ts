@@ -16,7 +16,12 @@ vi.mock("next/og", () => ({
   },
 }));
 
-import OG from "@/app/(public)/producto/[slug]/opengraph-image";
+import OG from "@/lib/seo/product-og-card";
+import {
+  GET,
+  runtime,
+  revalidate,
+} from "@/app/(public)/producto/[slug]/share-image/route";
 
 beforeEach(() => {
   vi.stubGlobal("React", React);
@@ -26,6 +31,18 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("product Open Graph endpoint", () => {
+  it("exposes the card through a stable GET route handler", async () => {
+    findFirst.mockResolvedValue(null);
+    const response = await GET(
+      new Request("https://zonasport.vercel.app/producto/hidden-product/share-image"),
+      { params: Promise.resolve({ slug: "hidden-product" }) },
+    );
+    expect(runtime).toBe("nodejs");
+    expect(revalidate).toBe(300);
+    expect(response.status).toBe(404);
+    expect(findFirst.mock.calls[0]![0].where.slug).toBe("hidden-product");
+  });
+
   it("only looks up active products and returns 404 without rendering hidden/missing products", async () => {
     findFirst.mockResolvedValue(null);
     const response = await OG({ params: Promise.resolve({ slug: "hidden-product" }) });
