@@ -5,10 +5,10 @@ import { ChevronRight, Check, Truck, RotateCcw, MapPin, Shield } from "lucide-re
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { db } from "@/lib/db";
-import { buildMetadata } from "@/lib/seo/metadata";
+import { buildMetadata, SITE } from "@/lib/seo/metadata";
 import { breadcrumbSchema, productSchema, jsonLd } from "@/lib/seo/schema-org";
 import { formatPriceEUR } from "@/lib/utils";
-import { sanitizeHtml, cleanProductName } from "@/lib/utils/html";
+import { sanitizeHtml, cleanProductName, stripHtml } from "@/lib/utils/html";
 import { effectivePrice } from "@/lib/price";
 import { ProductGallery } from "@/components/public/ProductGallery";
 import { ProductActions } from "@/components/public/ProductActions";
@@ -17,6 +17,7 @@ import { RelatedProducts } from "@/components/public/RelatedProducts";
 import { AmazonDisclosure } from "@/components/public/AmazonDisclosure";
 import { InfoAccordion } from "@/components/public/InfoAccordion";
 import { ProductSku } from "@/components/public/ProductSku";
+import { ProductShare } from "@/components/public/ProductShare";
 import { resolveProductSku } from "@/lib/products/sku";
 import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
 import {
@@ -58,6 +59,7 @@ export async function generateMetadata({
     where: { slug },
     select: {
       name: true,
+      status: true,
       shortName: true,
       description: true,
       mainImageUrl: true,
@@ -68,20 +70,23 @@ export async function generateMetadata({
       brand: { select: { name: true } },
     },
   });
-  if (!p) return buildMetadata({ title: "Producto no encontrado", noIndex: true });
+  if (!p || p.status !== "ACTIVE") {
+    return buildMetadata({ title: "Producto no encontrado", noIndex: true });
+  }
 
   const title =
-    p.metaTitle ||
+    stripHtml(p.metaTitle) ||
     `${cleanProductName(p.name)}${p.brand ? ` · ${p.brand.name}` : ""}${
       p.colorName && p.colorName !== "Único" ? ` (${p.colorName})` : ""
     }`;
+  const path = `/producto/${encodeURIComponent(slug)}`;
   return buildMetadata({
     title,
     description:
-      p.metaDescription ||
-      (p.description ? p.description.slice(0, 160) : `Compra ${p.name} en Zona Sport. Recoge en tienda o consulta por WhatsApp.`),
-    path: `/producto/${slug}`,
-    ogImage: p.mainImageUrl ?? undefined,
+      (stripHtml(p.metaDescription || p.description) ||
+        `Compra ${cleanProductName(p.name)} en Zona Sport. Recoge en tienda o consulta por WhatsApp.`).slice(0, 160),
+    path,
+    ogImage: new URL(`${path}/opengraph-image`, SITE.url).toString(),
     ogType: "product",
     tags: p.tags,
   });
@@ -301,6 +306,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 Color: <strong className="text-zs-ink">{product.colorName}</strong>
               </p>
             )}
+
+            <ProductShare
+              key={product.id}
+              title={cleanProductName(product.name)}
+              url={new URL(`/producto/${encodeURIComponent(product.slug)}`, SITE.url).toString()}
+            />
 
             <div className="flex flex-wrap items-baseline gap-3 pt-1">
               <span className="text-3xl font-extrabold tabular-nums text-zs-blue-900 sm:text-4xl">

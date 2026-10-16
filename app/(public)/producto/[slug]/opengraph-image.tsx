@@ -2,11 +2,14 @@ import { ImageResponse } from "next/og";
 import { db } from "@/lib/db";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
+import { cleanProductName, stripHtml } from "@/lib/utils/html";
+import { productOgPhoto } from "@/lib/seo/product-og-image";
 
 export const runtime = "nodejs";
 export const alt = "Zona Sport — Producto";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+export const revalidate = 300;
 
 /**
  * Imagen Open Graph del producto (1200×630). Lo que ve quien comparte el enlace
@@ -17,8 +20,8 @@ export const contentType = "image/png";
  */
 export default async function OG({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const p = await db.product.findUnique({
-    where: { slug },
+  const p = await db.product.findFirst({
+    where: { slug, status: "ACTIVE" },
     select: {
       name: true,
       shortName: true,
@@ -26,14 +29,18 @@ export default async function OG({ params }: { params: Promise<{ slug: string }>
       retailPrice: true,
       salePrice: true,
       mainImageUrl: true,
+      images: { orderBy: { position: "asc" }, take: 1, select: { url: true } },
       brand: { select: { name: true } },
     },
   });
 
-  const title = p?.shortName ?? p?.name ?? "Zona Sport";
-  const brand = p?.brand?.name ?? "Zona Sport";
-  const color = p?.colorName && p.colorName !== "Único" ? p.colorName : "";
-  const photo = p?.mainImageUrl ?? null;
+  if (!p) return new Response(null, { status: 404 });
+
+  const title = cleanProductName(p.shortName) || cleanProductName(p.name) || "Zona Sport";
+  const brand = cleanProductName(p.brand?.name, 40) || "Zona Sport";
+  const colorName = stripHtml(p.colorName);
+  const color = colorName !== "Único" ? cleanProductName(colorName, 50) : "";
+  const photo = await productOgPhoto(p.mainImageUrl || p.images?.[0]?.url);
 
   const pr = p
     ? effectivePrice(Number(p.retailPrice), p.salePrice != null ? Number(p.salePrice) : null)
