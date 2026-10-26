@@ -21,7 +21,7 @@ import {
   GET,
   runtime,
   revalidate,
-} from "@/app/(public)/producto/[slug]/share-image/route";
+} from "@/app/[locale]/(public)/producto/[slug]/share-image/route";
 
 beforeEach(() => {
   vi.stubGlobal("React", React);

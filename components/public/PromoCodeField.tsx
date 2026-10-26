@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import * as React from "react";
 import { toast } from "sonner";
 import { Tag, X } from "lucide-react";
@@ -20,6 +24,8 @@ export function PromoCodeField({
   appliedCode: string | null;
   discount: number;
 }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const [code, setCode] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
@@ -53,16 +59,15 @@ export function PromoCodeField({
       <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm">
         <span className="flex items-center gap-1.5 text-emerald-800">
           <Tag className="h-4 w-4" />
-          <span className="font-mono font-semibold">{appliedCode}</span>
-          {discount > 0 && <span className="text-emerald-700">aplicado</span>}
+          <span className="font-mono font-semibold">{tx(appliedCode)}</span>
+          {discount > 0 && <span className="text-emerald-700">{t("aplicado")}</span>}
         </span>
         <button
           type="button"
           onClick={() => setStoredPromo(null)}
           className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:underline"
         >
-          <X className="h-3.5 w-3.5" /> Quitar
-        </button>
+          <X className="h-3.5 w-3.5" /> {t("Quitar")}</button>
       </div>
     );
   }
@@ -78,8 +83,8 @@ export function PromoCodeField({
             void apply();
           }
         }}
-        placeholder="¿Tienes un código de descuento?"
-        aria-label="Código de descuento"
+        placeholder={t("¿Tienes un código de descuento?")}
+        aria-label={t("Código de descuento")}
         className="h-11 w-full rounded-xl border border-zs-border px-3 text-sm uppercase outline-none placeholder:normal-case placeholder:text-zs-muted focus:border-zs-blue-700"
       />
       <button
@@ -88,7 +93,7 @@ export function PromoCodeField({
         disabled={busy || !code.trim()}
         className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl border border-zs-border bg-white px-4 text-sm font-semibold text-zs-ink hover:bg-zs-surface disabled:opacity-50"
       >
-        {busy ? "…" : "Aplicar"}
+        {tx(busy ? "…" : "Aplicar")}
       </button>
     </div>
   );

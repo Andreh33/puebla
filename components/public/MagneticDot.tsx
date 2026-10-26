@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,7 @@ export function MagneticDot({
   className,
   children,
 }: Props) {
+  const tx = useTranslatedValue();
   const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -97,7 +100,7 @@ export function MagneticDot({
       className={cn("pointer-events-none inline-block will-change-transform", className)}
       style={{ transition: "transform 0ms" /* loop ya interpola */ }}
     >
-      {children}
+      {tx(children)}
     </span>
   );
 }

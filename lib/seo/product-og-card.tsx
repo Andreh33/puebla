@@ -1,5 +1,8 @@
+import { applyProductSourceCorrections } from "@/lib/i18n/source-corrections";
 import { ImageResponse } from "next/og";
-import { db } from "@/lib/db";
+import { db as sourceDb } from "@/lib/db";
+import { publicDatabase } from "@/lib/i18n/public-db";
+import { publishedImageLocale } from "@/lib/i18n/image-locale";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cleanProductName, stripHtml } from "@/lib/utils/html";
@@ -14,9 +17,12 @@ const size = { width: 1200, height: 630 };
  * sobre el degradado de marca. Si el producto no tiene foto, cae a una sola
  * columna centrada.
  */
-export default async function OG({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const p = await db.product.findFirst({
+export default async function OG({ params }: { params: Promise<{ slug: string; locale?: string }> }) {
+  const { slug, locale: rawLocale } = await params;
+  const locale = publishedImageLocale(rawLocale);
+  if (!locale) return new Response(null, { status: 404 });
+  const db = locale === "es" ? sourceDb : publicDatabase(locale);
+  const sourceProduct = await db.product.findFirst({
     where: { slug, status: "ACTIVE" },
     select: {
       name: true,
@@ -30,7 +36,8 @@ export default async function OG({ params }: { params: Promise<{ slug: string }>
     },
   });
 
-  if (!p) return new Response(null, { status: 404 });
+  if (!sourceProduct) return new Response(null, { status: 404 });
+  const p = locale === "es" ? applyProductSourceCorrections({ ...sourceProduct, slug }) : sourceProduct;
 
   const title = cleanProductName(p.shortName) || cleanProductName(p.name) || "Zona Sport";
   const brand = cleanProductName(p.brand?.name, 40) || "Zona Sport";

@@ -1,4 +1,9 @@
-import Link from "next/link";
+import { LOCALE_INFO } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/routing";
+import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
+import { getRequestLocale } from "@/lib/i18n/request";
+import { t } from "@/lib/i18n/dictionaries";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { ProductCardLuxe as ProductCard } from "@/components/public/ProductCardLuxe";
@@ -129,18 +134,18 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
   const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `${config.label} — Zona Sport`,
-    description: config.seoLead,
-    url: `${SITE_URL}/${config.slug}`,
-    isPartOf: { "@id": `${SITE_URL}/#website` },
-    inLanguage: "es-ES",
+    name: `${tx(config.label)} — Zona Sport`,
+    description: tx(config.seoLead),
+    url: `${SITE_URL}${localePath(getRequestLocale(),`/${config.slug}`)}`,
+    isPartOf: { "@id": `${SITE_URL}${localePath(getRequestLocale(),"/")}#website` },
+    inLanguage: LOCALE_INFO[getRequestLocale()].language,
   };
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema(breadcrumbs)) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema(breadcrumbs, getRequestLocale())) }}
       />
       <script
         type="application/ld+json"
@@ -160,12 +165,12 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
       {/* Breadcrumbs (movidos debajo del hero, como en el home tras una sección
           de portada). Mantienen el SEO + accesibilidad sin romper el impacto
           visual de la foto. */}
-      <nav aria-label="Migas de pan" className="border-b border-zs-border bg-white">
+      <nav aria-label={t("Migas de pan")} className="border-b border-zs-border bg-white">
         <ol className="mx-auto flex max-w-7xl flex-wrap items-center gap-1 px-4 py-3 text-xs text-zs-muted">
           {breadcrumbs.map((b, i) => (
             <li key={b.path} className="flex items-center gap-1">
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
-              {i === breadcrumbs.length - 1 ? (
+              {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
                   {b.name}
                 </span>
@@ -173,7 +178,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
                 <Link href={b.path} className="hover:text-zs-blue-700">
                   {b.name}
                 </Link>
-              )}
+              ))}
             </li>
           ))}
         </ol>
@@ -200,10 +205,10 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
             >
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-zs-red-600">
-                  Producto destacado · {config.label}
+                  {t("Producto destacado ·")}{" "}{tx(config.label)}
                 </p>
                 <p className="mt-1 truncate text-base font-semibold text-zs-blue-900 sm:text-lg">
-                  {heroProduct.brand?.name} {stripHtml(heroProduct.name)}
+                  {tx(heroProduct.brand?.name)} {stripHtml(heroProduct.name)}
                 </p>
               </div>
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zs-border text-zs-blue-700 transition-all group-hover:border-zs-red-600 group-hover:bg-zs-red-600 group-hover:text-white">
@@ -222,17 +227,15 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         <div className="mb-10 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-zs-red-600">
-              Ropa y calzado
-            </p>
+              {t("Ropa y calzado")}</p>
             <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-zs-blue-900 sm:text-4xl lg:text-5xl">
-              ¿Qué buscas hoy?
-            </h2>
+              {t("¿Qué buscas hoy?")}</h2>
           </div>
           <Link
             href="/marcas"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-zs-blue-700 hover:text-zs-red-600"
           >
-            Ver todas las marcas <ArrowRight className="h-4 w-4" />
+            {t("Ver todas las marcas")}{" "}<ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -245,7 +248,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         {categories.length > 0 && (
           <div className="mt-12 border-t border-zs-border pt-8">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zs-muted">
-              También en {config.label.toLowerCase()}
+              {t("También en")}{" "}{config.label.toLowerCase()}
             </p>
             <ul className="mt-4 flex flex-wrap gap-2">
               {categories.slice(0, 14).map((cat) => (
@@ -254,8 +257,8 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
                     href={`/${cat.slug}?genero=${config.gender}`}
                     className="inline-flex items-center gap-2 rounded-full border border-zs-border bg-white px-4 py-2 text-sm font-medium text-zs-ink transition hover:border-zs-blue-700 hover:text-zs-blue-700"
                   >
-                    {cat.name}
-                    <span className="text-xs text-zs-muted">{cat.productCount}</span>
+                    {tx(cat.name)}
+                    <span className="text-xs text-zs-muted">{tx(cat.productCount)}</span>
                   </Link>
                 </li>
               ))}
@@ -270,26 +273,23 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
           <div className="mb-8 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-zs-red-600">
-                Selección {config.label}
+                {t("Selección")}{" "}{tx(config.label)}
               </p>
               <h2 className="mt-1 text-3xl font-bold tracking-tight text-zs-blue-900 sm:text-4xl">
-                Lo más destacado
-              </h2>
+                {t("Lo más destacado")}</h2>
             </div>
             <Link
               href={`/${slug}/calzado`}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-zs-blue-700 hover:text-zs-red-600"
             >
-              Ver todo en calzado <ArrowRight className="h-4 w-4" />
+              {t("Ver todo en calzado")}{" "}<ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
-          {products.length === 0 ? (
+          {tx(products.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zs-border bg-white p-10 text-center">
               <p className="text-zs-muted">
-                Aún no tenemos productos publicados para {config.label.toLowerCase()}.
-                Pásate por la tienda o escríbenos por WhatsApp.
-              </p>
+                {t("Aún no tenemos productos publicados para")}{" "}{config.label.toLowerCase()}{t(". Pásate por la tienda o escríbenos por WhatsApp.")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -297,7 +297,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
                 <ProductCard key={p.id} priority={i < 2} product={p} />
               ))}
             </div>
-          )}
+          ))}
         </div>
       </section>
 
@@ -306,11 +306,9 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         <section className="mx-auto max-w-7xl px-4 py-14">
           <div className="mb-6 flex flex-col items-start gap-2">
             <p className="text-sm font-semibold uppercase tracking-wider text-zs-red-600">
-              Marcas que trabajan para ti
-            </p>
+              {t("Marcas que trabajan para ti")}</p>
             <h2 className="text-2xl font-bold text-zs-blue-900 sm:text-3xl">
-              Multimarca, sin filtros
-            </h2>
+              {t("Multimarca, sin filtros")}</h2>
           </div>
           <BrandsMarquee brands={brands} />
         </section>

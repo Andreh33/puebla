@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
 import { CartDrawer } from "./CartDrawer";
@@ -11,6 +13,7 @@ import { cn } from "@/lib/utils";
  * Aplica un "pop" CSS al cambiar el contador para feedback visible.
  */
 export function CartIcon() {
+  const tx = useTranslatedValue();
   const { count, ready } = useCart();
   const [open, setOpen] = useState(false);
   const [bump, setBump] = useState(0);
@@ -47,7 +50,7 @@ export function CartIcon() {
               "animate-[zsBump_280ms_ease-out]",
             )}
           >
-            {visibleCount > 99 ? "99+" : visibleCount}
+            {tx(visibleCount > 99 ? "99+" : visibleCount)}
           </span>
         )}
       </button>

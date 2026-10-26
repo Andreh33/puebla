@@ -28,8 +28,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
 
   const AI_BOTS = [
     "GPTBot",
-    "ChatGPT-User",
-    "OAI-SearchBot",
     "anthropic-ai",
     "Claude-Web",
     "ClaudeBot",
@@ -40,7 +38,18 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     "Amazonbot",
   ];
 
-  const baseDisallow = ["/admin", "/api", "/buscar", "/*?preview=", "/*?utm_"];
+  const baseDisallow = [
+    "/admin",
+    "/api",
+    "/buscar",
+    "/pt/buscar",
+    "/it/buscar",
+    "/fr/buscar",
+    "/de/buscar",
+    "/es/",
+    "/*?preview=",
+    "/*?utm_",
+  ];
 
   const rules: MetadataRoute.Robots["rules"] = [
     {
@@ -55,8 +64,11 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     },
   ];
 
+  // Search/discovery access is explicitly requested independently of training preferences.
+  rules.push({ userAgent: ["OAI-SearchBot", "ChatGPT-User"], allow: "/", disallow: baseDisallow });
+
   if (allowAI) {
-    rules.push({ userAgent: AI_BOTS, allow: "/", disallow: ["/admin", "/api"] });
+    rules.push({ userAgent: AI_BOTS, allow: "/", disallow: baseDisallow });
   } else {
     rules.push({ userAgent: AI_BOTS, disallow: "/" });
   }

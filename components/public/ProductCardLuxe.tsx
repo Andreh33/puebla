@@ -1,6 +1,12 @@
 "use client";
 
-import Link from "next/link";
+
+
+
+import { useLocale } from "@/components/public/LocaleProvider";
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { useRef, useState, type MouseEvent } from "react";
 import { ImageOff, Eye } from "lucide-react";
@@ -47,6 +53,9 @@ export function ProductCardLuxe({
   animated,
   onQuickView,
 }: Props) {
+  const locale=useLocale();
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const { final, retail, onSale, discountPct } = effectivePrice(
     Number(product.retailPrice),
     product.salePrice != null ? Number(product.salePrice) : null,
@@ -118,14 +127,14 @@ export function ProductCardLuxe({
         animatedBorder && "product-card--animated",
         className,
       )}
-      aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
+      aria-label={`${title}${product.colorName ? ` — ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber(), locale)}`}
       data-cursor="Ver"
     >
       <div
         className="relative aspect-square w-full overflow-hidden bg-zs-surface touch-pan-y"
         {...swipe.bind}
       >
-        {product.mainImageUrl ? (
+        {tx(product.mainImageUrl ? (
           <>
             <Image
               src={(typeof window !== "undefined" && window.matchMedia?.("(hover: none)").matches
@@ -159,13 +168,13 @@ export function ProductCardLuxe({
         ) : (
           <div className="flex h-full w-full items-center justify-center text-zs-muted/60">
             <ImageOff className="h-10 w-10" aria-hidden />
-            <span className="sr-only">Sin imagen</span>
+            <span className="sr-only">{t("Sin imagen")}</span>
           </div>
-        )}
+        ))}
 
         {/* Badges */}
         <div className="pointer-events-none absolute inset-x-2 top-2 z-10 flex items-start justify-between gap-2">
-          {product.brand?.name ? (
+          {tx(product.brand?.name ? (
             <Badge
               variant="secondary"
               className="bg-white/95 text-zs-blue-900 shadow-sm backdrop-blur"
@@ -174,23 +183,22 @@ export function ProductCardLuxe({
             </Badge>
           ) : (
             <span />
-          )}
+          ))}
           <div className="flex flex-col items-end gap-1">
             {(() => {
               const sb = stockBadge(product.totalStock);
               return sb ? (
-                <Badge className={cn("shadow-sm", sb.cls)}>{sb.label}</Badge>
+                <Badge className={cn("shadow-sm", sb.cls)}>{tx(sb.label)}</Badge>
               ) : null;
             })()}
             {onSale && (
               <Badge variant="sale" className="shadow-sm">
-                -{discountPct}%
+                -{tx(discountPct)}%
               </Badge>
             )}
             {isAmazon && (
               <Badge variant="amazon" className="shadow-sm">
-                Amazon
-              </Badge>
+                {t("Amazon")}</Badge>
             )}
           </div>
         </div>
@@ -200,7 +208,7 @@ export function ProductCardLuxe({
           aria-hidden
           className="pointer-events-none absolute bottom-2 left-2 z-10 translate-y-2 rounded-full bg-zs-blue-900/95 px-3 py-1 text-xs font-bold text-white opacity-0 shadow-md backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100"
         >
-          {formatPriceEUR(final.toNumber())}
+          {formatPriceEUR(final.toNumber(), locale)}
         </div>
 
         {/* Quick view (sólo desktop) */}
@@ -215,8 +223,7 @@ export function ProductCardLuxe({
             className="pointer-events-auto absolute bottom-2 right-2 z-10 hidden translate-y-2 items-center gap-1 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-zs-blue-900 opacity-0 shadow-md transition-all duration-300 hover:bg-white group-hover:translate-y-0 group-hover:opacity-100 md:inline-flex"
             data-cursor="Ver rápido"
           >
-            <Eye className="h-3.5 w-3.5" /> Ver rápido
-          </button>
+            <Eye className="h-3.5 w-3.5" /> {t("Ver rápido")}</button>
         )}
 
         {/* Ripple */}
@@ -251,18 +258,18 @@ export function ProductCardLuxe({
 
       <div className="space-y-1 p-3 sm:p-4">
         <p className="text-sm font-semibold text-zs-ink transition-colors group-hover:text-zs-blue-700">
-          {title}
+          {tx(title)}
         </p>
         {product.colorName && product.colorName !== "Único" && (
-          <p className="text-xs text-zs-muted">{product.colorName}</p>
+          <p className="text-xs text-zs-muted">{tx(product.colorName)}</p>
         )}
         <div className="flex items-baseline gap-2 pt-1">
           <span className="text-base font-bold tabular-nums text-zs-blue-900">
-            {formatPriceEUR(final.toNumber())}
+            {formatPriceEUR(final.toNumber(), locale)}
           </span>
           {onSale && (
             <span className="text-xs text-zs-muted line-through tabular-nums">
-              {formatPriceEUR(retail.toNumber())}
+              {formatPriceEUR(retail.toNumber(), locale)}
             </span>
           )}
         </div>

@@ -1,4 +1,8 @@
-import Link from "next/link";
+import { displayTags } from "@/lib/i18n/content";
+import { getRequestLocale } from "@/lib/i18n/request";
+import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
+import { t } from "@/lib/i18n/dictionaries";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { CalendarDays, Clock, User2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +17,7 @@ export type PostCardData = {
   author: string;
   publishedAt: Date | string | null;
   tags: string[];
+  translatedTags?:string[];
   contentMd?: string;
 };
 
@@ -27,7 +32,7 @@ export function PostCard({
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-zs-border bg-white shadow-sm transition hover:shadow-md">
       <Link href={`/blog/${post.slug}`} className="relative block aspect-[16/9] overflow-hidden bg-zs-surface">
-        {post.coverImageUrl ? (
+        {tx(post.coverImageUrl ? (
           <Image
             src={post.coverImageUrl}
             alt={`Portada de ${post.title}`}
@@ -38,41 +43,40 @@ export function PostCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-zs-muted">
-            <span className="text-sm">Sin portada</span>
+            <span className="text-sm">{t("Sin portada")}</span>
           </div>
-        )}
+        ))}
       </Link>
       <div className="flex flex-1 flex-col p-5">
         {post.tags.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
-            {post.tags.slice(0, 3).map((t) => (
+            {displayTags(post).slice(0, 3).map((t) => (
               <Badge key={t} variant="secondary" className="text-[10px] uppercase tracking-wide">
-                {t}
+                {tx(t)}
               </Badge>
             ))}
           </div>
         )}
         <h3 className="text-lg font-bold leading-snug text-zs-blue-900">
           <Link href={`/blog/${post.slug}`} className="hover:text-zs-red-600">
-            {post.title}
+            {tx(post.title)}
           </Link>
         </h3>
         {post.excerpt && (
-          <p className="mt-2 line-clamp-3 text-sm text-zs-muted">{post.excerpt}</p>
+          <p className="mt-2 line-clamp-3 text-sm text-zs-muted">{tx(post.excerpt)}</p>
         )}
         <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-4 text-xs text-zs-muted">
           <span className="inline-flex items-center gap-1">
-            <User2 className="h-3.5 w-3.5" /> {post.author}
+            <User2 className="h-3.5 w-3.5" /> {tx(post.author)}
           </span>
           {post.publishedAt && (
             <span className="inline-flex items-center gap-1">
-              <CalendarDays className="h-3.5 w-3.5" /> {formatDateES(post.publishedAt)}
+              <CalendarDays className="h-3.5 w-3.5" /> {formatDateES(post.publishedAt, getRequestLocale())}
             </span>
           )}
           {minutes != null && (
             <span className="inline-flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> {minutes} min lectura
-            </span>
+              <Clock className="h-3.5 w-3.5" /> {tx(minutes)} {t("min lectura")}</span>
           )}
         </div>
       </div>

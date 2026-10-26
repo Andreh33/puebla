@@ -1,6 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import {
+  useTranslations,
+  useTranslatedValue,
+  useTranslatedTemplate,
+} from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { ArrowRight, Flame, Package, Sparkle } from "lucide-react";
 import { Reveal } from "@/components/public/Reveal";
 
@@ -58,7 +63,7 @@ const TILES: Tile[] = [
     href: "/contacto",
     eyebrow: "Sin esperas",
     title: "Recoge en tienda",
-    caption: "Reserva por WhatsApp y pruébatelo aquí mismo. 0 € de envío en Extremadura.",
+    caption: "Recogida en tienda sin coste de envío.",
     cta: "Cómo reservar",
     Icon: Package,
     gradient: "from-zs-tennis-400 via-zs-tennis-300 to-[#7c8d22]",
@@ -67,8 +72,10 @@ const TILES: Tile[] = [
 ];
 
 export function PromoStrip() {
+  const _translateUi = useTranslations();
+  const _translateValue = useTranslatedValue();
   return (
-    <section className="relative bg-white pb-20 pt-4 sm:pb-28">
+    <section className="relative bg-white pt-4 pb-20 sm:pb-28">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-8">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
           {TILES.map((t, i) => {
@@ -89,7 +96,7 @@ export function PromoStrip() {
                   {/* Patrón ambiente sutil */}
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute -right-12 -top-12 h-72 w-72 rounded-full bg-white/15 blur-3xl"
+                    className="pointer-events-none absolute -top-12 -right-12 h-72 w-72 rounded-full bg-white/15 blur-3xl"
                   />
                   <div
                     aria-hidden
@@ -107,36 +114,33 @@ export function PromoStrip() {
                     </span>
                     <p
                       className={[
-                        "text-[10px] font-bold uppercase tracking-[0.32em]",
+                        "text-[10px] font-bold tracking-[0.32em] uppercase",
                         t.accent,
                       ].join(" ")}
                     >
-                      {t.eyebrow}
+                      {_translateValue(t.eyebrow)}
                     </p>
                   </div>
 
                   <div className="relative">
                     <h3
-                      className="max-w-[14ch] font-display font-black leading-[0.92] tracking-[-0.035em]"
+                      className="font-display max-w-[14ch] leading-[0.92] font-black tracking-[-0.035em]"
                       style={{ fontSize: "clamp(1.65rem, 3vw, 2.6rem)" }}
                     >
-                      {t.title}
+                      {_translateValue(t.title)}
                     </h3>
                     <p
-                      className={[
-                        "mt-3 max-w-[28ch] text-sm leading-relaxed",
-                        t.accent,
-                      ].join(" ")}
+                      className={["mt-3 max-w-[28ch] text-sm leading-relaxed", t.accent].join(" ")}
                     >
-                      {t.caption}
+                      {_translateValue(t.caption)}
                     </p>
                     <span
                       className={[
-                        "mt-5 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em]",
+                        "mt-5 inline-flex items-center gap-2 text-[12px] font-bold tracking-[0.18em] uppercase",
                         dark ? "text-white" : "text-zs-blue-950",
                       ].join(" ")}
                     >
-                      {t.cta}
+                      {_translateValue(t.cta)}
                       <ArrowRight
                         className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1.5"
                         strokeWidth={2.5}

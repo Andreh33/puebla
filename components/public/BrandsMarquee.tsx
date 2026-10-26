@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 
 type Brand = { id: string; name: string; slug: string; logoUrl: string | null };
@@ -10,13 +14,15 @@ type Brand = { id: string; name: string; slug: string; logoUrl: string | null };
  * Duplica el listado y usa keyframes para garantizar bucle sin jumps.
  */
 export function BrandsMarquee({ brands }: { brands: Brand[] }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   if (brands.length === 0) return null;
   const items = [...brands, ...brands];
 
   return (
     <div
       className="zs-marquee relative overflow-hidden"
-      aria-label="Marcas que trabajamos"
+      aria-label={t("Marcas que trabajamos")}
     >
       <div className="zs-marquee-track flex w-max gap-10 py-2">
         {items.map((b, i) => (
@@ -26,7 +32,7 @@ export function BrandsMarquee({ brands }: { brands: Brand[] }) {
             className="flex h-20 w-44 shrink-0 items-center justify-center rounded-xl border border-zs-border bg-white px-6 transition hover:border-zs-blue-700 hover:shadow-sm"
             aria-label={b.name}
           >
-            {b.logoUrl ? (
+            {tx(b.logoUrl ? (
               <Image
                 src={b.logoUrl}
                 alt={b.name}
@@ -36,7 +42,7 @@ export function BrandsMarquee({ brands }: { brands: Brand[] }) {
               />
             ) : (
               <span className="text-sm font-semibold text-zs-blue-900">{b.name}</span>
-            )}
+            ))}
           </Link>
         ))}
       </div>

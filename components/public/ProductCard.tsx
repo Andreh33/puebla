@@ -1,4 +1,8 @@
-import Link from "next/link";
+"use client";
+
+import { useLocale } from "@/components/public/LocaleProvider";
+import { useTranslations, useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +56,9 @@ type Props = {
 };
 
 export function ProductCard({ product, priority = false, sizes, className }: Props) {
+  const locale=useLocale();
+const t=useTranslations();
+const tx=useTranslatedValue();
   const { final, retail, onSale, discountPct } = effectivePrice(
     Number(product.retailPrice),
     product.salePrice != null ? Number(product.salePrice) : null,
@@ -72,10 +79,10 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         "zs-tilt group block overflow-hidden rounded-2xl border border-zs-border bg-white shadow-soft transition-all duration-500 ease-out hover:-translate-y-1 hover:shadow-[var(--shadow-zs-blue-glow)]",
         className,
       )}
-      aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber())}`}
+      aria-label={`${title}${product.colorName ? ` â€” ${product.colorName}` : ""} · ${formatPriceEUR(final.toNumber(), locale)}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-zs-surface">
-        {product.mainImageUrl ? (
+        {tx(product.mainImageUrl ? (
           <Image
             src={product.mainImageUrl}
             alt={`${title}${product.colorName ? ` â€” color ${product.colorName}` : ""}`}
@@ -89,35 +96,34 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
         ) : (
           <div className="flex h-full w-full items-center justify-center text-zs-muted/60">
             <ImageOff className="h-10 w-10" aria-hidden />
-            <span className="sr-only">Sin imagen</span>
+            <span className="sr-only">{t("Sin imagen")}</span>
           </div>
-        )}
+        ))}
 
         {/* Badges */}
         <div className="pointer-events-none absolute inset-x-2 top-2 flex items-start justify-between gap-2">
-          {product.brand?.name ? (
+          {tx(product.brand?.name ? (
             <Badge variant="secondary" className="bg-white/95 text-zs-blue-900 shadow-sm backdrop-blur">
               {decodeEntities(product.brand.name)}
             </Badge>
           ) : (
             <span />
-          )}
+          ))}
           <div className="flex flex-col items-end gap-1">
             {(() => {
               const sb = stockBadge(product.totalStock);
               return sb ? (
-                <Badge className={cn("shadow-sm", sb.cls)}>{sb.label}</Badge>
+                <Badge className={cn("shadow-sm", sb.cls)}>{tx(sb.label)}</Badge>
               ) : null;
             })()}
             {onSale && (
               <Badge variant="sale" className="shadow-sm">
-                -{discountPct}%
+                -{tx(discountPct)}%
               </Badge>
             )}
             {isAmazon && (
               <Badge variant="amazon" className="shadow-sm">
-                Amazon
-              </Badge>
+                {t("Amazon")}</Badge>
             )}
           </div>
         </div>
@@ -125,18 +131,18 @@ export function ProductCard({ product, priority = false, sizes, className }: Pro
 
       <div className="space-y-1 p-3 sm:p-4">
         <p className="text-sm font-semibold text-zs-ink group-hover:text-zs-blue-700">
-          {title}
+          {tx(title)}
         </p>
         {product.colorName && product.colorName !== "Ãšnico" && (
-          <p className="text-xs text-zs-muted">{product.colorName}</p>
+          <p className="text-xs text-zs-muted">{tx(product.colorName)}</p>
         )}
         <div className="flex items-baseline gap-2 pt-1">
           <span className="text-base font-bold tabular-nums text-zs-blue-900">
-            {formatPriceEUR(final.toNumber())}
+            {formatPriceEUR(final.toNumber(), locale)}
           </span>
           {onSale && (
             <span className="text-xs text-zs-muted line-through tabular-nums">
-              {formatPriceEUR(retail.toNumber())}
+              {formatPriceEUR(retail.toNumber(), locale)}
             </span>
           )}
         </div>

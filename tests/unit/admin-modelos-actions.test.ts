@@ -29,7 +29,7 @@ vi.mock("@/lib/products/stock", () => ({
   recomputeProductStock: (...args: unknown[]) => mocks.recomputeProductStock(...args),
 }));
 
-import { saveModelGridAction, searchModelsAction } from "@/app/admin/modelos/_actions";
+import { saveModelGridAction, searchModelsAction } from "@/app/(default)/admin/modelos/_actions";
 
 beforeEach(() => {
   vi.clearAllMocks();

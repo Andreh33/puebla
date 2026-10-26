@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { cn } from "@/lib/utils";
 
 export type EmptyStateVariant =
@@ -55,6 +57,7 @@ export function EmptyState({
   secondaryCta,
   className,
 }: Props) {
+  const tx = useTranslatedValue();
   const fallback = DEFAULTS[variant];
   return (
     <div
@@ -78,7 +81,7 @@ export function EmptyState({
               href={cta.href}
               className="inline-flex h-11 items-center justify-center rounded-xl bg-zs-blue-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-zs-blue-800 active:bg-zs-blue-950"
             >
-              {cta.label}
+              {tx(cta.label)}
             </Link>
           )}
           {secondaryCta &&
@@ -87,7 +90,7 @@ export function EmptyState({
                 href={secondaryCta.href}
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-zs-border bg-white px-5 text-sm font-semibold text-zs-ink transition hover:bg-zs-surface"
               >
-                {secondaryCta.label}
+                {tx(secondaryCta.label)}
               </Link>
             ) : (
               <button
@@ -95,7 +98,7 @@ export function EmptyState({
                 onClick={secondaryCta.onClick}
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-zs-border bg-white px-5 text-sm font-semibold text-zs-ink transition hover:bg-zs-surface"
               >
-                {secondaryCta.label}
+                {tx(secondaryCta.label)}
               </button>
             ))}
         </div>

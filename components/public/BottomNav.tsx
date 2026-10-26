@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { usePathname } from "next/navigation";
 import { Home, Search, ShoppingBag, User, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -57,6 +61,8 @@ const ITEMS: Item[] = [
  * - Respeta safe-area iOS via pb-[env(safe-area-inset-bottom)].
  */
 export function BottomNav() {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const pathname = usePathname() ?? "/";
   const [mounted, setMounted] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
@@ -72,7 +78,7 @@ export function BottomNav() {
       <div aria-hidden className="h-24 md:hidden" />
 
       <nav
-        aria-label="Navegación principal mobile"
+        aria-label={t("Navegación principal mobile")}
         className={cn(
           "fixed inset-x-0 bottom-0 z-40 border-t border-zs-border bg-white/85 backdrop-blur-xl backdrop-saturate-150 supports-[backdrop-filter]:bg-white/70 md:hidden",
           "pb-[env(safe-area-inset-bottom)]",
@@ -84,7 +90,7 @@ export function BottomNav() {
         {/* Quick switch de género — fila superior compacta */}
         <div
           role="tablist"
-          aria-label="Cambio rápido de género"
+          aria-label={t("Cambio rápido de género")}
           className="mx-auto flex max-w-md items-stretch gap-1 px-3 pt-2"
         >
           {GENDER_QUICK.map((g) => {
@@ -102,7 +108,7 @@ export function BottomNav() {
                     : "bg-zs-surface text-zs-ink hover:bg-zs-blue-50 hover:text-zs-blue-900",
                 )}
               >
-                {g.label}
+                {tx(g.label)}
               </Link>
             );
           })}
@@ -129,11 +135,11 @@ export function BottomNav() {
                   <Icon className="h-5 w-5" aria-hidden />
                   {showBadge && (
                     <span className="absolute -right-2 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-zs-red-600 px-1 text-[10px] font-bold leading-none text-white shadow-sm tabular-nums">
-                      {count > 9 ? "9+" : count}
+                      {tx(count > 9 ? "9+" : count)}
                     </span>
                   )}
                 </span>
-                <span>{item.label}</span>
+                <span>{tx(item.label)}</span>
                 <span
                   aria-hidden
                   className={cn(
@@ -151,10 +157,10 @@ export function BottomNav() {
                     trigger={
                       <button
                         type="button"
-                        aria-label="Buscar"
+                        aria-label={t("Buscar")}
                         className="h-full w-full text-left"
                       >
-                        {inner}
+                        {tx(inner)}
                       </button>
                     }
                   />
@@ -174,7 +180,7 @@ export function BottomNav() {
                     }
                     className="block h-full w-full text-left"
                   >
-                    {inner}
+                    {tx(inner)}
                   </button>
                 </li>
               );
@@ -187,7 +193,7 @@ export function BottomNav() {
                   aria-current={active ? "page" : undefined}
                   className="block h-full w-full"
                 >
-                  {inner}
+                  {tx(inner)}
                 </Link>
               </li>
             );

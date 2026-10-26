@@ -1,5 +1,18 @@
-import Link from "next/link";
-import { ArrowUpRight, Truck, RotateCcw, ShieldCheck, Flame, Sparkles, BadgePercent } from "lucide-react";
+import {
+  t as _translateUi,
+  translateValue as _translateValue,
+  translateTemplate as _translateTemplate,
+} from "@/lib/i18n/dictionaries";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
+import {
+  ArrowUpRight,
+  Truck,
+  RotateCcw,
+  ShieldCheck,
+  Flame,
+  Sparkles,
+  BadgePercent,
+} from "lucide-react";
 import { ProductCardLuxe } from "@/components/public/ProductCardLuxe";
 import { Reveal } from "@/components/public/Reveal";
 import type { PublicProductCardData } from "@/lib/public-queries";
@@ -42,49 +55,46 @@ function toneClasses(tone: Tone): string {
   }
 }
 
-export function ProductShowcase({
-  products,
-}: {
-  products: PublicProductCardData[];
-}) {
+export function ProductShowcase({ products }: { products: PublicProductCardData[] }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="relative bg-zs-blue-950 py-24 text-white sm:py-32 lg:py-36">
+    <section className="bg-zs-blue-950 relative py-24 text-white sm:py-32 lg:py-36">
       {/* Acentos sutiles de fondo */}
       <div className="pointer-events-none absolute inset-0 opacity-30" aria-hidden>
-        <div className="absolute -right-20 top-10 h-[28rem] w-[28rem] rounded-full bg-zs-red-600 blur-[160px]" />
-        <div className="absolute -left-20 bottom-0 h-[24rem] w-[24rem] rounded-full bg-zs-blue-700 blur-[140px]" />
+        <div className="bg-zs-red-600 absolute top-10 -right-20 h-[28rem] w-[28rem] rounded-full blur-[160px]" />
+        <div className="bg-zs-blue-700 absolute bottom-0 -left-20 h-[24rem] w-[24rem] rounded-full blur-[140px]" />
       </div>
 
       <header className="relative mx-auto mb-12 flex max-w-[1600px] flex-col gap-6 px-4 sm:mb-16 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
         <Reveal variant="fade-up">
-          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/60">
+          <p className="inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.32em] text-white/60 uppercase">
             <span className="inline-block h-px w-8 bg-white/30" />
-            Top ventas
+            {_translateUi("Top ventas")}
           </p>
           <h2
-            className="mt-6 font-display font-bold leading-[0.92] tracking-[-0.035em]"
+            className="font-display mt-6 leading-[0.92] font-bold tracking-[-0.035em]"
             style={{ fontSize: "clamp(2.25rem, 6vw, 5rem)" }}
           >
-            Lo más comprado<br />
-            <span className="text-white/45">esta semana.</span>
+            {_translateUi("Lo más comprado")}
+            <br />
+            <span className="text-white/45">{_translateUi("esta semana.")}</span>
           </h2>
         </Reveal>
         <Reveal variant="fade-up" delay={120}>
           <div className="flex flex-col items-start gap-4 lg:items-end">
             {/* Ribbon countdown mock */}
-            <span className="inline-flex items-center gap-2 rounded-full border border-zs-red-500/40 bg-zs-red-600/15 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-zs-red-300">
+            <span className="border-zs-red-500/40 bg-zs-red-600/15 text-zs-red-300 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] font-bold tracking-[0.18em] uppercase">
               <Flame className="h-3.5 w-3.5" strokeWidth={2.5} />
-              Oferta acaba en 2d 14h
+              {_translateUi("Oferta acaba en 2d 14h")}
             </span>
             <Link
               href="#catalogo"
               data-cursor="Catálogo"
-              className="group inline-flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.22em] text-white"
+              className="group inline-flex items-center gap-3 text-sm font-semibold tracking-[0.22em] text-white uppercase"
             >
-              <span className="zs-underline">Ver catálogo completo</span>
-              <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white/25 transition-all group-hover:bg-white group-hover:text-zs-blue-950">
+              <span className="zs-underline">{_translateUi("Ver catálogo completo")}</span>
+              <span className="group-hover:text-zs-blue-950 flex h-10 w-10 items-center justify-center rounded-full border border-white/25 transition-all group-hover:bg-white">
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:rotate-45" />
               </span>
             </Link>
@@ -94,14 +104,7 @@ export function ProductShowcase({
 
       {/* Grid desktop / scroll snap mobile */}
       <div className="relative">
-        <ul
-          className="
-            mx-auto flex max-w-[1600px] snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4
-            [scrollbar-width:none] sm:px-8
-            md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-8
-            lg:grid-cols-4 lg:gap-6
-          "
-        >
+        <ul className="mx-auto flex max-w-[1600px] snap-x snap-mandatory [scrollbar-width:none] gap-4 overflow-x-auto px-4 pb-4 sm:px-8 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:px-8 lg:grid-cols-4 lg:gap-6">
           {products.slice(0, 8).map((p, i) => {
             const badge = i < BADGES.length ? BADGES[i] : null;
             const Icon = badge?.Icon;
@@ -112,17 +115,19 @@ export function ProductShowcase({
               >
                 <Reveal variant="fade-up" delay={Math.min(i * 60, 280)}>
                   <div className="relative">
-                    {badge && Icon ? (
-                      <span
-                        className={[
-                          "pointer-events-none absolute left-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] shadow-lg",
-                          toneClasses(badge.tone),
-                        ].join(" ")}
-                      >
-                        <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                        {badge.label}
-                      </span>
-                    ) : null}
+                    {_translateValue(
+                      badge && Icon ? (
+                        <span
+                          className={[
+                            "pointer-events-none absolute top-3 left-3 z-20 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold tracking-[0.18em] uppercase shadow-lg",
+                            toneClasses(badge.tone),
+                          ].join(" ")}
+                        >
+                          <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
+                          {badge.label}
+                        </span>
+                      ) : null,
+                    )}
                     <ProductCardLuxe priority={i < 2} product={p} />
                   </div>
                 </Reveal>
@@ -138,8 +143,8 @@ export function ProductShowcase({
           {[
             {
               Icon: Truck,
-              title: "Envío 24/48 h",
-              caption: "Gratis a partir de 60 € · Península",
+              title: "Envío a cinco países",
+              caption: "Portugal, Francia, Italia y Alemania: 9,80 €",
             },
             {
               Icon: RotateCcw,
@@ -156,14 +161,14 @@ export function ProductShowcase({
               key={title}
               className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-zs-tennis-300 text-zs-blue-950">
+              <span className="bg-zs-tennis-300 text-zs-blue-950 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl">
                 <Icon className="h-5 w-5" strokeWidth={2.25} />
               </span>
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.12em] text-white">
-                  {title}
+                <p className="text-sm font-bold tracking-[0.12em] text-white uppercase">
+                  {_translateValue(title)}
                 </p>
-                <p className="mt-1 text-xs text-white/70">{caption}</p>
+                <p className="mt-1 text-xs text-white/70">{_translateValue(caption)}</p>
               </div>
             </li>
           ))}

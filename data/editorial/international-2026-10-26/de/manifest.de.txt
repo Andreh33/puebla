@@ -1,0 +1,84 @@
+German editorial batch — 2026-10-26
+STATUS: COMPLETE — 10 of 10 saved and validated.
+Exactly 5 city guides and 5 general buying guides.
+Total prose words: 35101. Each article >=3400.
+Counting: whitespace words in contentMd, excluding Markdown heading lines and HTTP URLs; all metadata excluded.
+
+ARTICLES
+fitnesshandschuhe-kaufen-groesse-griffgefuehl.json | GENERAL | 3452 prose words | Fitnesshandschuhe
+  Primary source: https://www.nike.com/a/how-to-measure-glove-size
+  Primary source: https://www.nike.com/ca/size-fit/training-gloves
+  Primary source: https://www.adidas.es/guantes-training/II5598.html
+fussball-groesse-3-4-5-kaufberatung.json | GENERAL | 3503 prose words | Fußballgrößen
+  Primary source: https://www.adidas.co.uk/blog/892669-football-ball-sizes-what-size-do-i-need
+  Primary source: https://www.theifab.com/laws/latest/the-ball/
+  Primary source: https://www.dfb.de/content/kopfballspiel
+laufbekleidung-frankfurt-alltag-training.json | CITY Frankfurt am Main | 3532 prose words | Laufbekleidung und Alltag
+  Primary source: https://frankfurt.de/themen/sport/sportorte/outdoor
+  Primary source: https://www.joma-sport.com/blog/de/die-beste-kleidung-zum-laufen-wie-ziehe-ich-mich-zum-joggen-an/
+  Primary source: https://www.adidas.de/running-reflektierend
+schwimmausruestung-berlin-kaufberatung.json | CITY Berlin | 3497 prose words | Schwimmausrüstung
+  Primary source: https://www.berlinerbaeder.de/baeder/
+  Primary source: https://www.berlinerbaeder.de/oeffnungszeiten-auf-einem-blick/
+  Primary source: https://speedo.com/en-eu/blogs/news/4-easy-ways-to-care-for-your-swimming-goggles
+schwimmbrille-kaufen-glaeser-passform.json | GENERAL | 3480 prose words | Schwimmbrillen
+  Primary source: https://blog.arenaswim.com/en/insider-advice/arenas-tips-for-choosing-the-right-lenses-for-your-goggles/?amp=1
+  Primary source: https://speedo.com/en-eu/blogs/news/4-easy-ways-to-care-for-your-swimming-goggles
+  Primary source: https://swans.co.jp/en/userguide/detail/0/28/
+sportausruestung-hamburg-fussball-multisport.json | CITY Hamburg | 3511 prose words | Fußball und Multisport
+  Primary source: https://www.hamburg.de/politik-und-verwaltung/bezirke/harburg/themen/freizeit-kultur/sport/sportpark-aussenmuehle-939274
+  Primary source: https://www.adidas.co.uk/blog/892669-football-ball-sizes-what-size-do-i-need
+  Primary source: https://www.uhlsport.com/faq/groessentabellen-sortiment
+  Primary source: https://www.uhlsport.com/torwarthandschuhe-waschen
+sportausruestung-koeln-mannschaft-familie.json | CITY Köln | 3490 prose words | Mannschaftsbedarf und Familienausstattung
+  Primary source: https://www.stadt-koeln.de/leben-in-koeln/freizeit-natur-sport/sportstadt/sportanlagen-bau-pflege-vermietung
+  Primary source: https://serviceportal-sport.stadt-koeln.de/?type=SP
+  Primary source: https://www.joma-sport.com/de_DE/linien/
+  Primary source: https://www.dfb.de/content/kopfballspiel
+sportbekleidung-muenchen-hallensport-freizeitsport.json | CITY München | 3551 prose words | Sportbekleidung für Hallenkurse
+  Primary source: https://stadt.muenchen.de/buergerservice/freizeit-hobby/sport-spiel.html
+  Primary source: https://opendata.muenchen.de/dataset/hallensportprogramm
+  Primary source: https://www.nike.com/de/size-fit/herrenoberteile-buchstabengrosse
+sportsocken-kaufen-groesse-dicke-schaft.json | GENERAL | 3530 prose words | Sportsocken
+  Primary source: https://www.falke.com/de_de/journal/sport-socks-guide/
+  Primary source: https://www.nike.com/de/size-fit/socken
+torwarthandschuhe-groesse-schnitt-kaufberatung.json | GENERAL | 3555 prose words | Torwarthandschuhe
+  Primary source: https://www.uhlsport.com/faq/groessentabellen-sortiment
+  Primary source: https://www.uhlsport.com/torwarthandschuhe
+  Primary source: https://de.reusch.com/de/service/pflegeanleitungen/
+  Primary source: https://www.joma-sport.com/es_ES/guantes-portero-futbol-calcio-23-naranja-fluor-lima/401272.054.html
+
+VALIDATION
+All 10 files parse as JSON and contain required fields.
+All locale values de; author Equipo Zona Sport; publication dates 2026-10-26 morning UTC.
+Every slug matches its JSON filename.
+Meta titles 44–57 characters; meta descriptions 139–154 characters.
+No repeated exact substantive paragraphs, checked across all 10 articles; threshold 20 whitespace words.
+Municipal/operator primary references verified for Berlin, Hamburg, München, Köln and Frankfurt.
+Technical guidance based on primary manufacturer sources; source-specific facts are limited and paraphrased.
+No fixed facility hours, uncertain local access, invented local routes, German branches or club partnerships asserted.
+Only physical shop: Calle Silos 3, Puebla de la Calzada, Spain.
+German shipping flat EUR9.80; no international delivery timeline promised.
+No ranking/indexing guarantee or medical injury-prevention guarantee.
+
+CATALOG PRECAUTIONS
+Joma Calcio 23 reference 401272.054 has differing shop/manufacturer color labels. Standalone glove guide explicitly asks to confirm variant; no imported reference-specific technical details.
+Lurbel Racer Three shop entry is not assumed identical to a similarly named new Race Three manufacturer generation.
+Softee fitness glove description used only for its publicly named fitness purpose; no inferred materials, padding, or support details.
+
+INTERNAL LINKS — all live HTTP GET200, validated 2026-10-26 with concurrency2
+200 https://zonasportpuebla.com/accesorios-balones
+200 https://zonasportpuebla.com/accesorios-calcetines
+200 https://zonasportpuebla.com/accesorios-gafas-natacion
+200 https://zonasportpuebla.com/accesorios-guantes
+200 https://zonasportpuebla.com/producto/balon-puma-big-cat-naranja
+200 https://zonasportpuebla.com/producto/calcetin-joma-invisible-400028
+200 https://zonasportpuebla.com/producto/calcetin-largo-joma-400032
+200 https://zonasportpuebla.com/producto/calcetin-lurbel-racer-three
+200 https://zonasportpuebla.com/producto/camiseta-joma-alg-monsul-melange-mc-nino-101682280
+200 https://zonasportpuebla.com/producto/camiseta-joma-elite-x-roja-manga-corta
+200 https://zonasportpuebla.com/producto/gafas-natacion-mosconi-barracuda-negra
+200 https://zonasportpuebla.com/producto/gafas-natacion-mosconi-easy-jr-azul
+200 https://zonasportpuebla.com/producto/guantes-gimnasio-softee
+200 https://zonasportpuebla.com/producto/guantes-portero-joma-calcio-23-rojo-negro-401272054
+200 https://zonasportpuebla.com/producto/mochila-joma-daphne-caqui-400697454

@@ -1,5 +1,12 @@
 "use client";
+import { LOCALE_INFO } from "@/lib/i18n/config";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useLocale } from "@/components/public/LocaleProvider";
+import { localePath } from "@/lib/i18n/routing";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
@@ -29,7 +36,10 @@ type Props = {
 };
 
 export function SearchCommand({ trigger }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const router = useRouter();
+  const locale=useLocale();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -63,7 +73,7 @@ export function SearchCommand({ trigger }: Props) {
     setLoading(true);
     debounceRef.current = window.setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+        const res = await fetch(`/api/search?locale=${locale}&q=${encodeURIComponent(query)}`, {
           headers: { accept: "application/json" },
         });
         if (res.ok) {
@@ -82,44 +92,42 @@ export function SearchCommand({ trigger }: Props) {
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [query,locale]);
 
   const go = (url: string) => {
     setOpen(false);
     setQuery("");
-    router.push(url);
+    router.push(localePath(locale,url));
   };
 
   return (
     <>
       <span onClick={() => setOpen(true)} className="contents">
-        {trigger}
+        {tx(trigger)}
       </span>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl gap-0 overflow-hidden p-0">
-          <DialogTitle className="sr-only">Buscar en Zona Sport</DialogTitle>
+          <DialogTitle className="sr-only">{t("Buscar en Zona Sport")}</DialogTitle>
           <Command shouldFilter={false} className="flex flex-col">
             <div className="flex items-center gap-2 border-b border-zs-border px-4 py-3">
               <Search className="h-5 w-5 shrink-0 text-zs-muted" />
               <Command.Input
                 value={query}
                 onValueChange={setQuery}
-                placeholder="Buscar productos, marcas o artículos del blog…"
+                placeholder={t("Buscar productos, marcas o artículos del blog…")}
                 className="flex-1 bg-transparent text-sm text-zs-ink placeholder:text-zs-muted focus:outline-none"
                 autoFocus
               />
               {loading && <Loader2 className="h-4 w-4 animate-spin text-zs-muted" />}
               <kbd className="hidden rounded border border-zs-border bg-zs-surface px-1.5 py-0.5 text-[10px] font-semibold text-zs-muted sm:inline-block">
-                ESC
-              </kbd>
+                {t("ESC")}</kbd>
             </div>
 
             <Command.List className="max-h-[60vh] overflow-y-auto p-2 scrollbar-thin">
               {!query && (
                 <div className="px-3 py-8 text-center text-sm text-zs-muted">
-                  Empieza a escribir para buscar productos y artículos.
-                  <p className="mt-2 text-xs">
-                    Atajo: <kbd className="rounded border px-1">⌘</kbd> / <kbd className="rounded border px-1">Ctrl</kbd> + <kbd className="rounded border px-1">K</kbd>
+                  {t("Empieza a escribir para buscar productos y artículos.")}<p className="mt-2 text-xs">
+                    {t("Atajo:")}{" "}<kbd className="rounded border px-1">⌘</kbd> / <kbd className="rounded border px-1">{t("Ctrl")}</kbd> + <kbd className="rounded border px-1">{t("K")}</kbd>
                   </p>
                 </div>
               )}
@@ -133,16 +141,15 @@ export function SearchCommand({ trigger }: Props) {
                     <circle cx="28" cy="28" r="6" fill="#c8da46" />
                   </svg>
                   <p className="font-medium text-zs-blue-900">
-                    Sin resultados para «{query}»
+                    {t("Sin resultados para «")}{tx(query)}»
                   </p>
                   <p className="text-xs">
-                    Prueba con otra palabra o consúltanos por WhatsApp.
-                  </p>
+                    {t("Prueba con otra palabra o consúltanos por WhatsApp.")}</p>
                 </Command.Empty>
               )}
 
               {results.products.length > 0 && (
-                <Command.Group heading="Productos" className="px-1 py-1 text-xs font-semibold uppercase tracking-wide text-zs-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5">
+                <Command.Group heading={t("Productos")} className="px-1 py-1 text-xs font-semibold uppercase tracking-wide text-zs-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5">
                   {results.products.map((p) => (
                     <Command.Item
                       key={p.id}
@@ -155,14 +162,14 @@ export function SearchCommand({ trigger }: Props) {
                     >
                       <ShoppingBag className="h-4 w-4 shrink-0 text-zs-blue-700" />
                       <span className="flex-1 truncate">
-                        <span className="font-medium">{p.name}</span>
+                        <span className="font-medium">{tx(p.name)}</span>
                         {p.brandName && (
-                          <span className="ml-2 text-xs text-zs-muted">· {p.brandName}</span>
+                          <span className="ml-2 text-xs text-zs-muted">· {tx(p.brandName)}</span>
                         )}
                       </span>
                       {p.price != null && (
                         <span className="text-xs font-semibold tabular-nums text-zs-blue-900">
-                          {new Intl.NumberFormat("es-ES", {
+                          {new Intl.NumberFormat(LOCALE_INFO[locale].language, {
                             style: "currency",
                             currency: "EUR",
                             maximumFractionDigits: 0,
@@ -175,7 +182,7 @@ export function SearchCommand({ trigger }: Props) {
               )}
 
               {results.posts.length > 0 && (
-                <Command.Group heading="Artículos" className="px-1 py-1 text-xs font-semibold uppercase tracking-wide text-zs-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5">
+                <Command.Group heading={t("Artículos")} className="px-1 py-1 text-xs font-semibold uppercase tracking-wide text-zs-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5">
                   {results.posts.map((p) => (
                     <Command.Item
                       key={p.id}
@@ -184,7 +191,7 @@ export function SearchCommand({ trigger }: Props) {
                       className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 text-sm text-zs-ink data-[selected=true]:bg-zs-surface"
                     >
                       <FileText className="h-4 w-4 shrink-0 text-zs-blue-700" />
-                      <span className="flex-1 truncate">{p.title}</span>
+                      <span className="flex-1 truncate">{tx(p.title)}</span>
                     </Command.Item>
                   ))}
                 </Command.Group>
@@ -197,7 +204,7 @@ export function SearchCommand({ trigger }: Props) {
                     onSelect={() => go(`/buscar?q=${encodeURIComponent(query)}`)}
                     className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-2 text-sm font-semibold text-zs-blue-700 data-[selected=true]:bg-zs-surface"
                   >
-                    Ver todos los resultados para “{query}”
+                    {t("Ver todos los resultados para “")}{tx(query)}”
                     <span aria-hidden>→</span>
                   </Command.Item>
                 </div>

@@ -1,0 +1,304 @@
+"use client";
+
+
+
+
+import { useLocale } from "@/components/public/LocaleProvider";
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
+import Image from "next/image";
+import {
+  Minus,
+  Plus,
+  ShoppingBag,
+  Trash2,
+  MessageCircle,
+  ArrowRight,
+} from "lucide-react";
+import { useCart } from "@/lib/cart/use-cart";
+import { itemKey } from "@/lib/cart/store";
+import { buildCartWhatsAppMessage } from "@/lib/cart/whatsapp-message";
+import { whatsappUrl } from "@/lib/whatsapp";
+import { logReservation } from "@/lib/whatsapp-reservation";
+import { formatPriceEUR } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { CheckoutButton } from "@/components/public/CheckoutButton";
+import { PromoCodeField } from "@/components/public/PromoCodeField";
+import { useCartPromo } from "@/lib/cart/promo-code";
+
+export function CartView() {
+  const locale=useLocale();
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const { items, count, total, updateQty, removeItem, clear, ready } =
+    useCart();
+  const { code: promoCode, discount } = useCartPromo(total);
+  const finalTotal = Math.max(0, Math.round((total - discount) * 100) / 100);
+
+  if (!ready) {
+    return (
+      <div className="rounded-2xl border border-zs-border bg-white p-10 text-center">
+        <p className="text-sm text-zs-muted">{t("Cargando tu carrito…")}</p>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return <EmptyState />;
+  }
+
+  const whatsappHref = whatsappUrl(buildCartWhatsAppMessage(items));
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
+      {/* Lista de items */}
+      <ul className="space-y-4">
+        {items.map((item) => (
+          <li
+            key={itemKey(item.productId, item.size)}
+            className="grid grid-cols-[96px_1fr] gap-4 rounded-2xl border border-zs-border bg-white p-4 sm:grid-cols-[120px_1fr_auto] sm:items-center"
+          >
+            <Link
+              href={`/producto/${item.slug}`}
+              className="relative aspect-square overflow-hidden rounded-xl bg-zs-surface"
+            >
+              {tx(item.imageUrl ? (
+                <Image
+                  src={item.imageUrl}
+                  alt={item.name}
+                  fill
+                  sizes="(max-width: 640px) 96px, 120px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-zs-muted/60">
+                  <ShoppingBag className="h-8 w-8" aria-hidden />
+                </div>
+              ))}
+            </Link>
+
+            <div className="min-w-0">
+              {item.brand && (
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zs-blue-700">
+                  {tx(item.brand)}
+                </p>
+              )}
+              <Link
+                href={`/producto/${item.slug}`}
+                className="line-clamp-2 text-base font-semibold text-zs-ink hover:text-zs-blue-700"
+              >
+                {tx(item.name)}
+              </Link>
+              <p className="mt-1 text-xs text-zs-muted">
+                {item.colorName && item.colorName !== "Único" && (
+                  <span>{tx(item.colorName)}</span>
+                )}
+                {item.size && (
+                  <span>
+                    {tx(item.colorName && item.colorName !== "Único" ? " · " : "")}
+                    {t("Talla")}{" "}<strong className="text-zs-ink">{tx(item.size)}</strong>
+                  </span>
+                )}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <QtyStepper
+                  value={item.qty}
+                  max={item.maxStock}
+                  onChange={(qty) =>
+                    updateQty(item.productId, item.size, qty)
+                  }
+                  ariaLabel={`Cantidad de ${item.name}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(item.productId, item.size)}
+                  aria-label={`Eliminar ${item.name} del carrito`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-zs-muted transition hover:text-zs-red-600"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> {t("Eliminar")}</button>
+              </div>
+            </div>
+
+            <div className="sm:text-right">
+              <p className="text-xs text-zs-muted">
+                {formatPriceEUR(item.price, locale)} {t("/ ud")}</p>
+              <p className="text-lg font-extrabold tabular-nums text-zs-blue-900">
+                {formatPriceEUR(item.price * item.qty, locale)}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      {/* Resumen sticky */}
+      <aside className="lg:sticky lg:top-24">
+        <div className="rounded-2xl border border-zs-border bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold text-zs-blue-900">{t("Resumen")}</h2>
+          <dl className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-zs-muted">
+                {tx(count)} {tx(count === 1 ? "producto" : "productos")}
+              </dt>
+              <dd className="font-semibold tabular-nums text-zs-ink">
+                {formatPriceEUR(total, locale)}
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-zs-muted">{t("IVA")}</dt>
+              <dd className="text-zs-muted">{t("incluido")}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-zs-muted">{t("Recogida en tienda")}</dt>
+              <dd className="text-emerald-600">{t("gratis")}</dd>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-emerald-700">
+                <dt>{t("Descuento")}{tx(promoCode ? ` · ${promoCode}` : "")}</dt>
+                <dd className="font-semibold tabular-nums">−{formatPriceEUR(discount, locale)}</dd>
+              </div>
+            )}
+          </dl>
+
+          <div className="mt-4">
+            <PromoCodeField subtotal={total} appliedCode={promoCode} discount={discount} />
+          </div>
+
+          <div className="my-4 border-t border-zs-border" />
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm font-semibold text-zs-ink">{t("Total")}</span>
+            <span className="text-2xl font-extrabold tabular-nums text-zs-blue-900">
+              {formatPriceEUR(finalTotal, locale)}
+            </span>
+          </div>
+
+          <CheckoutButton
+            items={items}
+            className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-zs-blue-900 px-4 text-base font-semibold text-white shadow-sm transition hover:bg-zs-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() =>
+              logReservation({
+                kind: "cart",
+                itemsCount: count,
+                amount: total,
+                summary: buildCartWhatsAppMessage(items),
+                items: items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.qty,
+                })),
+              })
+            }
+            className="mt-2 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"
+          >
+            <MessageCircle className="h-5 w-5" /> {t("Reservar por WhatsApp")}</a>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (
+                window.confirm(
+                  "¿Vaciar el carrito? Esta acción no se puede deshacer.",
+                )
+              ) {
+                clear();
+              }
+            }}
+            className="mt-2 inline-flex h-10 w-full items-center justify-center text-xs font-semibold text-zs-muted transition hover:text-zs-red-600"
+          >
+            {t("Vaciar carrito")}</button>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function QtyStepper({
+  value,
+  onChange,
+  ariaLabel,
+  max,
+}: {
+  value: number;
+  onChange: (qty: number) => void;
+  ariaLabel: string;
+  max?: number | null;
+}) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const atMax = max != null && value >= max;
+  return (
+    <div className="inline-flex flex-col gap-1">
+      <div
+        className="inline-flex items-center rounded-lg border border-zs-border bg-white"
+        role="group"
+        aria-label={ariaLabel}
+      >
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(1, value - 1))}
+          disabled={value <= 1}
+          aria-label={t("Reducir cantidad")}
+          className={cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-l-lg text-zs-ink transition hover:bg-zs-surface",
+            "disabled:cursor-not-allowed disabled:opacity-40",
+          )}
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+        <span className="min-w-9 px-1 text-center text-sm font-semibold tabular-nums">
+          {tx(value)}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(value + 1)}
+          disabled={atMax}
+          aria-label={t("Aumentar cantidad")}
+          className={cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-r-lg text-zs-ink transition hover:bg-zs-surface",
+            "disabled:cursor-not-allowed disabled:opacity-40",
+          )}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+      {atMax && (
+        <span className="text-[11px] leading-none text-zs-muted">
+          {t("Máx.")}{" "}{tx(max)} {t("disponible")}{tx(max === 1 ? "" : "s")}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function EmptyState() {
+  const t = useTranslations();
+  return (
+    <div className="mx-auto max-w-xl rounded-2xl border border-zs-border bg-white p-10 text-center shadow-sm">
+      <div className="mx-auto mb-5 inline-flex h-20 w-20 items-center justify-center rounded-full bg-zs-blue-50">
+        <ShoppingBag className="h-10 w-10 text-zs-blue-700" aria-hidden />
+      </div>
+      <h2 className="text-xl font-bold text-zs-blue-900">
+        {t("Aún no tienes nada en el carrito")}</h2>
+      <p className="mt-2 text-sm text-zs-muted">
+        {t("Explora nuestra tienda y añade productos para reservarlos. Te los guardamos para que pases a recogerlos cuando te venga bien.")}</p>
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+        <Link
+          href="/marcas"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-zs-blue-900 px-5 text-sm font-semibold text-white hover:bg-zs-blue-800"
+        >
+          {t("Ver marcas")}{" "}<ArrowRight className="h-4 w-4" />
+        </Link>
+        <Link
+          href="/"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-zs-border bg-white px-5 text-sm font-semibold text-zs-ink hover:bg-zs-surface"
+        >
+          {t("Volver al inicio")}</Link>
+      </div>
+    </div>
+  );
+}

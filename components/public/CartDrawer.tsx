@@ -1,6 +1,12 @@
 "use client";
 
-import Link from "next/link";
+
+
+
+import { useLocale } from "@/components/public/LocaleProvider";
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { Minus, Plus, ShoppingBag, Trash2, MessageCircle } from "lucide-react";
 import {
@@ -26,6 +32,9 @@ type Props = {
 };
 
 export function CartDrawer({ open, onOpenChange }: Props) {
+  const locale=useLocale();
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const { items, count, total, updateQty, removeItem, ready } = useCart();
   const { code: promoCode, discount } = useCartPromo(total);
   const finalTotal = Math.max(0, Math.round((total - discount) * 100) / 100);
@@ -39,17 +48,17 @@ export function CartDrawer({ open, onOpenChange }: Props) {
         className="flex w-full max-w-md flex-col gap-0 sm:max-w-md"
       >
         <SheetHeader>
-          <SheetTitle>Tu carrito</SheetTitle>
+          <SheetTitle>{t("Tu carrito")}</SheetTitle>
           <SheetDescription>
-            {count === 0
+            {tx(count === 0
               ? "Aún no tienes nada seleccionado."
-              : `${count} ${count === 1 ? "producto" : "productos"} listos para reservar.`}
+              : `${count} ${count === 1 ? "producto" : "productos"} listos para reservar.`)}
           </SheetDescription>
         </SheetHeader>
 
         {/* Cuerpo con scroll */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          {!ready ? (
+          {tx(!ready ? (
             <EmptyHydrating />
           ) : items.length === 0 ? (
             <EmptyCart onClose={() => onOpenChange(false)} />
@@ -98,7 +107,7 @@ export function CartDrawer({ open, onOpenChange }: Props) {
                           {item.size && (
                             <span>
                               {item.colorName && item.colorName !== "Único" ? " · " : ""}
-                              Talla {item.size}
+                              {t("Talla")}{" "}{item.size}
                             </span>
                           )}
                         </p>
@@ -123,14 +132,14 @@ export function CartDrawer({ open, onOpenChange }: Props) {
                         ariaLabel={`Cantidad de ${item.name}`}
                       />
                       <span className="text-sm font-bold tabular-nums text-zs-blue-900">
-                        {formatPriceEUR(item.price * item.qty)}
+                        {formatPriceEUR(item.price * item.qty, locale)}
                       </span>
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
-          )}
+          ))}
         </div>
 
         {/* Footer fijo con total y CTAs */}
@@ -141,19 +150,18 @@ export function CartDrawer({ open, onOpenChange }: Props) {
             </div>
             {discount > 0 && (
               <div className="mb-1 flex items-baseline justify-between gap-2 text-sm text-emerald-700">
-                <span>Descuento{promoCode ? ` · ${promoCode}` : ""}</span>
-                <span className="font-semibold tabular-nums">−{formatPriceEUR(discount)}</span>
+                <span>{t("Descuento")}{tx(promoCode ? ` · ${promoCode}` : "")}</span>
+                <span className="font-semibold tabular-nums">−{formatPriceEUR(discount, locale)}</span>
               </div>
             )}
             <div className="mb-3 flex items-baseline justify-between gap-2">
-              <span className="text-sm text-zs-muted">Total</span>
+              <span className="text-sm text-zs-muted">{t("Total")}</span>
               <span className="text-xl font-extrabold tabular-nums text-zs-blue-900">
-                {formatPriceEUR(finalTotal)}
+                {formatPriceEUR(finalTotal, locale)}
               </span>
             </div>
             <p className="mb-3 text-[11px] leading-snug text-zs-muted">
-              IVA incluido. Paga con tarjeta, Bizum o Klarna — o confirma por WhatsApp.
-            </p>
+              {t("IVA incluido. Paga con tarjeta, Bizum o Klarna — o confirma por WhatsApp.")}</p>
             <div className="flex flex-col gap-2">
               <CheckoutButton items={items} />
               <a
@@ -175,15 +183,13 @@ export function CartDrawer({ open, onOpenChange }: Props) {
                 }}
                 className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-4 text-sm font-semibold text-[#1a9e4c] transition hover:bg-[#f0fdf4]"
               >
-                <MessageCircle className="h-4 w-4" /> Reservar por WhatsApp
-              </a>
+                <MessageCircle className="h-4 w-4" /> {t("Reservar por WhatsApp")}</a>
               <Link
                 href="/carrito"
                 onClick={() => onOpenChange(false)}
                 className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-zs-border bg-white px-4 text-sm font-semibold text-zs-ink transition hover:bg-zs-surface"
               >
-                Ver carrito
-              </Link>
+                {t("Ver carrito")}</Link>
             </div>
           </div>
         )}
@@ -203,6 +209,8 @@ function QtyStepper({
   ariaLabel: string;
   max?: number | null;
 }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const atMax = max != null && value >= max;
   return (
     <div className="inline-flex flex-col gap-1">
@@ -215,19 +223,19 @@ function QtyStepper({
           type="button"
           onClick={() => onChange(Math.max(1, value - 1))}
           disabled={value <= 1}
-          aria-label="Reducir cantidad"
+          aria-label={t("Reducir cantidad")}
           className="inline-flex h-8 w-8 items-center justify-center rounded-l-lg text-zs-ink transition hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus className="h-3.5 w-3.5" />
         </button>
         <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
-          {value}
+          {tx(value)}
         </span>
         <button
           type="button"
           onClick={() => onChange(value + 1)}
           disabled={atMax}
-          aria-label="Aumentar cantidad"
+          aria-label={t("Aumentar cantidad")}
           className="inline-flex h-8 w-8 items-center justify-center rounded-r-lg text-zs-ink transition hover:bg-zs-surface disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -235,7 +243,7 @@ function QtyStepper({
       </div>
       {atMax && (
         <span className="text-[10px] leading-none text-zs-muted">
-          Máx. {max} disponible{max === 1 ? "" : "s"}
+          {t("Máx.")}{" "}{tx(max)} {t("disponible")}{tx(max === 1 ? "" : "s")}
         </span>
       )}
     </div>
@@ -243,15 +251,17 @@ function QtyStepper({
 }
 
 function EmptyHydrating() {
+  const t = useTranslations();
   return (
     <div className="flex h-full min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
       <ShoppingBag className="h-10 w-10 text-zs-muted/40" aria-hidden />
-      <p className="text-sm text-zs-muted">Cargando tu carrito…</p>
+      <p className="text-sm text-zs-muted">{t("Cargando tu carrito…")}</p>
     </div>
   );
 }
 
 function EmptyCart({ onClose }: { onClose: () => void }) {
+  const t = useTranslations();
   return (
     <div className="flex h-full min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
       <div className="rounded-full bg-zs-blue-50 p-5">
@@ -259,19 +269,16 @@ function EmptyCart({ onClose }: { onClose: () => void }) {
       </div>
       <div className="space-y-1">
         <p className="text-base font-semibold text-zs-blue-900">
-          Tu carrito está vacío
-        </p>
+          {t("Tu carrito está vacío")}</p>
         <p className="text-sm text-zs-muted">
-          Añade productos desde la tienda y vuelve aquí para reservar.
-        </p>
+          {t("Añade productos desde la tienda y vuelve aquí para reservar.")}</p>
       </div>
       <Link
         href="/marcas"
         onClick={onClose}
         className="inline-flex h-10 items-center justify-center rounded-xl bg-zs-blue-900 px-4 text-sm font-semibold text-white hover:bg-zs-blue-800"
       >
-        Explorar marcas
-      </Link>
+        {t("Explorar marcas")}</Link>
     </div>
   );
 }

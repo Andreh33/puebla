@@ -109,7 +109,7 @@ export function generateAutoMetaFromProduct(product: ProductInfo): string {
     `de ${product.brand.name}`,
     `en Zona Sport`,
   ].filter(Boolean);
-  return truncateMeta(parts.join(" ") + " · envío 24/48 h en toda España.");
+  return truncateMeta(parts.join(" ") + " · compra online o consulta en tienda.");
 }
 
 const META_MAX = 155;

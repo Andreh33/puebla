@@ -1,7 +1,13 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { stripLocale } from "@/lib/i18n/routing";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Search, MessageCircle, Menu, X, ChevronDown, ArrowRight } from "lucide-react";
@@ -118,7 +124,7 @@ const GENDER_TABS: Array<{
 
 /** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */
 const TICKER_PHRASES = [
-  "Desde Puebla de la Calzada hasta cualquier parte del mundo",
+  "Desde Puebla de la Calzada a España, Portugal, Francia, Italia y Alemania",
   "Años de calidad y trato cercano",
   "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Jhayber",
   "Atendemos por WhatsApp · Recogida en tienda",
@@ -132,7 +138,9 @@ const TICKER_PHRASES = [
 const MEGA_CLOSE_DELAY_MS = 260;
 
 export function Header() {
-  const pathname = usePathname() ?? "/";
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const pathname = stripLocale(usePathname() ?? "/");
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -277,11 +285,11 @@ export function Header() {
         <div className="overflow-hidden bg-zs-blue-950 text-white">
           <div
             className="zs-header-ticker flex w-max items-center gap-10 whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/90 sm:py-2.5"
-            aria-label="Argumentos de la tienda"
+            aria-label={t("Argumentos de la tienda")}
           >
             {[...TICKER_PHRASES, ...TICKER_PHRASES, ...TICKER_PHRASES].map((phrase, i) => (
               <span key={`${phrase}-${i}`} className="inline-flex items-center gap-10">
-                <span>{phrase}</span>
+                <span>{tx(phrase)}</span>
                 <span aria-hidden className="text-zs-red-500">
                   ✺
                 </span>
@@ -306,21 +314,23 @@ export function Header() {
             <Link
               href="/"
               className="flex shrink-0 items-center gap-2 pl-1 pr-2"
-              aria-label="Zona Sport — Inicio"
+              aria-label={t("Zona Sport — Inicio")}
             >
               <Image
                 src="/logo.webp"
-                alt="Zona Sport"
+                alt={t("Zona Sport")}
                 width={270}
                 height={186}
                 priority
+                fetchPriority="high"
+                sizes="(min-width: 1024px) 163px, (min-width: 640px) 105px, 93px"
                 className="h-16 w-auto sm:h-[4.5rem] lg:h-28 lg:-mt-5"
               />
             </Link>
 
             {/* Nav central desktop */}
             <nav
-              aria-label="Navegación principal"
+              aria-label={t("Navegación principal")}
               className="hidden flex-1 items-center justify-center gap-1 lg:flex"
             >
               {/* Tabs de género — pill activa estilo LATECH */}
@@ -346,7 +356,7 @@ export function Header() {
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
                     )}
                   >
-                    {tab.label}
+                    {tx(tab.label)}
                   </Link>
                 );
               })}
@@ -369,7 +379,7 @@ export function Header() {
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
                     )}
                   >
-                    {item.label}
+                    {tx(item.label)}
                   </Link>
                 );
               })}
@@ -391,12 +401,11 @@ export function Header() {
                       : "text-zs-red-600 hover:bg-zs-red-50 hover:text-zs-red-700",
                   )}
                 >
-                  Outlet
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
+                  {t("Outlet")}<ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
                 </Link>
                 <div
                   role="menu"
-                  aria-label="Outlet"
+                  aria-label={t("Outlet")}
                   className="invisible absolute left-0 top-full z-50 mt-1 min-w-[160px] translate-y-1 rounded-2xl border border-zs-border bg-white p-1.5 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
                 >
                   {OUTLET_LINKS.map((item) => {
@@ -414,7 +423,7 @@ export function Header() {
                             : "text-zs-ink hover:bg-zs-surface hover:text-zs-red-700",
                         )}
                       >
-                        {item.label}
+                        {tx(item.label)}
                       </Link>
                     );
                   })}
@@ -442,7 +451,7 @@ export function Header() {
                         : "text-zs-muted hover:bg-zs-surface hover:text-zs-blue-700",
                     )}
                   >
-                    {item.label}
+                    {tx(item.label)}
                   </Link>
                 );
               })}
@@ -457,10 +466,9 @@ export function Header() {
                   window.dispatchEvent(new CustomEvent("zs:show-pwa-install"));
                 }}
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700"
-                title="Instalar Zona Sport en tu dispositivo"
+                title={t("Instalar Zona Sport en tu dispositivo")}
               >
-                App
-              </button>
+                {t("App")}</button>
 
               {/* OCULTO a petición del cliente: el sub-nav de deportes
                   (Running/Pádel/Montaña/Calzado) y su separador vertical
@@ -494,7 +502,7 @@ export function Header() {
                 trigger={
                   <button
                     type="button"
-                    aria-label="Buscar (Ctrl+K)"
+                    aria-label={t("Buscar (Ctrl+K)")}
                     className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10"
                   >
                     <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
@@ -505,12 +513,13 @@ export function Header() {
                 href={whatsappUrl(WhatsAppMessages.generic())}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="WhatsApp"
+                aria-label={t("WhatsApp")}
                 className="hidden h-10 w-10 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:inline-flex"
               >
                 <MessageCircle className="h-[18px] w-[18px]" />
               </a>
-              <CartIcon />
+              <LanguageSwitcher />
+            <CartIcon />
 
               {/* CTA gradient — desktop */}
               <Link
@@ -518,18 +527,17 @@ export function Header() {
                 className="ml-1 hidden h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-zs-red-600 to-[#a01818] px-5 text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-[1.02] sm:inline-flex"
                 style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
               >
-                Comprar
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {t("Comprar")}<ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
               </Link>
 
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
                 className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10 lg:hidden"
-                aria-label="Abrir menú"
+                aria-label={t("Abrir menú")}
                 aria-expanded={mobileOpen}
               >
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {tx(mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />)}
               </button>
             </div>
           </div>
@@ -566,7 +574,7 @@ export function Header() {
           )}
           style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
         >
-          <nav aria-label="Menú móvil" className="overflow-hidden">
+          <nav aria-label={t("Menú móvil")} className="overflow-hidden">
             <div className="max-h-[80vh] overflow-y-auto px-4 py-3">
               {/* Tabs de género (acordeón con mega-menú embebido).
                   Iteramos GENDER_TABS (mujer/hombre) — ya no incluimos
@@ -594,7 +602,7 @@ export function Header() {
                               : "text-zs-ink",
                           )}
                         >
-                          {tabConfig.label}
+                          {tx(tabConfig.label)}
                         </Link>
                         <button
                           type="button"
@@ -645,7 +653,7 @@ export function Header() {
                             : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface",
                         )}
                       >
-                        {item.label}
+                        {tx(item.label)}
                       </Link>
                     </li>
                   );
@@ -659,8 +667,7 @@ export function Header() {
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-3 text-sm font-extrabold uppercase tracking-wider text-zs-red-700"
                 >
-                  Outlet
-                </Link>
+                  {t("Outlet")}</Link>
                 <ul className="grid grid-cols-2 gap-2 px-3 pb-3">
                   {OUTLET_LINKS.map((item) => {
                     const active = pathname === item.href;
@@ -676,7 +683,7 @@ export function Header() {
                               : "border border-zs-red-200 bg-white text-zs-red-700 hover:bg-zs-red-50",
                           )}
                         >
-                          {item.label}
+                          {tx(item.label)}
                         </Link>
                       </li>
                     );
@@ -696,7 +703,7 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
                     >
-                      {item.label}
+                      {tx(item.label)}
                     </Link>
                   </li>
                 ))}
@@ -709,8 +716,7 @@ export function Header() {
                     }}
                     className="block w-full rounded-lg px-3 py-2 text-left text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
                   >
-                    Instalar app
-                  </button>
+                    {t("Instalar app")}</button>
                 </li>
               </ul>
 
@@ -722,8 +728,7 @@ export function Header() {
                 style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
               >
                 <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
+                {t("WhatsApp")}</a>
             </div>
           </nav>
         </div>

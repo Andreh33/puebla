@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,6 +24,8 @@ type Props = {
  * - Atajos: ← → en teclado.
  */
 export function BlogPostNav({ prev, next }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const router = useRouter();
   const startX = useRef<number | null>(null);
   const startY = useRef<number | null>(null);
@@ -85,10 +91,10 @@ export function BlogPostNav({ prev, next }: Props) {
 
   return (
     <nav
-      aria-label="Navegación entre artículos"
+      aria-label={t("Navegación entre artículos")}
       className="mt-12 grid gap-3 border-t border-zs-border pt-6 sm:grid-cols-2"
     >
-      {prev ? (
+      {tx(prev ? (
         <Link
           href={`/blog/${prev.slug}`}
           className="group flex items-start gap-3 rounded-2xl border border-zs-border bg-white p-4 transition hover:border-zs-blue-300 hover:shadow-sm"
@@ -97,8 +103,7 @@ export function BlogPostNav({ prev, next }: Props) {
           <ChevronLeft className="mt-1 h-5 w-5 shrink-0 text-zs-muted transition group-hover:-translate-x-0.5 group-hover:text-zs-blue-700" />
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-zs-muted">
-              Artículo anterior
-            </p>
+              {t("Artículo anterior")}</p>
             <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-zs-blue-900 group-hover:text-zs-blue-700">
               {prev.title}
             </p>
@@ -106,8 +111,8 @@ export function BlogPostNav({ prev, next }: Props) {
         </Link>
       ) : (
         <span aria-hidden />
-      )}
-      {next ? (
+      ))}
+      {tx(next ? (
         <Link
           href={`/blog/${next.slug}`}
           className="group flex items-start justify-end gap-3 rounded-2xl border border-zs-border bg-white p-4 text-right transition hover:border-zs-blue-300 hover:shadow-sm sm:text-right"
@@ -115,8 +120,7 @@ export function BlogPostNav({ prev, next }: Props) {
         >
           <div className="min-w-0">
             <p className="text-xs uppercase tracking-wide text-zs-muted">
-              Siguiente artículo
-            </p>
+              {t("Siguiente artículo")}</p>
             <p className="mt-0.5 line-clamp-2 text-sm font-semibold text-zs-blue-900 group-hover:text-zs-blue-700">
               {next.title}
             </p>
@@ -125,7 +129,7 @@ export function BlogPostNav({ prev, next }: Props) {
         </Link>
       ) : (
         <span aria-hidden />
-      )}
+      ))}
     </nav>
   );
 }

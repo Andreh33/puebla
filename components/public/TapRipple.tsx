@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +38,7 @@ export function TapRipple({
   className,
   as = "span",
 }: Props) {
+  const tx = useTranslatedValue();
   const ref = useRef<HTMLElement | null>(null);
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
@@ -72,7 +75,7 @@ export function TapRipple({
       onPointerDown={onPointerDown}
       className={cn(!bare && "relative inline-flex overflow-hidden", className)}
     >
-      {children}
+      {tx(children)}
       {ripples.map((r) => (
         <span
           key={r.id}

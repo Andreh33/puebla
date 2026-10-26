@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-import { BalanceClient } from "@/app/admin/balance/BalanceClient";
+import { BalanceClient } from "@/app/(default)/admin/balance/BalanceClient";
 import type { BalanceData, Metrics } from "@/lib/admin/balance-types";
 
 afterEach(() => {

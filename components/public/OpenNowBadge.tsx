@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useEffect, useState } from "react";
 
 type Range = { open: number; close: number }; // minutos desde 00:00
@@ -141,6 +143,7 @@ type Props = {
  * Hidratación segura: el primer render devuelve null (evita mismatch).
  */
 export function OpenNowBadge({ className, tone = "light" }: Props) {
+  const tx = useTranslatedValue();
   const [state, setState] = useState<State | null>(null);
 
   useEffect(() => {
@@ -180,10 +183,10 @@ export function OpenNowBadge({ className, tone = "light" }: Props) {
             state.open ? "zs-open-pulse" : "",
           ].join(" ")}
         />
-        {state.open ? "Abierto ahora" : "Cerrado"}
+        {tx(state.open ? "Abierto ahora" : "Cerrado")}
       </span>
       {state.detail && (
-        <span className={["text-xs", detailClasses].join(" ")}>· {state.detail}</span>
+        <span className={["text-xs", detailClasses].join(" ")}>· {tx(state.detail)}</span>
       )}
       <style>{`
         @keyframes zs-open-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.78); } }
