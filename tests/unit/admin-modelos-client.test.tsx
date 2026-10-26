@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   saveModelGridAction: vi.fn(),
 }));
 
-vi.mock("@/app/admin/modelos/_actions", () => ({
+vi.mock("@/app/(default)/admin/modelos/_actions", () => ({
   searchModelsAction: (...args: unknown[]) => mocks.searchModelsAction(...args),
   saveModelGridAction: (...args: unknown[]) => mocks.saveModelGridAction(...args),
 }));
@@ -17,7 +17,7 @@ vi.mock("sonner", () => ({
   toast: Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
 }));
 
-import { ModelosClient } from "@/app/admin/modelos/ModelosClient";
+import { ModelosClient } from "@/app/(default)/admin/modelos/ModelosClient";
 
 beforeEach(() => {
   vi.clearAllMocks();

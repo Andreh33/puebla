@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useState } from "react";
 import { ShoppingBag, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +47,8 @@ export function AddToCartButton({
   className,
   label = "Añadir al carrito",
 }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const { addItem, items } = useCart();
   const [justAdded, setJustAdded] = useState(false);
 
@@ -116,15 +122,14 @@ export function AddToCartButton({
         className,
       )}
     >
-      {justAdded ? (
+      {tx(justAdded ? (
         <>
-          <Check className="h-5 w-5" /> Añadido
-        </>
+          <Check className="h-5 w-5" /> {t("Añadido")}</>
       ) : (
         <>
           <ShoppingBag className="h-5 w-5" /> {label}
         </>
-      )}
+      ))}
     </button>
   );
 }

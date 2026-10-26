@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { X, Smartphone } from "lucide-react";
@@ -16,6 +18,7 @@ const STORAGE_KEY = "zs:app-banner-dismissed-at";
 const DISMISS_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 2 semanas
 
 export function AppPromoBanner() {
+  const t = useTranslations();
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
@@ -63,12 +66,12 @@ export function AppPromoBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Descárgate nuestra app"
+      aria-label={t("Descárgate nuestra app")}
       className="animate-fade-in-up fixed bottom-4 right-4 z-50 max-w-[320px] rounded-2xl border border-zs-border bg-white p-4 shadow-xl lg:hidden"
     >
       <button
         onClick={dismiss}
-        aria-label="Cerrar"
+        aria-label={t("Cerrar")}
         className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-zs-border bg-white shadow-sm hover:bg-zs-surface"
       >
         <X className="h-3.5 w-3.5 text-zs-ink" />
@@ -78,16 +81,14 @@ export function AppPromoBanner() {
           <Smartphone className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-zs-ink">Llévate Zona Sport contigo</p>
+          <p className="text-sm font-semibold text-zs-ink">{t("Llévate Zona Sport contigo")}</p>
           <p className="mt-1 text-xs text-zs-muted">
-            Descárgate nuestra app para una experiencia más rápida.
-          </p>
+            {t("Descárgate nuestra app para una experiencia más rápida.")}</p>
           <button
             onClick={openInstall}
             className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-zs-blue-900 hover:underline"
           >
-            Descargar →
-          </button>
+            {t("Descargar →")}</button>
         </div>
       </div>
     </div>

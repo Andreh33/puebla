@@ -1,5 +1,7 @@
+"use client";
+import { useTranslations, useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import Image from "next/image";
-import Link from "next/link";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { ArrowRight, MapPin, MessageCircle, Mountain, Compass } from "lucide-react";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
 
@@ -16,6 +18,7 @@ import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
  * Sin Three.js, sin Lenis, 100% CSS. Funciona en cualquier navegador.
  */
 export function StaticHeroFallback() {
+const t=useTranslations();
   return (
     <section className="relative overflow-hidden bg-zs-blue-950 text-white">
       {/* Acentos de color en el fondo */}
@@ -32,7 +35,7 @@ export function StaticHeroFallback() {
           <div className="relative aspect-square overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
             <Image
               src="/sample-products/bota-alta-8000-tovir-negro.webp"
-              alt="Bota alta +8000 Tovir — selección Zona Sport"
+              alt={t("Bota alta +8000 Tovir — selección Zona Sport")}
               fill
               priority
               sizes="(max-width: 1024px) 100vw, 60vw"
@@ -41,30 +44,25 @@ export function StaticHeroFallback() {
             {/* Etiqueta superpuesta */}
             <div className="pointer-events-none absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/30 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zs-tennis-300 backdrop-blur">
               <Compass className="h-3.5 w-3.5" />
-              Tu deporte, tu sitio
-            </div>
+              {t("Tu deporte, tu sitio")}</div>
           </div>
         </div>
 
         {/* Contenido editorial */}
         <div className="space-y-6">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] backdrop-blur">
-            Multimarca · Puebla de la Calzada
-          </p>
+            {t("Multimarca · Puebla de la Calzada")}</p>
           <h1 className="text-balance text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            Hecho para correr en Extremadura.
-          </h1>
+            {t("Hecho para correr en Extremadura.")}</h1>
           <p className="max-w-xl text-balance text-base leading-relaxed text-white/85 sm:text-lg">
-            Running, pádel, montaña y calzado. Te asesoramos en tienda como llevamos haciéndolo
-            años: cara a cara, sin postureo. Reservas por WhatsApp con un clic.
-          </p>
+            {t("Running, pádel, montaña y calzado. Te asesoramos en tienda como llevamos haciéndolo años: cara a cara, sin postureo. Reservas por WhatsApp con un clic.")}</p>
 
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <Link
               href="/catalogo"
               className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-zs-blue-900 shadow-lg shadow-black/30 transition hover:bg-zs-surface"
             >
-              Ver catálogo <ArrowRight className="h-4 w-4" />
+              {t("Ver catálogo")}{" "}<ArrowRight className="h-4 w-4" />
             </Link>
             <a
               href={whatsappUrl(WhatsAppMessages.generic())}
@@ -72,15 +70,14 @@ export function StaticHeroFallback() {
               rel="noopener noreferrer"
               className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#25D366] px-6 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:bg-[#1ebe57]"
             >
-              <MessageCircle className="h-4 w-4" /> WhatsApp
-            </a>
+              <MessageCircle className="h-4 w-4" /> {t("WhatsApp")}</a>
           </div>
 
           {/* Tiles narrativos */}
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <Tile icon={Compass} title="Running" copy="Trail y urban" href="/hombre/calzado?tipo=running" />
-            <Tile icon={Mountain} title="Montaña" copy="+8000 trekking" href="/hombre/calzado?tipo=trail" />
-            <Tile icon={MapPin} title="Tienda" copy="C. Silos, 3" href="/contacto" />
+            <Tile icon={Compass} title={t("Running")} copy="Trail y urban" href="/hombre/calzado?tipo=running" />
+            <Tile icon={Mountain} title={t("Montaña")} copy="+8000 trekking" href="/hombre/calzado?tipo=trail" />
+            <Tile icon={MapPin} title={t("Tienda")} copy="C. Silos, 3" href="/contacto" />
           </div>
         </div>
       </div>
@@ -99,6 +96,7 @@ function Tile({
   copy: string;
   href: string;
 }) {
+const tx=useTranslatedValue();
   return (
     <Link
       href={href}
@@ -108,8 +106,8 @@ function Tile({
         <Icon className="h-4 w-4" />
       </span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-white">{title}</p>
-        <p className="truncate text-xs text-white/65">{copy}</p>
+        <p className="text-sm font-semibold text-white">{tx(title)}</p>
+        <p className="truncate text-xs text-white/65">{tx(copy)}</p>
       </div>
       <ArrowRight className="ml-auto h-4 w-4 self-center text-white/40 transition group-hover:translate-x-0.5 group-hover:text-white" />
     </Link>

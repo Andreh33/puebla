@@ -2,14 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingIncludes: {
+    "/*": [
+      "./data/translations/**/*.json",
+      "./data/editorial/**/*.json",
+      "./evidence/ui-source.es.json",
+      "./evidence/ui-client-keys.es.json",
+    ],
+  },
   poweredByHeader: false,
   experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "@radix-ui/react-icons",
-      "date-fns",
-      "recharts",
-    ],
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons", "date-fns", "recharts"],
   },
   images: {
     formats: ["image/avif", "image/webp"],
@@ -58,9 +61,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/admin/(.*)",
-        headers: [
-          { key: "X-Robots-Tag", value: "noindex, nofollow" },
-        ],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
     ];
   },

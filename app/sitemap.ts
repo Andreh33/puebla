@@ -1,5 +1,13 @@
+import {
+  PRODUCT_TRANSLATION_SELECT,
+  POST_TRANSLATION_SELECT,
+  staticLocaleEntries,
+  contentLocaleEntries,
+  editorialLocaleEntries,
+} from "@/lib/i18n/sitemap";
 import type { MetadataRoute } from "next";
 import { db } from "@/lib/db";
+import { LANDING_SLUGS } from "@/lib/landings/contents";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 
@@ -32,9 +40,17 @@ function dedupeByUrl(entries: Entry[]): Entry[] {
 function staticEntries(now: Date): Entry[] {
   return [
     { url: `${SITE_URL}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
+    { url: `${SITE_URL}/catalogo`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: `${SITE_URL}/outlet`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
+    { url: `${SITE_URL}/bebe`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/contacto`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${SITE_URL}/sobre-nosotros`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    {
+      url: `${SITE_URL}/sobre-nosotros`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
     { url: `${SITE_URL}/marcas`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     // Landings de género — alta prioridad, son los principales puntos de entrada del top-nav.
     // Niño y niña son hubs independientes (Bloque 4); /ninos redirige 308 a /nino,
@@ -44,26 +60,29 @@ function staticEntries(now: Date): Entry[] {
     { url: `${SITE_URL}/nino`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/nina`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/aviso-legal`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
-    { url: `${SITE_URL}/politica-privacidad`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
-    { url: `${SITE_URL}/politica-cookies`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
-    { url: `${SITE_URL}/condiciones-de-venta`, lastModified: now, changeFrequency: "yearly", priority: 0.2 },
+    {
+      url: `${SITE_URL}/politica-privacidad`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
+    {
+      url: `${SITE_URL}/politica-cookies`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
+    {
+      url: `${SITE_URL}/condiciones-de-venta`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
   ];
 }
 
 function localLandings(now: Date): Entry[] {
-  const municipios = [
-    "puebla-de-la-calzada",
-    "montijo",
-    "lobon",
-    "talavera-la-real",
-    "merida",
-    "badajoz",
-    "esparragalejo",
-    "la-garrovilla",
-    "torremayor",
-    "calamonte",
-  ];
-  return municipios.map((m) => ({
+  return LANDING_SLUGS.map((m) => ({
     url: `${SITE_URL}/tienda-en/${m}`,
     lastModified: now,
     changeFrequency: "monthly" as const,
@@ -88,7 +107,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         orderBy: { name: "asc" },
       }),
       db.product.count({ where: { status: "ACTIVE" } }),
-      db.blogPost.count({ where: { status: "PUBLISHED" } }),
+      db.blogPost.count({
+        where: { status: "PUBLISHED", OR: [{ publishedAt: null }, { publishedAt: { lte: now } }] },
+      }),
     ]);
 
     for (const b of brands) {
@@ -110,46 +131,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
 
-    const overLimit = productCount + postCount + entries.length > HARD_LIMIT;
+    const overLimit = 5 * (productCount + postCount) + entries.length > HARD_LIMIT;
 
     if (overLimit) {
-      // Referenciamos los sub-sitemaps mediante entradas-señuelo en el root.
-      // (Next aún no soporta sitemap index nativo en `app/sitemap.ts`; los
-      // motores de búsqueda los descubrirán a través de robots.txt + los
-      // routes específicos `/sitemap-products.xml` y `/sitemap-posts.xml`.)
-      return dedupeByUrl(entries);
+      // Large catalogs are listed in the product/post sitemaps declared in robots.txt.
+      return dedupeByUrl([
+        ...entries.flatMap((entry) => (entry.alternates ? [entry] : staticLocaleEntries(entry))),
+        ...editorialLocaleEntries(),
+      ]);
     }
 
     // Si no superamos límite, embebemos productos y posts en el principal.
     const [products, posts] = await Promise.all([
       db.product.findMany({
         where: { status: "ACTIVE" },
-        select: { slug: true, updatedAt: true },
+        select: PRODUCT_TRANSLATION_SELECT,
         orderBy: { updatedAt: "desc" },
       }),
       db.blogPost.findMany({
-        where: { status: "PUBLISHED" },
-        select: { slug: true, updatedAt: true, publishedAt: true },
+        where: { status: "PUBLISHED", OR: [{ publishedAt: null }, { publishedAt: { lte: now } }] },
+        select: POST_TRANSLATION_SELECT,
         orderBy: { publishedAt: "desc" },
       }),
     ]);
 
-    for (const p of products) {
-      entries.push({
-        url: `${SITE_URL}/producto/${p.slug}`,
-        lastModified: p.updatedAt,
-        changeFrequency: "weekly",
-        priority: 0.6,
-      });
-    }
-    for (const p of posts) {
-      entries.push({
-        url: `${SITE_URL}/blog/${p.slug}`,
-        lastModified: p.updatedAt,
-        changeFrequency: "monthly",
-        priority: 0.5,
-      });
-    }
+    entries.push(...products.flatMap((product) => contentLocaleEntries("products", product)));
+    entries.push(...posts.flatMap((post) => contentLocaleEntries("posts", post)));
   } catch (err) {
     // Eco silencioso: en build sin DB es esperable.
     console.warn("[sitemap] no se pudo consultar DB:", (err as Error).message);

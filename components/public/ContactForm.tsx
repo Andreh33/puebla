@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +22,8 @@ type Props = {
 };
 
 export function ContactForm({ sourcePage }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -80,7 +86,7 @@ export function ContactForm({ sourcePage }: Props) {
     >
       {/* Honeypot anti-spam, invisible para humanos */}
       <div className="hidden" aria-hidden="true">
-        <label htmlFor="website-hp">No rellenes este campo</label>
+        <label htmlFor="website-hp">{t("No rellenes este campo")}</label>
         <input
           id="website-hp"
           type="text"
@@ -93,44 +99,44 @@ export function ContactForm({ sourcePage }: Props) {
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="name">
-            Nombre <span className="text-zs-red-600">*</span>
+            {t("Nombre")}{" "}<span className="text-zs-red-600">*</span>
           </Label>
           <Input
             id="name"
             autoComplete="name"
-            placeholder="Tu nombre"
+            placeholder={t("Tu nombre")}
             aria-invalid={!!errors.name}
             {...register("name")}
           />
           {errors.name && (
             <p role="alert" className="text-xs text-zs-red-600">
-              {errors.name.message}
+              {tx(errors.name.message)}
             </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="email">
-            Email <span className="text-zs-red-600">*</span>
+            {t("Email")}{" "}<span className="text-zs-red-600">*</span>
           </Label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="tucorreo@ejemplo.com"
+            placeholder={t("tucorreo@ejemplo.com")}
             aria-invalid={!!errors.email}
             {...register("email")}
           />
           {errors.email && (
             <p role="alert" className="text-xs text-zs-red-600">
-              {errors.email.message}
+              {tx(errors.email.message)}
             </p>
           )}
         </div>
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="phone">Teléfono (opcional)</Label>
+        <Label htmlFor="phone">{t("Teléfono (opcional)")}</Label>
         <Input
           id="phone"
           type="tel"
@@ -141,25 +147,25 @@ export function ContactForm({ sourcePage }: Props) {
         />
         {errors.phone && (
           <p role="alert" className="text-xs text-zs-red-600">
-            {errors.phone.message}
+            {tx(errors.phone.message)}
           </p>
         )}
       </div>
 
       <div className="space-y-1.5">
         <Label htmlFor="message">
-          Mensaje <span className="text-zs-red-600">*</span>
+          {t("Mensaje")}{" "}<span className="text-zs-red-600">*</span>
         </Label>
         <Textarea
           id="message"
           rows={5}
-          placeholder="Cuéntanos en qué podemos ayudarte: producto, talla, horario, lo que necesites."
+          placeholder={t("Cuéntanos en qué podemos ayudarte: producto, talla, horario, lo que necesites.")}
           aria-invalid={!!errors.message}
           {...register("message")}
         />
         {errors.message && (
           <p role="alert" className="text-xs text-zs-red-600">
-            {errors.message.message}
+            {tx(errors.message.message)}
           </p>
         )}
       </div>
@@ -171,13 +177,10 @@ export function ContactForm({ sourcePage }: Props) {
           onCheckedChange={(v) => setValue("gdprConsent", v === true ? true : (false as unknown as true), { shouldValidate: true })}
         />
         <Label htmlFor="gdpr" className="text-xs leading-relaxed text-zs-ink/85">
-          He leído y acepto la{" "}
+          {t("He leído y acepto la")}{tx(" ")}
           <Link href="/politica-privacidad" className="underline hover:text-zs-blue-700">
-            política de privacidad
-          </Link>
-          . Trataremos tus datos para responder a tu consulta. No te enviaremos publicidad
-          salvo que tú lo solicites expresamente.
-        </Label>
+            {t("política de privacidad")}</Link>
+          {t(". Trataremos tus datos para responder a tu consulta. No te enviaremos publicidad salvo que tú lo solicites expresamente.")}</Label>
       </div>
       {errors.gdprConsent && (
         <p role="alert" className="-mt-3 text-xs text-zs-red-600">
@@ -186,8 +189,8 @@ export function ContactForm({ sourcePage }: Props) {
       )}
 
       <Button type="submit" disabled={submitting} size="lg" className="w-full sm:w-auto">
-        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-        {submitting ? "Enviando…" : "Enviar mensaje"}
+        {tx(submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />)}
+        {tx(submitting ? "Enviando…" : "Enviar mensaje")}
       </Button>
     </form>
   );

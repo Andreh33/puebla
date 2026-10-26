@@ -1,7 +1,11 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import Image from "next/image";
-import Link from "next/link";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { MagneticButton } from "@/components/public/MagneticButton";
@@ -110,6 +114,8 @@ export function GenderHero({
   gender: GenderKey;
   productCount?: number;
 }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const cfg = HERO_CONFIG[gender];
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
@@ -123,7 +129,7 @@ export function GenderHero({
 
   // El headline puede tener varias palabras — animamos cada una con stagger,
   // como el HomeHero. Pero más compacto: 1 sola línea visual de masking.
-  const words = cfg.headline.split(" ");
+  const words = tx(cfg.headline).split(" ");
 
   return (
     <section
@@ -170,7 +176,7 @@ export function GenderHero({
           }}
         >
           <span className="inline-block h-px w-8 bg-white/40" />
-          {cfg.eyebrow}
+          {tx(cfg.eyebrow)}
         </p>
 
         {/* Headline monumental con stagger por palabra. */}
@@ -218,7 +224,7 @@ export function GenderHero({
               "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 700ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 700ms",
           }}
         >
-          {cfg.tagline}
+          {tx(cfg.tagline)}
         </p>
 
         {/* CTAs */}
@@ -239,8 +245,7 @@ export function GenderHero({
               className="group inline-flex h-14 items-center gap-3 rounded-full bg-zs-red-600 pl-7 pr-3 text-sm font-bold uppercase tracking-[0.06em] text-white transition-all hover:bg-zs-red-500"
               style={{ boxShadow: cfg.primaryGlow }}
             >
-              Ver selección
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zs-red-600 transition-transform group-hover:translate-x-0.5">
+              {t("Ver selección")}<span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zs-red-600 transition-transform group-hover:translate-x-0.5">
                 <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
               </span>
             </Link>
@@ -251,8 +256,7 @@ export function GenderHero({
               data-cursor="Explorar"
               className="inline-flex h-14 items-center gap-2.5 rounded-full border border-white/30 bg-white/[0.06] px-7 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/60 hover:bg-white/[0.12]"
             >
-              Ver categorías
-            </Link>
+              {t("Ver categorías")}</Link>
           </MagneticButton>
         </div>
 
@@ -265,8 +269,7 @@ export function GenderHero({
               transition: "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 1100ms",
             }}
           >
-            {productCount} {productCount === 1 ? "producto" : "productos"} disponibles
-          </p>
+            {tx(productCount)} {tx(productCount === 1 ? "producto" : "productos")} {t("disponibles")}</p>
         )}
       </div>
 

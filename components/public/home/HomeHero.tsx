@@ -1,31 +1,22 @@
 "use client";
 
-import Link from "next/link";
+import {
+  useTranslations,
+  useTranslatedValue,
+  useTranslatedTemplate,
+} from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Truck, Sparkles } from "lucide-react";
 import { MagneticButton } from "@/components/public/MagneticButton";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 
 /**
- * HomeHero — hero monumental sobre UNA SOLA imagen estática vistosa.
- *
- * Decisión tras varias iteraciones:
- *  1. Inicialmente había <video> + <Image> solapada → cliente pidió quitar.
- *  2. Probamos foto Unsplash que resultó ser una nadadora (mal etiquetada).
- *  3. Probamos video Pexels (3192305): hoy apunta a una reunión de oficina.
- *  4. Probamos video Mixkit (32812): pista de atletismo con shorts Adidas.
- *  5. Final: cenital aéreo de pista de atletismo color terracota con
- *     corredores en SILUETA (Unsplash CC0, photo-1502904550040). Sin ropa
- *     identificable → cero riesgo de marcas prohibidas. Atmosférico,
- *     dramático, inequívocamente deportivo.
- *
- * A11y:
- *  - H1 visible con headline real.
- *  - Respeta `prefers-reduced-motion`.
- *  - Contraste AA por overlay 55% + gradientes.
+ * Portada con vídeo local y póster visible desde el HTML inicial.
+ * El contenido móvil se muestra sin esperar a la hidratación; el vídeo empieza
+ * después de las fuentes y del primer pintado. Conserva la animación de escritorio.
  */
 
-const HEADLINE = ["La", "temporada", "que", "estabas", "esperando."] as const;
 // Marcas que la tienda trabaja de verdad (petición cliente 2026-05-24). Misma
 // lista que la marquesina superior del Header y que MARQUEE_BRAND_NAMES en
 // public-queries.ts — fuente única de marcas en todo el sitio.
@@ -41,6 +32,9 @@ const BRANDS_TICKER = [
 ] as const;
 
 export function HomeHero() {
+  const _translateUi = useTranslations();
+  const _translateValue = useTranslatedValue();
+  const headlineWords = _translateUi("La temporada que estabas esperando.").split(/\s+/);
   const [mounted, setMounted] = useState(false);
   const [reduced, setReduced] = useState(false);
   const rootRef = useRef<HTMLElement | null>(null);
@@ -53,29 +47,51 @@ export function HomeHero() {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  // Forzar reproducción del video en CADA visita. Algunos navegadores
-  // (Safari iOS, Chrome con autoplay restringido) ignoran el atributo
-  // `autoplay` si la pestaña entra en background o el bundle JS termina
-  // antes de que se cumplan las heurísticas. Llamamos a play() en el
-  // efecto post-hidratación y volvemos a intentar cuando la pestaña
-  // vuelve a primer plano. Silenciamos rejections (algunos browsers las
-  // lanzan aunque el video sí esté reproduciendo). Se reproduce SIEMPRE,
-  // independientemente de prefers-reduced-motion (decisión del cliente).
+  // El póster ya está en el HTML; el vídeo de fondo espera a las fuentes y
+  // a una oportunidad de pintado para no competir con el texto crítico.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const v = videoRef.current;
-    if (!v) return;
+    const video = videoRef.current;
+    if (!video) return;
+    let cancelled = false;
+    let frame = 0;
+    let started = false;
+
     const tryPlay = () => {
-      void v.play().catch(() => {
-        /* ignored — autoplay puede estar bloqueado puntualmente */
+      if (cancelled || !started) return;
+      void video.play().catch(() => {
+        // El navegador puede bloquear autoplay; el póster sigue visible.
       });
     };
-    tryPlay();
+
+    void Promise.resolve(document.fonts?.ready)
+      .catch(() => {
+        // Un fallo de fuentes no debe impedir la reproducción del fondo.
+      })
+      .then(() => {
+        if (cancelled) return;
+        frame = requestAnimationFrame(() => {
+          frame = requestAnimationFrame(() => {
+            if (cancelled) return;
+            video.src = "/videos/hero-basket.mp4";
+            started = true;
+            video.load();
+            tryPlay();
+          });
+        });
+      });
+
     document.addEventListener("visibilitychange", tryPlay);
     window.addEventListener("focus", tryPlay);
     return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", tryPlay);
       window.removeEventListener("focus", tryPlay);
+      if (started) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
     };
   }, []);
 
@@ -119,14 +135,14 @@ export function HomeHero() {
   return (
     <section
       ref={rootRef}
-      aria-label="Zona Sport — bienvenida"
-      className="relative isolate overflow-hidden bg-zs-blue-950 text-white"
+      aria-label={_translateUi("Zona Sport — bienvenida")}
+      className="bg-zs-blue-950 relative isolate overflow-hidden text-white"
       style={{ minHeight: "100svh" }}
     >
       {/* Video hero EN FIXED — se queda de fondo mientras scrolleas por
           encima. Las secciones siguientes del home tienen background
           opaco propio, así que tapan al fixed cuando llegas a ellas.
-          Pexels CC0: zapatillas + balón baloncesto en pista terracota. */}
+          Vídeo local de zapatillas y balón de baloncesto en pista terracota. */}
       <div className="fixed inset-0 -z-20 h-screen w-screen" aria-hidden>
         <video
           ref={videoRef}
@@ -134,31 +150,27 @@ export function HomeHero() {
           muted
           loop
           playsInline
-          preload="auto"
+          preload="none"
           poster="/videos/hero-basket.jpg"
           disablePictureInPicture
           disableRemotePlayback
           className="h-full w-full object-cover object-center"
-        >
-          <source src="/videos/hero-basket.mp4" type="video/mp4" />
-        </video>
+        />
       </div>
-      {/* Overlay azul corporativo (zs-blue-950 navy) al 60% — reemplaza
-          al gris previo. Acompaña al video en position: fixed. La textura
-          zs-grain se mantiene a opacidad muy baja como acabado editorial. */}
+      {/* Capa negra al 30% sobre el vídeo, manteniendo la textura editorial. */}
       <div className="fixed inset-0 -z-10 h-screen w-screen" aria-hidden>
-        <div className="absolute inset-0 bg-zs-blue-950/60" />
-        <div className="absolute inset-0 mix-blend-overlay opacity-[0.07] zs-grain" />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="zs-grain absolute inset-0 opacity-[0.07] mix-blend-overlay" />
       </div>
 
       {/* Sticker superior derecho */}
-      <div className="pointer-events-none absolute right-4 top-24 z-20 hidden -rotate-6 sm:right-8 sm:top-28 sm:block">
+      <div className="pointer-events-none absolute top-24 right-4 z-20 hidden -rotate-6 sm:top-[152px] sm:right-8 sm:block">
         <div
-          className="flex items-center gap-2 rounded-full bg-zs-tennis-300 px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-zs-blue-950 shadow-2xl"
+          className="bg-zs-tennis-300 text-zs-blue-950 flex items-center gap-2 rounded-full px-5 py-2.5 text-[11px] font-bold tracking-[0.22em] uppercase shadow-2xl"
           style={{ boxShadow: "var(--shadow-zs-tennis-glow-lg)" }}
         >
           <Truck className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Envío rápido
+          {_translateUi("Envío rápido")}
         </div>
       </div>
 
@@ -166,15 +178,15 @@ export function HomeHero() {
           intencional: la pill flotante del Header (top-strip 38px + pill ~64px
           + márgenes) ocupa ~148px desde el top y la imagen del hero queda
           DETRÁS de la pill — el texto tiene que empezar por debajo. */}
-      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-44 sm:px-8 sm:pt-48 lg:pt-52">
-        <p className="inline-flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.32em] text-white/70">
+      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-36 sm:px-8 sm:pt-[216px]">
+        <p className="inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.32em] text-white/70 uppercase">
           <span className="inline-block h-px w-8 bg-white/40" />
-          Con cariño desde Puebla de la Calzada
+          {_translateUi("Con cariño desde Puebla de la Calzada")}
         </p>
         <div className="flex items-center gap-3">
           <OpenNowBadge className="text-white" tone="dark" />
-          <p className="hidden text-[11px] uppercase tracking-[0.32em] text-white/55 sm:block">
-            Est. 1998 — Badajoz
+          <p className="hidden text-[11px] tracking-[0.32em] text-white/55 uppercase sm:block">
+            {_translateUi("Puebla de la Calzada — Badajoz")}
           </p>
         </div>
       </div>
@@ -190,10 +202,10 @@ export function HomeHero() {
         }}
       >
         <h1
-          className="font-display font-black leading-[0.86] tracking-[-0.04em] text-white"
+          className="font-display leading-[0.86] font-black tracking-[-0.04em] text-white"
           style={{ fontSize: "clamp(3rem, 11vw, 10.5rem)" }}
         >
-          {HEADLINE.map((word, i) => (
+          {headlineWords.map((word, i) => (
             <span
               key={`${word}-${i}`}
               className="zs-word-mask inline-block overflow-hidden align-bottom"
@@ -207,12 +219,12 @@ export function HomeHero() {
                     mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 105%, 0)",
                   opacity: mounted || reduced ? 1 : 0,
                   color:
-                    word === "esperando."
+                    i === headlineWords.length - 1
                       ? "#f97316" /* orange-500 — cambio de rojo a naranja por petición del cliente */
                       : undefined,
                 }}
               >
-                {word}
+                {_translateValue(word)}
               </span>
             </span>
           ))}
@@ -222,27 +234,25 @@ export function HomeHero() {
         <div className="mt-10 grid gap-10 sm:mt-14 lg:grid-cols-12 lg:items-end">
           <div className="lg:col-span-7">
             <p
-              className="max-w-2xl text-balance text-base leading-relaxed text-white/85 sm:text-lg"
+              className="zs-hero-critical max-w-2xl text-base leading-relaxed text-balance text-white/85 sm:text-lg"
               style={{
                 opacity: mounted || reduced ? 1 : 0,
-                transform:
-                  mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 14px, 0)",
+                transform: mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 14px, 0)",
                 transition:
                   "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 900ms",
               }}
             >
-              Running, montaña, pádel, fitness y calzado. Más de 20 años de
-              experiencia, atención cara a cara en tienda y envío 24/48 h
-              a toda España.
+              {_translateUi(
+                "Running, montaña, pádel, fitness y calzado. Atención cara a cara en tienda y envíos a España, Portugal, Francia, Italia y Alemania.",
+              )}
             </p>
           </div>
 
           <div
-            className="flex flex-wrap items-center gap-3 lg:col-span-5 lg:justify-end"
+            className="zs-hero-critical flex flex-wrap items-center gap-3 lg:col-span-5 lg:justify-end"
             style={{
               opacity: mounted || reduced ? 1 : 0,
-              transform:
-                mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 14px, 0)",
+              transform: mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 14px, 0)",
               transition:
                 "opacity 700ms cubic-bezier(0.16, 1, 0.3, 1) 1050ms, transform 700ms cubic-bezier(0.16, 1, 0.3, 1) 1050ms",
             }}
@@ -251,11 +261,11 @@ export function HomeHero() {
               <Link
                 href="#catalogo"
                 data-cursor="Comprar"
-                className="group inline-flex h-14 items-center gap-3 rounded-full bg-zs-red-600 pl-7 pr-3 text-sm font-bold uppercase tracking-[0.06em] text-white transition-all hover:bg-zs-red-500"
+                className="group bg-zs-red-600 hover:bg-zs-red-500 inline-flex h-14 items-center gap-3 rounded-full pr-3 pl-7 text-sm font-bold tracking-[0.06em] text-white uppercase transition-all"
                 style={{ boxShadow: "var(--shadow-zs-rojo-glow-lg)" }}
               >
-                Comprar ahora
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-zs-red-600 transition-transform group-hover:translate-x-0.5">
+                {_translateUi("Comprar ahora")}
+                <span className="text-zs-red-600 flex h-9 w-9 items-center justify-center rounded-full bg-white transition-transform group-hover:translate-x-0.5">
                   <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </span>
               </Link>
@@ -266,7 +276,7 @@ export function HomeHero() {
                 data-cursor="Marcas"
                 className="inline-flex h-14 items-center gap-2.5 rounded-full border border-white/30 bg-white/[0.06] px-7 text-sm font-semibold text-white backdrop-blur-md transition-colors hover:border-white/60 hover:bg-white/[0.12]"
               >
-                Explorar marcas
+                {_translateUi("Explorar marcas")}
               </Link>
             </MagneticButton>
           </div>
@@ -293,11 +303,17 @@ export function HomeHero() {
           className="group relative mt-4 flex flex-col items-start justify-between gap-6 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-orange-500 via-orange-500 to-orange-800 p-6 text-white transition-transform hover:-translate-y-0.5 sm:flex-row sm:items-center sm:gap-12 sm:p-8 lg:p-10"
           style={{ boxShadow: "0 14px 40px -10px rgba(249, 115, 22, 0.55)" }}
         >
-          <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay zs-grain" aria-hidden />
+          <div
+            className="zs-grain pointer-events-none absolute inset-0 -z-10 opacity-30 mix-blend-overlay"
+            aria-hidden
+          />
           {/* Brillo que barre el banner de lado a lado en bucle. Banda
               diagonal blanca semitransparente que cruza con `zs-shine-sweep`.
               Respeta prefers-reduced-motion (no anima). */}
-          <span aria-hidden className="zs-shine pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          <span
+            aria-hidden
+            className="zs-shine pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
+          >
             <span className="zs-shine-bar" />
           </span>
           <div className="relative flex flex-1 items-center gap-5 sm:gap-7">
@@ -305,22 +321,23 @@ export function HomeHero() {
               <Sparkles className="h-7 w-7 sm:h-8 sm:w-8" strokeWidth={2.25} />
             </span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.32em] text-white/80">
-                Outlet
+              <p className="text-[10px] font-bold tracking-[0.32em] text-white/80 uppercase">
+                {_translateUi("Outlet")}
               </p>
               <p
-                className="mt-1 font-display font-black leading-[0.95] tracking-[-0.03em]"
+                className="font-display mt-1 leading-[0.95] font-black tracking-[-0.03em]"
                 style={{ fontSize: "clamp(1.5rem, 3vw, 2.5rem)" }}
               >
-                Outlet en una <span className="text-zs-tennis-300">selección</span>
+                {_translateUi("Outlet en una")}{" "}
+                <span className="text-zs-tennis-300">{_translateUi("selección")}</span>
               </p>
               <p className="mt-1 text-sm text-white/80">
-                Textil y calzado de marca a precio reducido · mientras haya stock
+                {_translateUi("Textil y calzado de marca a precio reducido · mientras haya stock")}
               </p>
             </div>
           </div>
-          <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold uppercase tracking-[0.06em] text-orange-600 transition-transform group-hover:translate-x-1">
-            Ver outlet
+          <span className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-bold tracking-[0.06em] text-orange-600 uppercase transition-transform group-hover:translate-x-1">
+            {_translateUi("Ver outlet")}
             <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
           </span>
         </Link>
@@ -330,27 +347,26 @@ export function HomeHero() {
       <div className="relative mx-auto max-w-[1600px] px-4 pb-12 sm:px-8 sm:pb-16">
         <div className="grid grid-cols-2 gap-6 border-t border-white/10 pt-8 sm:grid-cols-4">
           {[
-            { k: "2003", v: "en el barrio desde" },
-            { k: "+20", v: "años de experiencia" },
-            { k: "24/48h", v: "envío Península" },
-            { k: "60€", v: "envío gratis desde" },
+            { k: "06490", v: "Puebla de la Calzada" },
+            { k: "Tienda", v: "atención cercana" },
+            { k: "5", v: "países de entrega" },
+            { k: "9,80 €", v: "envío internacional" },
           ].map((it, i) => (
             <div
               key={it.v}
               style={{
                 opacity: mounted || reduced ? 1 : 0,
-                transform:
-                  mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 12px, 0)",
+                transform: mounted || reduced ? "translate3d(0, 0, 0)" : "translate3d(0, 12px, 0)",
                 transition: `opacity 600ms cubic-bezier(0.16, 1, 0.3, 1) ${
                   1300 + i * 80
                 }ms, transform 600ms cubic-bezier(0.16, 1, 0.3, 1) ${1300 + i * 80}ms`,
               }}
             >
-              <p className="font-display text-3xl font-bold leading-none tracking-tight text-white sm:text-4xl">
-                {it.k}
+              <p className="font-display text-3xl leading-none font-bold tracking-tight text-white sm:text-4xl">
+                {_translateValue(it.k)}
               </p>
-              <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.22em] text-white/65">
-                {it.v}
+              <p className="mt-2 text-[11px] font-medium tracking-[0.22em] text-white/65 uppercase">
+                {_translateValue(it.v)}
               </p>
             </div>
           ))}
@@ -363,11 +379,11 @@ export function HomeHero() {
           {[...BRANDS_TICKER, ...BRANDS_TICKER, ...BRANDS_TICKER].map((b, i) => (
             <span
               key={`${b}-${i}`}
-              className="inline-flex items-center gap-12 font-display text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
+              className="font-display inline-flex items-center gap-12 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl"
             >
-              {b}
+              {_translateValue(b)}
               <span aria-hidden className="text-zs-red-500">
-                ✺
+                {_translateUi("✺")}
               </span>
             </span>
           ))}
@@ -381,6 +397,14 @@ export function HomeHero() {
         }
         .zs-word {
           transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), opacity 900ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        /* The mobile first paint must not wait for hydration or entrance delays. */
+        @media (max-width: 767px), (prefers-reduced-motion: reduce) {
+          .zs-word, .zs-hero-critical {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+          }
         }
         @keyframes zs-brand-scroll {
           from { transform: translateX(0); }

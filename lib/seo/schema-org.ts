@@ -1,3 +1,5 @@
+import { localePath } from "@/lib/i18n/routing";
+import { LOCALE_INFO, type Locale } from "@/lib/i18n/config";
 /**
  * Builders de JSON-LD para schemas Schema.org.
  * Devuelven objetos serializables que se inyectan en <script type="application/ld+json">.
@@ -23,8 +25,8 @@ export const STORE_NAP = {
   addressCountry: "ES",
   telephone: "+34689110691",
   email: "hola@zonasport.es",
-  latitude: 38.881,
-  longitude: -6.622,
+  latitude: 38.8938767,
+  longitude: -6.6259371,
 };
 
 export const STORE_HOURS = [
@@ -71,7 +73,10 @@ export const AREA_SERVED_CITIES = [
  * perder señal de SEO de proximidad.
  */
 export const AREA_SERVED = [
-  { "@type": "Country", name: "España" },
+  ...["España", "Portugal", "Francia", "Italia", "Alemania"].map((name) => ({
+    "@type": "Country",
+    name,
+  })),
   ...AREA_SERVED_CITIES,
 ];
 
@@ -158,20 +163,20 @@ export function organizationSchema(opts: { sameAs?: string[] } = {}) {
 // WebSite / Search
 // ---------------------------------------------------------------------------
 
-export function websiteSchema() {
+export function websiteSchema(locale: Locale = "es") {
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "@id": `${SITE_URL}/#website`,
-    url: SITE_URL,
+    "@id": `${SITE_URL}${localePath(locale, "/")}#website`,
+    url: `${SITE_URL}${localePath(locale, "/")}`,
     name: SITE_NAME,
-    inLanguage: "es-ES",
+    inLanguage: LOCALE_INFO[locale].language,
     publisher: { "@id": ORG_ID },
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/buscar?q={search_term_string}`,
+        urlTemplate: `${SITE_URL}${localePath(locale, "/buscar")}?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -182,38 +187,47 @@ export function websiteSchema() {
 // Páginas
 // ---------------------------------------------------------------------------
 
-export function aboutPageSchema(opts: { title: string; description: string }) {
+export function aboutPageSchema(
+  opts: { title: string; description: string },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "@id": `${SITE_URL}/sobre-nosotros#about`,
-    url: `${SITE_URL}/sobre-nosotros`,
+    "@id": `${SITE_URL}${localePath(locale, `/sobre-nosotros#about`)}`,
+    url: `${SITE_URL}${localePath(locale, `/sobre-nosotros`)}`,
     name: opts.title,
     description: opts.description,
-    isPartOf: { "@id": `${SITE_URL}/#website` },
+    isPartOf: { "@id": `${SITE_URL}${localePath(locale, "/")}#website` },
     about: { "@id": ORG_ID },
   };
 }
 
-export function contactPageSchema(opts: { title: string; description: string }) {
+export function contactPageSchema(
+  opts: { title: string; description: string },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    "@id": `${SITE_URL}/contacto#contact`,
-    url: `${SITE_URL}/contacto`,
+    "@id": `${SITE_URL}${localePath(locale, `/contacto#contact`)}`,
+    url: `${SITE_URL}${localePath(locale, `/contacto`)}`,
     name: opts.title,
     description: opts.description,
-    isPartOf: { "@id": `${SITE_URL}/#website` },
+    isPartOf: { "@id": `${SITE_URL}${localePath(locale, "/")}#website` },
     mainEntity: { "@id": STORE_ID },
   };
 }
 
-export function siteNavigationElementSchema(items: Array<{ name: string; path: string }>) {
+export function siteNavigationElementSchema(
+  items: Array<{ name: string; path: string }>,
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "SiteNavigationElement",
     name: items.map((it) => it.name),
-    url: items.map((it) => `${SITE_URL}${it.path}`),
+    url: items.map((it) => `${SITE_URL}${localePath(locale, `${it.path}`)}`),
   };
 }
 
@@ -221,7 +235,10 @@ export function siteNavigationElementSchema(items: Array<{ name: string; path: s
 // Breadcrumbs
 // ---------------------------------------------------------------------------
 
-export function breadcrumbSchema(items: Array<{ name: string; path: string }>) {
+export function breadcrumbSchema(
+  items: Array<{ name: string; path: string }>,
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -229,7 +246,7 @@ export function breadcrumbSchema(items: Array<{ name: string; path: string }>) {
       "@type": "ListItem",
       position: i + 1,
       name: it.name,
-      item: `${SITE_URL}${it.path}`,
+      item: `${SITE_URL}${localePath(locale, `${it.path}`)}`,
     })),
   };
 }
@@ -238,21 +255,24 @@ export function breadcrumbSchema(items: Array<{ name: string; path: string }>) {
 // Producto
 // ---------------------------------------------------------------------------
 
-export function productSchema(p: {
-  name: string;
-  description?: string | null;
-  images: string[];
-  sku: string;
-  gtin13?: string | null;
-  mpn?: string | null;
-  brandName: string;
-  categoryName?: string | null;
-  price: number;
-  inStock: boolean;
-  slug: string;
-  condition?: "NewCondition" | "UsedCondition";
-  aggregateRating?: { ratingValue: number; reviewCount: number };
-}) {
+export function productSchema(
+  p: {
+    name: string;
+    description?: string | null;
+    images: string[];
+    sku: string;
+    gtin13?: string | null;
+    mpn?: string | null;
+    brandName: string;
+    categoryName?: string | null;
+    price: number;
+    inStock: boolean;
+    slug: string;
+    condition?: "NewCondition" | "UsedCondition";
+    aggregateRating?: { ratingValue: number; reviewCount: number };
+  },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -275,22 +295,21 @@ export function productSchema(p: {
       : {}),
     offers: {
       "@type": "Offer",
-      url: `${SITE_URL}/producto/${p.slug}`,
+      url: `${SITE_URL}${localePath(locale, `/producto/${p.slug}`)}`,
       priceCurrency: "EUR",
       price: p.price.toFixed(2),
-      priceValidUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
-        .toISOString()
-        .slice(0, 10),
-      availability: p.inStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      priceValidUntil: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toISOString().slice(0, 10),
+      availability: p.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       itemCondition: `https://schema.org/${p.condition ?? "NewCondition"}`,
       seller: { "@id": STORE_ID },
     },
   };
 }
 
-export function productListSchema(items: Array<{ name: string; slug: string; image?: string | null }>) {
+export function productListSchema(
+  items: Array<{ name: string; slug: string; image?: string | null }>,
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -298,7 +317,7 @@ export function productListSchema(items: Array<{ name: string; slug: string; ima
     itemListElement: items.map((it, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${SITE_URL}/producto/${it.slug}`,
+      url: `${SITE_URL}${localePath(locale, `/producto/${it.slug}`)}`,
       name: it.name,
       ...(it.image ? { image: it.image } : {}),
     })),
@@ -309,19 +328,23 @@ export function productListSchema(items: Array<{ name: string; slug: string; ima
 // Blog
 // ---------------------------------------------------------------------------
 
-export function blogPostingSchema(p: {
-  title: string;
-  description?: string | null;
-  slug: string;
-  publishedAt: Date | string;
-  modifiedAt?: Date | string | null;
-  author: string;
-  imageUrl?: string | null;
-  tags?: string[];
-}) {
+export function blogPostingSchema(
+  p: {
+    title: string;
+    description?: string | null;
+    slug: string;
+    publishedAt: Date | string;
+    modifiedAt?: Date | string | null;
+    author: string;
+    imageUrl?: string | null;
+    tags?: string[];
+  },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
+    inLanguage: LOCALE_INFO[locale].language,
     headline: p.title,
     description: p.description ?? undefined,
     image: p.imageUrl ? [p.imageUrl] : undefined,
@@ -329,7 +352,10 @@ export function blogPostingSchema(p: {
     dateModified: p.modifiedAt ? new Date(p.modifiedAt).toISOString() : undefined,
     author: { "@type": "Organization", name: p.author },
     publisher: { "@id": ORG_ID },
-    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${p.slug}` },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${SITE_URL}${localePath(locale, `/blog/${p.slug}`)}`,
+    },
     keywords: p.tags?.join(", "),
   };
 }
@@ -354,45 +380,51 @@ export function faqPageSchema(items: Array<{ q: string; a: string }>) {
 // Brand / Categoría / Landing local
 // ---------------------------------------------------------------------------
 
-export function brandSchema(b: {
-  name: string;
-  slug: string;
-  description?: string | null;
-  logoUrl?: string | null;
-}) {
+export function brandSchema(
+  b: {
+    name: string;
+    slug: string;
+    description?: string | null;
+    logoUrl?: string | null;
+  },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "Brand",
     name: b.name,
-    url: `${SITE_URL}/marca/${b.slug}`,
+    url: `${SITE_URL}${localePath(locale, `/marca/${b.slug}`)}`,
     description: b.description ?? undefined,
     logo: b.logoUrl ?? undefined,
   };
 }
 
-export function categoryCollectionSchema(opts: {
-  name: string;
-  slug: string;
-  description?: string | null;
-  imageUrl?: string | null;
-}) {
+export function categoryCollectionSchema(
+  opts: {
+    name: string;
+    slug: string;
+    description?: string | null;
+    imageUrl?: string | null;
+  },
+  locale: Locale = "es",
+) {
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${SITE_URL}/${opts.slug}#collection`,
-    url: `${SITE_URL}/${opts.slug}`,
+    "@id": `${SITE_URL}${localePath(locale, `/${opts.slug}#collection`)}`,
+    url: `${SITE_URL}${localePath(locale, `/${opts.slug}`)}`,
     name: opts.name,
     description: opts.description ?? undefined,
     image: opts.imageUrl ?? undefined,
-    isPartOf: { "@id": `${SITE_URL}/#website` },
+    isPartOf: { "@id": `${SITE_URL}${localePath(locale, "/")}#website` },
   };
 }
 
-export function localLandingSchema(municipio: string) {
+export function localLandingSchema(municipio: string, locale: Locale = "es") {
   return {
     "@context": "https://schema.org",
     "@type": ["LocalBusiness", "SportingGoodsStore"],
-    "@id": `${SITE_URL}/tienda-en/${municipio.toLowerCase()}/#localbusiness`,
+    "@id": `${SITE_URL}${localePath(locale, `/tienda-en/${municipio.toLowerCase()}/#localbusiness`)}`,
     name: `${SITE_NAME} — tienda de deportes cerca de ${municipio}`,
     parentOrganization: { "@id": ORG_ID },
     areaServed: { "@type": "City", name: municipio },

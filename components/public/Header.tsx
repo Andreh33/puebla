@@ -1,7 +1,13 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { stripLocale } from "@/lib/i18n/routing";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Search, MessageCircle, Menu, X, ChevronDown, ArrowRight } from "lucide-react";
@@ -116,23 +122,15 @@ const GENDER_TABS: Array<{
   },
 ];
 
-/** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */
-const TICKER_PHRASES = [
-  "Desde Puebla de la Calzada hasta cualquier parte del mundo",
-  "Años de calidad y trato cercano",
-  "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Jhayber",
-  "Atendemos por WhatsApp · Recogida en tienda",
-  "Pádel, running, montaña, fitness — todo en una sola tienda",
-  "Asesoramiento real, no postureo",
-] as const;
-
 // Delay generoso al cerrar el mega-menú: da tiempo a cruzar el gap entre
 // la pill flotante y el panel sin que se cierre debajo del cursor. El
 // puente invisible del MegaMenu cubre el hueco; este margen es el colchón.
 const MEGA_CLOSE_DELAY_MS = 260;
 
 export function Header() {
-  const pathname = usePathname() ?? "/";
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const pathname = stripLocale(usePathname() ?? "/");
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -267,61 +265,43 @@ export function Header() {
       <header
         data-hidden={hidden ? "true" : "false"}
         className={cn(
-          "fixed inset-x-0 top-0 z-40 overflow-x-clip transition-transform duration-300 will-change-transform",
+          "zs-iphone-header fixed inset-x-0 top-0 z-40 overflow-x-clip transition-transform duration-300 will-change-transform motion-reduce:transition-none",
           hidden && !mobileOpen ? "-translate-y-[120%]" : "translate-y-0",
         )}
       >
         {/* ─────────────────────────────────────────────────────────────────
-            TOP STRIP — marquesina infinita de frases sobre fondo oscuro
-            ───────────────────────────────────────────────────────────────── */}
-        <div className="overflow-hidden bg-zs-blue-950 text-white">
-          <div
-            className="zs-header-ticker flex w-max items-center gap-10 whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/90 sm:py-2.5"
-            aria-label="Argumentos de la tienda"
-          >
-            {[...TICKER_PHRASES, ...TICKER_PHRASES, ...TICKER_PHRASES].map((phrase, i) => (
-              <span key={`${phrase}-${i}`} className="inline-flex items-center gap-10">
-                <span>{phrase}</span>
-                <span aria-hidden className="text-zs-red-500">
-                  ✺
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────────
             PILL FLOTANTE — logo + nav + acciones
             ───────────────────────────────────────────────────────────────── */}
-        <div className="px-3 pt-3 sm:px-5 sm:pt-4">
+        <div className="px-2 pt-[max(10px,env(safe-area-inset-top))] sm:px-5 sm:pt-[max(16px,env(safe-area-inset-top))]">
           <div
             ref={navRef}
             className={cn(
-              "mx-auto flex max-w-[1380px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/85 px-3 py-3 backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/70 sm:gap-3 sm:px-5 sm:py-3.5",
-              scrolled ? "shadow-xl" : "shadow-lg",
+              "mx-auto flex h-24 max-w-[1440px] items-center gap-2 rounded-[24px] bg-white/95 px-2.5 text-zs-ink backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/85 sm:h-28 sm:gap-4 sm:rounded-[28px] sm:px-5",
+              scrolled ? "shadow-[0_8px_28px_-10px_rgba(15,23,42,0.24)]" : "shadow-[0_6px_24px_-12px_rgba(15,23,42,0.18)]",
             )}
-            style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
           >
             {/* Logo */}
             <Link
               href="/"
-              className="flex shrink-0 items-center gap-2 pl-1 pr-2"
-              aria-label="Zona Sport — Inicio"
+              className="flex h-20 shrink-0 items-center px-1 sm:h-24"
+              aria-label={t("Zona Sport — Inicio")}
             >
               <Image
                 src="/logo.webp"
-                alt="Zona Sport"
+                alt={t("Zona Sport")}
                 width={270}
                 height={186}
                 priority
-                className="h-16 w-auto sm:h-[4.5rem] lg:h-28 lg:-mt-5"
+                fetchPriority="high"
+                sizes="(min-width: 640px) 140px, (min-width: 380px) 116px, 93px"
+                className="h-16 w-auto min-[380px]:h-20 sm:h-24"
               />
             </Link>
 
             {/* Nav central desktop */}
             <nav
-              aria-label="Navegación principal"
-              className="hidden flex-1 items-center justify-center gap-1 lg:flex"
+              aria-label={t("Navegación principal")}
+              className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex"
             >
               {/* Tabs de género — pill activa estilo LATECH */}
               {GENDER_TABS.map((tab) => {
@@ -340,13 +320,13 @@ export function Header() {
                     onFocus={() => openMega(tab.key)}
                     onClick={() => setMegaKey(null)}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-all",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-semibold tracking-normal transition-colors",
                       active || expanded
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
                     )}
                   >
-                    {tab.label}
+                    {tx(tab.label)}
                   </Link>
                 );
               })}
@@ -363,13 +343,13 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium uppercase transition-colors",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
                     )}
                   >
-                    {item.label}
+                    {tx(item.label)}
                   </Link>
                 );
               })}
@@ -385,18 +365,17 @@ export function Header() {
                       : undefined
                   }
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-colors",
+                    "inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-semibold tracking-normal transition-colors",
                     pathname === OUTLET_HREF || pathname.startsWith(`${OUTLET_HREF}/`)
                       ? "bg-zs-red-600 text-white"
                       : "text-zs-red-600 hover:bg-zs-red-50 hover:text-zs-red-700",
                   )}
                 >
-                  Outlet
-                  <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
+                  {t("Outlet")}<ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
                 </Link>
                 <div
                   role="menu"
-                  aria-label="Outlet"
+                  aria-label={t("Outlet")}
                   className="invisible absolute left-0 top-full z-50 mt-1 min-w-[160px] translate-y-1 rounded-2xl border border-zs-border bg-white p-1.5 opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
                 >
                   {OUTLET_LINKS.map((item) => {
@@ -414,7 +393,7 @@ export function Header() {
                             : "text-zs-ink hover:bg-zs-surface hover:text-zs-red-700",
                         )}
                       >
-                        {item.label}
+                        {tx(item.label)}
                       </Link>
                     );
                   })}
@@ -424,7 +403,7 @@ export function Header() {
               {/* Separador entre TIENDA (Mujer/Hombre/Niños + sub-tabs) y
                   PÁGINA (Contacto/Blog/App). Diferenciación visual:
                   «aquí compras» vs «aquí informas». */}
-              <span className="mx-3 h-5 w-px bg-zs-border" aria-hidden />
+              <span className="mx-2 h-5 w-px bg-zs-border" aria-hidden />
 
               {/* Links a páginas (no son tienda). */}
               {PAGE_NAV.map((item) => {
@@ -436,13 +415,13 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-zs-surface text-zs-blue-900"
                         : "text-zs-muted hover:bg-zs-surface hover:text-zs-blue-700",
                     )}
                   >
-                    {item.label}
+                    {tx(item.label)}
                   </Link>
                 );
               })}
@@ -456,11 +435,10 @@ export function Header() {
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent("zs:show-pwa-install"));
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700"
-                title="Instalar Zona Sport en tu dispositivo"
+                className="hidden min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700 2xl:inline-flex"
+                title={t("Instalar Zona Sport en tu dispositivo")}
               >
-                App
-              </button>
+                {t("App")}</button>
 
               {/* OCULTO a petición del cliente: el sub-nav de deportes
                   (Running/Pádel/Montaña/Calzado) y su separador vertical
@@ -489,13 +467,13 @@ export function Header() {
             </nav>
 
             {/* Acciones derecha */}
-            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+            <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
               <SearchCommand
                 trigger={
                   <button
                     type="button"
-                    aria-label="Buscar (Ctrl+K)"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10"
+                    aria-label={t("Buscar (Ctrl+K)")}
+                    className="hidden h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10 min-[380px]:inline-flex"
                   >
                     <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                   </button>
@@ -505,31 +483,30 @@ export function Header() {
                 href={whatsappUrl(WhatsAppMessages.generic())}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="hidden h-10 w-10 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:inline-flex"
+                aria-label={t("WhatsApp")}
+                className="hidden h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 2xl:inline-flex"
               >
                 <MessageCircle className="h-[18px] w-[18px]" />
               </a>
-              <CartIcon />
+              <LanguageSwitcher />
+            <CartIcon />
 
               {/* CTA gradient — desktop */}
               <Link
                 href="#catalogo"
-                className="ml-1 hidden h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-zs-red-600 to-[#a01818] px-5 text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-[1.02] sm:inline-flex"
-                style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
+                className="ml-2 hidden h-11 items-center gap-2 rounded-full bg-zs-red-600 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-zs-red-700 xl:inline-flex"
               >
-                Comprar
-                <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+                {t("Comprar")}<ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
               </Link>
 
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10 lg:hidden"
-                aria-label="Abrir menú"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10 xl:hidden"
+                aria-label={t("Abrir menú")}
                 aria-expanded={mobileOpen}
               >
-                {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {tx(mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />)}
               </button>
             </div>
           </div>
@@ -558,16 +535,17 @@ export function Header() {
             DRAWER MÓVIL — flotante en card rounded-3xl
             ───────────────────────────────────────────────────────────────── */}
         <div
+          aria-hidden={!mobileOpen}
+          inert={!mobileOpen}
           className={cn(
-            "mx-3 mt-2 overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 ease-out sm:mx-5 lg:hidden",
+            "mx-2 mt-2 overflow-hidden rounded-[24px] bg-white/95 shadow-xl backdrop-blur-xl transition-all duration-300 ease-out sm:mx-5 xl:hidden motion-reduce:transition-none",
             mobileOpen
-              ? "max-h-[80vh] opacity-100"
+              ? "max-h-[calc(100dvh-var(--zs-header-offset)-8px)] opacity-100"
               : "pointer-events-none max-h-0 opacity-0",
           )}
-          style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
         >
-          <nav aria-label="Menú móvil" className="overflow-hidden">
-            <div className="max-h-[80vh] overflow-y-auto px-4 py-3">
+          <nav aria-label={t("Menú móvil")} className="overflow-hidden">
+            <div className="max-h-[calc(100dvh-var(--zs-header-offset)-8px)] overflow-y-auto overscroll-contain px-4 py-3">
               {/* Tabs de género (acordeón con mega-menú embebido).
                   Iteramos GENDER_TABS (mujer/hombre) — ya no incluimos
                   Niños porque el cliente lo separó en dos entradas
@@ -594,7 +572,7 @@ export function Header() {
                               : "text-zs-ink",
                           )}
                         >
-                          {tabConfig.label}
+                          {tx(tabConfig.label)}
                         </Link>
                         <button
                           type="button"
@@ -645,7 +623,7 @@ export function Header() {
                             : "border border-zs-border bg-white text-zs-ink hover:bg-zs-surface",
                         )}
                       >
-                        {item.label}
+                        {tx(item.label)}
                       </Link>
                     </li>
                   );
@@ -659,8 +637,7 @@ export function Header() {
                   onClick={() => setMobileOpen(false)}
                   className="block px-3 py-3 text-sm font-extrabold uppercase tracking-wider text-zs-red-700"
                 >
-                  Outlet
-                </Link>
+                  {t("Outlet")}</Link>
                 <ul className="grid grid-cols-2 gap-2 px-3 pb-3">
                   {OUTLET_LINKS.map((item) => {
                     const active = pathname === item.href;
@@ -676,7 +653,7 @@ export function Header() {
                               : "border border-zs-red-200 bg-white text-zs-red-700 hover:bg-zs-red-50",
                           )}
                         >
-                          {item.label}
+                          {tx(item.label)}
                         </Link>
                       </li>
                     );
@@ -685,6 +662,20 @@ export function Header() {
               </div>
 
               <ul className="flex flex-col gap-1">
+                <li>
+                  <SearchCommand
+                    keyboardShortcut={false}
+                    trigger={
+                      <button
+                        type="button"
+                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-zs-ink hover:bg-zs-surface"
+                      >
+                        <Search className="h-4 w-4" aria-hidden="true" />
+                        {t("Buscar")}
+                      </button>
+                    }
+                  />
+                </li>
                 {SPORT_NAV.map((item, i) => (
                   <li
                     key={item.href}
@@ -696,7 +687,7 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className="block rounded-lg px-3 py-2 text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
                     >
-                      {item.label}
+                      {tx(item.label)}
                     </Link>
                   </li>
                 ))}
@@ -709,8 +700,7 @@ export function Header() {
                     }}
                     className="block w-full rounded-lg px-3 py-2 text-left text-base font-medium text-zs-ink hover:bg-zs-surface hover:text-zs-blue-700"
                   >
-                    Instalar app
-                  </button>
+                    {t("Instalar app")}</button>
                 </li>
               </ul>
 
@@ -722,21 +712,11 @@ export function Header() {
                 style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
               >
                 <MessageCircle className="h-4 w-4" />
-                WhatsApp
-              </a>
+                {t("WhatsApp")}</a>
             </div>
           </nav>
         </div>
 
-        <style>{`
-          @keyframes zs-header-ticker-scroll {
-            from { transform: translateX(0); }
-            to { transform: translateX(-33.333%); }
-          }
-          .zs-header-ticker {
-            animation: zs-header-ticker-scroll 38s linear infinite;
-          }
-                  `}</style>
       </header>
       {/* El spacer ya no vive aquí — lo gestiona `<main>` con `pt-[136px]
           sm:pt-[148px]` para no tapar contenido. El home anula ese padding

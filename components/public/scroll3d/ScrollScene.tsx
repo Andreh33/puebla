@@ -1,7 +1,11 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import dynamic from "next/dynamic";
-import Link from "next/link";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Mountain, MapPin, MessageCircle, Compass } from "lucide-react";
 import { whatsappUrl, WhatsAppMessages } from "@/lib/whatsapp";
@@ -42,6 +46,8 @@ type ScrollSceneProps = {
 };
 
 export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollProgress = useRef(0);
   const [enabled, setEnabled] = useState(true);
@@ -186,12 +192,11 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
       ref={containerRef}
       className="relative bg-zs-blue-950 text-white"
       style={{ height: "400vh" }}
-      aria-label="Recorrido visual por Zona Sport"
+      aria-label={t("Recorrido visual por Zona Sport")}
     >
       {/* H1 semántico oculto para SEO/A11y — los paneles 3D usan h2 visibles */}
       <h1 className="sr-only">
-        Zona Sport — tienda de deportes en Puebla de la Calzada (Badajoz)
-      </h1>
+        {t("Zona Sport — tienda de deportes en Puebla de la Calzada (Badajoz)")}</h1>
 
       {/* Canvas sticky 3D — lazy montado tras 1ª interacción/scroll/1500ms */}
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-zs-blue-950">
@@ -232,16 +237,16 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
                     <div className="rounded-2xl border border-white/10 bg-black/30 p-6 backdrop-blur-md sm:p-8">
                       <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zs-tennis-300">
                         <Icon className="h-3.5 w-3.5" />
-                        {p.eyebrow}
+                        {tx(p.eyebrow)}
                       </span>
                       <h2 className="mt-4 text-balance text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-                        {p.title}
+                        {tx(p.title)}
                       </h2>
                       <p className="mt-3 max-w-md text-balance text-sm leading-relaxed text-white/80 sm:text-base">
-                        {p.copy}
+                        {tx(p.copy)}
                       </p>
                       <div className="mt-6">
-                        {p.cta.href.startsWith("#") || p.cta.href.startsWith("/") ? (
+                        {tx(p.cta.href.startsWith("#") || p.cta.href.startsWith("/") ? (
                           <Link
                             href={p.cta.href}
                             className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-zs-blue-900 transition hover:bg-zs-surface"
@@ -257,7 +262,7 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
                           >
                             {p.cta.label} <ArrowRight className="h-4 w-4" />
                           </a>
-                        )}
+                        ))}
                       </div>
                     </div>
                   </article>
@@ -288,8 +293,7 @@ export function ScrollScene({ fallback }: ScrollSceneProps = {}) {
             activePanel === 0 ? "opacity-100" : "opacity-0",
           ].join(" ")}
         >
-          Desliza para descubrir
-        </div>
+          {t("Desliza para descubrir")}</div>
       </div>
     </section>
   );

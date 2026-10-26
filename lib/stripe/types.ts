@@ -27,6 +27,8 @@ export interface CheckoutCartItem {
 
 /** Payload aceptado por POST /api/stripe/create-checkout. */
 export interface CreateCheckoutRequest {
+  locale?: import("@/lib/i18n/config").Locale;
+  shippingCountry?: import("@/lib/stripe/shipping").ShippingCountry;
   items: CheckoutCartItem[];
   /** "shipping" envía a domicilio; "pickup" recoger en tienda. */
   deliveryMethod?: "pickup" | "shipping";

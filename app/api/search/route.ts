@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { IN_STOCK_WHERE } from "@/lib/products/in-stock";
+import { publicDatabase } from "@/lib/i18n/public-db";
+import { normalizeLocale } from "@/lib/i18n/config";
+import { searchProductWhere, searchPublicPosts } from "@/lib/i18n/search";
+import { isLocalePublished } from "@/lib/i18n/readiness";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { cleanProductName } from "@/lib/utils/html";
 
@@ -15,6 +17,9 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
+  const locale=normalizeLocale(searchParams.get("locale"));
+  if(!isLocalePublished(locale))return NextResponse.json({products:[],posts:[]});
+  const db=publicDatabase(locale);
   const qRaw = (searchParams.get("q") || "").trim();
   if (qRaw.length < 2) {
     return NextResponse.json({ products: [], posts: [] });
@@ -24,17 +29,7 @@ export async function GET(req: Request) {
   try {
     const [products, posts] = await Promise.all([
       db.product.findMany({
-        where: {
-          status: "ACTIVE",
-          AND: [IN_STOCK_WHERE],
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { shortName: { contains: q, mode: "insensitive" } },
-            { colorName: { contains: q, mode: "insensitive" } },
-            { tags: { has: q.toLowerCase() } },
-            { brand: { is: { name: { contains: q, mode: "insensitive" } } } },
-          ],
-        },
+        where: searchProductWhere(locale, q),
         take: 8,
         orderBy: [{ isFeatured: "desc" }, { updatedAt: "desc" }],
         select: {
@@ -49,19 +44,7 @@ export async function GET(req: Request) {
           brand: { select: { name: true } },
         },
       }),
-      db.blogPost.findMany({
-        where: {
-          status: "PUBLISHED",
-          OR: [
-            { title: { contains: q, mode: "insensitive" } },
-            { excerpt: { contains: q, mode: "insensitive" } },
-            { tags: { has: q.toLowerCase() } },
-          ],
-        },
-        take: 5,
-        orderBy: [{ publishedAt: "desc" }],
-        select: { id: true, slug: true, title: true, excerpt: true },
-      }),
+      searchPublicPosts(locale, q, 5),
     ]);
 
     return NextResponse.json(

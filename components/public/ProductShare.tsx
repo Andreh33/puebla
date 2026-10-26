@@ -1,10 +1,16 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import React, { useState } from "react";
 import { Check, Copy, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ProductShare({ url, title }: { url: string; title: string }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const [copied, setCopied] = useState(false);
   const [manualCopy, setManualCopy] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -43,33 +49,31 @@ export function ProductShare({ url, title }: { url: string; title: string }) {
   }
 
   return (
-    <div className="space-y-2" role="group" aria-label="Compartir producto">
+    <div className="space-y-2" role="group" aria-label={t("Compartir producto")}>
       <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" onClick={share} disabled={sharing}>
           <Share2 aria-hidden="true" />
-          Compartir
-        </Button>
+          {t("Compartir")}</Button>
         <Button asChild variant="outline">
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Compartir producto por WhatsApp"
+            aria-label={t("Compartir producto por WhatsApp")}
           >
-            WhatsApp
-          </a>
+            {t("WhatsApp")}</a>
         </Button>
         <Button type="button" variant="ghost" onClick={copyLink}>
-          {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
-          {copied ? "Enlace copiado" : "Copiar enlace"}
+          {tx(copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />)}
+          {tx(copied ? "Enlace copiado" : "Copiar enlace")}
         </Button>
       </div>
       <p role="status" aria-live="polite" className="text-zs-muted text-xs">
-        {message}
+        {tx(message)}
       </p>
       {manualCopy && (
         <label className="text-zs-muted block space-y-1 text-xs">
-          <span>Enlace del producto</span>
+          <span>{t("Enlace del producto")}</span>
           <input
             type="text"
             readOnly
