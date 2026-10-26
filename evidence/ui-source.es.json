@@ -7519,5 +7519,11 @@
   ],
   "Sí. Para Mérida ofrecemos envío a domicilio gratuito, sin importe mínimo de compra. Puedes hacer el pedido online o consultar disponibilidad por WhatsApp.": [
     "lib/landings/contents.ts"
+  ],
+  "Portada de {0}": [
+    "app/[locale]/(public)/blog/[slug]/page.tsx"
+  ],
+  "Ver {0}": [
+    "app/[locale]/(public)/tienda-en/[municipio]/page.tsx"
   ]
 }

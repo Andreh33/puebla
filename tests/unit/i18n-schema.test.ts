@@ -27,7 +27,8 @@ describe("localized structured data", () => {
       },
       "de",
     );
-    expect(product.offers.url).toMatch(/\/de\/producto\/shoe$/);
+    expect(product.offers.url).toMatch(/\/producto\/shoe$/);
+    expect(product.offers.url).not.toContain("/de/");
     const post = blogPostingSchema(
       { slug: "guide", title: "Guida", author: "Zona Sport", publishedAt: "2026-01-01" },
       "it",

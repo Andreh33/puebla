@@ -1,4 +1,5 @@
 "use client";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
 
 
 
@@ -88,11 +89,11 @@ export function CartView() {
                 href={`/producto/${item.slug}`}
                 className="line-clamp-2 text-base font-semibold text-zs-ink hover:text-zs-blue-700"
               >
-                {tx(item.name)}
+                {PRODUCT_TRANSLATIONS_ENABLED ? tx(item.name) : item.name}
               </Link>
               <p className="mt-1 text-xs text-zs-muted">
                 {item.colorName && item.colorName !== "Único" && (
-                  <span>{tx(item.colorName)}</span>
+                  <span>{PRODUCT_TRANSLATIONS_ENABLED ? tx(item.colorName) : item.colorName}</span>
                 )}
                 {item.size && (
                   <span>

@@ -270,7 +270,7 @@ async function getHighlightProducts(categorySlug: string) {
             href={`/${landing.highlightCategorySlug}`}
             className="inline-flex items-center gap-1 text-sm font-semibold text-zs-blue-700 hover:underline"
           >
-            {t("Ver todo")}{" "}{landing.highlightCategoryLabel.toLowerCase()}{tx(" ")}
+            {tf("Ver {0}", [tx(landing.highlightCategoryLabel)])}{tx(" ")}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>

@@ -1,4 +1,5 @@
 import { localizeContent } from "@/lib/i18n/content";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
 import { isLocalePublished } from "@/lib/i18n/readiness";
 import {
   SHIPPING_COUNTRIES,
@@ -223,7 +224,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
         { status: 409 },
       );
     }
-    const localized = localizeContent("products", locale, p);
+    const localized = localizeContent("products", PRODUCT_TRANSLATIONS_ENABLED ? locale : "es", p);
     if (!localized)
       return NextResponse.json<CreateCheckoutResponse>(
         {

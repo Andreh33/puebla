@@ -59,12 +59,12 @@
   "bienvenidos-a-la-nueva-tienda-online-de-zona-sport": {
     "id": "cmpcil1dd0022jy04ruor6gk7",
     "slug": "bienvenidos-a-la-nueva-tienda-online-de-zona-sport",
-    "sourceHash": "0199ef94d3ea5f8b52a9b7c3f9d7525782eb173a32e7e910381062b9522d9ac0",
+    "sourceHash": "7f3e886ddc3c88b5b601cf00f3f6e57beb2dcc4bd2e669a5451cb4ae8c8d9af3",
     "status": "published",
     "fields": {
       "title": "Bienvenue sur la nouvelle boutique en ligne Zona Sport",
       "excerpt": "Notre nouveau site est ouvert. Découvrez son contenu, la réservation sur WhatsApp et les nouveautés à venir.",
-      "contentMd": "## Notre nouveau site est ouvert\n\nDepuis de nombreuses années, nous équipons à Puebla de la Calzada les coureurs, les joueurs de padel, les randonneurs et tous ceux qui ont envie de bouger. Aujourd’hui, nous passons en ligne avec cette nouvelle boutique.\n\n## Ce que vous y trouverez\n\n- **Un catalogue multimarque** avec John Smith, +8000 et bien d’autres marques à venir.\n- **Des fiches détaillées** avec composition, informations sur les tailles et stock par taille.\n- **Des conseils sur WhatsApp** depuis chaque fiche produit : posez-nous vos questions avant d’acheter.\n- **Le retrait en magasin** : réservez, attendez notre confirmation et passez récupérer votre achat.\n\n## Paiement en ligne : prochainement\n\nNous terminons la mise en place du paiement en ligne. En attendant, les achats se font sur WhatsApp ou dans notre magasin physique. S’il vous manque quelque chose, écrivez-nous.\n\n## Venez nous voir\n\nNous sommes au **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Nous ouvrons du lundi au vendredi de 10 h à 14 h et de 17 h à 20 h, ainsi que le samedi matin.\n\nÀ bientôt en magasin !\n",
+      "contentMd": "## Notre nouveau site est ouvert\n\nDepuis de nombreuses années, nous équipons à Puebla de la Calzada les coureurs, les joueurs de padel, les randonneurs et tous ceux qui ont envie de bouger. Aujourd’hui, nous passons en ligne avec cette nouvelle boutique.\n\n## Ce que vous y trouverez\n\n- **Un catalogue multimarque** avec John Smith, +8000 et bien d’autres marques à venir.\n- **Des fiches détaillées** avec composition, informations sur les tailles et stock par taille.\n- **Des conseils sur WhatsApp** depuis chaque fiche produit : posez-nous vos questions avant d’acheter.\n- **Le retrait en magasin** : réservez, attendez notre confirmation et passez récupérer votre achat.\n\n## Paiement en ligne\n\nVous pouvez finaliser votre achat en ligne. Pour toute question sur les tailles, les modèles ou la disponibilité, contactez-nous sur WhatsApp ou rendez-vous dans notre magasin à Puebla de la Calzada, en Espagne.\n\n## Venez nous voir\n\nNous sommes au **C. Silos, 3, 06490 Puebla de la Calzada (Badajoz)**. Nous ouvrons du lundi au vendredi de 10 h à 14 h et de 17 h 30 à 20 h 30, ainsi que le samedi de 10 h à 14 h.\n\nÀ bientôt en magasin !\n",
       "metaTitle": "Bienvenue sur la nouvelle boutique en ligne Zona Sport",
       "metaDescription": "Le nouveau site Zona Sport est ouvert : catalogue multimarque, conseils sur WhatsApp et retrait en magasin à Puebla de la Calzada (Badajoz).",
       "tags": [
@@ -278,7 +278,7 @@
       "metaTitle": "Les accessoires sportifs indispensables | Zona Sport",
       "metaDescription": "Chaussettes techniques, gourde, ceinture et autres accessoires pour améliorer vos entraînements. Découvrez-les chez Zona Sport, à Badajoz.",
       "tags": [
-        "compléments sportifs",
+        "accessoires de sport",
         "guides",
         "accessoires"
       ],

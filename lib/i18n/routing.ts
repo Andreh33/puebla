@@ -1,4 +1,5 @@
 import { isLocale, type Locale } from "./config";
+import { isLocaleRouteAvailable } from "./publication-policy";
 const OPERATIONAL = /^\/(?:api|admin|_next|3d|sample-products|blog-covers)(?:\/|$)/;
 export function shouldLocalizePath(path: string): boolean {
   if (!path.startsWith("/") || path.startsWith("//")) return false;
@@ -21,7 +22,13 @@ export function localePath(locale: Locale, path: string): string {
   const unprefixed = stripLocale(path);
   const normalized =
     unprefixed.startsWith("?") || unprefixed.startsWith("#") ? `/${unprefixed}` : unprefixed;
-  return locale === "es" ? normalized : `/${locale}${normalized === "/" ? "" : normalized}`;
+  return !isLocaleRouteAvailable(locale, normalized) || locale === "es"
+    ? normalized
+    : `/${locale}${normalized === "/" ? "" : normalized}`;
+}
+/** A language switch from Spanish shopping opens the selected editorial home. */
+export function languageSwitchPath(locale: Locale, path: string): string {
+  return localePath(locale, isLocaleRouteAvailable(locale, path) ? path : "/");
 }
 export function internalLocalePath(path: string): string {
   return `/es${path === "/" ? "" : path}`;

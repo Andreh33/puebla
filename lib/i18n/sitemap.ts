@@ -3,6 +3,7 @@ import "server-only";
 import type { MetadataRoute } from "next";
 import { LOCALES, LOCALE_INFO, type Locale } from "./config";
 import { localePath } from "./routing";
+import { isLocaleRouteAvailable } from "./publication-policy";
 import { availableContentLocales, loadEditorialPosts } from "./content";
 import { hasCompleteUi } from "./dictionaries";
 import type { ContentKind, SourceText } from "./content-contract";
@@ -38,6 +39,7 @@ export const POST_TRANSLATION_SELECT = {
   publishedAt: true,
 } as const;
 function variants(path: string, locales: readonly Locale[], base: Omit<Entry, "url">): Entry[] {
+  locales = locales.filter((locale) => isLocaleRouteAvailable(locale, path));
   const languages = Object.fromEntries(
     locales.map((locale) => [
       LOCALE_INFO[locale].language,

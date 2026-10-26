@@ -25,12 +25,12 @@ describe("public translation read view", () => {
       publicDatabase("fr").product.findUnique({ where: { slug: "shoe" } }),
       publicDatabase("de").product.findUnique({ where: { slug: "shoe" } }),
     ]);
-    expect(fr?.name).toBe("fr:Zapatilla");
-    expect(de?.name).toBe("de:Zapatilla");
+    expect(fr?.name).toBe("Zapatilla");
+    expect(de?.name).toBe("Zapatilla");
     expect(fr?.retailPrice).toBe(49.5);
     expect(de?.stock).toBe(3);
     expect(source.name).toBe("Zapatilla");
-    expect(localesForContent(fr!)).toEqual(["es", "fr", "de"]);
+    expect(localesForContent(fr!)).toEqual(["es"]);
   });
   it("requests hash fields internally but returns only requested selected fields", async () => {
     findMany.mockResolvedValue([
@@ -39,13 +39,13 @@ describe("public translation read view", () => {
     const rows = await publicDatabase("fr").product.findMany({ select: { name: true } });
     expect(findMany.mock.calls[0]?.[0].select).toHaveProperty("technicalDescription", true);
     expect(findMany.mock.calls[0]?.[0].select.images.select).toEqual({ url: true, alt: true });
-    expect(rows).toEqual([{ name: "fr:Zapatilla" }]);
+    expect(rows).toEqual([{ name: "Zapatilla" }]);
   });
-  it("suppresses unpublished foreign records without falling back to Spanish", async () => {
+  it("preserves published Spanish product cards even without foreign product translations", async () => {
     findUnique.mockResolvedValue({ id: "p", slug: "missing", name: "Español" });
     expect(
       await publicDatabase("fr").product.findUnique({ where: { slug: "missing" } }),
-    ).toBeNull();
+    ).toMatchObject({ name: "Español" });
     expect(
       (await publicDatabase("es").product.findUnique({ where: { slug: "missing" } }))?.name,
     ).toBe("Español");

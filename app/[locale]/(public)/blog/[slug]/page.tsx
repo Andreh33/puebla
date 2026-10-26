@@ -243,7 +243,7 @@ export async function generateStaticParams() {
         <div className="relative mb-12 aspect-[16/9] overflow-hidden rounded-2xl bg-zs-surface">
           <Image
             src={post.coverImageUrl}
-            alt={`Portada de ${post.title}`}
+            alt={tf("Portada de {0}", [post.title])}
             fill
             sizes="(min-width: 1024px) 1024px, 100vw"
             className="object-cover"

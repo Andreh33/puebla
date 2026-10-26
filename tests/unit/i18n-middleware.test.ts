@@ -6,6 +6,21 @@ vi.mock("@/lib/redirects", () => ({
 import { NextRequest } from "next/server";
 import { middleware } from "@/middleware";
 describe("public language middleware", () => {
+  it.each([
+    "/pt/producto/a",
+    "/it/catalogo",
+    "/fr/marca/nike",
+    "/de/running/zapatillas",
+    "/fr/producto/a/share-image",
+  ])("redirects paused shopping %s preserving the query", async (path) => {
+    const response = await middleware(
+      new NextRequest(`https://zonasportpuebla.com${path}?ref=a&sort=price`),
+    );
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      `https://zonasportpuebla.com${path.slice(3)}?ref=a&sort=price`,
+    );
+  });
   it("internally rewrites Spanish URLs and preserves their public URL/query", async () => {
     const response = await middleware(
       new NextRequest("https://zonasportpuebla.com/producto/modelo?ref=a"),
@@ -29,7 +44,9 @@ describe("public language middleware", () => {
   });
   it("leaves foreign URLs, API, assets and discovery endpoints outside rewrites", async () => {
     for (const path of [
-      "/pt/producto/a",
+      "/pt/carrito",
+      "/fr/checkout/success",
+      "/it/buscar",
       "/de/blog/a",
       "/api/search",
       "/robots.txt",

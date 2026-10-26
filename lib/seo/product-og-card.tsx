@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { db as sourceDb } from "@/lib/db";
 import { publicDatabase } from "@/lib/i18n/public-db";
 import { publishedImageLocale } from "@/lib/i18n/image-locale";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
 import { formatPriceEUR } from "@/lib/utils";
 import { effectivePrice } from "@/lib/price";
 import { cleanProductName, stripHtml } from "@/lib/utils/html";
@@ -20,7 +21,7 @@ const size = { width: 1200, height: 630 };
 export default async function OG({ params }: { params: Promise<{ slug: string; locale?: string }> }) {
   const { slug, locale: rawLocale } = await params;
   const locale = publishedImageLocale(rawLocale);
-  if (!locale) return new Response(null, { status: 404 });
+  if (!locale || (locale !== "es" && !PRODUCT_TRANSLATIONS_ENABLED)) return new Response(null, { status: 404 });
   const db = locale === "es" ? sourceDb : publicDatabase(locale);
   const sourceProduct = await db.product.findFirst({
     where: { slug, status: "ACTIVE" },

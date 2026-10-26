@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { isLocale, LOCALE_INFO, type Locale } from "./config";
 import { localePath } from "./routing";
+import { isLocaleRouteAvailable } from "./publication-policy";
 import { setRequestLocale } from "./request";
 import { getDictionary, hasCompleteUi } from "./dictionaries";
 
@@ -30,6 +31,11 @@ export function withLocaleMetadata<P>(
     const ready = isLocalePublished(locale);
     if (!ready) return { title: "Zona Sport", robots: { index: false, follow: false } };
     const original = typeof metadata === "function" ? await metadata(props) : metadata;
+    if (
+      original.alternates?.canonical &&
+      !isLocaleRouteAvailable(locale, new URL(String(original.alternates.canonical)).pathname)
+    )
+      return original;
     const dictionary = getDictionary(locale);
     const translate = (value: unknown): unknown => {
       if (typeof value !== "string") return value;

@@ -1,4 +1,5 @@
 "use client";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
 
 
 
@@ -258,10 +259,10 @@ export function ProductCardLuxe({
 
       <div className="space-y-1 p-3 sm:p-4">
         <p className="text-sm font-semibold text-zs-ink transition-colors group-hover:text-zs-blue-700">
-          {tx(title)}
+          {PRODUCT_TRANSLATIONS_ENABLED ? tx(title) : title}
         </p>
         {product.colorName && product.colorName !== "Único" && (
-          <p className="text-xs text-zs-muted">{tx(product.colorName)}</p>
+          <p className="text-xs text-zs-muted">{PRODUCT_TRANSLATIONS_ENABLED ? tx(product.colorName) : product.colorName}</p>
         )}
         <div className="flex items-baseline gap-2 pt-1">
           <span className="text-base font-bold tabular-nums text-zs-blue-900">

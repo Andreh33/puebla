@@ -1,5 +1,6 @@
 import { applyProductSourceCorrections, applyPostSourceCorrections } from "./source-corrections";
 import "server-only";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "./publication-policy";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { LOCALES, type Locale, type ForeignLocale } from "./config";
@@ -37,6 +38,7 @@ export function resolveTranslation(
   locale: Locale,
   source: SourceText,
 ): TranslationRecord | null {
+  if (kind === "products" && !PRODUCT_TRANSLATIONS_ENABLED) return null;
   source =
     kind === "posts" ? applyPostSourceCorrections(source) : applyProductSourceCorrections(source);
   if (locale === "es") return null;
@@ -54,7 +56,7 @@ export function localizeContent<T extends SourceText>(
 ): T | null {
   source =
     kind === "posts" ? applyPostSourceCorrections(source) : applyProductSourceCorrections(source);
-  if (locale === "es") return source;
+  if (locale === "es" || (kind === "products" && !PRODUCT_TRANSLATIONS_ENABLED)) return source;
   const translation = resolveTranslation(kind, locale, source);
   if (!translation) return null;
   const localized = { ...source };
@@ -148,7 +150,7 @@ export function displayTags(record: { tags?: unknown; translatedTags?: unknown }
 }
 
 export function translatedSearchSlugs(kind: ContentKind, locale: Locale, query: string): string[] {
-  if (locale === "es") return [];
+  if (locale === "es" || (kind === "products" && !PRODUCT_TRANSLATIONS_ENABLED)) return [];
   const normalize = (value: string) =>
     value
       .normalize("NFD")

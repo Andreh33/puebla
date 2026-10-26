@@ -1,5 +1,6 @@
 import { translate } from "./dictionaries";
 import "server-only";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "./publication-policy";
 import { db } from "@/lib/db";
 import { getRequestLocale } from "./request";
 import { normalizeLocale, type Locale } from "./config";
@@ -129,9 +130,10 @@ export function publicDatabase(locale: Locale = getRequestLocale()): typeof db {
               }
             }
             const localize = (source: SourceText) => {
-              const localized = localizeContent(kind, locale, source);
+              const productPaused = kind === "products" && !PRODUCT_TRANSLATIONS_ENABLED;
+              const localized = localizeContent(kind, productPaused ? "es" : locale, source);
               if (!localized) return null;
-              if (kind === "products" && locale !== "es") {
+              if (kind === "products" && locale !== "es" && PRODUCT_TRANSLATIONS_ENABLED) {
                 if (localized.category)
                   (localized as Record<string, unknown>).category = localizeEntity(
                     locale,
@@ -154,7 +156,10 @@ export function publicDatabase(locale: Locale = getRequestLocale()): typeof db {
                 : localized;
               if (localized.translatedTags && (!query.select || query.select.tags))
                 projected.translatedTags = localized.translatedTags;
-              contentLocales.set(projected, availableContentLocales(kind, source));
+              contentLocales.set(
+                projected,
+                productPaused ? ["es"] : availableContentLocales(kind, source),
+              );
               return projected;
             };
             if (Array.isArray(result)) result = result.map(localize).filter(Boolean);

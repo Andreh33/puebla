@@ -1,6 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
+import { PRODUCT_SOURCE_FILE } from "./publication-policy";
 import { POST_TEXT_FIELDS, PRODUCT_TEXT_FIELDS, type SourceText } from "./content-contract";
 const overlays = new Map<string, Record<string, Record<string, unknown>>>();
 function applyCorrections<T extends SourceText>(
@@ -33,8 +34,8 @@ export function applyPostSourceCorrections<T extends SourceText>(source: T): T {
   return applyCorrections(source, "source-corrections.json", POST_TEXT_FIELDS);
 }
 export function applyProductSourceCorrections<T extends SourceText>(source: T): T {
-  const corrected = applyCorrections(source, "product-source-corrections.json", PRODUCT_TEXT_FIELDS);
-  const alts = overlays.get("product-source-corrections.json")?.[source.slug]?.imageAlts;
+  const corrected = applyCorrections(source, PRODUCT_SOURCE_FILE, PRODUCT_TEXT_FIELDS);
+  const alts = overlays.get(PRODUCT_SOURCE_FILE)?.[source.slug]?.imageAlts;
   if (!alts || typeof alts !== "object" || Array.isArray(alts)) return corrected;
   const result = { ...corrected };
   // Corrections replace text only on existing images. URLs and image metadata
@@ -44,9 +45,10 @@ export function applyProductSourceCorrections<T extends SourceText>(source: T): 
     (result as Record<string, unknown>)[key] = corrected[key].map((image: unknown) => {
       if (!image || typeof image !== "object") return image;
       const original = image as Record<string, unknown>;
-      const alt = typeof original.url === "string" && Object.hasOwn(alts, original.url)
-        ? (alts as Record<string, unknown>)[original.url]
-        : undefined;
+      const alt =
+        typeof original.url === "string" && Object.hasOwn(alts, original.url)
+          ? (alts as Record<string, unknown>)[original.url]
+          : undefined;
       return typeof alt === "string" && alt.trim() ? { ...original, alt } : image;
     });
   }

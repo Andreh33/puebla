@@ -1,4 +1,5 @@
 "use client";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
 import { LOCALE_INFO } from "@/lib/i18n/config";
 
 
@@ -162,7 +163,7 @@ export function SearchCommand({ trigger }: Props) {
                     >
                       <ShoppingBag className="h-4 w-4 shrink-0 text-zs-blue-700" />
                       <span className="flex-1 truncate">
-                        <span className="font-medium">{tx(p.name)}</span>
+                        <span className="font-medium">{PRODUCT_TRANSLATIONS_ENABLED ? tx(p.name) : p.name}</span>
                         {p.brandName && (
                           <span className="ml-2 text-xs text-zs-muted">· {tx(p.brandName)}</span>
                         )}

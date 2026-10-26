@@ -2,6 +2,7 @@ import { isLocalePublished } from "@/lib/i18n/readiness";
 import type { Metadata } from "next";
 import { LOCALES, LOCALE_INFO, type Locale } from "@/lib/i18n/config";
 import { localePath } from "@/lib/i18n/routing";
+import { isLocaleRouteAvailable } from "@/lib/i18n/publication-policy";
 import { getRequestLocale } from "@/lib/i18n/request";
 import { getDictionary, hasCompleteUi } from "@/lib/i18n/dictionaries";
 
@@ -39,9 +40,12 @@ export function buildMetadata({
   modifiedTime,
   tags,
 }: BuildArgs): Metadata {
+  if (!isLocaleRouteAvailable(locale, path)) locale = "es";
   const baseUrl = SITE_URL.replace(/\/$/, "");
   const url = `${baseUrl}${localePath(locale, path.startsWith("/") ? path : `/${path}`)}`;
-  const publishedLocales = availableLocales.filter((item) => isLocalePublished(item));
+  const publishedLocales = availableLocales.filter(
+    (item) => isLocalePublished(item) && isLocaleRouteAvailable(item, path),
+  );
   const languages = Object.fromEntries(
     publishedLocales.map((item) => [
       LOCALE_INFO[item].language,

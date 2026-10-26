@@ -2,7 +2,8 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import type { Locale } from "./config";
-import { translationSnapshot } from "./content";
+import { translationSnapshot, loadEditorialPosts } from "./content";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "./publication-policy";
 import { hasCompleteUi } from "./dictionaries";
 export type SourceManifestEntry = {
   id?: string;
@@ -63,19 +64,29 @@ export function manifestTranslationReady(source: SourceManifestEntry, record: un
   );
 }
 const readiness = new Map<Locale, boolean>();
+/** Keep the complete product gate intact for an explicit future resumption. */
+export function localePublicationReady(
+  locale: Exclude<Locale, "es">,
+  source: SourceManifest | null,
+  productsEnabled = PRODUCT_TRANSLATIONS_ENABLED,
+): boolean {
+  return (
+    !!source &&
+    hasCompleteUi(locale) &&
+    (!productsEnabled || source.products.length === 1521) &&
+    source.posts.length === 54 &&
+    loadEditorialPosts(locale).length === 10 &&
+    (productsEnabled ? (["products", "posts"] as const) : (["posts"] as const)).every((kind) => {
+      const snapshot = translationSnapshot(kind, locale);
+      return source[kind].every((entry) => manifestTranslationReady(entry, snapshot[entry.slug]));
+    })
+  );
+}
 export function isLocalePublished(locale: Locale): boolean {
   if (locale === "es") return true;
   if (readiness.has(locale)) return readiness.get(locale)!;
   const source = sourceManifest();
-  const ready =
-    !!source &&
-    hasCompleteUi(locale) &&
-    source.products.length === 1521 &&
-    source.posts.length === 54 &&
-    (["products", "posts"] as const).every((kind) => {
-      const snapshot = translationSnapshot(kind, locale);
-      return source[kind].every((entry) => manifestTranslationReady(entry, snapshot[entry.slug]));
-    });
+  const ready = localePublicationReady(locale, source);
   readiness.set(locale, ready);
   return ready;
 }

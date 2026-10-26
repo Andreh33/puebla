@@ -62,11 +62,12 @@ function request(body: Record<string, unknown>) {
   });
 }
 describe("validated international checkout endpoint", () => {
-  it("uses server prices and980cents shipping, restricts country, and localizes labels/returns", async () => {
+  it("uses server prices and980cents shipping, Spanish labels and native locale/returns", async () => {
     expect((await POST(request({ shippingCost: 0 }))).status).toBe(200);
     const session = createSession.mock.calls[0]?.[0];
     expect(session.line_items[0].price_data.unit_amount).toBe(4950);
-    expect(session.line_items[0].price_data.product_data.name).toBe("Chaussure");
+    expect(session.line_items[0].price_data.product_data.name).toBe("Zapatilla");
+    expect(session.line_items[0].price_data.product_data.description).toBe("Marca · Azul");
     expect(session.shipping_options[0].shipping_rate_data.fixed_amount).toEqual({
       currency: "eur",
       amount: 980,

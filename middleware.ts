@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isLocaleRouteAvailable } from "@/lib/i18n/publication-policy";
 import { lookupRedirect, normalizePath } from "@/lib/redirects";
 import {
   shouldLocalizePath,
@@ -60,6 +61,11 @@ export async function middleware(req: NextRequest) {
 
   // Visible /es URLs are aliases of the original Spanish URLs. Preserve queries.
   if (/^\/es(?:\/|$)/.test(pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = stripLocale(pathname);
+    return NextResponse.redirect(url, 308);
+  }
+  if (!isLocaleRouteAvailable(routeLocale(pathname), pathname)) {
     const url = req.nextUrl.clone();
     url.pathname = stripLocale(pathname);
     return NextResponse.redirect(url, 308);
