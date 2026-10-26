@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
  */
 export function CartIcon() {
   const tx = useTranslatedValue();
+  const tf = useTranslatedTemplate();
   const { count, ready } = useCart();
   const [open, setOpen] = useState(false);
   const [bump, setBump] = useState(0);
@@ -34,8 +35,8 @@ export function CartIcon() {
         onClick={() => setOpen(true)}
         aria-label={
           visibleCount > 0
-            ? `Tu carrito (${visibleCount} ${visibleCount === 1 ? "producto" : "productos"})`
-            : "Tu carrito (vacío)"
+            ? tf(visibleCount === 1 ? "Tu carrito ({0} producto)" : "Tu carrito ({0} productos)", [visibleCount])
+            : tx("Tu carrito (vacío)")
         }
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-zs-ink transition-colors hover:bg-zs-surface"
       >

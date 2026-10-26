@@ -7525,5 +7525,40 @@
   ],
   "Ver {0}": [
     "app/[locale]/(public)/tienda-en/[municipio]/page.tsx"
+  ],
+  "Cerrado": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "Abierto ahora": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "cierra en {0}": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "abre en {0}": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "abre hoy a las {0}": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "abre mañana a las {0}": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "abre el {0} a las {1}": [
+    "components/public/OpenNowBadge.tsx"
+  ],
+  "países de entrega": [
+    "components/public/home/HomeHero.tsx"
+  ],
+  "envío internacional": [
+    "components/public/home/HomeHero.tsx"
+  ],
+  "Tu carrito ({0} producto)": [
+    "components/public/CartIcon.tsx",
+    "components/public/BottomNav.tsx"
+  ],
+  "Tu carrito ({0} productos)": [
+    "components/public/CartIcon.tsx",
+    "components/public/BottomNav.tsx"
   ]
 }

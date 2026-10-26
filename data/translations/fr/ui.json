@@ -2266,5 +2266,16 @@
   "Sí. Organizamos la entrega a Talavera con envío gratuito, sin importe mínimo de compra. Consulta la disponibilidad del producto al comprar online o por WhatsApp.": "Oui. Nous organisons la livraison à Talavera gratuitement, sans minimum d’achat. Vérifiez la disponibilité du produit en ligne ou sur WhatsApp.",
   "Sí. Para Mérida ofrecemos envío a domicilio gratuito, sin importe mínimo de compra. Puedes hacer el pedido online o consultar disponibilidad por WhatsApp.": "Oui. La livraison à domicile à Mérida est gratuite, sans minimum d’achat. Commandez en ligne ou vérifiez la disponibilité sur WhatsApp.",
   "Portada de {0}": "Illustration de l’article « {0} »",
-  "Ver {0}": "Découvrir : {0}"
+  "Ver {0}": "Découvrir : {0}",
+  "Cerrado": "Fermé",
+  "Abierto ahora": "Ouvert actuellement",
+  "cierra en {0}": "ferme dans {0}",
+  "abre en {0}": "ouvre dans {0}",
+  "abre hoy a las {0}": "ouvre aujourd’hui à {0}",
+  "abre mañana a las {0}": "ouvre demain à {0}",
+  "abre el {0} a las {1}": "ouvre {0} à {1}",
+  "países de entrega": "pays de livraison",
+  "envío internacional": "livraison internationale",
+  "Tu carrito ({0} producto)": "Votre panier ({0} article)",
+  "Tu carrito ({0} productos)": "Votre panier ({0} articles)"
 }

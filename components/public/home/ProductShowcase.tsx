@@ -124,7 +124,7 @@ export function ProductShowcase({ products }: { products: PublicProductCardData[
                           ].join(" ")}
                         >
                           <Icon className="h-3.5 w-3.5" strokeWidth={2.5} />
-                          {badge.label}
+                          {_translateUi(badge.label)}
                         </span>
                       ) : null,
                     )}

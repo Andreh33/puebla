@@ -91,6 +91,7 @@ type State = {
   open: boolean;
   /** Texto secundario con info concreta del próximo evento. */
   detail: string;
+  detailValues?: string[];
 };
 
 function compute(): State {
@@ -101,7 +102,7 @@ function compute(): State {
   const inside = ranges.find((r) => minutes >= r.open && minutes < r.close);
   if (inside) {
     const diff = inside.close - minutes;
-    return { open: true, detail: `cierra en ${fmtDuration(diff)}` };
+    return { open: true, detail: "cierra en {0}", detailValues: [fmtDuration(diff)] };
   }
   // ¿Hay próximo tramo hoy?
   const nextToday = ranges.find((r) => minutes < r.open);
@@ -109,10 +110,8 @@ function compute(): State {
     const diff = nextToday.open - minutes;
     return {
       open: false,
-      detail:
-        diff <= 90
-          ? `abre en ${fmtDuration(diff)}`
-          : `abre hoy a las ${fmtClock(nextToday.open)}`,
+      detail: diff <= 90 ? "abre en {0}" : "abre hoy a las {0}",
+      detailValues: [diff <= 90 ? fmtDuration(diff) : fmtClock(nextToday.open)],
     };
   }
   // Buscar próximo día con tramos
@@ -120,8 +119,11 @@ function compute(): State {
     const d = (day + i) % 7;
     const r = SCHEDULE[d]?.[0];
     if (r) {
-      const label = i === 1 ? "mañana" : `el ${DAY_LABELS[d]}`;
-      return { open: false, detail: `abre ${label} a las ${fmtClock(r.open)}` };
+      return {
+        open: false,
+        detail: i === 1 ? "abre mañana a las {0}" : "abre el {0} a las {1}",
+        detailValues: i === 1 ? [fmtClock(r.open)] : [DAY_LABELS[d]!, fmtClock(r.open)],
+      };
     }
   }
   return { open: false, detail: "horarios disponibles en tienda" };
@@ -144,6 +146,7 @@ type Props = {
  */
 export function OpenNowBadge({ className, tone = "light" }: Props) {
   const tx = useTranslatedValue();
+  const tf = useTranslatedTemplate();
   const [state, setState] = useState<State | null>(null);
 
   useEffect(() => {
@@ -186,7 +189,7 @@ export function OpenNowBadge({ className, tone = "light" }: Props) {
         {tx(state.open ? "Abierto ahora" : "Cerrado")}
       </span>
       {state.detail && (
-        <span className={["text-xs", detailClasses].join(" ")}>· {tx(state.detail)}</span>
+        <span className={["text-xs", detailClasses].join(" ")}>· {state.detailValues ? tf(state.detail, state.detailValues.map(tx)) : tx(state.detail)}</span>
       )}
       <style>{`
         @keyframes zs-open-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.78); } }

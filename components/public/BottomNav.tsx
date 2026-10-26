@@ -62,6 +62,7 @@ const ITEMS: Item[] = [
  */
 export function BottomNav() {
   const tx = useTranslatedValue();
+  const tf = useTranslatedTemplate();
   const t = useTranslations();
   const pathname = usePathname() ?? "/";
   const [mounted, setMounted] = useState(false);
@@ -175,8 +176,8 @@ export function BottomNav() {
                     onClick={() => setCartOpen(true)}
                     aria-label={
                       ready && count > 0
-                        ? `Tu carrito (${count} ${count === 1 ? "producto" : "productos"})`
-                        : "Tu carrito (vacío)"
+                        ? tf(count === 1 ? "Tu carrito ({0} producto)" : "Tu carrito ({0} productos)", [count])
+                        : tx("Tu carrito (vacío)")
                     }
                     className="block h-full w-full text-left"
                   >

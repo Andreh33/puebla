@@ -2258,5 +2258,16 @@
   "Zona Sport, tu tienda de deportes cerca de {0}. {1}. Running, pádel, montaña, fitness y calzado. Visítanos en Puebla de la Calzada o reserva por WhatsApp.": "Zona Sport, dein Sportgeschäft in der Nähe von {0}. {1}. Laufen, Padel, Bergsport, Fitness und Schuhe. Besuche uns in Puebla de la Calzada oder reserviere per WhatsApp.",
   "Zona Sport, tu tienda de deportes multimarca en Puebla de la Calzada (Badajoz). Running, pádel, montaña, calzado y complementos. Atención cercana en tienda y por WhatsApp.": "Zona Sport, dein Sportgeschäft mit verschiedenen Marken in Puebla de la Calzada (Badajoz). Laufen, Padel, Bergsport, Schuhe und Zubehör. Persönliche Betreuung im Geschäft und per WhatsApp.",
   "Portada de {0}": "Titelbild zu {0}",
-  "Ver {0}": "{0} ansehen"
+  "Ver {0}": "{0} ansehen",
+  "Cerrado": "Geschlossen",
+  "Abierto ahora": "Jetzt geöffnet",
+  "cierra en {0}": "schließt in {0}",
+  "abre en {0}": "öffnet in {0}",
+  "abre hoy a las {0}": "öffnet heute um {0}",
+  "abre mañana a las {0}": "öffnet morgen um {0}",
+  "abre el {0} a las {1}": "öffnet am {0} um {1}",
+  "países de entrega": "Lieferländer",
+  "envío internacional": "internationaler Versand",
+  "Tu carrito ({0} producto)": "Dein Warenkorb ({0} Artikel)",
+  "Tu carrito ({0} productos)": "Dein Warenkorb ({0} Artikel)"
 }

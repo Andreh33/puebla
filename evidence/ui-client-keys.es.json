@@ -1,5 +1,5 @@
 {
-  "sourceHash": "ef5ddd4db50027525a61e01c20894645b209418f5bb2197916eaca2e9f1a3350",
+  "sourceHash": "5cb831605329ba0c3412e97f75fd578398563f9e9679f221ac182705b356621f",
   "keys": [
     "¡Listo!",
     "¡Mensaje enviado! Te contestamos en breve.",
@@ -887,6 +887,17 @@
     "Running, montaña, pádel, fitness y calzado. Atención cara a cara en tienda y envíos a España, Portugal, Francia, Italia y Alemania.",
     "Desde Puebla de la Calzada a España, Portugal, Francia, Italia y Alemania",
     "Recogida en tienda sin coste de envío.",
-    "atención cercana"
+    "atención cercana",
+    "Cerrado",
+    "Abierto ahora",
+    "cierra en {0}",
+    "abre en {0}",
+    "abre hoy a las {0}",
+    "abre mañana a las {0}",
+    "abre el {0} a las {1}",
+    "países de entrega",
+    "envío internacional",
+    "Tu carrito ({0} producto)",
+    "Tu carrito ({0} productos)"
   ]
 }
