@@ -1,5 +1,7 @@
 # Compact glass header
 
+Historical release record. The user's subsequent larger-logo request and its current dimensions are documented in [NATIVE-COMMERCE-2026-10-26.md](NATIVE-COMMERCE-2026-10-26.md).
+
 The user requested an iPhone-inspired header after reviewing the international release. The header now uses a compact translucent surface, a proportionate logo, softer neutral elevation, uniform 44 px controls and a compact ISO language indicator with the full native language names retained in the select menu. The top ticker and its animation were removed. The main content and overlapping home/category heroes share a safe-area-aware header offset.
 
 Desktop navigation becomes visible at 1280 px to leave enough room for translated labels; narrower screens use the existing category drawer. The drawer retains its category accordions, limits its scroll area to the available viewport and is inert when closed. Search, cart, language switching, shopping links and the desktop keyboard megamenu remain available. The application prompts are retained; no product copy, price, stock, payment, schema or canonical changes are part of this adjustment. No dependency was added.

@@ -1,5 +1,7 @@
 # International editorial release, 26 October 2026
 
+Historical release record. The current pause boundary and store-page publication policy are documented in [NATIVE-COMMERCE-2026-10-26.md](NATIVE-COMMERCE-2026-10-26.md).
+
 The user's latest instruction pauses product descriptions, corrections and translations. The release enables Portuguese `/pt`, Italian `/it`, French `/fr` and German `/de` for the storefront interface, information pages, blog, cart and checkout. Shopping links continue to the existing Spanish catalog; direct foreign shopping routes return a permanent redirect preserving the query. Switching language from a shopping page opens that language's home page.
 
 `PRODUCT_TRANSLATIONS_ENABLED = false` is an explicit publication decision. It prevents partial product records from appearing publicly. Spanish product overlays come exclusively from `product-source-corrections.published.json`, copied byte for byte from the previously published deployment: SHA256 `cece203fe185a2a6768eb0de9fcda8a1a3b8eaf0048f5840f72b6dd1e5456b4e`. Later authoring files remain saved and inactive. No production database product updates are part of this release.
