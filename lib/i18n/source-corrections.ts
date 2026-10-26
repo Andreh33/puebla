@@ -33,5 +33,22 @@ export function applyPostSourceCorrections<T extends SourceText>(source: T): T {
   return applyCorrections(source, "source-corrections.json", POST_TEXT_FIELDS);
 }
 export function applyProductSourceCorrections<T extends SourceText>(source: T): T {
-  return applyCorrections(source, "product-source-corrections.json", PRODUCT_TEXT_FIELDS);
+  const corrected = applyCorrections(source, "product-source-corrections.json", PRODUCT_TEXT_FIELDS);
+  const alts = overlays.get("product-source-corrections.json")?.[source.slug]?.imageAlts;
+  if (!alts || typeof alts !== "object" || Array.isArray(alts)) return corrected;
+  const result = { ...corrected };
+  // Corrections replace text only on existing images. URLs and image metadata
+  // remain authoritative; the same rule serves runtime and exported sources.
+  for (const key of ["images", "imageAlts"] as const) {
+    if (!Array.isArray(corrected[key])) continue;
+    (result as Record<string, unknown>)[key] = corrected[key].map((image: unknown) => {
+      if (!image || typeof image !== "object") return image;
+      const original = image as Record<string, unknown>;
+      const alt = typeof original.url === "string" && Object.hasOwn(alts, original.url)
+        ? (alts as Record<string, unknown>)[original.url]
+        : undefined;
+      return typeof alt === "string" && alt.trim() ? { ...original, alt } : image;
+    });
+  }
+  return result;
 }

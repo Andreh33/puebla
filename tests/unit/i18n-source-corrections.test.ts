@@ -11,6 +11,7 @@ vi.mock("node:fs", () => ({
           slug: "other",
           status: "DRAFT",
           retailPrice: 1,
+          imageAlts: { "photo.webp": "Modelo azul marino", "foreign.webp": "No insertar" },
         },
       }),
   },
@@ -57,5 +58,15 @@ describe("versioned Spanish source corrections", () => {
   it("leaves articles without a reviewed correction unchanged", () => {
     const source = { slug: "unchanged", title: "Other" };
     expect(applyPostSourceCorrections(source)).toBe(source);
+  });
+  it("corrects existing image alts consistently for runtime and exported sources without changing image identity", () => {
+    const image = { url: "photo.webp", alt: "Naranja (copia)", width: 800, id: "image1" };
+    const source = { slug: "article", images: [image], imageAlts: [image] };
+    const fixed = applyProductSourceCorrections(source);
+    expect(fixed.images).toEqual([{ ...image, alt: "Modelo azul marino" }]);
+    expect(fixed.imageAlts).toEqual([{ ...image, alt: "Modelo azul marino" }]);
+    expect(source.images[0]?.alt).toBe("Naranja (copia)");
+    expect(sourceContentHash("products", fixed)).not.toBe(sourceContentHash("products", source));
+    expect(applyPostSourceCorrections(source).images).toEqual([image]);
   });
 });

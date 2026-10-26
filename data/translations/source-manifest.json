@@ -22,7 +22,7 @@
     {
       "id": "cmqgr3e8u00rbl204x8i55z6f",
       "slug": "abrigo-john-smith-jr-inton-coral-fluor",
-      "sourceHash": "21d30d0d276da6befbf235b18caf59b81be8f1fa6ac167e47eaa6cfdf54858f6",
+      "sourceHash": "4169746c2fdc566eefa82abbdd3f2b1e9f92b28d696db17fa032ff19d33bd7e3",
       "requiredFields": [
         "name",
         "shortName",
@@ -145,7 +145,7 @@
     {
       "id": "cmu6tckmx0006kw04eh2t5o4f",
       "slug": "abrigo-joluvi-mujer-heat-dipa-w-237240-reversible-calefactable-chocolate",
-      "sourceHash": "40ece5d8ff59a64447972ced74bad3ac7f9cdac3a636bd9c450f876663d9401a",
+      "sourceHash": "3b896dd6f1078917da55294672dbaa4de14b90fbf78a380aea07fe47bc664b8d",
       "requiredFields": [
         "name",
         "shortName",
@@ -162,7 +162,7 @@
     {
       "id": "cmu6v1utq0001ju043jmxoi3x",
       "slug": "abrigo-joluvi-mujer-heat-dipa-w-237240-reversible-calefactable-rosapalo",
-      "sourceHash": "da5aba4650b6e525ae39a5928d71e4ed1a1e8a444adb72ac0a371b16ad29dbe8",
+      "sourceHash": "c43958f8652cedfeef8c922338808055ac8b48cbfb0f40ccaf987a25699f48bb",
       "requiredFields": [
         "name",
         "shortName",
@@ -213,7 +213,7 @@
     {
       "id": "cmqgr48us09ikl204xterlb0l",
       "slug": "active-short-pacific-mujer-sh1060-641",
-      "sourceHash": "181625643e576a8577f2542fe00460ad6423a3686e5d648e73145dce4b63c4c8",
+      "sourceHash": "782c1de32955450289561e61115053a16b8c21b9914f21422f8e1292f9e201f5",
       "requiredFields": [
         "name",
         "shortName",
@@ -222,7 +222,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 7,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr48us09ikl204xterlb0l/f37b3409-5fcf-4640-bf55-f2291f8f5cd8-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/unassigned/5d21dc3c-521f-4f55-9375-9e7a0b67f18e-large.webp",
@@ -551,7 +551,7 @@
     {
       "id": "cmrq6h2hu0001jr04dm0ja7y5",
       "slug": "anorak-joluvi-heat-duo-w-237240-reversible-verde-caza-orquidea-copia",
-      "sourceHash": "b4d08716facc1b9ac06c417bb6f760aef639bdb3f8370c85779bca61162174ab",
+      "sourceHash": "5c5f958622957695dd3a80fb8b2c17a0262e119b89183d559e993d335514c905",
       "requiredFields": [
         "name",
         "shortName",
@@ -1392,7 +1392,7 @@
     {
       "id": "cmqpdxu7p0001l704tsknb006",
       "slug": "banador-john-smith-natales-caballero-copia",
-      "sourceHash": "1e373811a6c56ae3886b81d3dfb77a54d2e2f6ad7c2079a8de13180a1a314fd8",
+      "sourceHash": "ddf5d6f2a9347801a06f12ec221dcd1a33962fbb9dab24a1766752c3e6f2d46a",
       "requiredFields": [
         "name",
         "shortName",
@@ -1426,7 +1426,7 @@
     {
       "id": "cmqpe3ve90009l804tqkq4xsj",
       "slug": "banador-john-smith-natales-caballero-copia-copia-copia",
-      "sourceHash": "6393f2565e600a8c8b1e885e734f888a5ebd5cc5382840cd7ed5a1879280bd58",
+      "sourceHash": "c7dfbbdee906c9378157b6a7f8f5a77e53dbe09cb594193354fa61e19e7a9482",
       "requiredFields": [
         "name",
         "shortName",
@@ -1581,7 +1581,7 @@
     {
       "id": "cmqgr3h5f01gfl204m47ix8qr",
       "slug": "banador-john-smith-otsoa-jr-limon",
-      "sourceHash": "5bb8f5efceefdf84c32aac3d430da9aaa2cd9766f03b6b4270b7fc228ae4e6ab",
+      "sourceHash": "75f46b505c4a21e24a205dff7affb333e1eeac7c7ad0beab8cb87d5abb1019e7",
       "requiredFields": [
         "name",
         "shortName",
@@ -1937,7 +1937,7 @@
     {
       "id": "cmqgr3z4s06i5l204bjmjc7b2",
       "slug": "banador-joma-shark-negro-901635100",
-      "sourceHash": "ac6c5782c10dcd56f8c49cb19076eb8550b5b83c7ffc73b3cd336dc10ab66411",
+      "sourceHash": "618ed6888ce59050dfd31359872b85ae1f039173ef3ef7a523527cca11719047",
       "requiredFields": [
         "name",
         "shortName",
@@ -6919,7 +6919,7 @@
     {
       "id": "cmqgr3y550651l204zu6w3uhy",
       "slug": "chanclas-joma-socean-jr-2307-rosa-turquesa-socejs2307v",
-      "sourceHash": "2a7b5e36465c385a5407fe111e35e8a72c74dfcfb37defb2bef28e2a40a63fde",
+      "sourceHash": "3f17164194d38a8829c86c43071616f9b974956641825f07345c55e2318e9529",
       "requiredFields": [
         "name",
         "shortName",
@@ -6988,7 +6988,7 @@
     {
       "id": "cmqsatvn80007k104grz87bx1",
       "slug": "chanclas-mujer-reebok-goma-letras-ligeras-comodas-verano-playa-piscina-blanco",
-      "sourceHash": "646173fa92c87519fef56425fbbfd2e0d04a15b86fc828615aa266c129101fa9",
+      "sourceHash": "f8525f811044cc47391e8eb86b1710219e96d15a5b02059aed531d44169427eb",
       "requiredFields": [
         "name",
         "shortName",
@@ -7005,7 +7005,7 @@
     {
       "id": "cmqsbz5kt0000ju049xfyzwwk",
       "slug": "chanclas-nina-reebok-pala-goma-negras-ligeras-comodas-verano-piscina-playa-unico",
-      "sourceHash": "ae3440769bc44407cc9679759897032165c6abbfc57af11eacfba9d84a07cae8",
+      "sourceHash": "d2f869f104dddfe8dee3831f9642f9f2de1ac97d39d42fed8509b9b0d170ac35",
       "requiredFields": [
         "name",
         "shortName",
@@ -7022,7 +7022,7 @@
     {
       "id": "cmqsb7hun0000l804yprnzec2",
       "slug": "chanclas-nina-rip-curl-goma-dedo-logo-negra-ligeras-comodas-verano-playa-piscina-negro",
-      "sourceHash": "ca16a04a89752d540a7e04a87ca26555ec3f28026a8ca799e8fc296a653f7ad4",
+      "sourceHash": "83b6d910815b67e902f3e959c3b5291564a798b0ebb889497bc5230bc25285e6",
       "requiredFields": [
         "name",
         "shortName",
@@ -7039,7 +7039,7 @@
     {
       "id": "cmqqhys600000l104yx1oe35u",
       "slug": "chanclas-piscina-caballero-pala-reebok-comodas-ligeras-agua-verano-playa-azul-cobalto",
-      "sourceHash": "e62c5799db847e4ccca62ca6ad3977b29e0e492bcb480d2998b1ee82aa06a74e",
+      "sourceHash": "7309fca487cb891653c3ccb6f0dba2d7d68fa8730ab4fe6edeebb6fe37aa674c",
       "requiredFields": [
         "name",
         "shortName",
@@ -7057,7 +7057,7 @@
     {
       "id": "cmqqf74m70007i9048nz99acx",
       "slug": "chanclas-piscina-dedo-aquasphere-negras-royal-ligeras-comodas-agua-verano-negro-copia",
-      "sourceHash": "f0e28d7570de477e42337c2960d690a5bbab9ae5ecd8564a958233c084420b86",
+      "sourceHash": "15699f3db33def745bf48282f3234a9129fa89f91d1392b9dc73a68a33589392",
       "requiredFields": [
         "name",
         "shortName",
@@ -7075,7 +7075,7 @@
     {
       "id": "cmqqf04pa0000i904kein83nz",
       "slug": "chanclas-piscina-dedo-aquasphere-negras-verdes-ligeras-comodas-agua-verano-negro",
-      "sourceHash": "ec328c91c7fa7b8a5eea4e538247486f01dc7bb7d0238aafb4a27062344fda31",
+      "sourceHash": "eea4dfd33589dcc4165b3937715ced967e097d97f358b6b454c3ea731bee1150",
       "requiredFields": [
         "name",
         "shortName",
@@ -7093,7 +7093,7 @@
     {
       "id": "cmqqthu360000jo041hkzde3z",
       "slug": "chanclas-puma-logo-jr-marino-ligeras-comodas-verano-piscina-playa-nino-unico",
-      "sourceHash": "6acc7475f29f6a6addbd52e21590d58e189caffa3f6fe4153a44f9f034a8082c",
+      "sourceHash": "213e3c755bee623f63aa2b436314ae7446b012f7e02b9a778587435dce6882dd",
       "requiredFields": [
         "name",
         "shortName",
@@ -7110,7 +7110,7 @@
     {
       "id": "cmqqsxj5m0000l504y58z8eul",
       "slug": "chanclas-puma-logo-nino-ligeras-comodas-verano-piscina-playa-junior-negro",
-      "sourceHash": "fc8687930fafd61b5fff275fb129292845ab872fbfa6a8702002ef84ee1ce3ae",
+      "sourceHash": "0fb47251a33ab9200764a5bc0765325bce86fc96c0b06fcf1bebbb76beedfa68",
       "requiredFields": [
         "name",
         "shortName",
@@ -7127,7 +7127,7 @@
     {
       "id": "cmqqu85ml0005jo046b3sgrau",
       "slug": "chanclas-puma-logo-rosa-nina-dedo-ligeras-comodas-verano-piscina-playa-rosa",
-      "sourceHash": "d333bc8e496a669ba89ac394bfead70b59e2f186ff915b6486c70d0c2766dba9",
+      "sourceHash": "92204c8a802a62debef11acc1d04819822393523d5439bc03529311ea7651aa9",
       "requiredFields": [
         "name",
         "shortName",
@@ -7144,7 +7144,7 @@
     {
       "id": "cmqqueics000al504tbk7qan4",
       "slug": "chanclas-puma-nina-logo-amarillo-lila-ligeras-comodas-verano-piscina-playa-amarillo",
-      "sourceHash": "28b7529d64f54661cfe584c545882bdbea4434342fb97bb9554e2e1b928aad50",
+      "sourceHash": "eb46cd9523621bc4b611b9622ad18be453a8bbb8f8c2295d185dd44fe0a756d4",
       "requiredFields": [
         "name",
         "shortName",
@@ -7161,7 +7161,7 @@
     {
       "id": "cmqqv8zxy0000jo04c0mnb4oz",
       "slug": "chanclas-puma-nina-logo-lila-ligeras-comodas-verano-piscina-playa-lila",
-      "sourceHash": "51fd69ace42f861f8a836814b57eecdb5c8efb6f9e080336540ff6a59be73d6c",
+      "sourceHash": "227a912648a0b3c9a6f35a1d1fc2dfd5e242df83452fb6f28f18c72bde644658",
       "requiredFields": [
         "name",
         "shortName",
@@ -7177,7 +7177,7 @@
     {
       "id": "cmqqvgji10005jo04dybvlbnv",
       "slug": "chanclas-reebok-mujer-goma-dedo-estampadas-comodas-ligeras-verano-piscina-playa-gris",
-      "sourceHash": "57d40e938ba1fd1f62655f1db94e0229c9bc793f46a7b6ef3d127171dcfbcf2e",
+      "sourceHash": "d2a0fe67d4318d9ade2ac7b4367052fef7243fa8edfc0f8b54ee759282199ff3",
       "requiredFields": [
         "name",
         "shortName",
@@ -7194,7 +7194,7 @@
     {
       "id": "cmqgr3dyb00p9l204njs8upz7",
       "slug": "chandal-adidas-badge-of-sport-fullzip-hoodie-h28831",
-      "sourceHash": "dd305f7c1d469132ca843c53b3193ef8e3a1e196ed1f68c393be20535220c401",
+      "sourceHash": "50ebde9aa8e6c64505372fda816df5fca81e38c4e51fc1d93b03267756b8629b",
       "requiredFields": [
         "name",
         "shortName",
@@ -7293,7 +7293,7 @@
     {
       "id": "cmqgr3p6t03djl204exm4vn0v",
       "slug": "chandal-jhayber-diamon-black-junior-dn2003",
-      "sourceHash": "29d6946363b418f09dd468984188e8c73e610bc9ef79b82023e38fb10c2f0316",
+      "sourceHash": "8f536e7429d0fec452641712248da7305f431ab03f87f5bf4d355d56945e1e2e",
       "requiredFields": [
         "name",
         "shortName",
@@ -7311,7 +7311,7 @@
     {
       "id": "cmqgr3p7j03drl2043hyizwrt",
       "slug": "chandal-jhayber-diamon-yellow-junior-dn2002",
-      "sourceHash": "4de486bb84192f8fc8a20bea14b138227bf2e3058699e21617e1eccbcdfc8b13",
+      "sourceHash": "55e47bcf252e3db745bf635bafcbeab10a90fb6358996a4400856e3875fb7bbc",
       "requiredFields": [
         "name",
         "shortName",
@@ -7386,7 +7386,7 @@
     {
       "id": "cmu1hlxz2000fjy04g4dt4e3m",
       "slug": "chandal-jhayber-syoney-black-da2006-ropa-deportiva-entrenamiento-negro",
-      "sourceHash": "76e66589d7e5aaf5f8d3ca3472bf8dd8a1f72f031a4c9868123db78ade512a55",
+      "sourceHash": "3061de1100d3d7bacf34eaa3b0a008d1ea84cc60a6dd4fd2394b4f5989ce1d1c",
       "requiredFields": [
         "name",
         "shortName",
@@ -7404,7 +7404,7 @@
     {
       "id": "cmqgr42q307o7l204f2elqgmy",
       "slug": "chandal-jhayber-wave-black-dn2012",
-      "sourceHash": "555234797e2aa446c98bf5cd417a0543a3f5c5b8fe7cdba6aab83d1066e9b4ad",
+      "sourceHash": "27e1f6fa9d5a08846c404ac9462a425c2ddf18c7a1f246b03b232104dbd404d4",
       "requiredFields": [
         "name",
         "shortName",
@@ -7495,7 +7495,7 @@
     {
       "id": "cmsx2web80000ic043qdyf7br",
       "slug": "chandal-john-smith-alajar-blanco-caballero-deportivo-comodo-resistente-blanco",
-      "sourceHash": "cbd14902aad8e5a3d86bdbd86a0ac7a2210ace63e425c0585cf2cd65e876c0d3",
+      "sourceHash": "c026c9d500a1d988ebec0a637e7d60cb09fcb5245510b6dfef0c118f5929fa17",
       "requiredFields": [
         "name",
         "shortName",
@@ -7533,7 +7533,7 @@
     {
       "id": "cmupv793z000ijp042dv1v9oi",
       "slug": "chandal-john-smith-alburquerque-blanco-caballero-deportivo-comodo-resistente-blanco",
-      "sourceHash": "f625d0430b065fe9425e5ce2e014632b94220508f7607194a55229bf89e52741",
+      "sourceHash": "417be74ab06d7d33f0fc72b11ff01f9ace24aaa6a5b0d179112ac0f52af14e97",
       "requiredFields": [
         "name",
         "shortName",
@@ -7553,7 +7553,7 @@
     {
       "id": "cmsx2hsa4000kld04eronxu4i",
       "slug": "chandal-john-smith-alburquerque-caballero-deportivo-comodo-resistente-unico",
-      "sourceHash": "f05bf560a13914b3bc62385d28c7248870dc9293030c5ddde732d59576985727",
+      "sourceHash": "81fc89a4161f03313ad9aad6e026e373ed5234e5fae4ab811b87ca56078f71dc",
       "requiredFields": [
         "name",
         "shortName",
@@ -7855,7 +7855,7 @@
     {
       "id": "cmqgr40w30713l204qf7lf99x",
       "slug": "chandal-john-smith-chao-azul-acero",
-      "sourceHash": "19c4cacc1890073baa6dd6addbd0e09107e15546d16996fe9f00f5eb43d69368",
+      "sourceHash": "da0ee034436aacd55f4411ad5ee8c14b7b26ac347c6e6d3b70db7bb9880ac18b",
       "requiredFields": [
         "name",
         "shortName",
@@ -7876,7 +7876,7 @@
     {
       "id": "cmqgr40xz071zl20440tu84g7",
       "slug": "chandal-john-smith-chao-kaki",
-      "sourceHash": "94192c7e133c6310cdd4d12b0f657765212f7e9f930f4f6480a7c09dfdb1b1a7",
+      "sourceHash": "29be58b5e75f83eeda17cf5bc7430804a3239dc6e48d7739573150fbf7fa09f5",
       "requiredFields": [
         "name",
         "shortName",
@@ -7981,7 +7981,7 @@
     {
       "id": "cmqh7rpqg07ubid04mqh3q27h",
       "slug": "chandal-john-smith-frechilla-blanco-nina-algodon",
-      "sourceHash": "ba557eecaabe288afbb7c9e655b85c1f40fb75d4e8ffdd8d60e3737138403749",
+      "sourceHash": "6f939677505624da52cc551234f52c2eecb1e4e3edf449dfea3e53e222fe640f",
       "requiredFields": [
         "name",
         "shortName",
@@ -7998,7 +7998,7 @@
     {
       "id": "cmqh7rpq007u5id04sgqgtbkx",
       "slug": "chandal-john-smith-funcho-fucsia-nina-algodon",
-      "sourceHash": "677b35f7225dd931f2e47a2592d076d0f48c78f9bd17a48b551dbaf010eeb3cd",
+      "sourceHash": "053b2d204602e169e7eda0f811e8e38bc13afe657d7083a537597bf693db4e51",
       "requiredFields": [
         "name",
         "shortName",
@@ -8282,7 +8282,7 @@
     {
       "id": "cmqgr3uw9050bl204aym2y8tl",
       "slug": "chandal-joluvi-larol-nina-237293",
-      "sourceHash": "75ddfccafea314b758952b87741c7c81647c951d3855c2b1ab549cc3600fba48",
+      "sourceHash": "9b4cc85edae187eb9a30345f0e6e4e014074266974c597c3116b6373ee0a456d",
       "requiredFields": [
         "name",
         "shortName",
@@ -8317,7 +8317,7 @@
     {
       "id": "cmqgr43t6081tl204kr311ycx",
       "slug": "chandal-joluvi-loan-w-giruela-negro-237286",
-      "sourceHash": "6c572c99c9719b92af75fd59207fffd21f1633ef71993692d179613599b37f34",
+      "sourceHash": "a87eaa320a07f2cfe85b46dfe102db3c4c072fa97df113c1daa41a32c6f13fcd",
       "requiredFields": [
         "name",
         "shortName",
@@ -8326,7 +8326,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 4,
+      "tagCount": 5,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43t6081tl204kr311ycx/35eb8bc8-5312-4775-8ca7-3b23298de264-large.webp"
       ]
@@ -8371,7 +8371,7 @@
     {
       "id": "cmqgr4add09ykl2042k01s246",
       "slug": "chandal-joma-bebe-rosa-algodon",
-      "sourceHash": "70f6aecc173d7a8d1ca6c0659f1748b9d215e6ca11488ccc43553ac98430ac5a",
+      "sourceHash": "73ecf4a3668989ca214531d6bf55f340ca3f77c78cb3a4d5000a86d25154f587",
       "requiredFields": [
         "name",
         "shortName",
@@ -8391,7 +8391,7 @@
     {
       "id": "cmqgr4aco09yal204m23jxj2z",
       "slug": "chandal-joma-bebe-verde-algodon",
-      "sourceHash": "dda7051452cc3e731049a50945ae7077595dc13e6c0bfcf5b26928a625db6a88",
+      "sourceHash": "0253a62fc0c3251ce4abf15ae1d6fc9c93ab1f8e6d4bcda2a9d7cea19e753f22",
       "requiredFields": [
         "name",
         "shortName",
@@ -8411,7 +8411,7 @@
     {
       "id": "cmqgr45sg08l0l204ssatzjdk",
       "slug": "chandal-joma-championship-20-royal-navy-105201703",
-      "sourceHash": "266c7d41dc96c195c4db251efb0bbd3e33f9fca0698232968b547f970a2163c9",
+      "sourceHash": "3cdb63026eaa8a3a0ebed564c6628e2e7b4f9330c78def7c02b4d288469c28ea",
       "requiredFields": [
         "name",
         "shortName",
@@ -8447,7 +8447,7 @@
     {
       "id": "cmqlgoikf0050ho04e7ljjhgr",
       "slug": "chandal-joma-championship-viii-104201-burdeo",
-      "sourceHash": "f5b288fc6eb991fa96749e3d1ef75e2e36ea4b3a0d8c07c464905a688583a13d",
+      "sourceHash": "be646f57e39dd4de41e6d760cfb3d3fe718eb5e869753c3e476229bdb9f0b3f7",
       "requiredFields": [
         "name",
         "description",
@@ -8463,7 +8463,7 @@
     {
       "id": "cmqlgoibg004xho04pz6zutrf",
       "slug": "chandal-joma-championship-viii-104201-verde",
-      "sourceHash": "40c77528bbdf7f04bed425c6ec787e3e66ac41e685e1497fd792e9218479ee08",
+      "sourceHash": "c7628dda52adb8c3d9787191970bae45826396c3abff396276a361e9a39a7686",
       "requiredFields": [
         "name",
         "description",
@@ -8514,7 +8514,7 @@
     {
       "id": "cmqgr3s61045bl2040cz7mq93",
       "slug": "chandal-joma-danubio-iii-negro-naranja-fluor-103733108",
-      "sourceHash": "0d29c15c1973f1cb7640a6b2f30bd23c988aa461041a0ee30b3bb4ace6171b36",
+      "sourceHash": "c306a28f7d4b217453bbbb3148251c8bb1c49fd980b00de46b9688ae38206dcc",
       "requiredFields": [
         "name",
         "shortName",
@@ -8532,7 +8532,7 @@
     {
       "id": "cmqgr48io09gcl2043tu0ua1y",
       "slug": "chandal-joma-danubio-iv-verde",
-      "sourceHash": "7bd6cd59cf26a3a271a8d8a3aeded05681f42a999b790d97653ef5e3bbc95202",
+      "sourceHash": "61e7cd45f952f53d7d6ee649c09bea6d4246c8eb7f43052bfa37121f6c1cb2f4",
       "requiredFields": [
         "name",
         "shortName",
@@ -8551,7 +8551,7 @@
     {
       "id": "cmv6wffll0007jv06ue6j9jh6",
       "slug": "chandal-joma-eco-championship-102751106-negro-rojo-entrenamiento-confort-durabilidad-marino-coral",
-      "sourceHash": "7f7b84b6c44520949c9955b16a5c75f2d8854be4ccaddf927fbe4efe0a541c91",
+      "sourceHash": "51abc57c9a7cdafb33a097a8de3fe2b2b84fea8c4325f98b53e0e51846c7bf26",
       "requiredFields": [
         "name",
         "shortName",
@@ -8624,7 +8624,7 @@
     {
       "id": "cmqh7rprt07utid04e3xbelk4",
       "slug": "chandal-joma-nina-rosa-marino-poliester",
-      "sourceHash": "3e0db53315a91640dcc6e41faec9ae167c577aba9ad9e0ff8c9b625b4a763bc7",
+      "sourceHash": "60483392977dec6cbe87bd8bea8bc08ca88c7c8bdb0f83623d04429d9e5c1147",
       "requiredFields": [
         "name",
         "shortName",
@@ -8731,7 +8731,7 @@
     {
       "id": "cmqh7rpid07r2id04k1m3ex2g",
       "slug": "chandal-luanvi-algodon-senora-ada-negro",
-      "sourceHash": "ee1683b1d978ac8344894b9e1932b3d0232f1bd89f40342d59769bd19b6ac951",
+      "sourceHash": "92f4abea33d56ebdc4501285fce2fe21a4cdec8e220152d2b4e02f596eda831c",
       "requiredFields": [
         "name",
         "shortName",
@@ -8748,7 +8748,7 @@
     {
       "id": "cmqh7rpje07riid04j3a02a5r",
       "slug": "chandal-luanvi-algodon-senora-gala-azul",
-      "sourceHash": "18b32ec882b0857416b2d87e2bdbb77bff01690e453324abc50a86b0033dad96",
+      "sourceHash": "f24d98a9009b6ab761456bd0373a9852910b04a8b4d6632e4a17379cb88e7c01",
       "requiredFields": [
         "name",
         "shortName",
@@ -8765,7 +8765,7 @@
     {
       "id": "cmqh7rpit07r8id04h7nevlag",
       "slug": "chandal-luanvi-algodon-senora-gala-negro",
-      "sourceHash": "31b665a45295e13b4b6247d8935e18e9dbca5fc590db210c596971eac1af2c44",
+      "sourceHash": "f14c549b4d553c46d9a9edb6c7b992d46793858d09c787fefeb8f312200ee4a5",
       "requiredFields": [
         "name",
         "shortName",
@@ -8782,7 +8782,7 @@
     {
       "id": "cmupaasnh0008nw06pzqrg420",
       "slug": "chandal-mujer-john-smith-hadar-rosa-palo-confort-ligero-entrenamiento-deporte-diario-burdeos",
-      "sourceHash": "27c66b8d66037acf9da99143a5c232230c40d599cca818c4e85195b560d6c096",
+      "sourceHash": "d714b7caf4a5c4bf43f7c03502de012a2e293909781ff6be0def49922d89fce7",
       "requiredFields": [
         "name",
         "shortName",
@@ -8946,7 +8946,7 @@
     {
       "id": "cmqgr3tkd04lrl204o68jbg3k",
       "slug": "chandal-puma-classic-hoodied-tracksuit-683025-mujer",
-      "sourceHash": "17e1cf3869ce7a184ba75ce49406059bc907b42036508a9afc08463f4e4f43ac",
+      "sourceHash": "fe055f836a62acbd2f524743d827b50a5322f47405b16176fb700d78a326a1e4",
       "requiredFields": [
         "name",
         "shortName",
@@ -9005,7 +9005,7 @@
     {
       "id": "cmqgr3t8304hpl204voymua5k",
       "slug": "chandal-puma-poly-suit-logo-677427-01-caballero",
-      "sourceHash": "251f0b647932fc1031f27a71ed6ec1c116ed938a0854f64b72f3a686ebd5fa05",
+      "sourceHash": "4a917a710a3f61c1d0e44133a9393666ab6c29374b08ab9fc935bbc0c98ccb6b",
       "requiredFields": [
         "name",
         "shortName",
@@ -9025,7 +9025,7 @@
     {
       "id": "cmqh7rprd07unid048zn7z54f",
       "slug": "chandal-reebok-charged-nina-rosa-negro",
-      "sourceHash": "2f9851770b41b6ac1599f65f602950fc1198e4c61abfa99fd47cc520319fab0f",
+      "sourceHash": "5cb3ac6f16e0df5ee71d86f2c00afcbd8006bba6c3166b903cf646986404c9b9",
       "requiredFields": [
         "name",
         "shortName",
@@ -9059,7 +9059,7 @@
     {
       "id": "cmqgr43b707v1l204ydggu43a",
       "slug": "chaqueta-8000-esrikos-crema",
-      "sourceHash": "100f778deb1dbd534cdbc698cd3a3f6bf7b7b0380e08ee9c0dfa8f29cedade36",
+      "sourceHash": "0e4117f369f04a9418843c66d8eddea3efb466e6df4cde52c5f9c3313ca2ab13",
       "requiredFields": [
         "name",
         "shortName",
@@ -9068,7 +9068,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43b707v1l204ydggu43a/1c161f8b-403d-49ff-aebb-7ba75a2f1c3a-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43b707v1l204ydggu43a/ef9c6415-5943-4657-a2ab-c25b0d0cbf9c-large.webp",
@@ -9079,7 +9079,7 @@
     {
       "id": "cmqgr43a607ull204fey090w2",
       "slug": "chaqueta-8000-esrikos-negro",
-      "sourceHash": "16a08b74f1dcc6b02238a5716ba4172fa460623e9ac33aabb6729a8efd6df13a",
+      "sourceHash": "4c9d014bd588af5ac54db14ebf34e7414ae38e5ad02f75eb12029dd18916daf8",
       "requiredFields": [
         "name",
         "shortName",
@@ -9088,7 +9088,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43a607ull204fey090w2/1782f79e-d37d-49a5-8db8-8024d03f5149-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43a607ull204fey090w2/bef1c6b3-0d4d-41b0-bd05-a70ff2551ba3-large.webp",
@@ -9117,7 +9117,7 @@
     {
       "id": "cmqgr434e07ttl204mgngjyhl",
       "slug": "chaqueta-8000-mesi-gris-negro",
-      "sourceHash": "377f309f0e358c43eb2aaa2c9e6fcda1622c262f23075f918e628dd4d7db317c",
+      "sourceHash": "8e277e293fa75b320f4edcb64d076baefdcf677b7317c75d1ad259fcdb6728ca",
       "requiredFields": [
         "name",
         "shortName",
@@ -9126,7 +9126,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr434e07ttl204mgngjyhl/c177117c-c1db-42a2-8060-5d6d622bb2ca-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr434e07ttl204mgngjyhl/893ad01f-87b4-4317-a95e-6c9cb1e8317c-large.webp",
@@ -9136,7 +9136,7 @@
     {
       "id": "cmqgr435d07u7l204nl9dgmpa",
       "slug": "chaqueta-8000-mesi-gris-verde",
-      "sourceHash": "1645f42c4146f81eb79740ef741f8ea2e878f96f1865a7202fe4f161af5408f0",
+      "sourceHash": "f1227f5096333b9fce245b01520cddbac9eee1332e1cd8651cb7c4061c9a8e5e",
       "requiredFields": [
         "name",
         "shortName",
@@ -9145,7 +9145,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr435d07u7l204nl9dgmpa/9ee46547-3727-4e7f-aa0d-bfd9a5cdedbf-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr435d07u7l204nl9dgmpa/843f6a28-d282-4f18-93b9-75dbbf04feb3-large.webp",
@@ -9230,7 +9230,7 @@
     {
       "id": "cmt9sbq340006l204ws6unsqk",
       "slug": "chaqueta-8000-monester-caballero-outdoor-tecnica-resistente-comoda-unico",
-      "sourceHash": "04a98562343a2606c4126704de62249b08e3e3dd184579f7ed7a1fc7fd4ac0f8",
+      "sourceHash": "f0059c83847f358aaefd03c52436b39b60d9669c76d25e6545ba8291e0995213",
       "requiredFields": [
         "name",
         "shortName",
@@ -9306,7 +9306,7 @@
     {
       "id": "cmqgr43e207w7l20442xt71hi",
       "slug": "chaqueta-8000-ned-negro",
-      "sourceHash": "97d4e80d604a5674ac5ae41fd3b8a6e49ddd0a2a5ea829233fddb86504c0115e",
+      "sourceHash": "b18a8703423e0c187232e3cd760cf9dde58e50ab532c0243273e4f70d5e4f803",
       "requiredFields": [
         "name",
         "shortName",
@@ -9315,7 +9315,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43e207w7l20442xt71hi/9302a265-604a-4ca2-b837-f21231ff66a9-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43e207w7l20442xt71hi/de8c0156-a35d-4178-884c-a317e0110c5a-large.webp",
@@ -9325,7 +9325,7 @@
     {
       "id": "cmqgr43d307vtl20473uom6rr",
       "slug": "chaqueta-8000-ned-verde",
-      "sourceHash": "72ebb70d0474a0efa845097e96009e1df520415736837ca9da01696572ebd58f",
+      "sourceHash": "24cdc98888b06377cb0dc2976ac8e88002a4dcbe3bcbfb74b7c6f5079e1b3e5c",
       "requiredFields": [
         "name",
         "shortName",
@@ -9334,7 +9334,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 8,
+      "tagCount": 6,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43d307vtl20473uom6rr/6e066916-0285-40a9-b0dd-467ee77aeaa1-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr43d307vtl20473uom6rr/f0f08a5e-d51e-4690-afc8-ab6a1a71101f-large.webp",
@@ -9363,7 +9363,7 @@
     {
       "id": "cmqgr3mxb02t1l204dq0aklj7",
       "slug": "chaqueta-babolat-capucha-lebron",
-      "sourceHash": "118021fa410104dcf9d833b9faff665fc1447155a4049435895e00d5a0726f1a",
+      "sourceHash": "f9f63a02661f922a4df31d835de12422c8409239ffcfeb2750a524fd0150ead5",
       "requiredFields": [
         "name",
         "shortName",
@@ -9402,7 +9402,7 @@
     {
       "id": "cmtd7rvwo0001j70asg7itc66",
       "slug": "chaqueta-ditchil-mujer-lycra-comfeel-perchada-marron-jkc1027202-marron-copia",
-      "sourceHash": "30cf83eef307ee6b83e6d5340bbef182c87f073260dc8d136023bd5d00d403aa",
+      "sourceHash": "4424d91dd1ffc1961a1079081fe709ad3e0979db4bdbe9728c3e25adb43a2c5a",
       "requiredFields": [
         "name",
         "shortName",
@@ -9477,7 +9477,7 @@
     {
       "id": "cmqgr3j3p01wbl204pf50338v",
       "slug": "chaqueta-john-smith-flete-gris-medio-vigore-caballero",
-      "sourceHash": "883318dbfa7ef201a0492581f010f7cb5e36620b118bfdad8ec8335caf90e332",
+      "sourceHash": "26c209d7be8d1093872e004f023812ab9577a8afc571a06efc14197249046a4b",
       "requiredFields": [
         "name",
         "shortName",
@@ -9577,7 +9577,7 @@
     {
       "id": "cmqgr3tc804j3l204zyuktzsk",
       "slug": "chaqueta-joma-break-901569100-mujer",
-      "sourceHash": "162b066ebe60be8dfcd4705dad06d367522fb5e62e94c0647efa309fd660aedb",
+      "sourceHash": "930f110f04739275a8317f90315047eb29865e13b3f49ee5a26ada68810a3c84",
       "requiredFields": [
         "name",
         "shortName",
@@ -9586,7 +9586,7 @@
         "colorName",
         "metaDescription"
       ],
-      "tagCount": 5,
+      "tagCount": 4,
       "imageAltUrls": [
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/cmqgr3tc804j3l204zyuktzsk/b99e533f-f3d8-4eff-9440-ad21dfb68c94-large.webp",
         "https://jjguqpz67qppiux0.public.blob.vercel-storage.com/products/unassigned/938058d4-248a-4c56-b743-883f569ed866-large.webp",
@@ -9651,7 +9651,7 @@
     {
       "id": "cmv6vkgpf000alc06qgcr0dwn",
       "slug": "chaqueta-joma-championship-20-dark-navy-amarillo-fluor-105201321-entrenamiento-deportivo-unico-",
-      "sourceHash": "ac6c5ec30032d734423635702b1675b19ae6156514a9b0c2a4a698ccc01ab051",
+      "sourceHash": "cf47a683b0bf7a1aa27bcc2c446c219d9bcd8ef7d66c185f1959d9523192b728",
       "requiredFields": [
         "name",
         "shortName",
@@ -9949,7 +9949,7 @@
     {
       "id": "cmqgr3uud04zdl204znluhdhr",
       "slug": "chaqueta-polar-joluvi-matt-237295",
-      "sourceHash": "9a18b1947321003f5dac983798b048db5400ff5643b888241a15520bdf6bfbd4",
+      "sourceHash": "37a5d698c2f9ae02ae32fe7dc544a6ecfd3eaee8c58b7cdc1aa3fb7ada53b5c3",
       "requiredFields": [
         "name",
         "shortName",
@@ -10146,7 +10146,7 @@
     {
       "id": "cmqgr49ee09pul204kum4y67d",
       "slug": "chubasquero-joma-lima-nina-morado",
-      "sourceHash": "30a27b4b227d66bf84a3a28049695a25273c96ba7cd0e471531c7667ce7c60dd",
+      "sourceHash": "cefa3bd81720b7e0486852f1f77c1e1dba53b8523be36814f0ef561e064e8a30",
       "requiredFields": [
         "name",
         "shortName",
@@ -10202,7 +10202,7 @@
     {
       "id": "cmqh7rq8f07zrid04ovwsc2na",
       "slug": "chubasquero-joma-nina-500026502-gorro",
-      "sourceHash": "47dfc6f658439b283861c5830aa53a42b9a459c862f7e5697ddb8392976c74e1",
+      "sourceHash": "353d2ca4fd9bd27d49af435cce1de55aad82a0b4887b358f5ae75a9af5cc1758",
       "requiredFields": [
         "name",
         "shortName",
@@ -10219,7 +10219,7 @@
     {
       "id": "cmqgr49c709p0l204o0agizvb",
       "slug": "chubasquero-joma-nina-marino-rosa-9016244014",
-      "sourceHash": "4b16dca4290f1ea12e56b84ef4ad5db9200d70c2c2414167c7e76cf979bfdc39",
+      "sourceHash": "c8615b48a9ac29fc9d2ac86a2fdfe80a2b2ac10071232028560831756fad7440",
       "requiredFields": [
         "name",
         "shortName",
@@ -10278,7 +10278,7 @@
     {
       "id": "cmqgr49ct09p8l2045xdy9570",
       "slug": "chubasquero-joma-nina-rosa-morado-9016244011",
-      "sourceHash": "6895269aea831fc0c68566c4a888f158f93e5faf85f3ff9e8828b1b241f2b223",
+      "sourceHash": "aa17c06e31564c1dbb9e473bb441782dac39bc2ba29626069bd1904a4116d1df",
       "requiredFields": [
         "name",
         "shortName",
@@ -10335,7 +10335,7 @@
     {
       "id": "cmqgr4ae409yul204kk11eth5",
       "slug": "chubasquero-joma-r-trail-nature-rojo",
-      "sourceHash": "3e27e16b6a9f3ed027fed30f4eaea34f9e64cf88c25f41bd335f4cae433d2409",
+      "sourceHash": "96c14e8e270d7f114e035b6f215439270faf32492ae991369f755fc6fa29eab9",
       "requiredFields": [
         "name",
         "shortName",
@@ -10355,7 +10355,7 @@
     {
       "id": "cmql6wf71000bl904mqkrtpr8",
       "slug": "chubasquero-joma-r-trail-nature-rojo-copia",
-      "sourceHash": "aa3f45c7a36cd6260f56cd79ac7c82c42658d5822107e45b05a570ee2277bcfd",
+      "sourceHash": "17cfecce367aaffc1a08609a7975d61f971f39b9104d623ac11b5b40e81418af",
       "requiredFields": [
         "name",
         "shortName",
@@ -10373,7 +10373,7 @@
     {
       "id": "cmqgr42a907jhl204anudhabo",
       "slug": "chubasquero-joma-rnature-violeta-902297581",
-      "sourceHash": "ddfc52d2b47fafdba81547ef60381da5c700aec55932d86943e3c9b0e8b88da0",
+      "sourceHash": "56044dfcf346d654597ffbac7c3ced79c44a603f12f5c808b4d978fef1fd4b01",
       "requiredFields": [
         "name",
         "shortName",

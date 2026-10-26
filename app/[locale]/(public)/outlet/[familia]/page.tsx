@@ -276,7 +276,7 @@ export function generateStaticParams(): Params[] {
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/70">
             {t("Outlet")}</p>
           <h1 className="mt-2 text-balance text-3xl font-extrabold tracking-tight sm:text-5xl">
-            {t("Outlet de")}{" "}{label.toLowerCase()}
+            {t("Outlet de")}{" "}{getRequestLocale() === "de" ? t(label) : t(label).toLowerCase()}
           </h1>
           <p className="mt-3 max-w-2xl text-balance text-white/85 sm:text-lg">
             {tx(label)} {t("de marca a precio reducido, mientras haya stock.")}</p>
