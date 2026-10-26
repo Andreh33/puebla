@@ -178,7 +178,7 @@ export function HomeHero() {
           intencional: la pill flotante del Header (top-strip 38px + pill ~64px
           + márgenes) ocupa ~148px desde el top y la imagen del hero queda
           DETRÁS de la pill — el texto tiene que empezar por debajo. */}
-      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-28 sm:px-8 sm:pt-32 lg:pt-36">
+      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-28 sm:px-8 sm:pt-44">
         <p className="inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.32em] text-white/70 uppercase">
           <span className="inline-block h-px w-8 bg-white/40" />
           {_translateUi("Con cariño desde Puebla de la Calzada")}
