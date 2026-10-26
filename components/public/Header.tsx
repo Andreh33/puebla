@@ -122,16 +122,6 @@ const GENDER_TABS: Array<{
   },
 ];
 
-/** Frases para la marquesina superior. Mismas que el viejo PhrasesMarquee. */
-const TICKER_PHRASES = [
-  "Desde Puebla de la Calzada a España, Portugal, Francia, Italia y Alemania",
-  "Años de calidad y trato cercano",
-  "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Jhayber",
-  "Atendemos por WhatsApp · Recogida en tienda",
-  "Pádel, running, montaña, fitness — todo en una sola tienda",
-  "Asesoramiento real, no postureo",
-] as const;
-
 // Delay generoso al cerrar el mega-menú: da tiempo a cruzar el gap entre
 // la pill flotante y el panel sin que se cierre debajo del cursor. El
 // puente invisible del MegaMenu cubre el hueco; este margen es el colchón.
@@ -280,28 +270,9 @@ export function Header() {
         )}
       >
         {/* ─────────────────────────────────────────────────────────────────
-            TOP STRIP — marquesina infinita de frases sobre fondo oscuro
-            ───────────────────────────────────────────────────────────────── */}
-        <div className="hidden" aria-hidden="true">
-          <div
-            className="zs-header-ticker flex w-max items-center gap-10 whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/90 sm:py-2.5"
-            aria-label={t("Argumentos de la tienda")}
-          >
-            {[...TICKER_PHRASES, ...TICKER_PHRASES, ...TICKER_PHRASES].map((phrase, i) => (
-              <span key={`${phrase}-${i}`} className="inline-flex items-center gap-10">
-                <span>{tx(phrase)}</span>
-                <span aria-hidden className="text-zs-red-500">
-                  ✺
-                </span>
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ─────────────────────────────────────────────────────────────────
             PILL FLOTANTE — logo + nav + acciones
             ───────────────────────────────────────────────────────────────── */}
-        <div className="px-2 pt-[max(10px,env(safe-area-inset-top))] sm:px-5 sm:pt-4">
+        <div className="px-2 pt-[max(10px,env(safe-area-inset-top))] sm:px-5 sm:pt-[max(16px,env(safe-area-inset-top))]">
           <div
             ref={navRef}
             className={cn(
@@ -569,12 +540,12 @@ export function Header() {
           className={cn(
             "mx-2 mt-2 overflow-hidden rounded-[24px] bg-white/95 shadow-xl backdrop-blur-xl transition-all duration-300 ease-out sm:mx-5 xl:hidden motion-reduce:transition-none",
             mobileOpen
-              ? "max-h-[calc(100dvh-108px)] opacity-100"
+              ? "max-h-[calc(100dvh-var(--zs-header-offset)-8px)] opacity-100"
               : "pointer-events-none max-h-0 opacity-0",
           )}
         >
           <nav aria-label={t("Menú móvil")} className="overflow-hidden">
-            <div className="max-h-[calc(100dvh-108px)] overflow-y-auto overscroll-contain px-4 py-3">
+            <div className="max-h-[calc(100dvh-var(--zs-header-offset)-8px)] overflow-y-auto overscroll-contain px-4 py-3">
               {/* Tabs de género (acordeón con mega-menú embebido).
                   Iteramos GENDER_TABS (mujer/hombre) — ya no incluimos
                   Niños porque el cliente lo separó en dos entradas
@@ -732,15 +703,6 @@ export function Header() {
           </nav>
         </div>
 
-        <style>{`
-          @keyframes zs-header-ticker-scroll {
-            from { transform: translateX(0); }
-            to { transform: translateX(-33.333%); }
-          }
-          .zs-header-ticker {
-            animation: zs-header-ticker-scroll 38s linear infinite;
-          }
-                  `}</style>
       </header>
       {/* El spacer ya no vive aquí — lo gestiona `<main>` con `pt-[136px]
           sm:pt-[148px]` para no tapar contenido. El home anula ese padding
