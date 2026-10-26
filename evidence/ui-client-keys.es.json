@@ -1,5 +1,5 @@
 {
-  "sourceHash": "8da74ee4ca4ed28b07db75245690233635e4948b7f0f935dd21d99837f9171b6",
+  "sourceHash": "97c097fec520281f694a1d62fe73dd93c4c16bcf6cc1edc8aadaf4f9ae202678",
   "keys": [
     "¡Listo!",
     "¡Mensaje enviado! Te contestamos en breve.",
@@ -74,6 +74,7 @@
     "Bolsos",
     "both",
     "bottom",
+    "Buscar",
     "Buscar (Ctrl+K)",
     "Buscar en Zona Sport",
     "Buscar productos, marcas o artículos del blog…",
@@ -888,6 +889,7 @@
     "Desde Puebla de la Calzada a España, Portugal, Francia, Italia y Alemania",
     "Recogida en tienda sin coste de envío.",
     "atención cercana",
+    "Ver {0}",
     "Cerrado",
     "Abierto ahora",
     "cierra en {0}",

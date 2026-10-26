@@ -276,14 +276,14 @@ export function Header() {
           <div
             ref={navRef}
             className={cn(
-              "mx-auto flex h-16 max-w-[1440px] items-center gap-2 rounded-[24px] bg-white/95 px-2.5 text-zs-ink backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/85 sm:h-[72px] sm:gap-4 sm:rounded-[28px] sm:px-5",
+              "mx-auto flex h-24 max-w-[1440px] items-center gap-2 rounded-[24px] bg-white/95 px-2.5 text-zs-ink backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/85 sm:h-28 sm:gap-4 sm:rounded-[28px] sm:px-5",
               scrolled ? "shadow-[0_8px_28px_-10px_rgba(15,23,42,0.24)]" : "shadow-[0_6px_24px_-12px_rgba(15,23,42,0.18)]",
             )}
           >
             {/* Logo */}
             <Link
               href="/"
-              className="flex h-11 shrink-0 items-center px-1"
+              className="flex h-20 shrink-0 items-center px-1 sm:h-24"
               aria-label={t("Zona Sport — Inicio")}
             >
               <Image
@@ -293,8 +293,8 @@ export function Header() {
                 height={186}
                 priority
                 fetchPriority="high"
-                sizes="(min-width: 640px) 64px, 58px"
-                className="h-10 w-auto sm:h-11"
+                sizes="(min-width: 640px) 140px, (min-width: 380px) 116px, 93px"
+                className="h-16 w-auto min-[380px]:h-20 sm:h-24"
               />
             </Link>
 
@@ -473,7 +473,7 @@ export function Header() {
                   <button
                     type="button"
                     aria-label={t("Buscar (Ctrl+K)")}
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10"
+                    className="hidden h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10 min-[380px]:inline-flex"
                   >
                     <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                   </button>
@@ -662,6 +662,20 @@ export function Header() {
               </div>
 
               <ul className="flex flex-col gap-1">
+                <li>
+                  <SearchCommand
+                    keyboardShortcut={false}
+                    trigger={
+                      <button
+                        type="button"
+                        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-zs-ink hover:bg-zs-surface"
+                      >
+                        <Search className="h-4 w-4" aria-hidden="true" />
+                        {t("Buscar")}
+                      </button>
+                    }
+                  />
+                </li>
                 {SPORT_NAV.map((item, i) => (
                   <li
                     key={item.href}

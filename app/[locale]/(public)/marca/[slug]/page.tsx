@@ -94,8 +94,8 @@ export async function generateStaticParams() {
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: "Marcas", path: "/marcas" },
+    { name: t("Inicio"), path: "/" },
+    { name: t("Marcas"), path: "/marcas" },
     { name: brand.name, path: `/marca/${brand.slug}` },
   ];
 
@@ -117,11 +117,11 @@ export async function generateStaticParams() {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>

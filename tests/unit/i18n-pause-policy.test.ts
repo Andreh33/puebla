@@ -23,7 +23,15 @@ import {
   translatedSearchSlugs,
 } from "@/lib/i18n/content";
 import { applyProductSourceCorrections } from "@/lib/i18n/source-corrections";
+import { isLocaleRouteAvailable } from "@/lib/i18n/publication-policy";
 describe("paused product publication", () => {
+  it.each(["pt", "it", "fr", "de"] as const)("keeps all %s store interfaces available while protecting frozen product URLs", (locale) => {
+    for (const route of ["/", "/catalogo", "/marcas", "/marca/joma", "/hombre/calzado", "/mujer/textil", "/outlet/textil", "/accesorios-balones", "/condiciones-de-venta", "/carrito"])
+      expect(isLocaleRouteAvailable(locale, `/${locale}${route}?sort=price#list`), route).toBe(true);
+    for (const route of ["/producto/shoe", "/producto/shoe/share-image", "/producto/shoe/opengraph-image"])
+      expect(isLocaleRouteAvailable(locale, `/${locale}${route}?ref=a`), route).toBe(false);
+    expect(isLocaleRouteAvailable("es", "/producto/shoe")).toBe(true);
+  });
   it("uses the frozen Spanish overlay in every locale without activating authoring work or changing commerce", () => {
     const source = {
       slug: "shoe",

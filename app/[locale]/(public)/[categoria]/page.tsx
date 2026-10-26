@@ -235,7 +235,7 @@ export async function generateStaticParams() {
   const currentPage = Math.min(currentPageRequested, totalPages);
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
+    { name: t("Inicio"), path: "/" },
     ...(category.parent
       ? [{ name: category.parent.name, path: `/${category.parent.slug}` }]
       : []),
@@ -309,11 +309,11 @@ export async function generateStaticParams() {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>
@@ -362,7 +362,7 @@ export async function generateStaticParams() {
             {/* Bloque 8.9: chips de sub-categoría (hijas). Solo si la categoría
                 tiene hijas (p.ej. accesorios). "Todos" + cada hija; ?sub= filtra. */}
             {subCats.length > 0 && (
-              <nav aria-label={`Subcategorías de ${category.name}`} className="flex flex-wrap gap-2">
+              <nav aria-label={tf("Subcategorías de {0}", [category.name])} className="flex flex-wrap gap-2">
                 <Link
                   href={subUrl(null)}
                   aria-current={!activeSub ? "page" : undefined}

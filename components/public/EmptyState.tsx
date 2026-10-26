@@ -70,9 +70,9 @@ export function EmptyState({
       <Illustration variant={variant} />
       <div className="max-w-md space-y-1.5">
         <h3 className="font-display text-xl font-bold text-zs-blue-900">
-          {title ?? fallback.title}
+          {tx(title ?? fallback.title)}
         </h3>
-        <p className="text-sm text-zs-muted">{description ?? fallback.description}</p>
+        <p className="text-sm text-zs-muted">{tx(description ?? fallback.description)}</p>
       </div>
       {(cta || secondaryCta) && (
         <div className="mt-2 flex flex-wrap items-center justify-center gap-2">

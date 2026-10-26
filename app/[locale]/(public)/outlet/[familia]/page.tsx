@@ -67,8 +67,8 @@ export function generateStaticParams(): Params[] {
   }
   const label = FAMILIA_LABEL[familia];
   return buildMetadata({
-    title: tf("Outlet de {0} — Ofertas", [label.toLowerCase()]),
-    description: tf("{0} deportivo de marca rebajado en el outlet de Zona Sport. Recogida en tienda en Puebla de la Calzada (Badajoz) y envío a España, Portugal, Francia, Italia y Alemania.", [label]),
+    title: tf("Outlet de {0} — Ofertas", [getRequestLocale() === "de" ? tx(label) : tx(label).toLowerCase()]),
+    description: tf("{0} deportivo de marca rebajado en el outlet de Zona Sport. Recogida en tienda en Puebla de la Calzada (Badajoz) y envío a España, Portugal, Francia, Italia y Alemania.", [tx(label)]),
     path: `/outlet/${familia}`,
   });
 }
@@ -210,7 +210,7 @@ export function generateStaticParams(): Params[] {
   const currentPage = Math.min(currentPageRequested, totalPages);
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
+    { name: t("Inicio"), path: "/" },
     { name: "Outlet", path: "/outlet" },
     { name: label, path: `/outlet/${familia}` },
   ];
@@ -218,7 +218,7 @@ export function generateStaticParams(): Params[] {
   const collectionLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: tf("Outlet — {0}", [label]),
+    name: tf("Outlet — {0}", [tx(label)]),
     url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/outlet/${familia}`,
     isPartOf: { "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/#website` },
   };
@@ -258,11 +258,11 @@ export function generateStaticParams(): Params[] {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>

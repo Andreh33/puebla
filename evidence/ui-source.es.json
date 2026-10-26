@@ -936,7 +936,8 @@
   ],
   "Buscar": [
     "app/[locale]/(public)/buscar/page.tsx",
-    "components/public/BottomNav.tsx"
+    "components/public/BottomNav.tsx",
+    "components/public/Header.tsx"
   ],
   "Buscar (Ctrl+K)": [
     "components/public/Header.tsx"
@@ -7524,7 +7525,8 @@
     "app/[locale]/(public)/blog/[slug]/page.tsx"
   ],
   "Ver {0}": [
-    "app/[locale]/(public)/tienda-en/[municipio]/page.tsx"
+    "app/[locale]/(public)/tienda-en/[municipio]/page.tsx",
+    "components/public/GenderHub.tsx"
   ],
   "Cerrado": [
     "components/public/OpenNowBadge.tsx"
@@ -7620,5 +7622,8 @@
   ],
   "Copiado": [
     "components/public/ShareButtons.tsx"
+  ],
+  "Subcategorías de {0}": [
+    "app/[locale]/(public)/[categoria]/page.tsx"
   ]
 }

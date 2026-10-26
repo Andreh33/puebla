@@ -8,11 +8,8 @@ import { middleware } from "@/middleware";
 describe("public language middleware", () => {
   it.each([
     "/pt/producto/a",
-    "/it/catalogo",
-    "/fr/marca/nike",
-    "/de/running/zapatillas",
     "/fr/producto/a/share-image",
-  ])("redirects paused shopping %s preserving the query", async (path) => {
+  ])("redirects only paused product pages %s preserving the query", async (path) => {
     const response = await middleware(
       new NextRequest(`https://zonasportpuebla.com${path}?ref=a&sort=price`),
     );
@@ -48,6 +45,12 @@ describe("public language middleware", () => {
       "/fr/checkout/success",
       "/it/buscar",
       "/de/blog/a",
+      "/it/catalogo?sort=price",
+      "/fr/marca/nike",
+      "/de/running/zapatillas",
+      "/pt/hombre/calzado",
+      "/fr/outlet/textil",
+      "/it/marcas",
       "/api/search",
       "/robots.txt",
       "/sitemap-products.xml",

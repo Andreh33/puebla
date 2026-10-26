@@ -34,9 +34,10 @@ type Results = { products: ResultProduct[]; posts: ResultPost[] };
 
 type Props = {
   trigger: React.ReactNode;
+  keyboardShortcut?: boolean;
 };
 
-export function SearchCommand({ trigger }: Props) {
+export function SearchCommand({ trigger, keyboardShortcut = true }: Props) {
   const tx = useTranslatedValue();
   const t = useTranslations();
   const router = useRouter();
@@ -49,6 +50,7 @@ export function SearchCommand({ trigger }: Props) {
 
   // ⌘K / Ctrl+K open
   useEffect(() => {
+    if (!keyboardShortcut) return;
     const onKey = (e: KeyboardEvent) => {
       if ((e.key === "k" || e.key === "K") && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -61,7 +63,7 @@ export function SearchCommand({ trigger }: Props) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, keyboardShortcut]);
 
   // Fetch debounced
   useEffect(() => {

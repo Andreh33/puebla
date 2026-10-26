@@ -270,7 +270,7 @@ export function generateStaticParams(): Params[] {
   const seccionLabel =
     category.parent?.name ?? seccion.charAt(0).toUpperCase() + seccion.slice(1);
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
+    { name: t("Inicio"), path: "/" },
     { name: seccionLabel, path: `/${seccion}` },
     { name: category.name, path: `/${seccion}/${familia}` },
   ];
@@ -319,11 +319,11 @@ export function generateStaticParams(): Params[] {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>

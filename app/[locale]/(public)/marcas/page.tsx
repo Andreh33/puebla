@@ -23,8 +23,8 @@ export const revalidate = 600;
   const { brands } = await getBrandList();
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: "Marcas", path: "/marcas" },
+    { name: t("Inicio"), path: "/" },
+    { name: t("Marcas"), path: "/marcas" },
   ];
 
   return (

@@ -129,7 +129,7 @@ export function GenderHero({
 
   // El headline puede tener varias palabras — animamos cada una con stagger,
   // como el HomeHero. Pero más compacto: 1 sola línea visual de masking.
-  const words = cfg.headline.split(" ");
+  const words = tx(cfg.headline).split(" ");
 
   return (
     <section
@@ -207,7 +207,7 @@ export function GenderHero({
                     i === words.length - 1 ? "var(--color-zs-red-500)" : undefined,
                 }}
               >
-                {tx(word)}
+                {word}
               </span>
             </span>
           ))}

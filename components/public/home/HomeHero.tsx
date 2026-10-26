@@ -164,7 +164,7 @@ export function HomeHero() {
       </div>
 
       {/* Sticker superior derecho */}
-      <div className="pointer-events-none absolute top-24 right-4 z-20 hidden -rotate-6 sm:top-28 sm:right-8 sm:block">
+      <div className="pointer-events-none absolute top-24 right-4 z-20 hidden -rotate-6 sm:top-[152px] sm:right-8 sm:block">
         <div
           className="bg-zs-tennis-300 text-zs-blue-950 flex items-center gap-2 rounded-full px-5 py-2.5 text-[11px] font-bold tracking-[0.22em] uppercase shadow-2xl"
           style={{ boxShadow: "var(--shadow-zs-tennis-glow-lg)" }}
@@ -178,7 +178,7 @@ export function HomeHero() {
           intencional: la pill flotante del Header (top-strip 38px + pill ~64px
           + márgenes) ocupa ~148px desde el top y la imagen del hero queda
           DETRÁS de la pill — el texto tiene que empezar por debajo. */}
-      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-28 sm:px-8 sm:pt-44">
+      <div className="relative mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 pt-36 sm:px-8 sm:pt-[216px]">
         <p className="inline-flex items-center gap-3 text-[11px] font-medium tracking-[0.32em] text-white/70 uppercase">
           <span className="inline-block h-px w-8 bg-white/40" />
           {_translateUi("Con cariño desde Puebla de la Calzada")}

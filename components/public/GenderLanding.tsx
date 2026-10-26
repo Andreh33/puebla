@@ -127,8 +127,8 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
   const heroProduct = products[0] ?? null;
 
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: config.label, path: `/${config.slug}` },
+    { name: t("Inicio"), path: "/" },
+    { name: tx(config.label), path: `/${config.slug}` },
   ];
 
   const collectionLd = {
@@ -172,11 +172,11 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>
@@ -248,7 +248,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
         {categories.length > 0 && (
           <div className="mt-12 border-t border-zs-border pt-8">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-zs-muted">
-              {t("También en")}{" "}{config.label.toLowerCase()}
+              {t("También en")}{" "}{getRequestLocale() === "de" ? tx(config.label) : tx(config.label).toLowerCase()}
             </p>
             <ul className="mt-4 flex flex-wrap gap-2">
               {categories.slice(0, 14).map((cat) => (
@@ -289,7 +289,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
           {tx(products.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zs-border bg-white p-10 text-center">
               <p className="text-zs-muted">
-                {t("Aún no tenemos productos publicados para")}{" "}{config.label.toLowerCase()}{t(". Pásate por la tienda o escríbenos por WhatsApp.")}</p>
+                {t("Aún no tenemos productos publicados para")}{" "}{getRequestLocale() === "de" ? tx(config.label) : tx(config.label).toLowerCase()}{t(". Pásate por la tienda o escríbenos por WhatsApp.")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

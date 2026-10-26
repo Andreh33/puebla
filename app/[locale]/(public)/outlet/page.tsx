@@ -45,7 +45,7 @@ const FAMILIES: Array<{
 
   function OutletHubPage() {
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
+    { name: t("Inicio"), path: "/" },
     { name: "Outlet", path: "/outlet" },
   ];
 
@@ -64,11 +64,11 @@ const FAMILIES: Array<{
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>
@@ -119,7 +119,7 @@ const FAMILIES: Array<{
                   </h2>
                   <p className="mt-2 max-w-[34ch] text-sm text-white/80">{tx(f.caption)}</p>
                   <span className="mt-5 inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em]">
-                    {t("Ver outlet de")}{" "}{f.title.toLowerCase()}
+                    {t("Ver outlet de")}{" "}{getRequestLocale() === "de" ? tx(f.title) : tx(f.title).toLowerCase()}
                     <ArrowRight
                       className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1.5"
                       strokeWidth={2.5}

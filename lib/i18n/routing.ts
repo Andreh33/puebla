@@ -26,7 +26,7 @@ export function localePath(locale: Locale, path: string): string {
     ? normalized
     : `/${locale}${normalized === "/" ? "" : normalized}`;
 }
-/** A language switch from Spanish shopping opens the selected editorial home. */
+/** Paused product pages switch to the selected home; all other pages keep their native route. */
 export function languageSwitchPath(locale: Locale, path: string): string {
   return localePath(locale, isLocaleRouteAvailable(locale, path) ? path : "/");
 }

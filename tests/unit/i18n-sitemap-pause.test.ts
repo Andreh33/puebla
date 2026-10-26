@@ -5,12 +5,19 @@ vi.mock("@/lib/i18n/content", () => ({
   loadEditorialPosts: () => [],
 }));
 import { contentLocaleEntries, staticLocaleEntries } from "@/lib/i18n/sitemap";
-it("keeps product and category sitemaps Spanish-only even if saved translations exist", () => {
+it("keeps product sitemaps Spanish-only even if saved translations exist", () => {
   const products = contentLocaleEntries("products", { slug: "shoe" });
   expect(products).toHaveLength(1);
   expect(products[0]!.alternates?.languages).toHaveProperty("es-ES");
   expect(products[0]!.alternates?.languages).not.toHaveProperty("fr-FR");
-  expect(staticLocaleEntries({ url: "https://zonasportpuebla.com/catalogo" })).toHaveLength(1);
+});
+it("publishes category, catalog and brand sitemap variants with reciprocal languages", () => {
+  for (const path of ["/catalogo", "/hombre/calzado", "/marca/joma", "/marcas", "/outlet/textil", "/accesorios-balones"]) {
+    const entries = staticLocaleEntries({ url: `https://zonasportpuebla.com${path}` });
+    expect(entries, path).toHaveLength(5);
+    expect(entries.find((entry) => String(entry.url).includes(`/fr${path}`))?.alternates?.languages)
+      .toHaveProperty("de-DE", expect.stringContaining(`/de${path}`));
+  }
 });
 it("retains all published editorial and home variants", () => {
   expect(staticLocaleEntries({ url: "https://zonasportpuebla.com/" })).toHaveLength(5);

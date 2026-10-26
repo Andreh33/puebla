@@ -88,6 +88,7 @@ function HubCard({
 }) {
   const tx = useTranslatedValue();
   const t = useTranslations();
+  const tf = useTranslatedTemplate();
   const ref = useRef<HTMLAnchorElement>(null);
   const { Icon } = card;
 
@@ -115,7 +116,7 @@ function HubCard({
       <Link
         ref={ref}
         href={`/${seccion}/${card.familia}`}
-        aria-label={`Ver ${card.title.toLowerCase()} de ${seccion}`}
+        aria-label={tf("Ver {0}", [tx(card.title)])}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
         style={{ "--glow": card.glow } as CSSProperties}
@@ -156,7 +157,7 @@ function HubCard({
             <span
               className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${card.ctaClass}`}
             >
-              {t("Ver")}{" "}{card.title.toLowerCase()}
+              {tf("Ver {0}", [tx(card.title)])}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </span>
           </div>

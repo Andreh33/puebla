@@ -1,6 +1,6 @@
 import type { Locale } from "./config";
 
-/** Human publication decision: keep unfinished catalogs saved but never expose them. */
+/** Human publication decision: preserve unfinished product copy while localizing store pages. */
 export const PRODUCT_TRANSLATIONS_ENABLED = false;
 export const PRODUCT_SOURCE_FILE = PRODUCT_TRANSLATIONS_ENABLED
   ? "product-source-corrections.json"
@@ -27,5 +27,12 @@ export function isShoppingPath(path: string): boolean {
 }
 
 export function isLocaleRouteAvailable(locale: Locale, path: string): boolean {
-  return locale === "es" || PRODUCT_TRANSLATIONS_ENABLED || !isShoppingPath(path);
+  return locale === "es" || PRODUCT_TRANSLATIONS_ENABLED || !isProductPath(path);
+}
+
+/** Product pages and their images stay Spanish; category/catalog/brand interfaces are native. */
+export function isProductPath(path: string): boolean {
+  const pathname =
+    path.replace(/^\/(?:es|pt|it|fr|de)(?=\/|[?#]|$)/, "").split(/[?#]/, 1)[0] || "/";
+  return /^\/producto(?:\/|$)/.test(pathname);
 }

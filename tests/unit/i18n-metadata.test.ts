@@ -7,7 +7,7 @@ vi.mock("@/lib/i18n/dictionaries", () => ({
 import { buildMetadata } from "@/lib/seo/metadata";
 
 describe("international metadata", () => {
-  it("suppresses foreign shopping canonical, hreflang and OG variants while products are paused", () => {
+  it("suppresses foreign product canonical, hreflang and OG variants while products are paused", () => {
     const meta = buildMetadata({
       title: "Chaussures",
       path: "/producto/modelo",
@@ -25,6 +25,13 @@ describe("international metadata", () => {
     expect(meta.alternates?.languages).not.toHaveProperty("fr-FR");
     expect(meta.alternates?.languages).not.toHaveProperty("de-DE");
     expect(meta.openGraph).toHaveProperty("locale", "es_ES");
+  });
+  it("retains native catalog canonical, reciprocal hreflang and OpenGraph while products are paused", () => {
+    const meta = buildMetadata({ title: "Catalogue", path: "/catalogo", locale: "fr" });
+    expect(String(meta.alternates?.canonical)).toMatch(/\/fr\/catalogo$/);
+    expect(meta.alternates?.languages).toHaveProperty("fr-FR", expect.stringMatching(/\/fr\/catalogo$/));
+    expect(meta.alternates?.languages).toHaveProperty("de-DE", expect.stringMatching(/\/de\/catalogo$/));
+    expect(meta.openGraph).toHaveProperty("locale", "fr_FR");
   });
   it("keeps simultaneous explicitly scoped metadata independent", async () => {
     const [fr, de] = await Promise.all([

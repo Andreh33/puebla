@@ -35,8 +35,8 @@ const GENDER_LABELS: Record<string, string> = {
 
 function pageTitle(sp: SearchParams): string {
   const genero = typeof sp.genero === "string" ? sp.genero.toUpperCase() : "";
-  if (genero in GENDER_LABELS) return tf("{0} — Catálogo completo", [GENDER_LABELS[genero]]);
-  return "Catálogo completo";
+  if (genero in GENDER_LABELS) return tf("{0} — Catálogo completo", [tx(GENDER_LABELS[genero])]);
+  return t("Catálogo completo");
 }
 
  async function baseGenerateMetadata({
@@ -175,8 +175,8 @@ function pageTitle(sp: SearchParams): string {
 
   const title = pageTitle(sp);
   const breadcrumbs = [
-    { name: "Inicio", path: "/" },
-    { name: "Catálogo", path: "/catalogo" },
+    { name: t("Inicio"), path: "/" },
+    { name: t("Catálogo"), path: "/catalogo" },
   ];
 
   // Helper para URLs paginadas conservando todos los demás filtros.
@@ -207,11 +207,11 @@ function pageTitle(sp: SearchParams): string {
               {i > 0 && <ChevronRight className="h-3 w-3" aria-hidden />}
               {tx(i === breadcrumbs.length - 1 ? (
                 <span className="font-semibold text-zs-ink" aria-current="page">
-                  {b.name}
+                  {tx(b.name)}
                 </span>
               ) : (
                 <Link href={b.path} className="hover:text-zs-blue-700">
-                  {b.name}
+                  {tx(b.name)}
                 </Link>
               ))}
             </li>
