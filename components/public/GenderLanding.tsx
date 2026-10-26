@@ -156,7 +156,7 @@ export async function GenderLanding({ slug }: { slug: GenderKey }) {
           quede DETRÁS de la pill flotante del Header (mismo truco que el home).
           El GenderHero internamente añade `pt-44 sm:pt-48 lg:pt-52` para que el
           texto del hero no quede tapado por la pill. */}
-      <div className="-mt-[136px] sm:-mt-[148px]" />
+      <div className="-mt-[var(--zs-header-offset)]" />
 
       {/* HERO foto-top — fullbleed con foto landscape, igual concepto que
           HomeHero pero más compacto. Sustituye al antiguo hero de gradiente. */}

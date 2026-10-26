@@ -38,7 +38,7 @@ export function CartIcon() {
             ? tf(visibleCount === 1 ? "Tu carrito ({0} producto)" : "Tu carrito ({0} productos)", [visibleCount])
             : tx("Tu carrito (vacío)")
         }
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-zs-ink transition-colors hover:bg-zs-surface"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10"
       >
         <ShoppingBag className="h-5 w-5" />
         {visibleCount > 0 && (

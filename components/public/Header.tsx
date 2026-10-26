@@ -275,14 +275,14 @@ export function Header() {
       <header
         data-hidden={hidden ? "true" : "false"}
         className={cn(
-          "fixed inset-x-0 top-0 z-40 overflow-x-clip transition-transform duration-300 will-change-transform",
+          "zs-iphone-header fixed inset-x-0 top-0 z-40 overflow-x-clip transition-transform duration-300 will-change-transform motion-reduce:transition-none",
           hidden && !mobileOpen ? "-translate-y-[120%]" : "translate-y-0",
         )}
       >
         {/* ─────────────────────────────────────────────────────────────────
             TOP STRIP — marquesina infinita de frases sobre fondo oscuro
             ───────────────────────────────────────────────────────────────── */}
-        <div className="overflow-hidden bg-zs-blue-950 text-white">
+        <div className="hidden" aria-hidden="true">
           <div
             className="zs-header-ticker flex w-max items-center gap-10 whitespace-nowrap py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-white/90 sm:py-2.5"
             aria-label={t("Argumentos de la tienda")}
@@ -301,19 +301,18 @@ export function Header() {
         {/* ─────────────────────────────────────────────────────────────────
             PILL FLOTANTE — logo + nav + acciones
             ───────────────────────────────────────────────────────────────── */}
-        <div className="px-3 pt-3 sm:px-5 sm:pt-4">
+        <div className="px-2 pt-[max(10px,env(safe-area-inset-top))] sm:px-5 sm:pt-4">
           <div
             ref={navRef}
             className={cn(
-              "mx-auto flex max-w-[1380px] items-center gap-2 rounded-full border border-zs-border/80 bg-white/85 px-3 py-3 backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/70 sm:gap-3 sm:px-5 sm:py-3.5",
-              scrolled ? "shadow-xl" : "shadow-lg",
+              "mx-auto flex h-16 max-w-[1440px] items-center gap-2 rounded-[24px] bg-white/95 px-2.5 text-zs-ink backdrop-blur-xl backdrop-saturate-150 transition-shadow supports-[backdrop-filter]:bg-white/85 sm:h-[72px] sm:gap-4 sm:rounded-[28px] sm:px-5",
+              scrolled ? "shadow-[0_8px_28px_-10px_rgba(15,23,42,0.24)]" : "shadow-[0_6px_24px_-12px_rgba(15,23,42,0.18)]",
             )}
-            style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
           >
             {/* Logo */}
             <Link
               href="/"
-              className="flex shrink-0 items-center gap-2 pl-1 pr-2"
+              className="flex h-11 shrink-0 items-center px-1"
               aria-label={t("Zona Sport — Inicio")}
             >
               <Image
@@ -323,15 +322,15 @@ export function Header() {
                 height={186}
                 priority
                 fetchPriority="high"
-                sizes="(min-width: 1024px) 163px, (min-width: 640px) 105px, 93px"
-                className="h-16 w-auto sm:h-[4.5rem] lg:h-28 lg:-mt-5"
+                sizes="(min-width: 640px) 64px, 58px"
+                className="h-10 w-auto sm:h-11"
               />
             </Link>
 
             {/* Nav central desktop */}
             <nav
               aria-label={t("Navegación principal")}
-              className="hidden flex-1 items-center justify-center gap-1 lg:flex"
+              className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex"
             >
               {/* Tabs de género — pill activa estilo LATECH */}
               {GENDER_TABS.map((tab) => {
@@ -350,7 +349,7 @@ export function Header() {
                     onFocus={() => openMega(tab.key)}
                     onClick={() => setMegaKey(null)}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-all",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-semibold tracking-normal transition-colors",
                       active || expanded
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
@@ -373,7 +372,7 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium uppercase transition-colors",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-zs-blue-950 text-white"
                         : "text-zs-ink hover:bg-zs-surface hover:text-zs-blue-900",
@@ -395,7 +394,7 @@ export function Header() {
                       : undefined
                   }
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold uppercase tracking-tight transition-colors",
+                    "inline-flex min-h-11 items-center gap-1 whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-semibold tracking-normal transition-colors",
                     pathname === OUTLET_HREF || pathname.startsWith(`${OUTLET_HREF}/`)
                       ? "bg-zs-red-600 text-white"
                       : "text-zs-red-600 hover:bg-zs-red-50 hover:text-zs-red-700",
@@ -433,7 +432,7 @@ export function Header() {
               {/* Separador entre TIENDA (Mujer/Hombre/Niños + sub-tabs) y
                   PÁGINA (Contacto/Blog/App). Diferenciación visual:
                   «aquí compras» vs «aquí informas». */}
-              <span className="mx-3 h-5 w-px bg-zs-border" aria-hidden />
+              <span className="mx-2 h-5 w-px bg-zs-border" aria-hidden />
 
               {/* Links a páginas (no son tienda). */}
               {PAGE_NAV.map((item) => {
@@ -445,7 +444,7 @@ export function Header() {
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                      "inline-flex min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-zs-surface text-zs-blue-900"
                         : "text-zs-muted hover:bg-zs-surface hover:text-zs-blue-700",
@@ -465,7 +464,7 @@ export function Header() {
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent("zs:show-pwa-install"));
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700"
+                className="hidden min-h-11 items-center whitespace-nowrap rounded-2xl px-2.5 text-[13px] font-medium text-zs-muted transition-colors hover:bg-zs-surface hover:text-zs-blue-700 2xl:inline-flex"
                 title={t("Instalar Zona Sport en tu dispositivo")}
               >
                 {t("App")}</button>
@@ -497,13 +496,13 @@ export function Header() {
             </nav>
 
             {/* Acciones derecha */}
-            <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+            <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
               <SearchCommand
                 trigger={
                   <button
                     type="button"
                     aria-label={t("Buscar (Ctrl+K)")}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10"
                   >
                     <Search className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
                   </button>
@@ -514,7 +513,7 @@ export function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={t("WhatsApp")}
-                className="hidden h-10 w-10 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:inline-flex"
+                className="hidden h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 2xl:inline-flex"
               >
                 <MessageCircle className="h-[18px] w-[18px]" />
               </a>
@@ -524,8 +523,7 @@ export function Header() {
               {/* CTA gradient — desktop */}
               <Link
                 href="#catalogo"
-                className="ml-1 hidden h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-zs-red-600 to-[#a01818] px-5 text-sm font-bold uppercase tracking-wide text-white transition-all hover:scale-[1.02] sm:inline-flex"
-                style={{ boxShadow: "var(--shadow-zs-rojo-glow)" }}
+                className="ml-2 hidden h-11 items-center gap-2 rounded-full bg-zs-red-600 px-5 text-[13px] font-semibold text-white transition-colors hover:bg-zs-red-700 xl:inline-flex"
               >
                 {t("Comprar")}<ArrowRight className="h-3.5 w-3.5" strokeWidth={2.5} />
               </Link>
@@ -533,7 +531,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setMobileOpen((v) => !v)}
-                className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-zs-surface sm:h-10 sm:w-10 lg:hidden"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10 xl:hidden"
                 aria-label={t("Abrir menú")}
                 aria-expanded={mobileOpen}
               >
@@ -566,16 +564,17 @@ export function Header() {
             DRAWER MÓVIL — flotante en card rounded-3xl
             ───────────────────────────────────────────────────────────────── */}
         <div
+          aria-hidden={!mobileOpen}
+          inert={!mobileOpen}
           className={cn(
-            "mx-3 mt-2 overflow-hidden rounded-3xl bg-white shadow-2xl transition-all duration-300 ease-out sm:mx-5 lg:hidden",
+            "mx-2 mt-2 overflow-hidden rounded-[24px] bg-white/95 shadow-xl backdrop-blur-xl transition-all duration-300 ease-out sm:mx-5 xl:hidden motion-reduce:transition-none",
             mobileOpen
-              ? "max-h-[80vh] opacity-100"
+              ? "max-h-[calc(100dvh-108px)] opacity-100"
               : "pointer-events-none max-h-0 opacity-0",
           )}
-          style={{ boxShadow: "var(--shadow-zs-blue-glow-lg)" }}
         >
           <nav aria-label={t("Menú móvil")} className="overflow-hidden">
-            <div className="max-h-[80vh] overflow-y-auto px-4 py-3">
+            <div className="max-h-[calc(100dvh-108px)] overflow-y-auto overscroll-contain px-4 py-3">
               {/* Tabs de género (acordeón con mega-menú embebido).
                   Iteramos GENDER_TABS (mujer/hombre) — ya no incluimos
                   Niños porque el cliente lo separó en dos entradas

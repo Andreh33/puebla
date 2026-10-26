@@ -2,6 +2,15 @@
 
 @plugin "@tailwindcss/typography";
 
+:root {
+  --zs-header-offset: 100px;
+}
+@media (min-width: 640px) {
+  :root {
+    --zs-header-offset: 112px;
+  }
+}
+
 /* ============================================================================
  * Zona Sport — Design tokens
  * Paleta corporativa basada en el logo:

@@ -28,7 +28,7 @@ export default async function PublicLayout({
       <AuroraBackground />
       <PageLoader />
       <Header />
-      <main id="main" className="min-h-[60vh] pt-[136px] sm:pt-[148px]">
+      <main id="main" className="min-h-[60vh] pt-[var(--zs-header-offset)]">
         {tx(children)}
       </main>
       <GoogleReviews locale={locale} compact />
