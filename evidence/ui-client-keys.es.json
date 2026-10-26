@@ -1,5 +1,5 @@
 {
-  "sourceHash": "5cb831605329ba0c3412e97f75fd578398563f9e9679f221ac182705b356621f",
+  "sourceHash": "8da74ee4ca4ed28b07db75245690233635e4948b7f0f935dd21d99837f9171b6",
   "keys": [
     "¡Listo!",
     "¡Mensaje enviado! Te contestamos en breve.",
@@ -898,6 +898,25 @@
     "países de entrega",
     "envío internacional",
     "Tu carrito ({0} producto)",
-    "Tu carrito ({0} productos)"
+    "Tu carrito ({0} productos)",
+    "Aún no tienes nada seleccionado.",
+    "{0} producto listo para reservar.",
+    "{0} productos listos para reservar.",
+    "Enviando…",
+    "Enviar mensaje",
+    "Enlace copiado",
+    "Aplicar",
+    "Añadir Zona Sport a inicio",
+    "Cómo instalar Zona Sport",
+    "Solo 4 pasos en Safari",
+    "Desde el menú de tu navegador",
+    "Encuéntralo en la barra inferior de Safari.",
+    "Aparece en la fila de acciones del menú compartir.",
+    "Arriba a la derecha del diálogo.",
+    "Encuéntranos en tu pantalla de inicio.",
+    "En Chrome y Edge: los tres puntos arriba a la derecha.",
+    "También puede aparecer como “Añadir a pantalla de inicio”.",
+    "Se abrirá como una app independiente, sin barras del navegador.",
+    "Copiado"
   ]
 }

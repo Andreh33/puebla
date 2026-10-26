@@ -35,6 +35,7 @@ export function CartDrawer({ open, onOpenChange }: Props) {
   const locale=useLocale();
   const tx = useTranslatedValue();
   const t = useTranslations();
+  const tf = useTranslatedTemplate();
   const { items, count, total, updateQty, removeItem, ready } = useCart();
   const { code: promoCode, discount } = useCartPromo(total);
   const finalTotal = Math.max(0, Math.round((total - discount) * 100) / 100);
@@ -50,9 +51,9 @@ export function CartDrawer({ open, onOpenChange }: Props) {
         <SheetHeader>
           <SheetTitle>{t("Tu carrito")}</SheetTitle>
           <SheetDescription>
-            {tx(count === 0
-              ? "Aún no tienes nada seleccionado."
-              : `${count} ${count === 1 ? "producto" : "productos"} listos para reservar.`)}
+            {count === 0
+              ? t("Aún no tienes nada seleccionado.")
+              : tf(count === 1 ? "{0} producto listo para reservar." : "{0} productos listos para reservar.", [count])}
           </SheetDescription>
         </SheetHeader>
 

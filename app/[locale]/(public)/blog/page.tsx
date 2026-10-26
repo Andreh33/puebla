@@ -1,5 +1,7 @@
 import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
 import { getRequestLocale } from "@/lib/i18n/request";
+import { LOCALE_INFO } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/routing";
 import { loadEditorialPosts } from "@/lib/i18n/content";
 import { editorialAsPost } from "@/lib/i18n/public-db";
 import { t } from "@/lib/i18n/dictionaries";
@@ -68,10 +70,10 @@ type SearchParams = Promise<{ page?: string; tag?: string }>;
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Blog de Zona Sport",
-    description:
-      "Listado de artículos del blog editorial de Zona Sport: guías, comparativas, noticias y eventos.",
-    url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/blog`,
+    name: t("Blog de Zona Sport"),
+    description: t("Listado de artículos del blog editorial de Zona Sport: guías, comparativas, noticias y eventos."),
+    url: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}${localePath(getRequestLocale(), "/blog")}`,
+    inLanguage: LOCALE_INFO[getRequestLocale()].language,
   };
   const crumbs = breadcrumbSchema([
     { name: "Inicio", path: "/" },
@@ -89,7 +91,7 @@ type SearchParams = Promise<{ page?: string; tag?: string }>;
         <p className="text-xs font-semibold uppercase tracking-wider text-zs-red-600">
           {t("Blog editorial")}</p>
         <h1 className="mt-2 text-4xl font-bold tracking-tight text-zs-blue-900 sm:text-5xl">
-          {tx(tag ? tf("Etiqueta: {0}", [tag]) : "Diario de Zona Sport")}
+          {tag ? tf("Etiqueta: {0}", [tag]) : t("Diario de Zona Sport")}
         </h1>
         <p className="mt-3 text-base text-zs-muted">
           {t("Guías de compra, comparativas, noticias de la tienda y crónicas del deporte local en la comarca de Mérida y Badajoz.")}</p>

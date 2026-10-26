@@ -7560,5 +7560,65 @@
   "Tu carrito ({0} productos)": [
     "components/public/CartIcon.tsx",
     "components/public/BottomNav.tsx"
+  ],
+  "Diario de Zona Sport": [
+    "app/[locale]/(public)/blog/page.tsx"
+  ],
+  "Aún no tienes nada seleccionado.": [
+    "components/public/CartDrawer.tsx"
+  ],
+  "{0} producto listo para reservar.": [
+    "components/public/CartDrawer.tsx"
+  ],
+  "{0} productos listos para reservar.": [
+    "components/public/CartDrawer.tsx"
+  ],
+  "Enviando…": [
+    "components/public/ContactForm.tsx"
+  ],
+  "Enviar mensaje": [
+    "components/public/ContactForm.tsx"
+  ],
+  "Enlace copiado": [
+    "components/public/ProductShare.tsx"
+  ],
+  "Aplicar": [
+    "components/public/PromoCodeField.tsx"
+  ],
+  "Añadir Zona Sport a inicio": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Cómo instalar Zona Sport": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Solo 4 pasos en Safari": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Desde el menú de tu navegador": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Encuéntralo en la barra inferior de Safari.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Aparece en la fila de acciones del menú compartir.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Arriba a la derecha del diálogo.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Encuéntranos en tu pantalla de inicio.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "En Chrome y Edge: los tres puntos arriba a la derecha.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "También puede aparecer como “Añadir a pantalla de inicio”.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Se abrirá como una app independiente, sin barras del navegador.": [
+    "components/public/PwaInstallPrompt.tsx"
+  ],
+  "Copiado": [
+    "components/public/ShareButtons.tsx"
   ]
 }
