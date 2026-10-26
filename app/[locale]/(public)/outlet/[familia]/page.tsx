@@ -1,5 +1,7 @@
 import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
 import { getRequestLocale } from "@/lib/i18n/request";
+import { localePath } from "@/lib/i18n/routing";
+import { LOCALE_INFO } from "@/lib/i18n/config";
 import { t } from "@/lib/i18n/dictionaries";
 import { withLocalePage, withLocaleMetadata } from "@/lib/i18n/page";
 import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
@@ -219,8 +221,9 @@ export function generateStaticParams(): Params[] {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: tf("Outlet — {0}", [tx(label)]),
-    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/outlet/${familia}`,
-    isPartOf: { "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/#website` },
+    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${localePath(getRequestLocale(), `/outlet/${familia}`)}`,
+    isPartOf: { "@id": `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}${localePath(getRequestLocale(), "/")}#website` },
+    inLanguage: LOCALE_INFO[getRequestLocale()].language,
   };
 
   // URLs de paginación conservando el resto de query params.
