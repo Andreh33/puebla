@@ -77,7 +77,6 @@ async function fetchHomeData(): Promise<HomeData> {
 
   return (
     <>
-      <link rel="preload" as="image" href="/videos/hero-basket.jpg" fetchPriority="high" />
       {/* El home anula el padding-top del <main> para que el hero ocupe el
           viewport y la pill flotante del header quede ENCIMA de la foto, no
           sobre franja blanca. El resto de páginas conservan el padding. */}
