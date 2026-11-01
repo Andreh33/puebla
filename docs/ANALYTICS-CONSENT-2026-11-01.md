@@ -1,5 +1,8 @@
 # Inline analytics consent — 1 November 2026
 
+Historical release report. The later [public Vercel metrics change](VERCEL-PUBLIC-ANALYTICS-2026-11-01.md)
+supersedes the Vercel consent gate described below; the own counter remains opt-in.
+
 Removing the cookie popup left new visitors without a way to enable optional analytics: the remaining control on the cookie policy page could only withdraw permission. That page now offers equally styled inline allow/disable buttons, an explanation of the measurement, and the current saved choice in ES/PT/IT/FR/DE. Analytics remains off until explicit opt-in; marketing stays off. No automatic popup is mounted.
 
 The existing consent cookie persists the choice. Vercel Analytics, Speed Insights, and the page counter follow that choice. Both Vercel SDKs retain injected scripts after React unmounts, so their `beforeSend` callbacks read the current cookie and return `null` when permission is absent. Once first authorized, the SDK components stay mounted to preserve Speed Insights' route handle when permission is withdrawn and later granted again. The page counter also checks the current cookie before each send, covering expiry or a change made in another tab.

@@ -99,13 +99,17 @@ import { breadcrumbSchema, jsonLd, STORE_NAP } from "@/lib/seo/schema-org";
           <h3>{t("2.3 Analítica web")}</h3>
           <ul>
             <li>
-              <strong>{t("Datos tratados:")}</strong> {t("métricas agregadas y anónimas de navegación (páginas visitadas, dispositivo, país, duración de la sesión). Si has dado tu consentimiento, también métricas de rendimiento de Vercel Speed Insights.")}</li>
+              <strong>{t("Datos tratados:")}</strong> {t("estadísticas agregadas y anónimas de visitas y rendimiento mediante Vercel Analytics y Speed Insights. Eliminamos los parámetros de consulta y los fragmentos de las URL de las páginas medidas y excluimos las rutas de administración, autenticación y pago. Si lo permites, nuestro contador de páginas registra también las páginas visitadas.")}</li>
             <li>
               <strong>{t("Finalidad:")}</strong> {t("entender qué contenidos funcionan, detectar errores y mejorar la web.")}</li>
             <li>
-              <strong>{t("Base legal:")}</strong> {t("consentimiento explícito, cuando se haya otorgado (art. 6.1.a RGPD). Puedes retirarlo desde la política de cookies.")}</li>
+              <strong>{t("Configuración y consentimiento:")}</strong> {t("nuestro contador de páginas requiere tu consentimiento (art. 6.1.a RGPD), que puedes retirar desde la política de cookies. Vercel Analytics y Speed Insights se activan en las páginas públicas sin cookies analíticas y sin esperar a esta elección.")}</li>
             <li>
-              <strong>{t("Plazo:")}</strong> {t("según establezca el proveedor (Vercel Analytics, hasta 25 meses).")}</li>
+              <strong>{t("Información del proveedor:")}</strong>{" "}
+              <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noopener noreferrer">{t("Vercel Analytics")}</a>{" "}
+              {t("y")}{" "}
+              <a href="https://vercel.com/docs/speed-insights/privacy-policy" target="_blank" rel="noopener noreferrer">{t("Vercel Speed Insights")}</a>.
+            </li>
           </ul>
 
           <h3>{t("2.4 Cumplimiento de obligaciones legales")}</h3>

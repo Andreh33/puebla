@@ -15,9 +15,6 @@
   ", la": [
     "app/[locale]/(public)/condiciones-de-venta/page.tsx"
   ],
-  ", y solo las cargamos si has aceptado la categoría correspondiente.": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
   "¡Gracias por tu compra! 🎉": [
     "app/[locale]/(public)/checkout/success/page.tsx"
   ],
@@ -245,9 +242,6 @@
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   "3.1 Cookies técnicas o necesarias": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
-  "3.2 Cookies analíticas": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   "3.3 Cookies de marketing": [
@@ -499,9 +493,6 @@
   ],
   "Analítica": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
-  "Analíticas": [
-    "components/public/CookieConsent.tsx"
   ],
   "Analizamos tu pisada, te dejamos probar el material y te aconsejamos lo que necesitas, aunque no sea lo más caro.": [
     "app/[locale]/(public)/sobre-nosotros/page.tsx"
@@ -3083,9 +3074,6 @@
   "metalness": [
     "components/public/scroll3d/Shoe.tsx"
   ],
-  "métricas agregadas y anónimas de navegación (páginas visitadas, dispositivo, país, duración de la sesión). Si has dado tu consentimiento, también métricas de rendimiento de Vercel Speed Insights.": [
-    "app/[locale]/(public)/politica-privacidad/page.tsx"
-  ],
   "Mi hija necesitaba botas de montaña para el viaje del cole. Le probaron tres modelos, le explicaron por qué unas sí y otras no. Cero presión por vender.": [
     "components/public/home/SocialProof.tsx"
   ],
@@ -3778,9 +3766,6 @@
   "Pedido confirmado — Zona Sport": [
     "app/[locale]/(public)/checkout/success/page.tsx"
   ],
-  "Permiten analizar de forma agregada y anónima el comportamiento de los usuarios (páginas vistas, tiempo en página, dispositivo, país de origen). Usamos": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
   "Pero los trabajamos en tienda. Consúltanos por WhatsApp y te buscamos lo que necesitas.": [
     "app/[locale]/(public)/marca/[slug]/page.tsx"
   ],
@@ -4412,9 +4397,6 @@
   "Seguir comprando": [
     "app/[locale]/(public)/checkout/cancelado/page.tsx",
     "app/[locale]/(public)/checkout/success/page.tsx"
-  ],
-  "según establezca el proveedor (Vercel Analytics, hasta 25 meses).": [
-    "app/[locale]/(public)/politica-privacidad/page.tsx"
   ],
   "selección": [
     "components/public/home/HomeHero.tsx"
@@ -5218,9 +5200,6 @@
   "uppercase": [
     "app/[locale]/(public)/blog/[slug]/opengraph-image.tsx"
   ],
-  "Usamos cookies técnicas necesarias para el funcionamiento de la web. También queremos usar cookies analíticas para entender cómo navegas y mejorar la tienda. Puedes aceptarlas todas, rechazarlas o elegir qué categorías permites. Más información en nuestra": [
-    "components/public/CookieConsent.tsx"
-  ],
   "Uso deportivo": [
     "app/[locale]/(public)/producto/[slug]/page.tsx"
   ],
@@ -5357,17 +5336,14 @@
     "components/public/SearchCommand.tsx"
   ],
   "Vercel Analytics": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
-  "Vercel Analytics y Speed Insights. Nos ayudan a entender qué páginas funcionan y dónde hay errores. Datos agregados y anónimos.": [
-    "components/public/CookieConsent.tsx"
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
   ],
   "Vercel Inc.": [
     "app/[locale]/(public)/politica-privacidad/page.tsx",
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   "Vercel Speed Insights": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
   ],
   "VEST": [
     "lib/categories/classify.ts"
@@ -5471,7 +5447,7 @@
     "components/public/ShareButtons.tsx"
   ],
   "y": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
   ],
   "y la": [
     "app/[locale]/(public)/condiciones-de-venta/page.tsx"
@@ -7436,29 +7412,17 @@
   "Respondemos en <5min": [
     "components/public/home/WhatsAppNudge.tsx"
   ],
-  "Almacena tus preferencias de cookies opcionales y las retiradas de consentimiento.": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
   "Permiten la navegación a través del Sitio y la utilización de las distintas opciones (recordar preferencias de cookies, mantener una sesión de administrador). No requieren consentimiento conforme al art. 22.2 LSSI-CE.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   ". Cualquier activación futura de cookies opcionales requerirá el consentimiento correspondiente.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
-  "consentimiento explícito, cuando se haya otorgado (art. 6.1.a RGPD). Puedes retirarlo desde la política de cookies.": [
-    "app/[locale]/(public)/politica-privacidad/page.tsx"
-  ],
   "Pago y entrega:": [
     "app/[locale]/(public)/politica-privacidad/page.tsx"
   ],
   "Los pagos online se tramitan a través de Stripe. Para realizar una entrega se comunican a los proveedores correspondientes los datos necesarios para gestionar el envío.": [
     "app/[locale]/(public)/politica-privacidad/page.tsx"
-  ],
-  "Desactivar cookies opcionales": [
-    "components/public/CookieReopenButton.tsx"
-  ],
-  "Cookies opcionales desactivadas.": [
-    "components/public/CookieReopenButton.tsx"
   ],
   "Aplicar ({0})": [
     "components/public/ProductFilters.tsx"
@@ -7620,19 +7584,61 @@
   "Subcategorías de {0}": [
     "app/[locale]/(public)/[categoria]/page.tsx"
   ],
-  "Permitir analítica opcional": [
+  "Nuestro contador de páginas es opcional y permanece desactivado hasta que lo permitas. Puedes cambiar tu elección en cualquier momento.": [
     "components/public/CookieReopenButton.tsx"
   ],
-  "Analítica opcional activada.": [
+  "Permitir contador de páginas": [
     "components/public/CookieReopenButton.tsx"
   ],
-  "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.": [
+  "Desactivar contador de páginas": [
     "components/public/CookieReopenButton.tsx"
   ],
-  "La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.": [
+  "Contador de páginas activado.": [
+    "components/public/CookieReopenButton.tsx"
+  ],
+  "Contador de páginas desactivado.": [
+    "components/public/CookieReopenButton.tsx"
+  ],
+  "Usamos cookies técnicas necesarias para el funcionamiento de la web. Nuestro contador de páginas es opcional: puedes activarlo o mantenerlo desactivado. Más información en nuestra": [
+    "components/public/CookieConsent.tsx"
+  ],
+  "Contador de páginas": [
+    "components/public/CookieConsent.tsx"
+  ],
+  "Nuestro contador de páginas registra las páginas visitadas solo si lo permites.": [
+    "components/public/CookieConsent.tsx"
+  ],
+  "Almacena tu elección sobre el contador de páginas opcional y las retiradas de consentimiento.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
-  "La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.": [
+  "Usamos las cookies técnicas indicadas a continuación. Nuestro contador de páginas permanece desactivado por defecto: puedes permitirlo o retirar tu consentimiento desde los controles al inicio de esta página.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "3.2 Analítica y rendimiento": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "Vercel Analytics y Speed Insights recopilan estadísticas agregadas de visitas y rendimiento sin cookies analíticas. Se activan en las páginas públicas sin esperar a una elección en estos controles.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "Nuestro contador de páginas es independiente y solo se activa si lo permites desde los controles al inicio de esta página.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "El contador de páginas opcional está desactivado por defecto. Para activarlo, pulsa «Permitir contador de páginas» al inicio de esta página. Para rechazarlo o retirar tu consentimiento, pulsa «Desactivar contador de páginas» en el mismo lugar. Guardamos tu elección en este navegador. Estos controles no afectan a Vercel Analytics ni a Speed Insights.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "Configuración y consentimiento:": [
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
+  ],
+  "nuestro contador de páginas requiere tu consentimiento (art. 6.1.a RGPD), que puedes retirar desde la política de cookies. Vercel Analytics y Speed Insights se activan en las páginas públicas sin cookies analíticas y sin esperar a esta elección.": [
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
+  ],
+  "Información del proveedor:": [
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
+  ],
+  "Antes de enviar las URL de las páginas medidas a Vercel, eliminamos sus parámetros de consulta y fragmentos. Excluimos las rutas de administración, autenticación y pago.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "estadísticas agregadas y anónimas de visitas y rendimiento mediante Vercel Analytics y Speed Insights. Eliminamos los parámetros de consulta y los fragmentos de las URL de las páginas medidas y excluimos las rutas de administración, autenticación y pago. Si lo permites, nuestro contador de páginas registra también las páginas visitadas.": [
+    "app/[locale]/(public)/politica-privacidad/page.tsx"
   ]
 }
