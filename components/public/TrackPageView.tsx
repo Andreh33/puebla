@@ -6,7 +6,8 @@ import { getConsent, useConsent } from "@/lib/cookies/consent";
 
 /**
  * Registra una visita (POST /api/track) en cada cambio de ruta, SOLO si el
- * usuario consintió la categoría "analytics" (igual gate que Vercel Analytics).
+ * usuario consintió el contador propio (categoría "analytics"). Vercel se
+ * configura por separado y no activa este contador.
  * Best-effort con sendBeacon: no bloquea la navegación ni rompe nada.
  */
 export function TrackPageView() {

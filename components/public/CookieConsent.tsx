@@ -96,7 +96,7 @@ export function CookieConsent() {
               <h2 id="zs-cookie-title" className="text-base font-semibold text-zs-blue-900">
                 {t("Cuidamos tu privacidad")}</h2>
               <p className="mt-1 text-sm text-zs-ink/85">
-                {t("Usamos cookies técnicas necesarias para el funcionamiento de la web. También queremos usar cookies analíticas para entender cómo navegas y mejorar la tienda. Puedes aceptarlas todas, rechazarlas o elegir qué categorías permites. Más información en nuestra")}{" "}
+                {t("Usamos cookies técnicas necesarias para el funcionamiento de la web. Nuestro contador de páginas es opcional: puedes activarlo o mantenerlo desactivado. Más información en nuestra")}{" "}
                 <Link href="/politica-cookies" className="underline hover:text-zs-blue-700">
                   {t("Política de cookies")}</Link>
                 .
@@ -128,8 +128,8 @@ export function CookieConsent() {
               disabled
             />
             <CategoryRow
-              title={t("Analíticas")}
-              description={t("Vercel Analytics y Speed Insights. Nos ayudan a entender qué páginas funcionan y dónde hay errores. Datos agregados y anónimos.")}
+              title={t("Contador de páginas")}
+              description={t("Nuestro contador de páginas registra las páginas visitadas solo si lo permites.")}
               checked={prefs.analytics}
               onChange={(v) => setPrefs((p) => ({ ...p, analytics: v }))}
             />

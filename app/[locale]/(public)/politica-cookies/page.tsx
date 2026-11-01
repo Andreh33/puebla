@@ -19,7 +19,7 @@ const COOKIES = [
   {
     name: "zs_consent",
     purpose:
-      "Almacena tus preferencias de cookies opcionales y las retiradas de consentimiento.",
+      "Almacena tu elección sobre el contador de páginas opcional y las retiradas de consentimiento.",
     provider: "Zona Sport (propia)",
     type: "Técnica / necesaria",
     duration: "1 año",
@@ -84,7 +84,7 @@ const COOKIES = [
 
           <h2>{t("2. ¿Qué cookies usamos?")}</h2>
           <p>
-            {t("La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.")}</p>
+            {t("Usamos las cookies técnicas indicadas a continuación. Nuestro contador de páginas permanece desactivado por defecto: puedes permitirlo o retirar tu consentimiento desde los controles al inicio de esta página.")}</p>
 
           <div className="not-prose my-6 overflow-x-auto rounded-2xl border border-zs-border bg-white">
             <table className="w-full text-left text-sm">
@@ -104,7 +104,7 @@ const COOKIES = [
                     <td className="px-4 py-3">{tx(c.type)}</td>
                     <td
                       className="px-4 py-3 text-xs"
-                      dangerouslySetInnerHTML={{ __html: c.purpose }}
+                      dangerouslySetInnerHTML={{ __html: tx(c.purpose) }}
                     />
                     <td className="px-4 py-3 text-xs">{tx(c.provider)}</td>
                     <td className="px-4 py-3 text-xs">{tx(c.duration)}</td>
@@ -119,10 +119,13 @@ const COOKIES = [
           <p>
             {t("Permiten la navegación a través del Sitio y la utilización de las distintas opciones (recordar preferencias de cookies, mantener una sesión de administrador). No requieren consentimiento conforme al art. 22.2 LSSI-CE.")}</p>
 
-          <h3>{t("3.2 Cookies analíticas")}</h3>
+          <h3>{t("3.2 Analítica y rendimiento")}</h3>
           <p>
-            {t("Permiten analizar de forma agregada y anónima el comportamiento de los usuarios (páginas vistas, tiempo en página, dispositivo, país de origen). Usamos")}{tx(" ")}
-            <strong>{t("Vercel Analytics")}</strong> {t("y")}{" "}<strong>{t("Vercel Speed Insights")}</strong>{t(", y solo las cargamos si has aceptado la categoría correspondiente.")}</p>
+            {t("Vercel Analytics y Speed Insights recopilan estadísticas agregadas de visitas y rendimiento sin cookies analíticas. Se activan en las páginas públicas sin esperar a una elección en estos controles.")}</p>
+          <p>
+            {t("Antes de enviar las URL de las páginas medidas a Vercel, eliminamos sus parámetros de consulta y fragmentos. Excluimos las rutas de administración, autenticación y pago.")}</p>
+          <p>
+            {t("Nuestro contador de páginas es independiente y solo se activa si lo permites desde los controles al inicio de esta página.")}</p>
 
           <h3>{t("3.3 Cookies de marketing")}</h3>
           <p>
@@ -130,7 +133,7 @@ const COOKIES = [
 
           <h2>{t("4. Cómo gestionar tus cookies")}</h2>
           <p>
-            {t("La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.")}</p>
+            {t("El contador de páginas opcional está desactivado por defecto. Para activarlo, pulsa «Permitir contador de páginas» al inicio de esta página. Para rechazarlo o retirar tu consentimiento, pulsa «Desactivar contador de páginas» en el mismo lugar. Guardamos tu elección en este navegador. Estos controles no afectan a Vercel Analytics ni a Speed Insights.")}</p>
           <p>
             {t("Adicionalmente, puedes bloquear o eliminar cookies desde la configuración de tu navegador. Te dejamos los enlaces oficiales:")}</p>
           <ul>

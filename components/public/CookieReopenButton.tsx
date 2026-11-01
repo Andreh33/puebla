@@ -10,7 +10,7 @@ export function CookieReopenButton() {
     <div>
       <p className="text-zs-muted mb-3 text-sm">
         {t(
-          "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.",
+          "Nuestro contador de páginas es opcional y permanece desactivado hasta que lo permitas. Puedes cambiar tu elección en cualquier momento.",
         )}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -21,7 +21,7 @@ export function CookieReopenButton() {
           variant="outline"
           size="sm"
         >
-          {t("Permitir analítica opcional")}
+          {t("Permitir contador de páginas")}
         </Button>
         <Button
           type="button"
@@ -31,14 +31,14 @@ export function CookieReopenButton() {
           size="sm"
         >
           <Settings2 className="h-4 w-4" />
-          {t("Desactivar cookies opcionales")}
+          {t("Desactivar contador de páginas")}
         </Button>
       </div>
       <p role="status" aria-live="polite" className="text-zs-muted mt-2 text-xs">
         {isLoaded
           ? consent?.categories.analytics
-            ? t("Analítica opcional activada.")
-            : t("Cookies opcionales desactivadas.")
+            ? t("Contador de páginas activado.")
+            : t("Contador de páginas desactivado.")
           : null}
       </p>
     </div>

@@ -1,5 +1,5 @@
 {
-  "sourceHash": "4613d66a2fcd31d8445891518b74808cc64724971f173aeaa7fc95686a3ae1eb",
+  "sourceHash": "3c98ce3b8e0da2635599ac621cdf0b931b2fbcad0584ea1db216fa8ed2581cf6",
   "keys": [
     "¡Listo!",
     "¡Mensaje enviado! Te contestamos en breve.",
@@ -877,8 +877,6 @@
     "✺",
     "La temporada que estabas esperando.",
     "Respondemos en <5min",
-    "Desactivar cookies opcionales",
-    "Cookies opcionales desactivadas.",
     "Aplicar ({0})",
     "Talla {0}",
     "Contraer filtro {0}",
@@ -920,8 +918,10 @@
     "También puede aparecer como “Añadir a pantalla de inicio”.",
     "Se abrirá como una app independiente, sin barras del navegador.",
     "Copiado",
-    "Permitir analítica opcional",
-    "Analítica opcional activada.",
-    "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento."
+    "Nuestro contador de páginas es opcional y permanece desactivado hasta que lo permitas. Puedes cambiar tu elección en cualquier momento.",
+    "Permitir contador de páginas",
+    "Desactivar contador de páginas",
+    "Contador de páginas activado.",
+    "Contador de páginas desactivado."
   ]
 }

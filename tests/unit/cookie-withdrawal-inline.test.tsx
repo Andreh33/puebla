@@ -48,28 +48,37 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("keeps tracking off for a new visitor until an explicit inline opt-in", async () => {
+it("loads Vercel for a new visitor while the own counter still requires explicit opt-in", async () => {
   const view = render(preferenceControls());
   expect(getConsent()).toBeNull();
-  expect(sdkScripts()).toHaveLength(0);
+  await waitFor(() => expect(sdkScripts()).toHaveLength(2));
   expect(sendBeacon).not.toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).toBeNull();
 
-  fireEvent.click(screen.getByRole("button", { name: "Permitir analítica opcional" }));
+  const filter = window.vaq?.find(([name]) => name === "beforeSend")?.[1] as (event: {
+    type: "pageview";
+    url: string;
+  }) => unknown;
+  expect(
+    filter({ type: "pageview", url: "https://zonasportpuebla.com/catalogo?email=private#token" }),
+  ).toEqual({ type: "pageview", url: "https://zonasportpuebla.com/catalogo" });
+  expect(getConsent()).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Permitir contador de páginas" }));
   await waitFor(() => expect(sdkScripts()).toHaveLength(2));
   expect(getConsent()?.categories).toEqual({ necessary: true, analytics: true, marketing: false });
   expect(sendBeacon).toHaveBeenCalledTimes(1);
   expect(sendBeacon.mock.calls[0]?.[0]).toBe("/api/track");
   expect(await (sendBeacon.mock.calls[0]?.[1] as Blob).text()).toBe('{"path":"/politica-cookies"}');
-  expect(screen.getByRole("status").textContent).toContain("Analítica opcional activada");
+  expect(screen.getByRole("status").textContent).toContain("Contador de páginas activado");
 
   view.unmount();
   render(<CookieReopenButton />);
-  expect(screen.getByRole("status").textContent).toContain("Analítica opcional activada");
+  expect(screen.getByRole("status").textContent).toContain("Contador de páginas activado");
   expect(screen.queryByRole("dialog")).toBeNull();
 });
 
-it("withdraws existing consent and blocks later events from already loaded SDKs and routes", async () => {
+it("withdraws only the own counter consent while Vercel keeps following public routes", async () => {
   setConsent({ analytics: true, marketing: true });
   const view = render(preferenceControls());
   await waitFor(() => expect(sdkScripts()).toHaveLength(2));
@@ -81,22 +90,22 @@ it("withdraws existing consent and blocks later events from already loaded SDKs 
   expect(speedFilter).toBeTypeOf("function");
   const pageEvent = { type: "pageview" as const, url: "https://zonasportpuebla.com/catalogo" };
   const vitalEvent = { type: "vital" as const, url: pageEvent.url };
-  expect(analyticsFilter!(pageEvent)).toBe(pageEvent);
-  expect(speedFilter!(vitalEvent)).toBe(vitalEvent);
+  expect(analyticsFilter!(pageEvent)).toEqual(pageEvent);
+  expect(speedFilter!(vitalEvent)).toEqual(vitalEvent);
 
-  fireEvent.click(screen.getByRole("button", { name: "Desactivar cookies opcionales" }));
+  fireEvent.click(screen.getByRole("button", { name: "Desactivar contador de páginas" }));
   expect(getConsent()?.categories).toEqual({ necessary: true, analytics: false, marketing: false });
-  expect(screen.getByRole("status").textContent).toContain("Cookies opcionales desactivadas");
-  expect(analyticsFilter!(pageEvent)).toBeNull();
-  expect(speedFilter!(vitalEvent)).toBeNull();
+  expect(screen.getByRole("status").textContent).toContain("Contador de páginas desactivado");
+  expect(analyticsFilter!(pageEvent)).toEqual(pageEvent);
+  expect(speedFilter!(vitalEvent)).toEqual(vitalEvent);
   sendBeacon.mockClear();
   view.rerender(preferenceControls("/catalogo"));
   expect(sendBeacon).not.toHaveBeenCalled();
   expect(screen.queryByRole("dialog")).toBeNull();
 
-  fireEvent.click(screen.getByRole("button", { name: "Permitir analítica opcional" }));
-  expect(analyticsFilter!(pageEvent)).toBe(pageEvent);
-  expect(speedFilter!(vitalEvent)).toBe(vitalEvent);
+  fireEvent.click(screen.getByRole("button", { name: "Permitir contador de páginas" }));
+  expect(analyticsFilter!(pageEvent)).toEqual(pageEvent);
+  expect(speedFilter!(vitalEvent)).toEqual(vitalEvent);
   expect(sendBeacon).toHaveBeenCalledTimes(1);
   view.rerender(preferenceControls("/catalogo"));
   expect(sendBeacon).toHaveBeenCalledTimes(1);
@@ -107,11 +116,11 @@ it("withdraws existing consent and blocks later events from already loaded SDKs 
   view.rerender(preferenceControls("/blog"));
   expect(speedScript?.dataset.route).toBe("/blog");
   expect(sendBeacon).toHaveBeenCalledTimes(2);
-  fireEvent.click(screen.getByRole("button", { name: "Desactivar cookies opcionales" }));
+  fireEvent.click(screen.getByRole("button", { name: "Desactivar contador de páginas" }));
 
   view.unmount();
   render(<CookieReopenButton />);
-  expect(screen.getByRole("status").textContent).toContain("Cookies opcionales desactivadas");
+  expect(screen.getByRole("status").textContent).toContain("Contador de páginas desactivado");
 });
 
 it("checks stored permission before counting a route after consent was cleared elsewhere", () => {
@@ -124,11 +133,72 @@ it("checks stored permission before counting a route after consent was cleared e
   expect(sendBeacon).not.toHaveBeenCalled();
 });
 
+it("also loads Vercel with a saved refusal without granting counter or marketing consent", async () => {
+  setConsent({ analytics: false, marketing: false });
+  render(preferenceControls("/fr/catalogo"));
+  await waitFor(() => expect(sdkScripts()).toHaveLength(2));
+  expect(getConsent()?.categories).toEqual({ necessary: true, analytics: false, marketing: false });
+  expect(sendBeacon).not.toHaveBeenCalled();
+});
+
 it.each([
-  ["pt", "Permitir análise opcional", "Análise opcional ativada."],
-  ["it", "Consenti analisi facoltative", "Analisi facoltative attivate."],
-  ["fr", "Autoriser l’analyse facultative", "Analyse facultative activée."],
-  ["de", "Optionale Analyse erlauben", "Optionale Analyse aktiviert."],
+  "/admin",
+  "/admin/login?from=/admin/pedidos",
+  "/api/auth/callback/credentials?token=secret",
+  "/auth/callback#secret",
+  "/checkout/success?session_id=cs_private",
+  "/pt/checkout/success?session_id=cs_private",
+  "/it/checkout/cancelado",
+  "/fr/admin/pedidos",
+  "/de/auth/callback",
+  "/%61dmin/pedidos",
+])("drops private Vercel page and vital events for %s", async (path) => {
+  setConsent({ analytics: true, marketing: false });
+  render(preferenceControls());
+  await waitFor(() => expect(sdkScripts()).toHaveLength(2));
+  const analyticsFilter = window.vaq?.find(([name]) => name === "beforeSend")?.[1] as (event: {
+    type: "pageview";
+    url: string;
+  }) => unknown;
+  const speedFilter = window.siq?.find(([name]) => name === "beforeSend")?.[1];
+  const url = `https://zonasportpuebla.com${path}`;
+  expect(analyticsFilter({ type: "pageview", url })).toBeNull();
+  expect(speedFilter!({ type: "vital", url })).toBeNull();
+});
+
+it.each([
+  ["/", "/"],
+  ["/catalogo?email=private%40example.com#secret", "/catalogo"],
+  ["/producto/zapatilla-runner?token=secret", "/producto/zapatilla-runner"],
+  ["/pt", "/pt"],
+  ["/it/blog/guia?utm_campaign=private#section", "/it/blog/guia"],
+  ["/fr/marca/joma?ref=private", "/fr/marca/joma"],
+  ["/de/carrito#email", "/de/carrito"],
+  ["/blog/checkout-guide", "/blog/checkout-guide"],
+])("keeps public routes but removes query and hash from %s", async (path, expectedPath) => {
+  setConsent({ analytics: true, marketing: false });
+  render(preferenceControls());
+  await waitFor(() => expect(sdkScripts()).toHaveLength(2));
+  const analyticsFilter = window.vaq?.find(([name]) => name === "beforeSend")?.[1] as (event: {
+    type: "pageview";
+    url: string;
+  }) => unknown;
+  const speedFilter = window.siq?.find(([name]) => name === "beforeSend")?.[1];
+  const url = `https://zonasportpuebla.com${path}`;
+  const cleanUrl = `https://zonasportpuebla.com${expectedPath}`;
+  expect(analyticsFilter({ type: "pageview", url })).toEqual({ type: "pageview", url: cleanUrl });
+  expect(speedFilter!({ type: "vital", url, route: path })).toEqual({
+    type: "vital",
+    url: cleanUrl,
+    route: expectedPath,
+  });
+});
+
+it.each([
+  ["pt", "Permitir contador de páginas", "Contador de páginas ativado."],
+  ["it", "Consenti contatore di pagine", "Contatore di pagine attivato."],
+  ["fr", "Autoriser le compteur de pages", "Compteur de pages activé."],
+  ["de", "Seitenzähler erlauben", "Seitenzähler aktiviert."],
 ] as const)(
   "offers working opt-in with the published %s client dictionary",
   (locale, label, status) => {
