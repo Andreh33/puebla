@@ -2290,5 +2290,10 @@
   "También puede aparecer como “Añadir a pantalla de inicio”.": "Die Option kann auch „Zum Home-Bildschirm hinzufügen“ heißen.",
   "Se abrirá como una app independiente, sin barras del navegador.": "Die App öffnet sich eigenständig, ohne Browserleisten.",
   "Copiado": "Kopiert",
-  "Subcategorías de {0}": "Unterkategorien von {0}"
+  "Subcategorías de {0}": "Unterkategorien von {0}",
+  "Permitir analítica opcional": "Optionale Analyse erlauben",
+  "Analítica opcional activada.": "Optionale Analyse aktiviert.",
+  "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.": "Die optionale Analyse misst Besuche und Leistung mit Vercel Analytics, Speed Insights und unserem Seitenzähler. Du kannst deine Auswahl jederzeit ändern.",
+  "La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.": "Die Analyse ist standardmäßig deaktiviert. Du kannst sie über die Schaltflächen am Anfang dieser Seite erlauben oder deine Einwilligung widerrufen.",
+  "La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.": "Die optionale Analyse ist standardmäßig deaktiviert. Zum Aktivieren klicke am Anfang dieser Seite auf „Optionale Analyse erlauben“. Zum Ablehnen oder Widerrufen deiner Einwilligung klicke dort auf „Optionale Cookies deaktivieren“. Wir speichern deine Auswahl in diesem Browser."
 }

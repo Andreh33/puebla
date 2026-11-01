@@ -2298,5 +2298,10 @@
   "También puede aparecer como “Añadir a pantalla de inicio”.": "Cette option peut aussi s’appeler « Ajouter à l’écran d’accueil ».",
   "Se abrirá como una app independiente, sin barras del navegador.": "L’application s’ouvrira de manière autonome, sans les barres du navigateur.",
   "Copiado": "Copié",
-  "Subcategorías de {0}": "Sous-catégories de {0}"
+  "Subcategorías de {0}": "Sous-catégories de {0}",
+  "Permitir analítica opcional": "Autoriser l’analyse facultative",
+  "Analítica opcional activada.": "Analyse facultative activée.",
+  "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.": "L’analyse facultative mesure les visites et les performances avec Vercel Analytics, Speed Insights et notre compteur de pages. Vous pouvez modifier votre choix à tout moment.",
+  "La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.": "L’analyse est désactivée par défaut. Vous pouvez l’autoriser ou retirer votre consentement à l’aide des boutons en haut de cette page.",
+  "La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.": "L’analyse facultative est désactivée par défaut. Pour l’activer, cliquez sur « Autoriser l’analyse facultative » en haut de cette page. Pour la refuser ou retirer votre consentement, cliquez sur « Désactiver les cookies facultatifs » au même endroit. Nous enregistrons votre choix dans ce navigateur."
 }

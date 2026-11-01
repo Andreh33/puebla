@@ -2327,5 +2327,10 @@
   "También puede aparecer como “Añadir a pantalla de inicio”.": "Também pode aparecer como “Adicionar ao ecrã principal”.",
   "Se abrirá como una app independiente, sin barras del navegador.": "Abre-se como uma aplicação independente, sem as barras do navegador.",
   "Copiado": "Copiado",
-  "Subcategorías de {0}": "Subcategorias de {0}"
+  "Subcategorías de {0}": "Subcategorias de {0}",
+  "Permitir analítica opcional": "Permitir análise opcional",
+  "Analítica opcional activada.": "Análise opcional ativada.",
+  "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.": "A análise opcional mede as visitas e o desempenho com o Vercel Analytics, o Speed Insights e o nosso contador de páginas. Podes alterar a tua escolha a qualquer momento.",
+  "La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.": "A análise permanece desativada por predefinição. Podes permiti-la ou retirar o teu consentimento nos controlos no início desta página.",
+  "La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.": "A análise opcional está desativada por predefinição. Para a ativar, prime «Permitir análise opcional» no início desta página. Para a recusar ou retirar o teu consentimento, prime «Desativar cookies opcionais» no mesmo local. Guardamos a tua escolha neste navegador."
 }

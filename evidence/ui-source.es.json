@@ -7439,16 +7439,10 @@
   "Almacena tus preferencias de cookies opcionales y las retiradas de consentimiento.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
-  "La analítica permanece desactivada por defecto. Si anteriormente diste tu consentimiento, puedes retirarlo desde esta página.": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
   "Permiten la navegación a través del Sitio y la utilización de las distintas opciones (recordar preferencias de cookies, mantener una sesión de administrador). No requieren consentimiento conforme al art. 22.2 LSSI-CE.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   ". Cualquier activación futura de cookies opcionales requerirá el consentimiento correspondiente.": [
-    "app/[locale]/(public)/politica-cookies/page.tsx"
-  ],
-  "No mostramos un popup de cookies. Las cookies opcionales permanecen desactivadas por defecto. Puedes retirar cualquier consentimiento anterior pulsando «Desactivar cookies opcionales» al inicio de esta página.": [
     "app/[locale]/(public)/politica-cookies/page.tsx"
   ],
   "consentimiento explícito, cuando se haya otorgado (art. 6.1.a RGPD). Puedes retirarlo desde la política de cookies.": [
@@ -7625,5 +7619,20 @@
   ],
   "Subcategorías de {0}": [
     "app/[locale]/(public)/[categoria]/page.tsx"
+  ],
+  "Permitir analítica opcional": [
+    "components/public/CookieReopenButton.tsx"
+  ],
+  "Analítica opcional activada.": [
+    "components/public/CookieReopenButton.tsx"
+  ],
+  "La analítica opcional mide las visitas y el rendimiento con Vercel Analytics, Speed Insights y nuestro contador de páginas. Puedes cambiar tu elección en cualquier momento.": [
+    "components/public/CookieReopenButton.tsx"
+  ],
+  "La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
+  ],
+  "La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.": [
+    "app/[locale]/(public)/politica-cookies/page.tsx"
   ]
 }

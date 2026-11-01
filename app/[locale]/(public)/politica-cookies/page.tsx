@@ -84,7 +84,7 @@ const COOKIES = [
 
           <h2>{t("2. ¿Qué cookies usamos?")}</h2>
           <p>
-            {t("La analítica permanece desactivada por defecto. Si anteriormente diste tu consentimiento, puedes retirarlo desde esta página.")}</p>
+            {t("La analítica permanece desactivada por defecto. Puedes permitirla o retirar tu consentimiento desde los controles al inicio de esta página.")}</p>
 
           <div className="not-prose my-6 overflow-x-auto rounded-2xl border border-zs-border bg-white">
             <table className="w-full text-left text-sm">
@@ -130,7 +130,7 @@ const COOKIES = [
 
           <h2>{t("4. Cómo gestionar tus cookies")}</h2>
           <p>
-            {t("No mostramos un popup de cookies. Las cookies opcionales permanecen desactivadas por defecto. Puedes retirar cualquier consentimiento anterior pulsando «Desactivar cookies opcionales» al inicio de esta página.")}</p>
+            {t("La analítica opcional está desactivada por defecto. Para activarla, pulsa «Permitir analítica opcional» al inicio de esta página. Para rechazarla o retirar tu consentimiento, pulsa «Desactivar cookies opcionales» en el mismo lugar. Guardamos tu elección en este navegador.")}</p>
           <p>
             {t("Adicionalmente, puedes bloquear o eliminar cookies desde la configuración de tu navegador. Te dejamos los enlaces oficiales:")}</p>
           <ul>

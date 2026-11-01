@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { useConsent } from "@/lib/cookies/consent";
+import { getConsent, useConsent } from "@/lib/cookies/consent";
 
 /**
  * Registra una visita (POST /api/track) en cada cambio de ruta, SOLO si el
@@ -17,6 +17,8 @@ export function TrackPageView() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!consent?.categories.analytics) return;
+    // La cookie puede haber caducado o cambiado desde otra pestaña.
+    if (getConsent()?.categories.analytics !== true) return;
     if (!pathname || pathname.startsWith("/admin")) return;
     if (lastSent.current === pathname) return; // evita duplicar el mismo path
     lastSent.current = pathname;
