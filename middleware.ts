@@ -1,5 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isLocaleRouteAvailable } from "@/lib/i18n/publication-policy";
 import { lookupRedirect, normalizePath } from "@/lib/redirects";
+import {
+  shouldLocalizePath,
+  routeLocale,
+  stripLocale,
+  internalLocalePath,
+  localePath,
+} from "@/lib/i18n/routing";
 
 // ---------------------------------------------------------------------------
 // Edge-safe middleware.
@@ -36,7 +44,9 @@ function shouldSkipRedirectLookup(pathname: string): boolean {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname.startsWith("/sitemap-") ||
-    /\.(?:png|jpg|jpeg|gif|svg|webp|ico|css|js|map|txt|xml|json|woff2?)$/i.test(pathname)
+    /\.(?:png|jpg|jpeg|gif|svg|webp|avif|ico|css|js|map|txt|xml|json|woff2?|mp4|webm|glb|gltf|pdf|webmanifest)$/i.test(
+      pathname,
+    )
   );
 }
 
@@ -48,6 +58,23 @@ export async function middleware(req: NextRequest) {
   // salte el check de auth para evitar bucles de redirección.
   const forwardHeaders = new Headers(req.headers);
   forwardHeaders.set("x-pathname", pathname);
+
+  // Visible /es URLs are aliases of the original Spanish URLs. Preserve queries.
+  if (/^\/es(?:\/|$)/.test(pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = stripLocale(pathname);
+    return NextResponse.redirect(url, 308);
+  }
+  if (!isLocaleRouteAvailable(routeLocale(pathname), pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = stripLocale(pathname);
+    return NextResponse.redirect(url, 308);
+  }
+  if (stripLocale(pathname) === "/ninos") {
+    const url = req.nextUrl.clone();
+    url.pathname = localePath(routeLocale(pathname), "/nino");
+    return NextResponse.redirect(url, 308);
+  }
 
   // ---- (1) RedirectRule ----------------------------------------------------
   if (!shouldSkipRedirectLookup(pathname)) {
@@ -82,6 +109,15 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  if (
+    (shouldLocalizePath(pathname) ||
+      /\/(?:share-image|opengraph-image|twitter-image)$/.test(pathname)) &&
+    routeLocale(pathname) === "es"
+  ) {
+    const url = req.nextUrl.clone();
+    url.pathname = internalLocalePath(pathname);
+    return NextResponse.rewrite(url, { request: { headers: forwardHeaders } });
+  }
   return NextResponse.next({ request: { headers: forwardHeaders } });
 }
 

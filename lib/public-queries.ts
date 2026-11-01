@@ -1,4 +1,5 @@
-import { db, type Prisma } from "@/lib/db";
+import type { Prisma } from "@/lib/db";
+import { localizedPublicDb as db } from "@/lib/i18n/public-db";
 import {
   getDemoBrands,
   getDemoCategories,
@@ -701,6 +702,7 @@ export async function getCategoryBySlug(slug: string): Promise<PublicCategoryDet
 
 
 const RESERVED_SLUGS = new Set([
+  "es", "pt", "it", "fr", "de",
   "producto",
   "productos",
   "marca",

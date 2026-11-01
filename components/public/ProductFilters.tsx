@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
@@ -112,6 +116,9 @@ export function ProductFilters({
   startCollapsed = false,
   hideDestacar = false,
 }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const tf = useTranslatedTemplate();
   // Estado por defecto (abierto/cerrado) de los FilterGroup colapsables: cerrados
   // en modo compacto (textil/calzado) o cuando se pide startCollapsed (accesorios).
   const groupOpen = !compact && !startCollapsed;
@@ -278,7 +285,7 @@ export function ProductFilters({
     }
     for (const v of activeSizes) {
       const label = data.sizes.find((s) => s.value === v)?.label ?? v;
-      out.push({ id: `talla:${v}`, label: `Talla ${label}`, onRemove: () => removeMulti("talla", v) });
+      out.push({ id: `talla:${v}`, label: tf("Talla {0}", [label]), onRemove: () => removeMulti("talla", v) });
     }
     for (const v of activeTipo) {
       const label = FOOTWEAR_TYPE_LABELS[v as keyof typeof FOOTWEAR_TYPE_LABELS] ?? v;
@@ -318,20 +325,20 @@ export function ProductFilters({
       {/* Flags — ocultos en modo compacto (textil, Bloque 8.4) y en /accesorios
           (hideDestacar, Bloque 9.3 a petición del cliente). */}
       {!compact && !hideDestacar && (
-        <FilterGroup title="Destacar" defaultOpen={!startCollapsed}>
+        <FilterGroup title={t("Destacar")} defaultOpen={!startCollapsed}>
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <Checkbox checked={activeOnSale} onCheckedChange={() => toggleFlag("oferta")} />
-          <span>En oferta</span>
+          <span>{t("En oferta")}</span>
         </label>
         <label className="flex cursor-pointer items-center gap-2 text-sm">
           <Checkbox checked={activeNew} onCheckedChange={() => toggleFlag("nuevo")} />
-          <span>Novedades (último mes)</span>
+          <span>{t("Novedades (último mes)")}</span>
         </label>
         </FilterGroup>
       )}
 
       {data.brands.length > 0 && (
-        <FilterGroup title="Marca" defaultOpen={groupOpen} className={compact ? "order-2" : undefined}>
+        <FilterGroup title={t("Marca")} defaultOpen={groupOpen} className={compact ? "order-2" : undefined}>
           {/* "Sin marca" oculto del filtro a petición del cliente (los productos
               conservan su marca; solo no se ofrece como chip de filtro). */}
           {data.brands
@@ -344,16 +351,16 @@ export function ProductFilters({
                   checked={activeBrands.includes(b.value)}
                   onCheckedChange={() => toggleMulti("marca", b.value)}
                 />
-                <span>{b.label}</span>
+                <span>{tx(b.label)}</span>
               </span>
-              <span className="text-xs text-zs-muted">{b.count}</span>
+              <span className="text-xs text-zs-muted">{tx(b.count)}</span>
             </label>
           ))}
         </FilterGroup>
       )}
 
       {showGenderFilter && data.genders.length > 0 && (
-        <FilterGroup title="Género" defaultOpen={groupOpen}>
+        <FilterGroup title={t("Género")} defaultOpen={groupOpen}>
           {data.genders.map((g) => (
             <label key={g.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
               <span className="flex items-center gap-2">
@@ -361,16 +368,16 @@ export function ProductFilters({
                   checked={activeGenders.includes(g.value)}
                   onCheckedChange={() => toggleMulti("genero", g.value)}
                 />
-                <span>{GENDER_LABELS[g.value] ?? g.label}</span>
+                <span>{tx(GENDER_LABELS[g.value] ?? g.label)}</span>
               </span>
-              <span className="text-xs text-zs-muted">{g.count}</span>
+              <span className="text-xs text-zs-muted">{tx(g.count)}</span>
             </label>
           ))}
         </FilterGroup>
       )}
 
       {data.colors.length > 0 && (
-        <FilterGroup title="Color" defaultOpen={groupOpen} className={compact ? "order-5" : undefined}>
+        <FilterGroup title={t("Color")} defaultOpen={groupOpen} className={compact ? "order-5" : undefined}>
           <div className="flex flex-wrap gap-1.5">
             {[...data.colors].sort((a, b) => a.label.localeCompare(b.label, "es")).map((c) => {
               const on = activeColors.includes(c.value);
@@ -387,7 +394,7 @@ export function ProductFilters({
                   )}
                   aria-pressed={on}
                 >
-                  {c.label} <span className="opacity-70">({c.count})</span>
+                  {tx(c.label)} <span className="opacity-70">({tx(c.count)})</span>
                 </button>
               );
             })}
@@ -396,7 +403,7 @@ export function ProductFilters({
       )}
 
       {orderedSizes.length > 0 && (
-        <FilterGroup title="Talla" defaultOpen={groupOpen} className={compact ? "order-3" : undefined}>
+        <FilterGroup title={t("Talla")} defaultOpen={groupOpen} className={compact ? "order-3" : undefined}>
           <div className="flex flex-wrap gap-1.5">
             {orderedSizes.map((s) => {
               const on = activeSizes.includes(s.value);
@@ -413,7 +420,7 @@ export function ProductFilters({
                   )}
                   aria-pressed={on}
                 >
-                  {s.label}
+                  {tx(s.label)}
                 </button>
               );
             })}
@@ -423,7 +430,7 @@ export function ProductFilters({
 
       {/* Bloque 3: tipo de calzado. Solo en páginas de calzado (showFootwearFilter). */}
       {showFootwearFilter && data.footwearTypes && data.footwearTypes.length > 0 && (
-        <FilterGroup title="Tipo de calzado" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
+        <FilterGroup title={t("Tipo de calzado")} defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1.5">
             {[...data.footwearTypes]
               .sort((a, b) =>
@@ -439,9 +446,9 @@ export function ProductFilters({
                 <label key={t.value} className="flex cursor-pointer items-center justify-between gap-2 text-sm">
                   <span className="flex items-center gap-2">
                     <Checkbox checked={on} onCheckedChange={() => toggleMulti("tipo", t.value)} />
-                    <span>{label}</span>
+                    <span>{tx(label)}</span>
                   </span>
-                  {t.count > 0 && <span className="text-xs text-zs-muted">{t.count}</span>}
+                  {t.count > 0 && <span className="text-xs text-zs-muted">{tx(t.count)}</span>}
                 </label>
               );
             })}
@@ -451,7 +458,7 @@ export function ProductFilters({
 
       {/* Bloque 6 §18: tipo de prenda + sub-filtros de variante anidados. Solo textil. */}
       {showGarmentFilter && data.garmentTypes && data.garmentTypes.length > 0 && (
-        <FilterGroup title="Tipo de prenda" defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
+        <FilterGroup title={t("Tipo de prenda")} defaultOpen={groupOpen} className={compact ? "order-1" : undefined}>
           <div className="flex flex-col gap-1">
             {/* "chaqueta" oculta del filtro a petición del cliente (los productos
                 siguen en la tienda; solo no se ofrece el chip de filtro). */}
@@ -485,9 +492,9 @@ export function ProductFilters({
                         checked={checked}
                         onCheckedChange={(c) => togglePrenda(garmentValue, c === true)}
                       />
-                      <span>{GARMENT_TYPE_LABELS[garmentValue] ?? garmentValue}</span>
+                      <span>{tx(GARMENT_TYPE_LABELS[garmentValue] ?? garmentValue)}</span>
                     </span>
-                    {g.count > 0 && <span className="text-xs text-zs-muted">{g.count}</span>}
+                    {g.count > 0 && <span className="text-xs text-zs-muted">{tx(g.count)}</span>}
                   </label>
                   {/* A1: sub-variantes SOLO visibles si el padre está marcado. */}
                   {checked && variantsOfThis.length > 0 && (
@@ -504,9 +511,9 @@ export function ProductFilters({
                                 checked={activeVariante.includes(variantValue)}
                                 onCheckedChange={() => toggleMulti("variante", variantValue)}
                               />
-                              <span className="text-xs">{GARMENT_VARIANT_LABELS[variantValue]}</span>
+                              <span className="text-xs">{tx(GARMENT_VARIANT_LABELS[variantValue])}</span>
                             </span>
-                            <span className="text-xs text-zs-muted">{v.count}</span>
+                            <span className="text-xs text-zs-muted">{tx(v.count)}</span>
                           </label>
                         );
                       })}
@@ -519,7 +526,7 @@ export function ProductFilters({
         </FilterGroup>
       )}
 
-      <FilterGroup title="Precio (€)" defaultOpen={groupOpen} className={compact ? "order-4" : undefined}>
+      <FilterGroup title={t("Precio (€)")} defaultOpen={groupOpen} className={compact ? "order-4" : undefined}>
         <div className="flex items-center gap-2">
           <Input
             type="number"
@@ -528,7 +535,7 @@ export function ProductFilters({
             defaultValue={priceMin ?? ""}
             onBlur={(e) => setPrice("min", e.target.value)}
             className="h-9"
-            aria-label="Precio mínimo"
+            aria-label={t("Precio mínimo")}
           />
           <span className="text-zs-muted">—</span>
           <Input
@@ -538,7 +545,7 @@ export function ProductFilters({
             defaultValue={priceMax ?? ""}
             onBlur={(e) => setPrice("max", e.target.value)}
             className="h-9"
-            aria-label="Precio máximo"
+            aria-label={t("Precio máximo")}
           />
         </div>
       </FilterGroup>
@@ -551,10 +558,10 @@ export function ProductFilters({
       <aside className="hidden lg:block">
         <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-2xl border border-zs-border bg-white p-5 scrollbar-thin">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold text-zs-blue-900">Filtros</h2>
+            <h2 className="font-display text-lg font-bold text-zs-blue-900">{t("Filtros")}</h2>
             {totalActive > 0 && (
               <span className="rounded-full bg-zs-blue-900 px-2 py-0.5 text-xs font-semibold text-white">
-                {totalActive}
+                {tx(totalActive)}
               </span>
             )}
           </div>
@@ -566,7 +573,7 @@ export function ProductFilters({
               onClick={clearAll}
               className="mt-4 w-full"
             >
-              <X className="h-4 w-4" /> Limpiar filtros ({totalActive})
+              <X className="h-4 w-4" /> {tf("Limpiar filtros ({0})", [totalActive])}
             </Button>
           )}
         </div>
@@ -577,10 +584,9 @@ export function ProductFilters({
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" className="w-full justify-center">
-              <SlidersHorizontal className="h-4 w-4" /> Filtrar
-              {totalActive > 0 && (
+              <SlidersHorizontal className="h-4 w-4" /> {t("Filtrar")}{totalActive > 0 && (
                 <span className="ml-1 rounded-full bg-zs-blue-900 px-1.5 text-xs font-semibold text-white">
-                  {totalActive}
+                  {tx(totalActive)}
                 </span>
               )}
             </Button>
@@ -594,7 +600,7 @@ export function ProductFilters({
               <span className="h-1.5 w-12 rounded-full bg-zs-border" />
             </div>
             <SheetHeader className="!border-b-0 !p-5 !pb-3">
-              <SheetTitle>Filtros</SheetTitle>
+              <SheetTitle>{t("Filtros")}</SheetTitle>
               {activeChips.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {activeChips.map((chip) => (
@@ -604,7 +610,7 @@ export function ProductFilters({
                       onClick={chip.onRemove}
                       className="group inline-flex items-center gap-1 rounded-full border border-zs-blue-200 bg-zs-blue-50 px-2.5 py-1 text-xs font-medium text-zs-blue-900 transition hover:bg-zs-blue-100"
                     >
-                      <span>{chip.label}</span>
+                      <span>{tx(chip.label)}</span>
                       <X className="h-3 w-3 text-zs-blue-700 transition group-hover:text-zs-red-600" />
                     </button>
                   ))}
@@ -623,8 +629,7 @@ export function ProductFilters({
                   disabled={totalActive === 0}
                   className="flex-1"
                 >
-                  Limpiar todo
-                </Button>
+                  {t("Limpiar todo")}</Button>
                 <Button
                   type="button"
                   variant="default"
@@ -632,8 +637,8 @@ export function ProductFilters({
                   className="flex-1"
                 >
                   {typeof resultsCount === "number"
-                    ? `Aplicar (${resultsCount})`
-                    : "Aplicar filtros"}
+                    ? tf("Aplicar ({0})", [resultsCount])
+                    : t("Aplicar filtros")}
                 </Button>
               </div>
             </div>
@@ -655,6 +660,7 @@ function FilterGroup({
   defaultOpen?: boolean;
   className?: string;
 }) {
+  const tf = useTranslatedTemplate();
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className={cn("border-t border-zs-border pt-3 first:border-0 first:pt-0", className)}>
@@ -662,7 +668,7 @@ function FilterGroup({
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label={`${open ? "Contraer" : "Expandir"} filtro ${title}`}
+        aria-label={tf(open ? "Contraer filtro {0}" : "Expandir filtro {0}", [title])}
         className="flex w-full items-center justify-between gap-2 py-1.5 text-left"
       >
         <h3 className="text-sm font-semibold text-zs-blue-900">{title}</h3>

@@ -1,3 +1,7 @@
+import { localizedContentHref } from "@/lib/i18n/routing";
+import { getRequestLocale } from "@/lib/i18n/request";
+import type { Locale } from "@/lib/i18n/config";
+import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
@@ -27,15 +31,12 @@ const sanitizeSchema = {
     h3: [["id"]],
     h4: [["id"]],
   },
-  tagNames: [
-    ...(defaultSchema.tagNames ?? []),
-    "figure",
-    "figcaption",
-  ],
+  tagNames: [...(defaultSchema.tagNames ?? []), "figure", "figcaption"],
 };
 
 type Props = {
   source: string;
+  locale?: Locale;
 };
 
 /**
@@ -50,7 +51,7 @@ type Props = {
  * Si se necesita Shiki, se puede activar con `rehype-pretty-code` en una
  * iteración posterior.
  */
-export function MarkdownRenderer({ source }: Props) {
+export function MarkdownRenderer({ source, locale = getRequestLocale() }: Props) {
   // Calculamos ids reproducibles del lado servidor.
   const seen = new Map<string, number>();
   const headingId = (children: React.ReactNode): string => {
@@ -68,24 +69,32 @@ export function MarkdownRenderer({ source }: Props) {
       components={{
         h2: ({ children }) => (
           <h2 id={headingId(children)} className="scroll-mt-24">
-            {children}
+            {tx(children)}
           </h2>
         ),
         h3: ({ children }) => (
           <h3 id={headingId(children)} className="scroll-mt-24">
-            {children}
+            {tx(children)}
           </h3>
         ),
-        a: ({ href, children, ...rest }) => {
-          const isExternal = !!href && /^https?:\/\//.test(href) && !href.includes("zonasport");
+        a: ({ href, children, node: _node, ...rest }) => {
+          const target = localizedContentHref(locale, href);
+          const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://zonasportpuebla.com";
+          let isExternal = false;
+          try {
+            if (target && /^https?:\/\//.test(target))
+              isExternal = new URL(target).origin !== new URL(siteUrl).origin;
+          } catch {
+            isExternal = false;
+          }
           return (
             <a
-              href={href}
+              href={target}
               target={isExternal ? "_blank" : undefined}
               rel={isExternal ? "noopener noreferrer nofollow" : undefined}
               {...rest}
             >
-              {children}
+              {tx(children)}
             </a>
           );
         },
@@ -97,32 +106,32 @@ export function MarkdownRenderer({ source }: Props) {
               alt={alt ?? ""}
               loading="lazy"
               decoding="async"
-              className="my-6 rounded-xl border border-zs-border"
+              className="border-zs-border my-6 rounded-xl border"
               {...rest}
             />
           );
         },
         table: ({ children }) => (
           <div className="my-6 overflow-x-auto">
-            <table className="w-full border-collapse text-sm">{children}</table>
+            <table className="w-full border-collapse text-sm">{tx(children)}</table>
           </div>
         ),
         th: ({ children }) => (
-          <th className="border-b-2 border-zs-blue-900 bg-zs-surface px-3 py-2 text-left font-semibold text-zs-blue-900">
-            {children}
+          <th className="border-zs-blue-900 bg-zs-surface text-zs-blue-900 border-b-2 px-3 py-2 text-left font-semibold">
+            {tx(children)}
           </th>
         ),
         td: ({ children }) => (
-          <td className="border-b border-zs-border px-3 py-2 align-top">{children}</td>
+          <td className="border-zs-border border-b px-3 py-2 align-top">{tx(children)}</td>
         ),
         blockquote: ({ children }) => (
-          <blockquote className="my-6 rounded-r-xl border-l-4 border-zs-blue-700 bg-zs-blue-50 px-5 py-3 italic text-zs-blue-900">
-            {children}
+          <blockquote className="border-zs-blue-700 bg-zs-blue-50 text-zs-blue-900 my-6 rounded-r-xl border-l-4 px-5 py-3 italic">
+            {tx(children)}
           </blockquote>
         ),
       }}
     >
-      {source}
+      {tx(source)}
     </ReactMarkdown>
   );
 }

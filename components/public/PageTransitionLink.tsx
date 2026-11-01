@@ -1,6 +1,11 @@
 "use client";
 
-import Link, { type LinkProps } from "next/link";
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import type { LinkProps } from "next/link";
+import { LocalizedLink as Link } from "./LocalizedLink";
+import { localePath } from "@/lib/i18n/routing";
+import { useLocale } from "./LocaleProvider";
 import { useRouter } from "next/navigation";
 import { forwardRef, type AnchorHTMLAttributes, type MouseEvent, type ReactNode } from "react";
 
@@ -16,7 +21,9 @@ type Props = LinkProps &
  */
 export const PageTransitionLink = forwardRef<HTMLAnchorElement, Props>(
   function PageTransitionLink({ children, onClick, href, ...rest }, ref) {
+  const tx = useTranslatedValue();
     const router = useRouter();
+    const locale = useLocale();
 
     function handleClick(e: MouseEvent<HTMLAnchorElement>) {
       onClick?.(e);
@@ -31,14 +38,14 @@ export const PageTransitionLink = forwardRef<HTMLAnchorElement, Props>(
       if (typeof doc.startViewTransition === "function") {
         e.preventDefault();
         doc.startViewTransition(() => {
-          router.push(href);
+          router.push(localePath(locale,href));
         });
       }
     }
 
     return (
       <Link ref={ref} href={href} onClick={handleClick} {...rest}>
-        {children}
+        {tx(children)}
       </Link>
     );
   },

@@ -146,7 +146,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
     description:
       "Lobón es el municipio vecino al sur de Puebla, en plena ribera del Guadiana, y muchos lobonenses bajan a Zona Sport cuando necesitan equiparse para el fútbol sala, el running por los caminos de la dehesa o las rutas BTT hacia el embalse de Montijo. Acompañamos al CD Lobón con material técnico y atendemos a las familias que participan en la Carrera Popular de Lobón y en la procesión-romería de la Virgen de Barbaño. Si haces senderismo por la sierra de San Serván o practicas tiro deportivo en el club local, encontrarás aquí calzado de campo, mochilas y ropa técnica.",
     areaContext:
-      "Desde Lobón llegas a la tienda en menos de 10 minutos por la EX-209 cruzando Puebla. La mayoría de nuestros clientes de Lobón aprovecha la visita para hacer la compra semanal o ir al médico en Puebla. Te atendemos sin agobios y, si lo necesitas, te entregamos en Lobón sin coste para compras superiores a 50 €.",
+      "Si vienes desde Lobón, puedes consultar el trayecto hasta nuestra tienda de Puebla de la Calzada en el enlace de Google Maps. Te atendemos sin agobios y también puedes comprar online: el envío a Lobón es gratuito, sin importe mínimo de compra.",
     highlightCategorySlug: "montana",
     highlightCategoryLabel: "Montaña y outdoor",
     faqs: [
@@ -156,7 +156,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis envíos a Lobón si no puedo desplazarme?",
-        a: "Sí. Para clientes de Lobón confirmamos pedido por WhatsApp y entregamos en tu domicilio gratis a partir de 60 € de compra. Para importes menores, consulta gastos de envío al confirmar la reserva.",
+        a: "Sí. El envío a Lobón es gratuito, sin importe mínimo de compra. Puedes comprar online o consultar tu pedido por WhatsApp.",
       },
       {
         q: "¿Tenéis material para senderismo y BTT por la Sierra de San Serván?",
@@ -197,7 +197,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis envíos a Talavera la Real?",
-        a: "Sí. Confirmando por WhatsApp organizamos la entrega a Talavera. Para compras superiores a 60 € el envío es gratuito; para importes menores, consulta el coste al hacer la reserva.",
+        a: "Sí. Organizamos la entrega a Talavera con envío gratuito, sin importe mínimo de compra. Consulta la disponibilidad del producto al comprar online o por WhatsApp.",
       },
     ],
   },
@@ -234,7 +234,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis envíos a Mérida si no quiero desplazarme?",
-        a: "Sí. Para Mérida organizamos envío a domicilio. Gratuito a partir de 60 € de compra; para importes menores, consulta tarifa al hacer el pedido por WhatsApp.",
+        a: "Sí. Para Mérida ofrecemos envío a domicilio gratuito, sin importe mínimo de compra. Puedes hacer el pedido online o consultar disponibilidad por WhatsApp.",
       },
     ],
   },
@@ -267,7 +267,7 @@ export const LANDINGS: Record<LandingSlug, Landing> = {
       },
       {
         q: "¿Hacéis envíos a Badajoz capital?",
-        a: "Sí. Coordinamos envío a domicilio en Badajoz capital con entrega en 24-48 horas tras confirmar el pedido por WhatsApp. Gratis para compras desde 60 €.",
+        a: "Sí. Consulta por WhatsApp la disponibilidad, el coste y la previsión de entrega a domicilio en Badajoz antes de confirmar el pedido.",
       },
       {
         q: "¿Tenéis zapatillas de running con asesoramiento de pisada?",

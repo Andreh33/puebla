@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
@@ -48,6 +52,8 @@ export function MegaMenu({
   triggerId,
   anchorRef,
 }: MegaMenuProps) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const panelRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const open = activeKey !== null;
@@ -133,14 +139,12 @@ export function MegaMenu({
               />
               <div className="relative p-5 text-white">
                 <p className="text-xs font-semibold uppercase tracking-widest text-white/80">
-                  Sección
-                </p>
+                  {t("Sección")}</p>
                 <p className="mt-1 text-2xl font-extrabold tracking-tight">
-                  {tab.label}
+                  {tx(tab.label)}
                 </p>
                 <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 group-hover:underline">
-                  Ver toda la sección
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  {t("Ver toda la sección")}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </div>
             </Link>
@@ -178,11 +182,12 @@ function SectionGroups({
   showSectionLabel: boolean;
   onItemClick: () => void;
 }) {
+  const tx = useTranslatedValue();
   return (
     <div>
       {showSectionLabel && (
         <h3 className="mb-4 text-[11px] font-extrabold uppercase tracking-[0.2em] text-zs-blue-900">
-          {section.label}
+          {tx(section.label)}
         </h3>
       )}
       <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -208,10 +213,11 @@ function GroupColumn({
   gender: MegaMenuSection["gender"];
   onItemClick: () => void;
 }) {
+  const tx = useTranslatedValue();
   return (
     <div role="group" aria-label={group.title}>
       <h4 className="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-zs-ink">
-        {group.title}
+        {tx(group.title)}
       </h4>
       <ul className="flex flex-col gap-1.5">
         {groupMegaMenuItems(group.items).map((entry) => (
@@ -240,6 +246,7 @@ function DesktopItemLink({
   onItemClick: () => void;
   variant?: boolean;
 }) {
+  const tx = useTranslatedValue();
   return (
     <Link
       role="menuitem"
@@ -251,7 +258,7 @@ function DesktopItemLink({
       )}
     >
       <span className="relative">
-        {item.label}
+        {tx(item.label)}
         <span
           aria-hidden
           className="absolute -bottom-0.5 left-0 h-0.5 w-full origin-left scale-x-0 rounded-full bg-zs-blue-900 transition-transform duration-200 group-hover:scale-x-100 group-focus-visible:scale-x-100"
@@ -354,6 +361,8 @@ export function MegaMenuMobile({
   contentId,
   onLinkClick,
 }: MegaMenuMobileProps) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const tab = MEGA_MENU[tabKey];
 
   return (
@@ -372,7 +381,7 @@ export function MegaMenuMobile({
               onClick={onLinkClick}
               className="inline-flex items-center gap-1 text-sm font-semibold text-zs-blue-900 underline-offset-4 hover:underline"
             >
-              Ver toda la sección {tab.label}
+              {t("Ver toda la sección")}{" "}{tx(tab.label)}
               <ArrowRight className="h-4 w-4" />
             </Link>
 
@@ -380,14 +389,14 @@ export function MegaMenuMobile({
               <div key={section.gender}>
                 {tab.sections.length > 1 && (
                   <p className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-zs-blue-900">
-                    {section.label}
+                    {tx(section.label)}
                   </p>
                 )}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {section.groups.map((group) => (
                     <div key={`${section.gender}-${group.title}`}>
                       <p className="mb-1.5 text-[11px] font-extrabold uppercase tracking-[0.18em] text-zs-muted">
-                        {group.title}
+                        {tx(group.title)}
                       </p>
                       <ul className="flex flex-col">
                         {groupMegaMenuItems(group.items).map((entry) => (
@@ -426,6 +435,7 @@ function MobileGarmentEntry({
   gender: MegaMenuSection["gender"];
   onLinkClick: () => void;
 }) {
+  const tx = useTranslatedValue();
   const { base, variants } = entry;
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -438,7 +448,7 @@ function MobileGarmentEntry({
           onClick={onLinkClick}
           className="block py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
         >
-          {base.label}
+          {tx(base.label)}
         </Link>
       </li>
     );
@@ -452,7 +462,7 @@ function MobileGarmentEntry({
           onClick={onLinkClick}
           className="block flex-1 py-1.5 text-[15px] text-zs-ink hover:text-zs-blue-700"
         >
-          {base.label}
+          {tx(base.label)}
         </Link>
         <button
           type="button"
@@ -483,7 +493,7 @@ function MobileGarmentEntry({
                   onClick={onLinkClick}
                   className="block py-1.5 pl-4 text-[13px] text-zs-muted hover:text-zs-blue-700"
                 >
-                  {v.label}
+                  {tx(v.label)}
                 </Link>
               </li>
             ))}

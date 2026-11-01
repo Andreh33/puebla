@@ -1,6 +1,10 @@
 "use client";
 
-import Link from "next/link";
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { Shirt, Footprints, ArrowRight } from "lucide-react";
 import { useRef, type CSSProperties, type MouseEvent } from "react";
@@ -82,6 +86,9 @@ function HubCard({
   seccion: Seccion;
   delayMs: number;
 }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
+  const tf = useTranslatedTemplate();
   const ref = useRef<HTMLAnchorElement>(null);
   const { Icon } = card;
 
@@ -109,7 +116,7 @@ function HubCard({
       <Link
         ref={ref}
         href={`/${seccion}/${card.familia}`}
-        aria-label={`Ver ${card.title.toLowerCase()} de ${seccion}`}
+        aria-label={tf("Ver {0}", [tx(card.title)])}
         onMouseMove={handleMove}
         onMouseLeave={handleLeave}
         style={{ "--glow": card.glow } as CSSProperties}
@@ -142,15 +149,15 @@ function HubCard({
 
           <div className="relative">
             <h3 className="font-display text-4xl font-black tracking-tight text-white drop-shadow sm:text-5xl">
-              {card.title}
+              {tx(card.title)}
             </h3>
             <p className="mt-2 max-w-[22ch] text-sm text-white/85 sm:text-base">
-              {card.subtitle}
+              {tx(card.subtitle)}
             </p>
             <span
               className={`mt-5 inline-flex items-center gap-1.5 text-sm font-semibold ${card.ctaClass}`}
             >
-              Ver {card.title.toLowerCase()}
+              {tf("Ver {0}", [tx(card.title)])}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </span>
           </div>

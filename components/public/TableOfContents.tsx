@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useEffect, useState } from "react";
 import { ChevronDown, List } from "lucide-react";
 import type { Heading } from "@/lib/blog/reading-time";
@@ -12,6 +16,8 @@ type Props = {
 };
 
 export function TableOfContents({ headings, mobileCollapsible = false }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const [active, setActive] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -56,7 +62,7 @@ export function TableOfContents({ headings, mobileCollapsible = false }: Props) 
                 : "border-transparent text-zs-muted hover:text-zs-blue-700",
             )}
           >
-            {h.text}
+            {tx(h.text)}
           </a>
         </li>
       ))}
@@ -77,11 +83,11 @@ export function TableOfContents({ headings, mobileCollapsible = false }: Props) 
             <span className="flex items-center gap-2">
               <List className="h-4 w-4 text-zs-blue-700" aria-hidden />
               <span className="font-semibold text-zs-blue-900">
-                {open ? "Índice del artículo" : "En esta página"}
+                {tx(open ? "Índice del artículo" : "En esta página")}
               </span>
               {!open && activeText && (
                 <span className="ml-1 truncate text-xs text-zs-muted">
-                  · {activeText}
+                  · {tx(activeText)}
                 </span>
               )}
             </span>
@@ -100,29 +106,27 @@ export function TableOfContents({ headings, mobileCollapsible = false }: Props) 
             )}
           >
             <div className="overflow-hidden">
-              <nav aria-label="Índice del artículo" className="text-sm">
-                {list}
+              <nav aria-label={t("Índice del artículo")} className="text-sm">
+                {tx(list)}
               </nav>
             </div>
           </div>
         </div>
         {/* Desktop: sin colapsable */}
-        <nav aria-label="Índice del artículo" className="hidden text-sm lg:block">
+        <nav aria-label={t("Índice del artículo")} className="hidden text-sm lg:block">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zs-muted">
-            En esta página
-          </p>
-          {list}
+            {t("En esta página")}</p>
+          {tx(list)}
         </nav>
       </>
     );
   }
 
   return (
-    <nav aria-label="Índice del artículo" className="text-sm">
+    <nav aria-label={t("Índice del artículo")} className="text-sm">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zs-muted">
-        En esta página
-      </p>
-      {list}
+        {t("En esta página")}</p>
+      {tx(list)}
     </nav>
   );
 }

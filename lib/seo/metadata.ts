@@ -1,4 +1,10 @@
+import { isLocalePublished } from "@/lib/i18n/readiness";
 import type { Metadata } from "next";
+import { LOCALES, LOCALE_INFO, type Locale } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/routing";
+import { isLocaleRouteAvailable } from "@/lib/i18n/publication-policy";
+import { getRequestLocale } from "@/lib/i18n/request";
+import { getDictionary, hasCompleteUi } from "@/lib/i18n/dictionaries";
 
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Zona Sport";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -7,7 +13,9 @@ const SITE_DESCRIPTION_DEFAULT =
 
 const SITE_BASE = `${SITE_NAME} — Puebla de la Calzada`;
 
-type BuildArgs = {
+export type BuildArgs = {
+  locale?: Locale;
+  availableLocales?: readonly Locale[];
   title: string;
   description?: string;
   path?: string;
@@ -21,6 +29,8 @@ type BuildArgs = {
 
 export function buildMetadata({
   title,
+  locale = getRequestLocale(),
+  availableLocales = LOCALES,
   description = SITE_DESCRIPTION_DEFAULT,
   path = "/",
   ogImage,
@@ -30,23 +40,44 @@ export function buildMetadata({
   modifiedTime,
   tags,
 }: BuildArgs): Metadata {
-  const url = `${SITE_URL.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
-  const fullTitle =
-    title.toLowerCase().includes(SITE_NAME.toLowerCase()) ? title : `${title} | ${SITE_BASE}`;
+  if (!isLocaleRouteAvailable(locale, path)) locale = "es";
+  const baseUrl = SITE_URL.replace(/\/$/, "");
+  const url = `${baseUrl}${localePath(locale, path.startsWith("/") ? path : `/${path}`)}`;
+  const publishedLocales = availableLocales.filter(
+    (item) => isLocalePublished(item) && isLocaleRouteAvailable(item, path),
+  );
+  const languages = Object.fromEntries(
+    publishedLocales.map((item) => [
+      LOCALE_INFO[item].language,
+      `${baseUrl}${localePath(item, path)}`,
+    ]),
+  );
+  if (publishedLocales.includes("es"))
+    languages["x-default"] = `${baseUrl}${localePath("es", path)}`;
+  noIndex ||= !isLocalePublished(locale);
+  const dictionary = getDictionary(locale);
+  title = dictionary[title] ?? title;
+  description = dictionary[description] ?? description;
+  const fullTitle = title.toLowerCase().includes(SITE_NAME.toLowerCase())
+    ? title
+    : `${title} | ${SITE_BASE}`;
   const imageUrl = ogImage || `${SITE_URL}/og-default.png`;
 
   return {
     title: fullTitle,
     description,
     metadataBase: new URL(SITE_URL),
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(Object.keys(languages).length ? { languages } : {}) },
     openGraph: {
       title: fullTitle,
       description,
       url,
       siteName: SITE_BASE,
       images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
-      locale: "es_ES",
+      locale: LOCALE_INFO[locale].og,
+      alternateLocale: publishedLocales
+        .filter((item) => item !== locale)
+        .map((item) => LOCALE_INFO[item].og),
       type: ogType === "product" ? "website" : ogType,
       ...(publishedTime ? { publishedTime } : {}),
       ...(modifiedTime ? { modifiedTime } : {}),

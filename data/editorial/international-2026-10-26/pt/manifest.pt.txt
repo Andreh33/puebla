@@ -1,0 +1,45 @@
+PT ORIGINAL EDITORIAL: 10/10 COMPLETE
+8 new authored; existing Lisboa and Porto unchanged.
+Prose count excludes headings, URLs and numeric tokens.
+3536 | comprar-equipamento-desportivo-braga-rodovia-familia
+3525 | comprar-equipamento-desportivo-online-lisboa
+3527 | equipamento-desportivo-faro-futsal-pavilhao-estudantes
+3436 | equipamento-desportivo-porto-aulas-piscinas-caminhadas
+3460 | equipamento-natacao-coimbra-estudo-trabalho-piscina
+3453 | luvas-ginasio-tamanho-palma-fecho-guia-compra
+3456 | luvas-guarda-redes-tamanho-corte-palma-compra
+3428 | meias-desportivas-tamanho-comprimento-corrida-ginasio-futebol
+3437 | oculos-natacao-ajuste-lentes-ponte-cuidados
+3549 | tamanho-bola-futebol-futsal-criancas-treino
+TOTAL: 34807
+Exact substantive duplicate paragraphs: 0
+Schema/count errors: 0
+
+Source canonical internal URL checks (max 2 concurrent):
+200 | /catalogo
+200 | /condiciones-de-venta
+200 | /contacto
+200 | /hombre/calzado?tipo=futbol_sala
+200 | /hombre/calzado?tipo=running
+200 | /hombre/calzado?tipo=trail
+200 | /hombre/textil
+200 | /mujer/calzado?tipo=running
+200 | /mujer/textil
+200 | /nina/textil
+200 | /nino/textil
+200 | /producto/balon-puma-big-cat-azul
+200 | /producto/banador-john-smith-jauto-jr-marino
+200 | /producto/calcetin-invisible-blanco-joma-unisex-400028p02-confort-transpirable-running-unico
+200 | /producto/calcetin-joma-invisible-400028
+200 | /producto/cortavientos-joluvi-airlight-236334-verde
+200 | /producto/gafas-natacion-mosconi-barracuda-negra
+200 | /producto/gafas-natacion-mosconi-easy-jr-azul
+200 | /producto/guantes-gimnasio-softee
+200 | /producto/guantes-portero-joma-brave-royal-401709700
+200 | /producto/guantes-portero-joma-hunter-verde-fluor-negro-401477021
+200 | /producto/mochila-adidas-classic-hm8314-negro
+200 | /producto/pantalon-joma-cannes-ii-marino-101112331
+200 | /producto/sudadera-john-smith-calumba-marino
+200 | /producto/zapatilla-joma-victory-7-rvictw2612-gris-claro-running-hombre-amortiguacion-azul-cobalto
+
+Only pre-existing Lisboa/Porto articles contain /pt prefixes; their raw locale URLs were 404 before locale deployment. Their source paths normalized by removing /pt are verified below. Eight new articles use renderer-localized source paths directly. Existing articles left untouched by ownership instruction.

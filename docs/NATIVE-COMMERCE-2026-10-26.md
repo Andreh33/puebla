@@ -1,0 +1,15 @@
+# Native store pages with frozen Spanish products
+
+The user's latest clarification is authoritative: public store pages should stay in the selected language even though product fichas are paused. This supersedes the earlier editorial-only policy and the earlier compact-logo dimensions recorded in the previous release documents.
+
+`PRODUCT_TRANSLATIONS_ENABLED` remains false. Only `/producto` routes and their product share images are Spanish-only. Catalog, gender/category/family, brands and outlet routes now retain `/pt`, `/it`, `/fr` or `/de`, including internal links, language switching, metadata, hreflang and sitemap entries. Product names, descriptions, colors, image alts, IDs, prices and stock are unchanged; partial authoring files remain inactive and the frozen source overlay retains SHA256 `cece203fe185a2a6768eb0de9fcda8a1a3b8eaf0048f5840f72b6dd1e5456b4e`.
+
+The commerce review fixed full gender headlines before word animation, breadcrumb leaves/schema names, category and family labels inside templates, outlet calls to action, subcategory labels and empty states. All four dictionaries cover the current exported category/brand text fields; the corpus has 2,292 keys with 919 client keys and no missing keys/placeholders. Outlet-family structured data points to its native page and website identity.
+
+The user also requested a much larger logo. It now renders 80 px high on ordinary mobile widths and 96 px on desktop, compared with 40/44 px before this request; the narrowest screens use 64 px. The bar and safe-area/content offsets were enlarged accordingly. Narrow screens retain search through the mobile menu, with its extra search instance opting out of global keyboard shortcuts to avoid opening two dialogs.
+
+Validation: 659 tests in 105 files passed, TypeScript passed, and the isolated production build completed. Both stage and public deployment passed 119 route/content checks. Real browser checks covered French category/catalog navigation, translated filters with frozen Spanish product labels, German desktop navigation at 1280 px, logo dimensions, no horizontal overflow at 320/393 px, and narrow-menu search. Six product samples still match pre-release text/image hashes exactly. All 560 newly exposed URLs passed HEAD with HTTP 200, no redirects and no noindex response headers.
+
+The main sitemap now has 820 entries; product/article sitemaps remain 1,521/320. The union is 2,611 canonical URLs because fifty articles also occur in the main sitemap. The 560 new URLs were accepted by IndexNow with HTTP 200; the main sitemap was resubmitted to Google and Bing. Submission and sitemap processing do not establish indexing or rankings.
+
+Published application commit `ba2544c`, isolated snapshot `stage-20261026T204230Z`, deployment `dpl_9g7Hd6NgzBonrkZBueHzzVbHAp2L`. The zonasportpuebla.com alias was verified. Rollback: `dpl_EJC6TxKHgABgMAa9qnUqcEdq1KD9`. The temporary stage share link was revoked. No database migration/write or real payment occurred. The old external `.es` path-losing redirect remains dependent on access to its hosting.

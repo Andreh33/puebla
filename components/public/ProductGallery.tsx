@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
@@ -21,6 +25,8 @@ type Props = {
 };
 
 export function ProductGallery({ images, productName }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const safeImages = useMemo(
     () => (images.length > 0 ? images : []),
     [images],
@@ -65,7 +71,7 @@ export function ProductGallery({ images, productName }: Props) {
       <div className="flex aspect-square w-full items-center justify-center rounded-2xl border border-zs-border bg-zs-surface text-zs-muted">
         <div className="flex flex-col items-center gap-2">
           <ImageOff className="h-12 w-12" aria-hidden />
-          <span className="text-sm">Imagen no disponible</span>
+          <span className="text-sm">{t("Imagen no disponible")}</span>
         </div>
       </div>
     );
@@ -98,7 +104,7 @@ export function ProductGallery({ images, productName }: Props) {
             <button
               type="button"
               onClick={prev}
-              aria-label="Imagen anterior"
+              aria-label={t("Imagen anterior")}
               className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full border border-zs-border bg-white/90 p-2 text-zs-ink shadow-sm opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -106,13 +112,13 @@ export function ProductGallery({ images, productName }: Props) {
             <button
               type="button"
               onClick={next}
-              aria-label="Imagen siguiente"
+              aria-label={t("Imagen siguiente")}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-zs-border bg-white/90 p-2 text-zs-ink shadow-sm opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-medium text-white">
-              {active + 1} / {safeImages.length}
+              {active + 1} / {tx(safeImages.length)}
             </div>
           </>
         )}

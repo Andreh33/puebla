@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useEffect, useState, type ReactNode } from "react";
 import { MessageCircle, ExternalLink } from "lucide-react";
 import { SizeSelector, type SizeOption } from "./SizeSelector";
@@ -34,6 +38,8 @@ export function ProductActions({
   product,
   descriptionSlot,
 }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   // Bloque 1: trabajamos sólo con tallas que tienen stock real (> 0). Las
   // tallas agotadas no se muestran ni cuentan para la CTA — el stock es la
   // fuente de verdad exportada del WP antiguo.
@@ -87,12 +93,11 @@ export function ProductActions({
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">Temporalmente sin stock</p>
+          <p className="text-sm font-semibold text-amber-900">{t("Temporalmente sin stock")}</p>
           <p className="mt-1 text-sm text-amber-800">
-            Consulta disponibilidad por WhatsApp y te avisamos en cuanto vuelva.
-          </p>
+            {t("Consulta disponibilidad por WhatsApp y te avisamos en cuanto vuelva.")}</p>
         </div>
-        {descriptionSlot}
+        {tx(descriptionSlot)}
         <a
           href={whatsappUrl(
             WhatsAppMessages.product(productName, undefined, {
@@ -105,8 +110,7 @@ export function ProductActions({
           rel="noopener noreferrer"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#25D366] bg-white px-6 text-base font-semibold text-[#107a3e] shadow-sm transition hover:bg-[#e8fbf0]"
         >
-          <MessageCircle className="h-5 w-5 text-emerald-600" /> Consultar disponibilidad
-        </a>
+          <MessageCircle className="h-5 w-5 text-emerald-600" /> {t("Consultar disponibilidad")}</a>
       </div>
     );
   }
@@ -116,7 +120,7 @@ export function ProductActions({
       <div className="space-y-5">
         {inStock.length > 0 && (
           <div>
-            <p className="mb-2 text-sm font-semibold text-zs-ink">Tallas disponibles</p>
+            <p className="mb-2 text-sm font-semibold text-zs-ink">{t("Tallas disponibles")}</p>
             <SizeSelector
               sizes={inStock}
               defaultSize={presetSize ?? undefined}
@@ -124,23 +128,21 @@ export function ProductActions({
             />
           </div>
         )}
-        {descriptionSlot}
+        {tx(descriptionSlot)}
         <a
           href={externalUrl}
           target="_blank"
           rel="nofollow sponsored noopener noreferrer"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-6 text-base font-semibold text-zs-blue-950 shadow-sm transition hover:bg-amber-400"
         >
-          <ExternalLink className="h-5 w-5" /> Comprar en Amazon
-        </a>
+          <ExternalLink className="h-5 w-5" /> {t("Comprar en Amazon")}</a>
         <a
           href={reservationHref}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-zs-border bg-white px-6 text-sm font-semibold text-zs-ink hover:bg-zs-surface"
         >
-          <MessageCircle className="h-5 w-5 text-emerald-600" /> O consúltanos por WhatsApp
-        </a>
+          <MessageCircle className="h-5 w-5 text-emerald-600" /> {t("O consúltanos por WhatsApp")}</a>
       </div>
     );
   }
@@ -149,7 +151,7 @@ export function ProductActions({
     <div className="space-y-5">
       {inStock.length > 0 && (
         <div>
-          <p className="mb-2 text-sm font-semibold text-zs-ink">Tallas disponibles</p>
+          <p className="mb-2 text-sm font-semibold text-zs-ink">{t("Tallas disponibles")}</p>
           <SizeSelector
             sizes={inStock}
             defaultSize={presetSize ?? undefined}
@@ -158,10 +160,10 @@ export function ProductActions({
         </div>
       )}
 
-      {descriptionSlot}
+      {tx(descriptionSlot)}
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        {product ? (
+        {tx(product ? (
           <AddToCartButton
             product={product}
             selectedSize={effectiveSize}
@@ -169,7 +171,7 @@ export function ProductActions({
             maxStock={selectedSizeStock}
             className="flex-1"
           />
-        ) : null}
+        ) : null)}
         <a
           href={reservationHref}
           target="_blank"
@@ -197,16 +199,13 @@ export function ProductActions({
               : "cursor-not-allowed border-zs-border bg-white text-zs-muted")
           }
         >
-          <MessageCircle className="h-5 w-5 text-emerald-600" /> Reservar directo por WhatsApp
-        </a>
+          <MessageCircle className="h-5 w-5 text-emerald-600" /> {t("Reservar directo por WhatsApp")}</a>
       </div>
       {requiresSize && !selected && (
-        <p className="text-xs text-zs-muted">Selecciona una talla para continuar.</p>
+        <p className="text-xs text-zs-muted">{t("Selecciona una talla para continuar.")}</p>
       )}
       <p className="text-[11px] leading-snug text-zs-muted">
-        Paga online de forma segura con tarjeta, Bizum o a plazos con Klarna; o
-        resérvalo por WhatsApp para recogerlo en tienda.
-      </p>
+        {t("Paga online de forma segura con tarjeta, Bizum o a plazos con Klarna; o resérvalo por WhatsApp para recogerlo en tienda.")}</p>
     </div>
   );
 }

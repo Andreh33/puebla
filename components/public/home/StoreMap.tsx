@@ -1,4 +1,9 @@
-import Link from "next/link";
+import {
+  t as _translateUi,
+  translateValue as _translateValue,
+  translateTemplate as _translateTemplate,
+} from "@/lib/i18n/dictionaries";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import { MapPin, Phone, Mail, Clock, MessageCircle, ArrowUpRight, Star } from "lucide-react";
 import { OpenNowBadge } from "@/components/public/OpenNowBadge";
 import { STORE_NAP } from "@/lib/seo/schema-org";
@@ -28,22 +33,22 @@ export function StoreMap() {
 
   return (
     <section
-      aria-label="Cómo encontrarnos"
+      aria-label={_translateUi("Cómo encontrarnos")}
       className="relative bg-white py-20 sm:py-28"
     >
       <header className="mx-auto mb-12 flex max-w-[1600px] flex-col gap-4 px-4 sm:mb-16 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
         <Reveal variant="fade-up" className="max-w-2xl">
-          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-zs-muted">
-            <span className="inline-block h-px w-8 bg-zs-blue-900/30" />
-            Cómo encontrarnos
+          <p className="text-zs-muted inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.32em] uppercase">
+            <span className="bg-zs-blue-900/30 inline-block h-px w-8" />
+            {_translateUi("Cómo encontrarnos")}
           </p>
           <h2
-            className="mt-4 font-display font-bold leading-[0.95] tracking-[-0.035em] text-zs-blue-950"
+            className="font-display text-zs-blue-950 mt-4 leading-[0.95] font-bold tracking-[-0.035em]"
             style={{ fontSize: "clamp(1.85rem, 4.5vw, 3.5rem)" }}
           >
-            Ven a la tienda.
+            {_translateUi("Ven a la tienda.")}
             <br />
-            <span className="text-zs-muted/70">Te esperamos sin prisa.</span>
+            <span className="text-zs-muted/70">{_translateUi("Te esperamos sin prisa.")}</span>
           </h2>
         </Reveal>
         <Reveal variant="fade-up" delay={120}>
@@ -52,11 +57,11 @@ export function StoreMap() {
       </header>
 
       <div className="mx-auto max-w-[1600px] px-4 sm:px-8">
-        <div className="grid grid-cols-1 gap-6 overflow-hidden rounded-3xl border border-zs-blue-950/10 bg-zs-surface lg:grid-cols-5">
+        <div className="border-zs-blue-950/10 bg-zs-surface grid grid-cols-1 gap-6 overflow-hidden rounded-3xl border lg:grid-cols-5">
           {/* Mapa — 60% desktop */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-zs-blue-950 lg:col-span-3 lg:aspect-auto lg:min-h-[480px]">
+          <div className="bg-zs-blue-950 relative aspect-[4/3] w-full overflow-hidden lg:col-span-3 lg:aspect-auto lg:min-h-[480px]">
             <iframe
-              title="Mapa de Zona Sport en Puebla de la Calzada"
+              title={_translateUi("Mapa de Zona Sport en Puebla de la Calzada")}
               src={embedSrc}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -68,50 +73,54 @@ export function StoreMap() {
           {/* Info — 40% desktop */}
           <div className="flex flex-col gap-7 p-6 sm:p-10 lg:col-span-2 lg:p-12">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zs-red-600">
-                Zona Sport
+              <p className="text-zs-red-600 text-[11px] font-semibold tracking-[0.28em] uppercase">
+                {_translateUi("Zona Sport")}
               </p>
-              <p className="mt-2 font-display text-2xl font-bold leading-tight text-zs-blue-950 sm:text-3xl">
-                {STORE_NAP.streetAddress}
+              <p className="font-display text-zs-blue-950 mt-2 text-2xl leading-tight font-bold sm:text-3xl">
+                {_translateValue(STORE_NAP.streetAddress)}
                 <br />
-                {STORE_NAP.postalCode} {STORE_NAP.addressLocality}
+                {_translateValue(STORE_NAP.postalCode)} {_translateValue(STORE_NAP.addressLocality)}
                 <br />
-                <span className="text-zs-muted">Badajoz · {STORE_NAP.addressCountry}</span>
+                <span className="text-zs-muted">
+                  {_translateUi("Badajoz ·")} {_translateValue(STORE_NAP.addressCountry)}
+                </span>
               </p>
             </div>
 
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3 text-zs-blue-950">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zs-red-600" />
+              <li className="text-zs-blue-950 flex items-start gap-3">
+                <Clock className="text-zs-red-600 mt-0.5 h-4 w-4 shrink-0" />
                 <div>
-                  <p className="font-semibold">Horario</p>
-                  <p className="text-zs-muted">Lunes a viernes: 10:00 – 14:00 y 17:30 – 20:30</p>
-                  <p className="text-zs-muted">Sábado: 10:00 – 14:00</p>
-                  <p className="text-zs-muted">Domingo: cerrado</p>
+                  <p className="font-semibold">{_translateUi("Horario")}</p>
+                  <p className="text-zs-muted">
+                    {_translateUi("Lunes a viernes: 10:00 – 14:00 y 17:30 – 20:30")}
+                  </p>
+                  <p className="text-zs-muted">{_translateUi("Sábado: 10:00 – 14:00")}</p>
+                  <p className="text-zs-muted">{_translateUi("Domingo: cerrado")}</p>
                 </div>
               </li>
-              <li className="flex items-center gap-3 text-zs-blue-950">
-                <Phone className="h-4 w-4 shrink-0 text-zs-red-600" />
+              <li className="text-zs-blue-950 flex items-center gap-3">
+                <Phone className="text-zs-red-600 h-4 w-4 shrink-0" />
                 <a
                   href={`tel:${STORE_NAP.telephone}`}
-                  className="font-semibold hover:text-zs-red-600"
+                  className="hover:text-zs-red-600 font-semibold"
                 >
-                  +34 689 11 06 91
+                  {_translateUi("+34 689 11 06 91")}
                 </a>
               </li>
-              <li className="flex items-center gap-3 text-zs-blue-950">
-                <Mail className="h-4 w-4 shrink-0 text-zs-red-600" />
+              <li className="text-zs-blue-950 flex items-center gap-3">
+                <Mail className="text-zs-red-600 h-4 w-4 shrink-0" />
                 <a
                   href={`mailto:${STORE_NAP.email}`}
-                  className="font-semibold hover:text-zs-red-600"
+                  className="hover:text-zs-red-600 font-semibold"
                 >
-                  {STORE_NAP.email}
+                  {_translateValue(STORE_NAP.email)}
                 </a>
               </li>
-              <li className="flex items-start gap-3 text-zs-blue-950">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zs-red-600" />
+              <li className="text-zs-blue-950 flex items-start gap-3">
+                <MapPin className="text-zs-red-600 mt-0.5 h-4 w-4 shrink-0" />
                 <span className="text-zs-muted">
-                  A 5 min de Montijo, 15 min de Mérida, 30 min de Badajoz.
+                  {_translateUi("A 5 min de Montijo, 15 min de Mérida, 30 min de Badajoz.")}
                 </span>
               </li>
             </ul>
@@ -122,10 +131,10 @@ export function StoreMap() {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cursor="Cómo llegar"
-                className="group inline-flex h-12 items-center gap-2 rounded-full bg-zs-blue-950 px-6 text-sm font-bold uppercase tracking-[0.12em] text-white transition-all hover:bg-zs-blue-900"
+                className="group bg-zs-blue-950 hover:bg-zs-blue-900 inline-flex h-12 items-center gap-2 rounded-full px-6 text-sm font-bold tracking-[0.12em] text-white uppercase transition-all"
                 style={{ boxShadow: "var(--shadow-zs-blue-glow)" }}
               >
-                Cómo llegar
+                {_translateUi("Cómo llegar")}
                 <ArrowUpRight
                   className="h-4 w-4 transition-transform group-hover:rotate-45"
                   strokeWidth={2.5}
@@ -136,25 +145,28 @@ export function StoreMap() {
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cursor="WhatsApp"
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-zs-blue-950/15 bg-white px-6 text-sm font-semibold text-zs-blue-950 transition-colors hover:border-zs-blue-950 hover:text-zs-blue-950"
+                className="border-zs-blue-950/15 text-zs-blue-950 hover:border-zs-blue-950 hover:text-zs-blue-950 inline-flex h-12 items-center gap-2 rounded-full border bg-white px-6 text-sm font-semibold transition-colors"
               >
                 <MessageCircle className="h-4 w-4 text-[#25D366]" />
-                WhatsApp
+                {_translateUi("WhatsApp")}
               </a>
               <a
                 href="https://maps.app.goo.gl/ZNHviai5Zxd3rmJB8"
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cursor="Reseñas"
-                className="inline-flex h-12 items-center gap-2 rounded-full border border-zs-blue-950/15 bg-white px-6 text-sm font-semibold text-zs-blue-950 transition-colors hover:border-zs-blue-950"
+                className="border-zs-blue-950/15 text-zs-blue-950 hover:border-zs-blue-950 inline-flex h-12 items-center gap-2 rounded-full border bg-white px-6 text-sm font-semibold transition-colors"
               >
-                <Star className="h-4 w-4 fill-zs-yellow-400 text-zs-yellow-400" />
-                Reseñas en Google
+                <Star className="fill-zs-yellow-400 text-zs-yellow-400 h-4 w-4" />
+                {_translateUi("Reseñas en Google")}
               </a>
             </div>
 
-            <p className="text-[10px] uppercase tracking-[0.22em] text-zs-muted/80">
-              También puedes <Link href="/contacto" className="underline-offset-4 hover:underline">escribirnos</Link>
+            <p className="text-zs-muted/80 text-[10px] tracking-[0.22em] uppercase">
+              {_translateUi("También puedes")}{" "}
+              <Link href="/contacto" className="underline-offset-4 hover:underline">
+                {_translateUi("escribirnos")}
+              </Link>
             </p>
           </div>
         </div>

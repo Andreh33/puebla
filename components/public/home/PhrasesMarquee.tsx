@@ -1,3 +1,8 @@
+import {
+  t as _translateUi,
+  translateValue as _translateValue,
+  translateTemplate as _translateTemplate,
+} from "@/lib/i18n/dictionaries";
 /**
  * PhrasesMarquee — marquesina infinita horizontal con frases alternadas con
  * bullets en lugar de logos. Reemplaza la antigua tira de logos del home.
@@ -18,7 +23,7 @@ type Props = {
 };
 
 const DEFAULT_PHRASES = [
-  "Desde Puebla de la Calzada hasta cualquier parte del mundo",
+  "Desde Puebla de la Calzada a España, Portugal, Francia, Italia y Alemania",
   "Años de calidad y trato cercano",
   "John Smith · +8000 · Joma · Puma · Babolat · Joluvi · Ditchil · Jhayber",
   "Atendemos por WhatsApp · Recogida en tienda",
@@ -26,38 +31,35 @@ const DEFAULT_PHRASES = [
   "Asesoramiento real, no postureo",
 ];
 
-export function PhrasesMarquee({
-  phrases = DEFAULT_PHRASES,
-  durationSeconds = 60,
-}: Props) {
+export function PhrasesMarquee({ phrases = DEFAULT_PHRASES, durationSeconds = 60 }: Props) {
   // Duplicamos el contenido dos veces para que el bucle al -50% sea continuo.
   const loop = [...phrases, ...phrases];
 
   return (
     <section
-      aria-label="Eslóganes de Zona Sport"
-      className="relative overflow-hidden border-y border-zs-blue-950/10 bg-zs-blue-950 py-6 text-white sm:py-7"
+      aria-label={_translateUi("Eslóganes de Zona Sport")}
+      className="border-zs-blue-950/10 bg-zs-blue-950 relative overflow-hidden border-y py-6 text-white sm:py-7"
     >
       {/* Halo de color en los bordes para sensación premium */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-zs-blue-950 to-transparent z-10"
+        className="from-zs-blue-950 pointer-events-none absolute inset-y-0 left-0 z-10 w-32 bg-gradient-to-r to-transparent"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-zs-blue-950 to-transparent z-10"
+        className="from-zs-blue-950 pointer-events-none absolute inset-y-0 right-0 z-10 w-32 bg-gradient-to-l to-transparent"
       />
 
       <div className="zs-phrases-track flex w-max items-center gap-10 whitespace-nowrap">
         {loop.map((phrase, i) => (
           <span
             key={`${i}-${phrase}`}
-            className="inline-flex items-center gap-10 font-display text-2xl font-semibold tracking-[-0.015em] sm:text-[1.85rem]"
+            className="font-display inline-flex items-center gap-10 text-2xl font-semibold tracking-[-0.015em] sm:text-[1.85rem]"
           >
-            <span>{phrase}</span>
+            <span>{_translateValue(phrase)}</span>
             <span
               aria-hidden
-              className="inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-zs-red-500"
+              className="bg-zs-red-500 inline-flex h-3 w-3 shrink-0 items-center justify-center rounded-full"
             />
           </span>
         ))}

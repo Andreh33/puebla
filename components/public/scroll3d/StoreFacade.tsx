@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useRef } from "react";
 import { Text } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -18,6 +20,7 @@ type Props = {
 };
 
 export function StoreFacade({ scrollProgress, range = [0.65, 0.95] }: Props) {
+  const t = useTranslations();
   const group = useRef<THREE.Group>(null);
 
   useFrame(() => {
@@ -85,8 +88,7 @@ export function StoreFacade({ scrollProgress, range = [0.65, 0.95] }: Props) {
         outlineWidth={0.005}
         outlineColor="#ffffff"
       >
-        ZONA
-      </Text>
+        {t("ZONA")}</Text>
       <Text
         position={[1.4, 2.45, 0.35]}
         fontSize={0.42}
@@ -96,8 +98,7 @@ export function StoreFacade({ scrollProgress, range = [0.65, 0.95] }: Props) {
         outlineWidth={0.005}
         outlineColor="#ffffff"
       >
-        SPORT
-      </Text>
+        {t("SPORT")}</Text>
 
       {/* Mini balón fútbol decorativo en cristalera */}
       <mesh position={[-1.6, 0.3, 0.25]}>

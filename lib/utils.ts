@@ -1,3 +1,4 @@
+import { LOCALE_INFO, type Locale } from "@/lib/i18n/config";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -5,11 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPriceEUR(value: number | string | null | undefined): string {
+export function formatPriceEUR(value: number | string | null | undefined, locale:Locale = "es"): string {
   if (value == null || value === "") return "—";
   const n = typeof value === "string" ? Number(value) : value;
   if (Number.isNaN(n)) return "—";
-  return new Intl.NumberFormat("es-ES", {
+  return new Intl.NumberFormat(LOCALE_INFO[locale].language, {
     style: "currency",
     currency: "EUR",
     minimumFractionDigits: 2,
@@ -17,10 +18,10 @@ export function formatPriceEUR(value: number | string | null | undefined): strin
   }).format(n);
 }
 
-export function formatDateES(date: Date | string | null | undefined): string {
+export function formatDateES(date: Date | string | null | undefined, locale:Locale = "es"): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat(LOCALE_INFO[locale].language, {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -28,10 +29,10 @@ export function formatDateES(date: Date | string | null | undefined): string {
   }).format(d);
 }
 
-export function formatDateTimeES(date: Date | string | null | undefined): string {
+export function formatDateTimeES(date: Date | string | null | undefined, locale:Locale = "es"): string {
   if (!date) return "—";
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("es-ES", {
+  return new Intl.DateTimeFormat(LOCALE_INFO[locale].language, {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

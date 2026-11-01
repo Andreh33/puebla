@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
@@ -25,6 +29,8 @@ interface SafariNavigator extends Navigator {
 }
 
 export function PwaInstallPrompt() {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [platform, setPlatform] = useState<Platform>("other");
@@ -184,7 +190,7 @@ export function PwaInstallPrompt() {
       <div
         role="dialog"
         aria-live="polite"
-        aria-label="Instalar aplicación Zona Sport"
+        aria-label={t("Instalar aplicación Zona Sport")}
         className="fixed inset-x-3 bottom-3 z-40 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:max-w-sm md:max-w-md md:bottom-8"
         style={{
           animation: "zs-pwa-slide-up 350ms cubic-bezier(0.16, 1, 0.3, 1)",
@@ -203,7 +209,7 @@ export function PwaInstallPrompt() {
           <button
             ref={closeBtnRef}
             type="button"
-            aria-label="Cerrar"
+            aria-label={t("Cerrar")}
             onClick={dismiss}
             className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-900"
           >
@@ -223,26 +229,23 @@ export function PwaInstallPrompt() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-zs-blue-900">
-                Instala Zona Sport en tu dispositivo
-              </p>
+                {t("Instala Zona Sport en tu dispositivo")}</p>
               <p className="mt-0.5 text-xs leading-relaxed text-gray-600">
-                Acceso rápido al catálogo, reservas y novedades. Sin app store.
-              </p>
+                {t("Acceso rápido al catálogo, reservas y novedades. Sin app store.")}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={install}
                   className="inline-flex h-9 items-center justify-center rounded-lg bg-zs-blue-900 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-zs-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-900 focus-visible:ring-offset-2"
                 >
-                  {installLabel}
+                  {tx(installLabel)}
                 </button>
                 <button
                   type="button"
                   onClick={dismiss}
                   className="inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-medium text-gray-600 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
                 >
-                  Más tarde
-                </button>
+                  {t("Más tarde")}</button>
               </div>
             </div>
           </div>
@@ -294,6 +297,8 @@ function InstallInstructionsModal({
   firstRef,
   lastRef,
 }: InstallInstructionsModalProps) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const isIos = platform === "ios";
 
   return (
@@ -315,7 +320,7 @@ function InstallInstructionsModal({
           ref={firstRef}
           type="button"
           onClick={onClose}
-          aria-label="Cerrar instrucciones"
+          aria-label={t("Cerrar instrucciones")}
           className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-900"
         >
           <X className="h-4 w-4" />
@@ -333,39 +338,39 @@ function InstallInstructionsModal({
             </div>
             <div>
               <h2 id="zs-pwa-ios-title" className="text-base font-semibold text-zs-blue-900">
-                {isIos ? "Añadir Zona Sport a inicio" : "Cómo instalar Zona Sport"}
+                {tx(isIos ? "Añadir Zona Sport a inicio" : "Cómo instalar Zona Sport")}
               </h2>
               <p className="text-xs text-gray-600">
-                {isIos
+                {tx(isIos
                   ? "Solo 4 pasos en Safari"
-                  : "Desde el menú de tu navegador"}
+                  : "Desde el menú de tu navegador")}
               </p>
             </div>
           </div>
 
-          {isIos ? (
+          {tx(isIos ? (
             <ol className="space-y-3">
               <Step
                 n={1}
-                title="Pulsa el icono de compartir"
+                title={t("Pulsa el icono de compartir")}
                 desc="Encuéntralo en la barra inferior de Safari."
                 icon={<Share className="h-5 w-5 text-zs-blue-900" aria-hidden="true" />}
               />
               <Step
                 n={2}
-                title="Desliza y pulsa “Añadir a inicio”"
+                title={t("Desliza y pulsa “Añadir a inicio”")}
                 desc="Aparece en la fila de acciones del menú compartir."
                 icon={<Plus className="h-5 w-5 text-zs-blue-900" aria-hidden="true" />}
               />
               <Step
                 n={3}
-                title="Confirma con “Añadir”"
+                title={t("Confirma con “Añadir”")}
                 desc="Arriba a la derecha del diálogo."
                 icon={<Smartphone className="h-5 w-5 text-zs-blue-900" aria-hidden="true" />}
               />
               <Step
                 n={4}
-                title="¡Listo!"
+                title={t("¡Listo!")}
                 desc="Encuéntranos en tu pantalla de inicio."
                 icon={<Check className="h-5 w-5 text-emerald-600" aria-hidden="true" />}
               />
@@ -374,24 +379,24 @@ function InstallInstructionsModal({
             <ol className="space-y-3">
               <Step
                 n={1}
-                title="Abre el menú del navegador"
+                title={t("Abre el menú del navegador")}
                 desc="En Chrome y Edge: los tres puntos arriba a la derecha."
                 icon={<Plus className="h-5 w-5 text-zs-blue-900" aria-hidden="true" />}
               />
               <Step
                 n={2}
-                title="Selecciona “Instalar aplicación”"
+                title={t("Selecciona “Instalar aplicación”")}
                 desc="También puede aparecer como “Añadir a pantalla de inicio”."
                 icon={<Smartphone className="h-5 w-5 text-zs-blue-900" aria-hidden="true" />}
               />
               <Step
                 n={3}
-                title="Confirma la instalación"
+                title={t("Confirma la instalación")}
                 desc="Se abrirá como una app independiente, sin barras del navegador."
                 icon={<Check className="h-5 w-5 text-emerald-600" aria-hidden="true" />}
               />
             </ol>
-          )}
+          ))}
 
           <div className="mt-5 flex items-center justify-end gap-2">
             <button
@@ -399,16 +404,14 @@ function InstallInstructionsModal({
               onClick={onClose}
               className="inline-flex h-10 items-center justify-center rounded-lg px-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
             >
-              Cerrar
-            </button>
+              {t("Cerrar")}</button>
             <button
               ref={lastRef}
               type="button"
               onClick={onComplete}
               className="inline-flex h-10 items-center justify-center rounded-lg bg-zs-blue-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zs-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zs-blue-900 focus-visible:ring-offset-2"
             >
-              Lo he hecho
-            </button>
+              {t("Lo he hecho")}</button>
           </div>
         </div>
       </div>
@@ -427,19 +430,20 @@ function Step({
   desc: string;
   icon: React.ReactNode;
 }) {
+  const tx = useTranslatedValue();
   return (
     <li className="flex items-start gap-3 rounded-xl border border-zs-border bg-gray-50/60 p-3">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm">
-        {icon}
+        {tx(icon)}
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zs-blue-900 px-1.5 text-[10px] font-bold text-white">
-            {n}
+            {tx(n)}
           </span>
-          <p className="text-sm font-semibold text-gray-900">{title}</p>
+          <p className="text-sm font-semibold text-gray-900">{tx(title)}</p>
         </div>
-        <p className="mt-0.5 text-xs leading-relaxed text-gray-600">{desc}</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-gray-600">{tx(desc)}</p>
       </div>
     </li>
   );

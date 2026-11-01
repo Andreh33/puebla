@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -17,6 +21,8 @@ const GENDER_CHIPS: Array<{ value: string; label: string }> = [
 ];
 
 export function GenderChips({ className }: { className?: string }) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -47,15 +53,14 @@ export function GenderChips({ className }: { className?: string }) {
   return (
     <div
       role="radiogroup"
-      aria-label="Filtrar por género"
+      aria-label={t("Filtrar por género")}
       className={cn(
         "flex flex-wrap items-center gap-2 rounded-2xl border border-zs-border bg-white p-2",
         className,
       )}
     >
       <span className="px-2 text-xs font-semibold uppercase tracking-wider text-zs-muted">
-        Para
-      </span>
+        {t("Para")}</span>
       {GENDER_CHIPS.map((chip) => {
         const on = active.includes(chip.value);
         return (
@@ -72,7 +77,7 @@ export function GenderChips({ className }: { className?: string }) {
                 : "bg-zs-surface text-zs-ink hover:bg-zs-blue-50 hover:text-zs-blue-900",
             )}
           >
-            {chip.label}
+            {tx(chip.label)}
           </button>
         );
       })}

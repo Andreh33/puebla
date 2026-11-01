@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslations } from "@/components/public/LocaleProvider";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -21,6 +23,7 @@ type Props = {
 };
 
 export function SceneLoader({ visible, progress }: Props) {
+  const t = useTranslations();
   // Si no recibimos progress real, simulamos una barra "casi ahí": llega rápido
   // al 85% y luego espera al evento de carga real para llegar al 100.
   const [fake, setFake] = useState(8);
@@ -73,11 +76,9 @@ export function SceneLoader({ visible, progress }: Props) {
 
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-zs-tennis-300">
-            Experiencia 3D
-          </p>
+            {t("Experiencia 3D")}</p>
           <p className="text-sm text-white/80 sm:text-base">
-            Cargando la zapatilla y la sierra…
-          </p>
+            {t("Cargando la zapatilla y la sierra…")}</p>
         </div>
 
         <div className="w-56 sm:w-72">

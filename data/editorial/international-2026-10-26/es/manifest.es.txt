@@ -1,0 +1,355 @@
+{
+  "checkedAt": "2026-10-26T15:44:33.415442+00:00",
+  "locale": "es",
+  "articleCount": 10,
+  "minimumRequiredProseWords": 3400,
+  "articles": [
+    {
+      "file": "balon-futbol-talla-3-4-5-entrenamiento.json",
+      "slug": "balon-futbol-talla-3-4-5-entrenamiento",
+      "city": null,
+      "proseWords": 3514,
+      "whitespaceWords": 3554,
+      "internalLinkCount": 6,
+      "sourceUrls": [
+        "https://www.select-sport.com/pages/size-chart-football",
+        "https://www.theifab.com/laws/latest/the-ball/"
+      ]
+    },
+    {
+      "file": "calcetines-deportivos-invisibles-tobilleros-medios-largos.json",
+      "slug": "calcetines-deportivos-invisibles-tobilleros-medios-largos",
+      "city": null,
+      "proseWords": 4100,
+      "whitespaceWords": 4131,
+      "internalLinkCount": 10,
+      "sourceUrls": [
+        "https://www.joma-sport.com/es_ES/promociones/accesorios/calcetines-y-medias/",
+        "https://www.nike.com/es/w/hombre-gimnasio-calcetines-58jtoz7ny3qznik1"
+      ]
+    },
+    {
+      "file": "gafas-natacion-piscina-ajuste-lentes.json",
+      "slug": "gafas-natacion-piscina-ajuste-lentes",
+      "city": null,
+      "proseWords": 3722,
+      "whitespaceWords": 3744,
+      "internalLinkCount": 5,
+      "sourceUrls": [
+        "https://speedo.com/en-us/blogs/news/the-speedo-guide-to-swimming-goggles",
+        "https://speedo.com/blogs/news/swimming-goggles-which-lenses-do-i-need"
+      ]
+    },
+    {
+      "file": "guantes-gimnasio-talla-palma-cierre.json",
+      "slug": "guantes-gimnasio-talla-palma-cierre",
+      "city": null,
+      "proseWords": 4166,
+      "whitespaceWords": 4189,
+      "internalLinkCount": 4,
+      "sourceUrls": [
+        "https://www.nike.com/a/how-to-measure-glove-size",
+        "https://www.adidas.es/guantes-training/II5598.html"
+      ]
+    },
+    {
+      "file": "guantes-portero-talla-corte-entrenamiento.json",
+      "slug": "guantes-portero-talla-corte-entrenamiento",
+      "city": null,
+      "proseWords": 3635,
+      "whitespaceWords": 3658,
+      "internalLinkCount": 5,
+      "sourceUrls": [
+        "https://www.adidas.com/us/blog/the-ultimate-adidas-guide-for-goalkeeper-glove-sizing",
+        "https://www.nike.com/a/how-to-measure-glove-size"
+      ]
+    },
+    {
+      "file": "ropa-deporte-alicante-padel-piscina-pista.json",
+      "slug": "ropa-deporte-alicante-padel-piscina-pista",
+      "city": "Alicante",
+      "proseWords": 3911,
+      "whitespaceWords": 3932,
+      "internalLinkCount": 13,
+      "sourceUrls": [
+        "https://www.alicante.es//es/contenidos/instalaciones-deportivas-municipales",
+        "https://www.alicante.es/es/contenidos/guia-instalaciones-deportivas",
+        "https://speedo.com/blogs/news/swimming-goggles-which-lenses-do-i-need"
+      ]
+    },
+    {
+      "file": "ropa-deporte-barcelona-natacion-piscina.json",
+      "slug": "ropa-deporte-barcelona-natacion-piscina",
+      "city": "Barcelona",
+      "proseWords": 4145,
+      "whitespaceWords": 4168,
+      "internalLinkCount": 9,
+      "sourceUrls": [
+        "https://ajuntament.barcelona.cat/esports/sites/default/files/2024-01/Guia%20Instal%C2%B7lacions%20Esportives%20Municipals.pdf",
+        "https://speedo.com/pages/size-guides"
+      ]
+    },
+    {
+      "file": "ropa-deporte-madrid-gimnasio-piscina.json",
+      "slug": "ropa-deporte-madrid-gimnasio-piscina",
+      "city": "Madrid",
+      "proseWords": 4155,
+      "whitespaceWords": 4178,
+      "internalLinkCount": 10,
+      "sourceUrls": [
+        "https://sede.madrid.es/portal/site/tramites/menuitem.62876cb64654a55e2dbd7003a8a409a0/?vgnextchannel=4fe8a38813180210VgnVCM100000c90da8c0RCRD&vgnextoid=c6c1790d22530110VgnVCM1000000b205a0aRCRD",
+        "https://datos.madrid.es/dataset/210227-0-piscinas-publicas/information",
+        "https://speedo.com/en-us/blogs/news/the-speedo-guide-to-swimming-goggles"
+      ]
+    },
+    {
+      "file": "ropa-deporte-sevilla-futbol-sala-pabellon.json",
+      "slug": "ropa-deporte-sevilla-futbol-sala-pabellon",
+      "city": "Sevilla",
+      "proseWords": 4029,
+      "whitespaceWords": 4052,
+      "internalLinkCount": 14,
+      "sourceUrls": [
+        "https://imd.sevilla.org/fs-sevilladeportes/sevilladeportes/centros-deportivos/abono-deporte/enlaces-generales-abonos/centro-deportivo-san-luis",
+        "https://www.joma-sport.com/es_ES/hombre/calzado-hombre/futbol-sala/"
+      ]
+    },
+    {
+      "file": "ropa-deporte-zamora-equipacion-padel.json",
+      "slug": "ropa-deporte-zamora-equipacion-padel",
+      "city": "Zamora",
+      "proseWords": 3825,
+      "whitespaceWords": 3848,
+      "internalLinkCount": 11,
+      "sourceUrls": [
+        "https://www.zamora.es/contenidos.aspx?id=531",
+        "https://www.zamora.es/ficheros/INSTALACIONES%20DEPORTIVAS%20MUNICIPALES-2.pdf",
+        "https://citas.zamora.es/"
+      ]
+    }
+  ],
+  "internalLinkChecks": [
+    {
+      "path": "/accesorios-balones",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/accesorios-balones",
+      "title": "Balones | Zona Sport"
+    },
+    {
+      "path": "/accesorios-gafas-natacion",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/accesorios-gafas-natacion",
+      "title": "Gafas de natación | Zona Sport"
+    },
+    {
+      "path": "/accesorios-guantes",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/accesorios-guantes",
+      "title": "Guantes | Zona Sport"
+    },
+    {
+      "path": "/blog/banadores-y-natacion-como-elegir-bien",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/banadores-y-natacion-como-elegir-bien",
+      "title": "Bañadores y natación: cómo elegir bien | Zona Sport"
+    },
+    {
+      "path": "/blog/chanclas-de-verano-cuales-elegir-segun-el-uso",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/chanclas-de-verano-cuales-elegir-segun-el-uso",
+      "title": "Chanclas de verano: cuáles elegir según el uso | Zona Sport"
+    },
+    {
+      "path": "/blog/chandal-ninos-educacion-fisica-talla-tejido",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/chandal-ninos-educacion-fisica-talla-tejido",
+      "title": "Chándal infantil para el colegio | Zona Sport"
+    },
+    {
+      "path": "/blog/como-elegir-mochila-deportiva-segun-el-uso",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/como-elegir-mochila-deportiva-segun-el-uso",
+      "title": "Cómo elegir mochila deportiva según el uso | Zona Sport"
+    },
+    {
+      "path": "/blog/cortavientos-polar-chubasquero-deporte-otono",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/cortavientos-polar-chubasquero-deporte-otono",
+      "title": "Cortavientos, polar o chubasquero | Zona Sport"
+    },
+    {
+      "path": "/blog/equipaciones-de-futbol-para-tu-equipo-o-tu-peque",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/equipaciones-de-futbol-para-tu-equipo-o-tu-peque",
+      "title": "Equipaciones de fútbol: qué mirar al comprar | Zona Sport"
+    },
+    {
+      "path": "/blog/espinilleras-de-futbol-tipos-y-como-elegir-talla",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/espinilleras-de-futbol-tipos-y-como-elegir-talla",
+      "title": "Espinilleras de fútbol: tipos y talla | Zona Sport"
+    },
+    {
+      "path": "/blog/futbol-sala-que-zapatillas-y-equipacion-necesitas",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/futbol-sala-que-zapatillas-y-equipacion-necesitas",
+      "title": "Fútbol sala: zapatillas y equipación necesaria | Zona Sport"
+    },
+    {
+      "path": "/blog/gorras-y-proteccion-solar-para-hacer-deporte",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/gorras-y-proteccion-solar-para-hacer-deporte",
+      "title": "Gorras y protección solar para el deporte | Zona Sport"
+    },
+    {
+      "path": "/blog/guia-de-tallas-como-acertar-comprando-deporte",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/guia-de-tallas-como-acertar-comprando-deporte",
+      "title": "Guía de tallas: cómo acertar comprando deporte | Zona Sport"
+    },
+    {
+      "path": "/blog/suela-zapatillas-padel-arena-cesped-artificial",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/suela-zapatillas-padel-arena-cesped-artificial",
+      "title": "Suela de pádel: arena o césped | Zona Sport"
+    },
+    {
+      "path": "/blog/zapatillas-futbol-sala-indoor-turf-pabellon",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/zapatillas-futbol-sala-indoor-turf-pabellon",
+      "title": "Fútbol sala: indoor o turf | Zona Sport"
+    },
+    {
+      "path": "/blog/zapatillas-running-trail-asfalto-caminos",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/blog/zapatillas-running-trail-asfalto-caminos",
+      "title": "Running o trail para asfalto y caminos | Zona Sport"
+    },
+    {
+      "path": "/condiciones-de-venta",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/condiciones-de-venta",
+      "title": "Condiciones de venta y devoluciones | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/contacto",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/contacto",
+      "title": "Contacto | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/hombre/calzado?tipo=futbol_sala",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/hombre/calzado?tipo=futbol_sala",
+      "title": "Zapatillas y calzado de hombre | Zona Sport"
+    },
+    {
+      "path": "/hombre/calzado?tipo=padel",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/hombre/calzado?tipo=padel",
+      "title": "Zapatillas y calzado de hombre | Zona Sport"
+    },
+    {
+      "path": "/hombre/textil",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/hombre/textil",
+      "title": "Ropa de hombre | Zona Sport"
+    },
+    {
+      "path": "/mujer/calzado?tipo=padel",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/mujer/calzado?tipo=padel",
+      "title": "Zapatillas y calzado de mujer | Zona Sport"
+    },
+    {
+      "path": "/mujer/textil",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/mujer/textil",
+      "title": "Ropa de mujer | Zona Sport"
+    },
+    {
+      "path": "/nino/calzado?tipo=futbol_sala",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/nino/calzado?tipo=futbol_sala",
+      "title": "Zapatillas y calzado de niño | Zona Sport"
+    },
+    {
+      "path": "/producto/balon-puma-big-cat-naranja",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/balon-puma-big-cat-naranja",
+      "title": "BALÓN PUMA BIG CAT NARANJA · Puma (Naranja) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/balon-puma-mini-attacanto-azul-084741-02",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/balon-puma-mini-attacanto-azul-084741-02",
+      "title": "BALÓN PUMA MINI ATTACANTO AZUL 084741 02 · Puma (Azul) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/banador-joma-shark-negro-901635100",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/banador-joma-shark-negro-901635100",
+      "title": "BAÑADOR JOMA SHARK NEGRO 901635.100 · Joma (Negro) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/calcetin-joma-invisible-400028",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/calcetin-joma-invisible-400028",
+      "title": "CALCETÍN JOMA INVISIBLE 400028 · Joma | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/calcetin-largo-joma-400032",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/calcetin-largo-joma-400032",
+      "title": "CALCETÍN LARGO JOMA 400032 · Joma | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/calcetin-mediano-joma-400030",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/calcetin-mediano-joma-400030",
+      "title": "CALCETÍN MEDIANO JOMA 400030 · Joma | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/calcetin-tobillero-joma-400027",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/calcetin-tobillero-joma-400027",
+      "title": "CALCETÍN TOBILLERO JOMA 400027 · Joma | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/gafas-natacion-mosconi-barracuda-negra",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/gafas-natacion-mosconi-barracuda-negra",
+      "title": "GAFAS DE NATACIÓN MOSCONI BARRACUDA NEGRA · Mosconi (Negra) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/gafas-natacion-mosconi-easy-jr-naranja",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/gafas-natacion-mosconi-easy-jr-naranja",
+      "title": "GAFAS DE NATACIÓN MOSCONI EASY JR NARANJA · Mosconi (Naranja) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/guantes-gimnasio-softee",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/guantes-gimnasio-softee",
+      "title": "GUANTES GIMNASIO SOFTEE · Softee | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/guantes-portero-joma-calcio-23-rojo-negro-401272054",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/guantes-portero-joma-calcio-23-rojo-negro-401272054",
+      "title": "GUANTES PORTERO JOMA CALCIO 23 ROJO NEGRO 401272.054 · Joma (Rojo Negro) | Zona Sport — Puebla de la Calzada"
+    },
+    {
+      "path": "/producto/guantes-portero-joma-hunter-verde-fluor-negro-401477021",
+      "status": 200,
+      "finalUrl": "https://zonasportpuebla.com/producto/guantes-portero-joma-hunter-verde-fluor-negro-401477021",
+      "title": "GUANTES PORTERO JOMA HUNTER VERDE FLÚOR NEGRO 401477.021 · Joma (Verde Flúor) | Zona Sport — Puebla de la Calzada"
+    }
+  ],
+  "claims": {
+    "newPhysicalStores": false,
+    "domesticCityDeliveryPromises": false,
+    "fixedPricesOrInventoryPromises": false,
+    "primarySourcesOnly": true
+  }
+}

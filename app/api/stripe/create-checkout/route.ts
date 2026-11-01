@@ -1,3 +1,13 @@
+import { localizeContent } from "@/lib/i18n/content";
+import { PRODUCT_TRANSLATIONS_ENABLED } from "@/lib/i18n/publication-policy";
+import { isLocalePublished } from "@/lib/i18n/readiness";
+import {
+  SHIPPING_COUNTRIES,
+  checkoutDeliveryOptions,
+  checkoutReturnUrls,
+  shippingCents,
+} from "@/lib/stripe/shipping";
+import { LOCALES } from "@/lib/i18n/config";
 /**
  * POST /api/stripe/create-checkout
  *
@@ -46,6 +56,8 @@ const CheckoutItemSchema = z.object({
 const RequestSchema = z.object({
   items: z.array(CheckoutItemSchema).min(1).max(50),
   deliveryMethod: z.enum(["pickup", "shipping"]).optional(),
+  shippingCountry: z.enum(SHIPPING_COUNTRIES).default("ES"),
+  locale: z.enum(LOCALES).default("es"),
   customerEmail: z.string().email().optional(),
   successUrl: z.string().url().optional(),
   cancelUrl: z.string().url().optional(),
@@ -97,10 +109,36 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
     );
   }
 
-  const { items, deliveryMethod = "shipping", customerEmail, successUrl, cancelUrl, promoCode } =
-    parsed.data;
+  const {
+    items,
+    deliveryMethod = "shipping",
+    shippingCountry,
+    locale,
+    customerEmail,
+    successUrl,
+    cancelUrl,
+    promoCode,
+  } = parsed.data;
 
+  if (!isLocalePublished(locale))
+    return NextResponse.json<CreateCheckoutResponse>(
+      { ok: false, error: "locale_unavailable", message: "Este idioma todavía no está publicado." },
+      { status: 409 },
+    );
   const base = siteUrl(req);
+  let returnUrls: ReturnType<typeof checkoutReturnUrls>;
+  try {
+    returnUrls = checkoutReturnUrls(base, locale, { successUrl, cancelUrl });
+  } catch {
+    return NextResponse.json<CreateCheckoutResponse>(
+      {
+        ok: false,
+        error: "invalid_return_url",
+        message: "La URL de retorno debe pertenecer a la tienda.",
+      },
+      { status: 400 },
+    );
+  }
 
   // SEGURIDAD: nunca confiamos en el `price` del body. Re-consultamos el precio
   // real de cada producto en BD y construimos el unit_amount en servidor. Así
@@ -112,6 +150,16 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
     select: {
       id: true,
       name: true,
+      shortName: true,
+      description: true,
+      technicalDescription: true,
+      colorName: true,
+      sportUse: true,
+      composition: true,
+      metaTitle: true,
+      metaDescription: true,
+      tags: true,
+      images: { select: { url: true, alt: true } },
       slug: true,
       sku: true,
       modelCode: true,
@@ -137,10 +185,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       qty: it.qty,
     })),
     new Map(
-      dbProducts.map((p) => [
-        p.id,
-        { id: p.id, name: p.name, stock: p.stock, sizes: p.sizes },
-      ]),
+      dbProducts.map((p) => [p.id, { id: p.id, name: p.name, stock: p.stock, sizes: p.sizes }]),
     ),
   );
   if (!stockCheck.ok) {
@@ -179,6 +224,16 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
         { status: 409 },
       );
     }
+    const localized = localizeContent("products", PRODUCT_TRANSLATIONS_ENABLED ? locale : "es", p);
+    if (!localized)
+      return NextResponse.json<CreateCheckoutResponse>(
+        {
+          ok: false,
+          error: "translation_unavailable",
+          message: "La información del producto ha cambiado. Actualiza el carrito.",
+        },
+        { status: 409 },
+      );
     const { final } = effectivePrice(p.retailPrice, p.salePrice);
     const unitAmount = final.times(100).toDecimalPlaces(0).toNumber();
     if (!Number.isFinite(unitAmount) || unitAmount < 0) {
@@ -192,26 +247,26 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       );
     }
     const img =
-      p.mainImageUrl && /^https?:\/\//i.test(p.mainImageUrl)
-        ? [p.mainImageUrl]
-        : undefined;
+      p.mainImageUrl && /^https?:\/\//i.test(p.mainImageUrl) ? [p.mainImageUrl] : undefined;
     lineItems.push({
       quantity: it.qty,
       price_data: {
         currency: "eur",
         unit_amount: unitAmount,
         product_data: {
-          name: cleanProductName(p.name) || it.name,
-          description: [p.brand?.name, it.colorName, it.size]
-            .filter(Boolean)
-            .join(" · "),
+          name: cleanProductName(localized.name) || it.name,
+          description: [p.brand?.name, localized.colorName, it.size].filter(Boolean).join(" · "),
           images: img,
           metadata: {
             zs_product_id: p.id,
             zs_slug: p.slug,
-            zs_sku: resolveProductSku({ modelCode: p.modelCode, externalId: p.externalId, id: p.id }),
+            zs_sku: resolveProductSku({
+              modelCode: p.modelCode,
+              externalId: p.externalId,
+              id: p.id,
+            }),
             zs_size: it.size ?? "",
-            zs_color: it.colorName,
+            zs_color: p.colorName,
           },
         },
       },
@@ -273,17 +328,14 @@ export async function POST(req: NextRequest): Promise<NextResponse<CreateCheckou
       phone_number_collection: { enabled: true },
       // Solo pedimos dirección de envío si es shipping. Para pickup la
       // tienda contacta al cliente.
-      shipping_address_collection:
-        deliveryMethod === "shipping"
-          ? { allowed_countries: ["ES", "PT"] }
-          : undefined,
-      // España + Portugal son los únicos países de envío inicialmente.
-      locale: "es",
-      success_url:
-        successUrl ?? `${base}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl ?? `${base}/checkout/cancelado`,
+      ...checkoutDeliveryOptions(shippingCountry, deliveryMethod, locale),
+      locale,
+      ...returnUrls,
       metadata: {
         deliveryMethod,
+        shippingCountry,
+        locale,
+        shippingCents: String(shippingCents(shippingCountry, deliveryMethod)),
         source: "zonasport-web",
         ...(appliedPromo ? { promoCode: appliedPromo } : {}),
       },

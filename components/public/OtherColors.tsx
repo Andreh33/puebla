@@ -1,4 +1,6 @@
-import Link from "next/link";
+import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
+import { t } from "@/lib/i18n/dictionaries";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,8 +25,7 @@ export function OtherColors({ siblings, currentColor, productName }: Props) {
   return (
     <section aria-labelledby="other-colors-heading" className="space-y-3">
       <h2 id="other-colors-heading" className="text-sm font-semibold text-zs-blue-900">
-        Otros colores disponibles
-      </h2>
+        {t("Otros colores disponibles")}</h2>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
         {siblings.map((s) => (
           <Link
@@ -37,7 +38,7 @@ export function OtherColors({ siblings, currentColor, productName }: Props) {
             )}
           >
             <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-zs-surface">
-              {s.mainImageUrl ? (
+              {tx(s.mainImageUrl ? (
                 <Image
                   src={s.mainImageUrl}
                   alt={`${productName} en color ${s.colorName}`}
@@ -49,17 +50,16 @@ export function OtherColors({ siblings, currentColor, productName }: Props) {
                 <div className="flex h-full w-full items-center justify-center text-zs-muted/60">
                   <ImageOff className="h-6 w-6" aria-hidden />
                 </div>
-              )}
+              ))}
             </div>
             <p className="line-clamp-1 px-1 text-center text-[11px] font-medium text-zs-ink">
-              {s.colorName}
+              {tx(s.colorName)}
             </p>
           </Link>
         ))}
       </div>
       <p className="text-xs text-zs-muted">
-        Cada color de {productName} es una ficha independiente (talla, stock y precio
-        propios). Color actual: <strong className="text-zs-ink">{currentColor}</strong>.
+        {t("Cada color de")}{" "}{tx(productName)} {t("es una ficha independiente (talla, stock y precio propios). Color actual:")}{" "}<strong className="text-zs-ink">{tx(currentColor)}</strong>.
       </p>
     </section>
   );

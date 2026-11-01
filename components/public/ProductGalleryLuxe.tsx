@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff, Maximize2, X } from "lucide-react";
@@ -22,6 +26,8 @@ type Props = {
  *  - ESC y flechas para navegar.
  */
 export function ProductGalleryLuxe({ images, productName }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const safeImages = useMemo(() => (images.length > 0 ? images : []), [images]);
   const [active, setActive] = useState(0);
   const [zoomPos, setZoomPos] = useState<{ x: number; y: number } | null>(null);
@@ -74,7 +80,7 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
       <div className="flex aspect-[4/5] w-full items-center justify-center rounded-2xl border border-zs-border bg-zs-surface text-zs-muted">
         <div className="flex flex-col items-center gap-2">
           <ImageOff className="h-12 w-12" aria-hidden />
-          <span className="text-sm">Imagen no disponible</span>
+          <span className="text-sm">{t("Imagen no disponible")}</span>
         </div>
       </div>
     );
@@ -157,7 +163,7 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
             <button
               ref={mainRef}
               type="button"
-              aria-label="Ampliar imagen"
+              aria-label={t("Ampliar imagen")}
               onClick={() => setLightbox(true)}
               className="absolute right-3 top-3 z-10 inline-flex items-center justify-center rounded-full border border-zs-border bg-white/90 p-2 text-zs-ink shadow-sm transition hover:bg-white"
               data-cursor="Zoom"
@@ -170,7 +176,7 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
                 <button
                   type="button"
                   onClick={prev}
-                  aria-label="Imagen anterior"
+                  aria-label={t("Imagen anterior")}
                   className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full border border-zs-border bg-white/90 p-2 text-zs-ink shadow-sm opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -178,13 +184,13 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
                 <button
                   type="button"
                   onClick={next}
-                  aria-label="Imagen siguiente"
+                  aria-label={t("Imagen siguiente")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-zs-border bg-white/90 p-2 text-zs-ink shadow-sm opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-0.5 text-xs font-medium text-white">
-                  {active + 1} / {safeImages.length}
+                  {active + 1} / {tx(safeImages.length)}
                 </div>
               </>
             )}
@@ -196,13 +202,13 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Vista ampliada"
+          aria-label={t("Vista ampliada")}
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 backdrop-blur"
           onClick={() => setLightbox(false)}
         >
           <button
             type="button"
-            aria-label="Cerrar"
+            aria-label={t("Cerrar")}
             className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
             onClick={() => setLightbox(false)}
           >
@@ -227,7 +233,7 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
                 <button
                   type="button"
                   onClick={prev}
-                  aria-label="Imagen anterior"
+                  aria-label={t("Imagen anterior")}
                   className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20"
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -235,13 +241,13 @@ export function ProductGalleryLuxe({ images, productName }: Props) {
                 <button
                   type="button"
                   onClick={next}
-                  aria-label="Imagen siguiente"
+                  aria-label={t("Imagen siguiente")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
-                  {active + 1} / {safeImages.length}
+                  {active + 1} / {tx(safeImages.length)}
                 </div>
               </>
             )}

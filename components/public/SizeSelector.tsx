@@ -1,5 +1,9 @@
 "use client";
 
+
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +20,14 @@ type Props = {
 };
 
 export function SizeSelector({ sizes, defaultSize, onChange }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const [selected, setSelected] = useState<string | null>(defaultSize ?? null);
 
   if (!sizes || sizes.length === 0) {
     return (
       <p className="text-sm text-zs-muted">
-        Consulta disponibilidad de tallas por WhatsApp.
-      </p>
+        {t("Consulta disponibilidad de tallas por WhatsApp.")}</p>
     );
   }
 
@@ -31,10 +36,9 @@ export function SizeSelector({ sizes, defaultSize, onChange }: Props) {
     return (
       <div className="space-y-2">
         <span className="inline-flex items-center rounded-full border border-zs-border bg-zs-surface px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zs-ink">
-          Talla única
-        </span>
+          {t("Talla única")}</span>
         {sizes[0]!.stock <= 0 && (
-          <p className="text-xs text-zs-red-600">Sin stock — consulta por WhatsApp.</p>
+          <p className="text-xs text-zs-red-600">{t("Sin stock — consulta por WhatsApp.")}</p>
         )}
       </div>
     );
@@ -71,16 +75,16 @@ export function SizeSelector({ sizes, defaultSize, onChange }: Props) {
               )}
               aria-label={out ? `Talla ${s.size} (sin stock)` : `Talla ${s.size}`}
             >
-              {s.size}
+              {tx(s.size)}
             </button>
           );
         })}
       </div>
-      {selected ? (
-        <p className="text-xs text-zs-muted">Talla seleccionada: <strong className="text-zs-ink">{selected}</strong></p>
+      {tx(selected ? (
+        <p className="text-xs text-zs-muted">{t("Talla seleccionada:")}{" "}<strong className="text-zs-ink">{selected}</strong></p>
       ) : (
-        <p className="text-xs text-zs-muted">Selecciona una talla.</p>
-      )}
+        <p className="text-xs text-zs-muted">{t("Selecciona una talla.")}</p>
+      ))}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
 import { CartDrawer } from "./CartDrawer";
@@ -11,6 +13,8 @@ import { cn } from "@/lib/utils";
  * Aplica un "pop" CSS al cambiar el contador para feedback visible.
  */
 export function CartIcon() {
+  const tx = useTranslatedValue();
+  const tf = useTranslatedTemplate();
   const { count, ready } = useCart();
   const [open, setOpen] = useState(false);
   const [bump, setBump] = useState(0);
@@ -31,10 +35,10 @@ export function CartIcon() {
         onClick={() => setOpen(true)}
         aria-label={
           visibleCount > 0
-            ? `Tu carrito (${visibleCount} ${visibleCount === 1 ? "producto" : "productos"})`
-            : "Tu carrito (vacío)"
+            ? tf(visibleCount === 1 ? "Tu carrito ({0} producto)" : "Tu carrito ({0} productos)", [visibleCount])
+            : tx("Tu carrito (vacío)")
         }
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-zs-ink transition-colors hover:bg-zs-surface"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-zs-ink transition-colors hover:bg-black/5 active:bg-black/10"
       >
         <ShoppingBag className="h-5 w-5" />
         {visibleCount > 0 && (
@@ -47,7 +51,7 @@ export function CartIcon() {
               "animate-[zsBump_280ms_ease-out]",
             )}
           >
-            {visibleCount > 99 ? "99+" : visibleCount}
+            {tx(visibleCount > 99 ? "99+" : visibleCount)}
           </span>
         )}
       </button>

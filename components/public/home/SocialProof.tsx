@@ -1,3 +1,8 @@
+import {
+  t as _translateUi,
+  translateValue as _translateValue,
+  translateTemplate as _translateTemplate,
+} from "@/lib/i18n/dictionaries";
 import { Star, Quote } from "lucide-react";
 import { Reveal } from "@/components/public/Reveal";
 
@@ -53,26 +58,29 @@ export function SocialProof() {
     <section className="relative bg-white py-20 sm:py-28">
       <header className="mx-auto mb-12 flex max-w-[1600px] flex-col gap-4 px-4 sm:mb-16 sm:px-8 lg:flex-row lg:items-end lg:justify-between">
         <Reveal variant="fade-up" className="max-w-2xl">
-          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-zs-muted">
-            <span className="inline-block h-px w-8 bg-zs-blue-900/30" />
-            Lo que dicen
+          <p className="text-zs-muted inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.32em] uppercase">
+            <span className="bg-zs-blue-900/30 inline-block h-px w-8" />
+            {_translateUi("Lo que dicen")}
           </p>
           <h2
-            className="mt-4 font-display font-bold leading-[0.95] tracking-[-0.035em] text-zs-blue-950"
+            className="font-display text-zs-blue-950 mt-4 leading-[0.95] font-bold tracking-[-0.035em]"
             style={{ fontSize: "clamp(1.85rem, 4.5vw, 3.5rem)" }}
           >
-            Atención que se nota.
+            {_translateUi("Atención que se nota.")}
           </h2>
         </Reveal>
         <Reveal variant="fade-up" delay={120}>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-zs-tennis-400">
+            <div className="text-zs-tennis-400 flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="h-5 w-5 fill-current" />
               ))}
             </div>
-            <p className="text-sm font-semibold text-zs-blue-950">
-              4,9 / 5 <span className="text-zs-muted">· valoraciones en tienda y online</span>
+            <p className="text-zs-blue-950 text-sm font-semibold">
+              {_translateUi("4,9 / 5")}{" "}
+              <span className="text-zs-muted">
+                {_translateUi("· valoraciones en tienda y online")}
+              </span>
             </p>
           </div>
         </Reveal>
@@ -82,10 +90,10 @@ export function SocialProof() {
         <ul className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
             <Reveal key={t.name} variant="fade-up" delay={Math.min(i * 100, 220)}>
-              <li className="group relative flex h-full flex-col rounded-3xl border border-zs-blue-900/10 bg-zs-surface p-7 transition-colors duration-500 hover:border-zs-red-600/20 hover:bg-white">
-                <Quote className="h-7 w-7 text-zs-red-600/40" strokeWidth={2.25} />
-                <p className="mt-4 flex-1 text-base leading-relaxed text-zs-blue-950">
-                  {t.text}
+              <li className="group border-zs-blue-900/10 bg-zs-surface hover:border-zs-red-600/20 relative flex h-full flex-col rounded-3xl border p-7 transition-colors duration-500 hover:bg-white">
+                <Quote className="text-zs-red-600/40 h-7 w-7" strokeWidth={2.25} />
+                <p className="text-zs-blue-950 mt-4 flex-1 text-base leading-relaxed">
+                  {_translateValue(t.text)}
                 </p>
                 <div className="mt-6 flex items-center gap-3">
                   <span
@@ -96,15 +104,17 @@ export function SocialProof() {
                     ].join(" ")}
                     aria-hidden
                   >
-                    {t.initials}
+                    {_translateValue(t.initials)}
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-zs-blue-950">{t.name}</p>
-                    <p className="text-xs uppercase tracking-[0.18em] text-zs-muted">
-                      {t.meta}
+                    <p className="text-zs-blue-950 text-sm font-semibold">
+                      {_translateValue(t.name)}
+                    </p>
+                    <p className="text-zs-muted text-xs tracking-[0.18em] uppercase">
+                      {_translateValue(t.meta)}
                     </p>
                   </div>
-                  <div className="ml-auto flex items-center gap-0.5 text-zs-tennis-400">
+                  <div className="text-zs-tennis-400 ml-auto flex items-center gap-0.5">
                     {Array.from({ length: 5 }).map((_, j) => (
                       <Star key={j} className="h-3.5 w-3.5 fill-current" />
                     ))}

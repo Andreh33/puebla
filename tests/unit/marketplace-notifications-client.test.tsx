@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: mocks.refresh }),
 }));
-vi.mock("@/app/admin/notificaciones/_actions", () => ({
+vi.mock("@/app/(default)/admin/notificaciones/_actions", () => ({
   resolveMarketplaceNotificationAction: (...args: unknown[]) => mocks.resolve(...args),
 }));
 vi.mock("sonner", () => ({
@@ -24,7 +24,7 @@ vi.mock("sonner", () => ({
 import {
   NotificationsClient,
   type MarketplaceNotificationDTO,
-} from "@/app/admin/notificaciones/NotificationsClient";
+} from "@/app/(default)/admin/notificaciones/NotificationsClient";
 
 const notification: MarketplaceNotificationDTO = {
   id: "notification-1",

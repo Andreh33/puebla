@@ -1,5 +1,7 @@
 "use client";
 
+
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,7 @@ type Props = {
  * - No fuerza display, se comporta como inline-block.
  */
 export function MagneticButton({ children, className, strength = 18, disabled }: Props) {
+  const tx = useTranslatedValue();
   const ref = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export function MagneticButton({ children, className, strength = 18, disabled }:
       className={cn("inline-block will-change-transform", className)}
       style={{ transition: "transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)" }}
     >
-      {children}
+      {tx(children)}
     </span>
   );
 }

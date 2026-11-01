@@ -1,3 +1,4 @@
+import { translateValue as tx, translateTemplate as tf } from "@/lib/i18n/dictionaries";
 import { ProductCard, type ProductCardProduct } from "./ProductCard";
 
 type Props = {
@@ -10,7 +11,7 @@ export function RelatedProducts({ products, title = "Productos relacionados" }: 
   return (
     <section aria-labelledby="related-heading" className="mt-16 space-y-6">
       <h2 id="related-heading" className="text-2xl font-bold tracking-tight text-zs-blue-900 sm:text-3xl">
-        {title}
+        {tx(title)}
       </h2>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {products.map((p) => (

@@ -1,6 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslatedValue, useTranslatedTemplate } from "@/components/public/LocaleProvider";
+import { useTranslations } from "@/components/public/LocaleProvider";
+import { LocalizedLink as Link } from "@/components/public/LocalizedLink";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -30,6 +32,8 @@ const TYPED_PHRASES = [
  *  - Sello "Visítanos" expandible en esquina inferior derecha
  */
 export function HeroLuxe({ primaryHref }: Props) {
+  const tx = useTranslatedValue();
+  const t = useTranslations();
   const sectionRef = useRef<HTMLElement | null>(null);
   const blobARef = useRef<HTMLDivElement | null>(null);
   const blobBRef = useRef<HTMLDivElement | null>(null);
@@ -87,7 +91,10 @@ export function HeroLuxe({ primaryHref }: Props) {
         const text = h1.textContent ?? "";
         h1.innerHTML = text
           .split(/\s+/)
-          .map((w) => `<span class="zs-hero-word inline-block will-change-transform" style="opacity:0">${w}</span>`)
+          .map(
+            (w) =>
+              `<span class="zs-hero-word inline-block will-change-transform" style="opacity:0">${w}</span>`,
+          )
           .join(" ");
         const words = h1.querySelectorAll<HTMLSpanElement>(".zs-hero-word");
         gsap.fromTo(
@@ -142,17 +149,17 @@ export function HeroLuxe({ primaryHref }: Props) {
   return (
     <section
       ref={sectionRef}
-      className="zs-hero relative isolate overflow-hidden bg-zs-gradient text-white"
+      className="zs-hero bg-zs-gradient relative isolate overflow-hidden text-white"
     >
       {/* Blobs parallax */}
       <div className="absolute inset-0 opacity-20" aria-hidden>
         <div
           ref={blobARef}
-          className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-zs-tennis-500 blur-3xl"
+          className="bg-zs-tennis-500 absolute top-10 -left-20 h-72 w-72 rounded-full blur-3xl"
         />
         <div
           ref={blobBRef}
-          className="absolute -right-10 bottom-0 h-80 w-80 rounded-full bg-zs-red-500 blur-3xl"
+          className="bg-zs-red-500 absolute -right-10 bottom-0 h-80 w-80 rounded-full blur-3xl"
         />
       </div>
 
@@ -168,22 +175,25 @@ export function HeroLuxe({ primaryHref }: Props) {
 
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:py-24 lg:grid-cols-2 lg:items-center lg:py-32">
         <div className="space-y-6">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" /> Tienda local · Compra online
+          <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wider uppercase backdrop-blur">
+            <Sparkles className="h-3.5 w-3.5" /> {t("Tienda local · Compra online")}
           </p>
           <h1
             ref={titleRef}
-            className="text-balance text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
+            className="text-4xl leading-[1.05] font-extrabold tracking-tight text-balance sm:text-5xl lg:text-6xl"
           >
-            Todo lo que necesitas para tu deporte, hecho en tu barrio.
+            {t("Todo lo que necesitas para tu deporte, hecho en tu barrio.")}
           </h1>
-          <p className="min-h-[3.5rem] max-w-xl text-balance text-base text-white/85 sm:text-lg">
-            <span aria-live="polite">{typed}</span>
-            <span aria-hidden className="zs-caret ml-0.5 inline-block w-[2px] bg-white/80 align-baseline">
-              &nbsp;
+          <p className="min-h-[3.5rem] max-w-xl text-base text-balance text-white/85 sm:text-lg">
+            <span aria-live="polite">{tx(typed)}</span>
+            <span
+              aria-hidden
+              className="zs-caret ml-0.5 inline-block w-[2px] bg-white/80 align-baseline"
+            >
+              {" "}
             </span>
             <br />
-            Multimarca, atención cercana y consejo experto.
+            {t("Multimarca, atención cercana y consejo experto.")}
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <MagneticButton>
@@ -191,17 +201,17 @@ export function HeroLuxe({ primaryHref }: Props) {
                 asChild
                 size="lg"
                 variant="default"
-                className="bg-white text-zs-blue-900 hover:bg-zs-surface"
+                className="text-zs-blue-900 hover:bg-zs-surface bg-white"
               >
                 <Link href={primaryHref} data-cursor="Catálogo">
-                  Ver catálogo <ArrowRight className="h-4 w-4" />
+                  {t("Ver catálogo")} <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </MagneticButton>
             <MagneticButton>
               <WhatsAppButton
                 message={WhatsAppMessages.generic()}
-                label="Pregúntanos por WhatsApp"
+                label={t("Pregúntanos por WhatsApp")}
               />
             </MagneticButton>
           </div>
@@ -221,7 +231,7 @@ export function HeroLuxe({ primaryHref }: Props) {
             <div
               ref={ballRef}
               aria-hidden
-              className="absolute -bottom-6 -right-6 h-24 w-24 will-change-transform"
+              className="absolute -right-6 -bottom-6 h-24 w-24 will-change-transform"
             >
               <svg viewBox="0 0 100 100" className="h-full w-full drop-shadow-xl">
                 <defs>
@@ -263,39 +273,42 @@ export function HeroLuxe({ primaryHref }: Props) {
 }
 
 function VisitanosSeal() {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   return (
-    <div className="pointer-events-none absolute bottom-4 right-4 hidden sm:block">
+    <div className="pointer-events-none absolute right-4 bottom-4 hidden sm:block">
       <button
         type="button"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="pointer-events-auto group relative flex h-24 w-24 items-center justify-center rounded-full border border-white/30 bg-white/10 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur transition hover:bg-white/20"
-        aria-label="Visítanos en Puebla de la Calzada"
+        className="group pointer-events-auto relative flex h-24 w-24 items-center justify-center rounded-full border border-white/30 bg-white/10 text-[10px] font-bold tracking-[0.18em] text-white uppercase backdrop-blur transition hover:bg-white/20"
+        aria-label={t("Visítanos en Puebla de la Calzada")}
         data-cursor="Visítanos"
       >
         <span className="absolute inset-0 animate-[spin_18s_linear_infinite]">
-          <SealRing text="VISÍTANOS · PUEBLA DE LA CALZADA · " />
+          <SealRing text={t("VISÍTANOS · PUEBLA DE LA CALZADA ·")} />
         </span>
         <span className="text-base">→</span>
       </button>
       <div
-        className={`pointer-events-auto absolute bottom-28 right-0 w-64 rounded-2xl border border-white/20 bg-zs-blue-900/95 p-4 text-white shadow-xl backdrop-blur transition-all ${
+        className={`bg-zs-blue-900/95 pointer-events-auto absolute right-0 bottom-28 w-64 rounded-2xl border border-white/20 p-4 text-white shadow-xl backdrop-blur transition-all ${
           open ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
         }`}
       >
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/70">Tienda física</p>
-        <p className="mt-1 text-sm font-bold">C. Silos, 3 · Puebla de la Calzada</p>
-        <p className="mt-2 text-xs text-white/80">L–V 10–14h / 17–20h · S 10–14h</p>
+        <p className="text-xs font-semibold tracking-wider text-white/70 uppercase">
+          {t("Tienda física")}
+        </p>
+        <p className="mt-1 text-sm font-bold">{t("C. Silos, 3 · Puebla de la Calzada")}</p>
+        <p className="mt-2 text-xs text-white/80">{t("L–V 10–14h / 17–20h · S 10–14h")}</p>
         <a
           href="https://maps.google.com/?q=C.+Silos,+3,+06490+Puebla+de+la+Calzada,+Badajoz"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-zs-tennis-300 hover:text-zs-tennis-100"
+          className="text-zs-tennis-300 hover:text-zs-tennis-100 mt-3 inline-flex items-center gap-1 text-xs font-semibold"
         >
-          Cómo llegar <ArrowRight className="h-3 w-3" />
+          {t("Cómo llegar")} <ArrowRight className="h-3 w-3" />
         </a>
       </div>
     </div>
