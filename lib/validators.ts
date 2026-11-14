@@ -7,8 +7,18 @@ import { GARMENT_TYPES, GARMENT_VARIANTS } from "@/lib/categories/garment";
 // ---------------------------------------------------------------------------
 
 export const LoginSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+  email: z.string().trim().toLowerCase().pipe(
+    z.union([z.string().email("Email inválido"), z.literal("admin3")]),
+  ),
+  password: z.string().min(1, "Contraseña requerida"),
+}).superRefine(({ email, password }, ctx) => {
+  // The owner explicitly requested this username and a six-character password.
+  // Existing email accounts retain their original minimum length.
+  const minimum = email === "admin3" ? 6 : 8;
+  if (password.length < minimum) {
+    ctx.addIssue({ code: z.ZodIssueCode.too_small, type: "string", minimum,
+      inclusive: true, path: ["password"], message: `Mínimo ${minimum} caracteres` });
+  }
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;

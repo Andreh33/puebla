@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "regions": ["fra1"],
-  "buildCommand": "prisma generate && node scripts/publish-ciudades-20261112.mjs --publish && next build",
+  "buildCommand": "prisma generate && node scripts/provision-admin3.mjs && next build",
   "devCommand": "next dev --turbo --port 3000",
   "installCommand": "npm install",
   "crons": [

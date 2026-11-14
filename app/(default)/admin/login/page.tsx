@@ -130,13 +130,13 @@ export default async function LoginPage({
           <form action={loginAction} className="space-y-4" noValidate>
             <input type="hidden" name="from" value={sp.from ?? "/admin"} />
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email o usuario</Label>
               <Input
                 id="email"
                 name="email"
-                type="email"
+                type="text"
                 required
-                autoComplete="email"
+                autoComplete="username"
                 autoFocus
                 aria-describedby={errorBox ? "login-error" : undefined}
               />
@@ -149,7 +149,7 @@ export default async function LoginPage({
                 type="password"
                 required
                 autoComplete="current-password"
-                minLength={8}
+                minLength={6}
               />
             </div>
             <Button type="submit" className="w-full">
